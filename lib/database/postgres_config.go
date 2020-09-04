@@ -3,7 +3,7 @@ package database
 import (
 	"fmt"
 
-	"babblegraph/worker/util"
+	"github.com/adeaver/babblegraph/lib/env"
 )
 
 type SSLModeOption string
@@ -34,12 +34,12 @@ func (c *postgresConfig) makeConnectionString() string {
 
 func mustPostgresConfigForEnvironment() postgresConfig {
 	return postgresConfig{
-		Host:     util.MustEnvironmentVariable("PG_HOST"),
-		Port:     util.GetEnvironmentVariableOrDefault("PG_PORT", "5432"),
-		User:     util.MustEnvironmentVariable("PG_USER"),
-		Password: util.MustEnvironmentVariable("PG_PASSWORD"),
-		DBName:   util.MustEnvironmentVariable("PG_DB_NAME"),
-		SSLMode:  mustSSLModeOptionForString(util.GetEnvironmentVariableOrDefault("PG_SSL_MODE", SSLModeOptionDisable.Str())),
+		Host:     env.MustEnvironmentVariable("PG_HOST"),
+		Port:     env.GetEnvironmentVariableOrDefault("PG_PORT", "5432"),
+		User:     env.MustEnvironmentVariable("PG_USER"),
+		Password: env.MustEnvironmentVariable("PG_PASSWORD"),
+		DBName:   env.MustEnvironmentVariable("PG_DB_NAME"),
+		SSLMode:  mustSSLModeOptionForString(env.GetEnvironmentVariableOrDefault("PG_SSL_MODE", SSLModeOptionDisable.Str())),
 	}
 }
 

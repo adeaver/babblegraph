@@ -1,13 +1,13 @@
 package queue
 
 import (
-	"babblegraph/worker/database"
 	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
 	"time"
 
+	"github.com/adeaver/babblegraph/lib/database"
 	"github.com/jmoiron/sqlx"
 )
 
