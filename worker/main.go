@@ -37,7 +37,7 @@ func main() {
 		Field1: "Andrew",
 		Field2: 5,
 	})
-	queue.StartQueue()
-	for {
-	}
+	errs := make(chan error, 1)
+	queue.StartQueue(errs)
+	<-errs
 }

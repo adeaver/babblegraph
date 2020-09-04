@@ -43,7 +43,7 @@ func WithTx(f func(tx *sqlx.Tx) error) error {
 		if rbErr := tx.Rollback(); rbErr != nil {
 			log.Fatalf("query failed: %s, unable to rollback: %s", err.Error(), rbErr.Error())
 		}
-		log.Fatalf(err.Error())
+		return err
 	}
 	return tx.Commit()
 }
