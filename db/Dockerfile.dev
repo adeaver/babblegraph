@@ -1,0 +1,10 @@
+# use version
+FROM postgres
+
+ENV POSTGRES_DB babblegraph
+ENV POSTGRES_USER dev
+ENV POSTGRES_PASSWORD development
+ENV ALLOW_IP_RANGE '0.0.0.0/0'
+ENV POSTGRES_HOST_AUTH_METHOD md5
+
+COPY ./migrations/worker/ /docker-entrypoint-initdb.d/

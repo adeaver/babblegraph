@@ -1,0 +1,15 @@
+FROM golang:1.12.5-alpine3.9
+
+# INSTALL OS DEPENDENCIES
+RUN apk update && apk add --no-cache git
+RUN apk add --no-cache curl
+# TODO(adeaver): make this install a specific version
+RUN curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+
+WORKDIR $GOPATH/src/babblegraph/worker
+
+# INSTALL GOLANG DEPENDENCIES
+COPY Gopkg.lock Gopkg.toml ./
+RUN dep ensure -vendor-only -v
+
+CMD [ "go", "run", "main.go" ]

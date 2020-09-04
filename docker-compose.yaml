@@ -1,0 +1,21 @@
+version: '3'
+services:
+  worker:
+    build:
+      dockerfile: Dockerfile.dev
+      context: ./worker
+    volumes:
+      - ./worker:/go/src/babblegraph/worker
+      - /go/src/babblegraph/worker/vendor
+    environment:
+      - PG_HOST=db
+      - PG_USER=dev
+      - PG_PASSWORD=development
+      - PG_DB_NAME=babblegraph
+  db:
+    # TODO: use version
+    build:
+      dockerfile: Dockerfile.dev
+      context: ./db
+    volumes:
+      - ./db/data:/var/lib/postgresql/data
