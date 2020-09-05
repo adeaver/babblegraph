@@ -1,43 +1,37 @@
 package main
 
 import (
+	"babblegraph/worker/htmlfetch"
 	"log"
 
 	"github.com/adeaver/babblegraph/lib/database"
 	"github.com/adeaver/babblegraph/lib/queue"
-
-	"github.com/jmoiron/sqlx"
 )
-
-type TestMessage struct {
-	Field1 string `json:"field1"`
-	Field2 int    `json:"field2"`
-}
-
-type TestQueue struct{}
-
-func (t *TestQueue) GetTopicName() string {
-	return "test-topic"
-}
-
-func (t *TestQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) error {
-	log.Println("Message Body: %s", msg.MessageBody)
-	return nil
-}
 
 func main() {
 	err := database.GetDatabaseForEnvironmentRetrying()
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	if err := queue.RegisterQueue(&TestQueue{}); err != nil {
-		log.Fatal(err.Error())
-	}
-	queue.PublishMessageToQueueByName("test-topic", TestMessage{
-		Field1: "Andrew",
-		Field2: 5,
-	})
+	registerQueues()
 	errs := make(chan error, 1)
+	if err := queue.PublishMessageToQueueByName(htmlfetch.FetchQueueTopicName, htmlfetch.QueueMessage{
+		URL: "https://cnnespanol.cnn.com/2020/08/29/la-lucha-de-europa-contra-el-covid-19-pasa-de-los-hospitales-a-las-calles/",
+	}); err != nil {
+		log.Fatalf(err.Error())
+	}
 	queue.StartQueue(errs)
 	<-errs
+}
+
+func registerQueues() error {
+	queues := []queue.Queue{
+		htmlfetch.FetchQueueImpl,
+	}
+	for _, q := range queues {
+		if err := queue.RegisterQueue(q); err != nil {
+			return err
+		}
+	}
+	return nil
 }
