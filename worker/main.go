@@ -2,6 +2,7 @@ package main
 
 import (
 	"babblegraph/worker/htmlfetch"
+	"babblegraph/worker/htmlparse"
 	"log"
 
 	"github.com/adeaver/babblegraph/lib/database"
@@ -27,6 +28,7 @@ func main() {
 func registerQueues() error {
 	queues := []queue.Queue{
 		htmlfetch.FetchQueueImpl,
+		htmlparse.ParseQueueImpl,
 	}
 	for _, q := range queues {
 		if err := queue.RegisterQueue(q); err != nil {

@@ -7,7 +7,10 @@ import (
 	"log"
 	"net/http"
 
+	"babblegraph/worker/htmlparse"
+
 	"github.com/adeaver/babblegraph/lib/queue"
+	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -31,22 +34,27 @@ func (f fetchQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) error {
 		log.Println(fmt.Sprintf("Error unmarshalling message for fetch queue: %s... marking complete", err.Error()))
 		return nil
 	}
-	return fetchAndStoreHTMLForURL(m.URL)
-}
-
-func fetchAndStoreHTMLForURL(url string) error {
-	resp, err := http.Get(url)
+	filename, err := fetchAndStoreHTMLForURL(m.URL)
 	if err != nil {
 		return err
+	}
+	return htmlparse.PublishFilenameToParseQueue(*filename)
+}
+
+func fetchAndStoreHTMLForURL(url string) (*string, error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("Got status code for website: %d", resp.StatusCode)
+		return nil, fmt.Errorf("Got status code for website: %d", resp.StatusCode)
 	}
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	log.Println(string(data))
-	return nil
+	// TODO: replace this with storage package
+	filename := fmt.Sprintf("/tmp/%s.html", uuid.New())
+	return &filename, ioutil.WriteFile(filename, data, 0644)
 }

@@ -3,7 +3,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:e20d89ecff610fde17741a944beff111227c825d003b4a91ae81f2d1263c33ef"
+  digest = "1:65dcda44305971ba3663af3a9009cb843d35921787b88f2af66a6c6dd50accb5"
   name = "github.com/adeaver/babblegraph"
   packages = [
     "lib/database",
@@ -11,7 +11,15 @@
     "lib/queue",
   ]
   pruneopts = "UT"
-  revision = "e99b8667c83e01d47dbeb9fc4f036b16a2377d2a"
+  revision = "3b0d0bc9158735489f1a2e8fce7e477be2f8024b"
+
+[[projects]]
+  digest = "1:ffe5ba52b122a56df4f9854ea2918e0d9f86e74919db63dc138f8fee3253d3d6"
+  name = "github.com/google/uuid"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "0e4e31197428a347842d152773b4cace4645ca25"
+  version = "v1.1.2"
 
 [[projects]]
   digest = "1:6c41d4f998a03b6604227ccad36edaed6126c397e5d78709ef4814a1145a6757"
@@ -36,13 +44,26 @@
   revision = "e7751f584844fbf92a5a18b13a0af1c855e34460"
   version = "v1.8.0"
 
+[[projects]]
+  branch = "master"
+  digest = "1:ca901dc31bf65bcdf4ceb1b9b83292ea7b71bf9e4e22a807093900c737e1d960"
+  name = "golang.org/x/net"
+  packages = [
+    "html",
+    "html/atom",
+  ]
+  pruneopts = "UT"
+  revision = "62affa334b73ec65ed44a326519ac12c421905e3"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
     "github.com/adeaver/babblegraph/lib/database",
     "github.com/adeaver/babblegraph/lib/queue",
+    "github.com/google/uuid",
     "github.com/jmoiron/sqlx",
+    "golang.org/x/net/html",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1
