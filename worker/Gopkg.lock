@@ -2,6 +2,18 @@
 
 
 [[projects]]
+  branch = "master"
+  digest = "1:e20d89ecff610fde17741a944beff111227c825d003b4a91ae81f2d1263c33ef"
+  name = "github.com/adeaver/babblegraph"
+  packages = [
+    "lib/database",
+    "lib/env",
+    "lib/queue",
+  ]
+  pruneopts = "UT"
+  revision = "e99b8667c83e01d47dbeb9fc4f036b16a2377d2a"
+
+[[projects]]
   digest = "1:6c41d4f998a03b6604227ccad36edaed6126c397e5d78709ef4814a1145a6757"
   name = "github.com/jmoiron/sqlx"
   packages = [
@@ -28,8 +40,9 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/adeaver/babblegraph/lib/database",
+    "github.com/adeaver/babblegraph/lib/queue",
     "github.com/jmoiron/sqlx",
-    "github.com/lib/pq",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

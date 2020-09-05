@@ -3,8 +3,8 @@ package main
 import (
 	"log"
 
-	"babblegraph/worker/database"
-	"babblegraph/worker/queue"
+	"github.com/adeaver/babblegraph/lib/database"
+	"github.com/adeaver/babblegraph/lib/queue"
 
 	"github.com/jmoiron/sqlx"
 )

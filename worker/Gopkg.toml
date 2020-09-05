@@ -24,14 +24,14 @@
 #   go-tests = true
 #   unused-packages = true
 
+[[constraint]]
+  branch = "master"
+  name = "github.com/adeaver/babblegraph"
 
 [[constraint]]
   name = "github.com/jmoiron/sqlx"
   version = "1.2.0"
 
-[[constraint]]
-  name = "github.com/lib/pq"
-  version = "1.8.0"
 
 [prune]
   go-tests = true
