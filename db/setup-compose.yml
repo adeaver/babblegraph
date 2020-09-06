@@ -1,0 +1,18 @@
+version: '3'
+services:
+  setup:
+    build:
+      dockerfile: Dockerfile
+      context: ./setup
+    environment:
+      - PG_HOST=db
+      - PG_USER=dev
+      - PG_PASSWORD=development
+      - PG_DB=babblegraph
+  db:
+    # TODO: use version
+    build:
+      dockerfile: Dockerfile.dev
+      context: .
+    volumes:
+      - ./data:/var/lib/postgresql/data
