@@ -8,3 +8,5 @@ CREATE TABLE lemmas(
 
     PRIMARY KEY (_id)
 );
+
+CREATE INDEX IF NOT EXISTS lemma_word_idx ON lemmas(lemma);
