@@ -9,6 +9,3 @@ CREATE TABLE words(
 
     PRIMARY KEY (_id)
 );
-
-CREATE UNIQUE INDEX IF NOT EXISTS word_lemma_unique_idx ON words(word, lemma_id, part_of_speech);
-CREATE INDEX IF NOT EXISTS word_part_of_speech_idx ON words(word, part_of_speech);

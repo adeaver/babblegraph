@@ -41,6 +41,8 @@ with io.open("./out/lemmas.csv", "w", encoding="latin1") as f:
     for lemma_key in lemma_forms.keys():
         lemma, part_of_speech, language = lemma_to_dict(lemma_key)
         _id = uuid.uuid4()
+        if "," in lemma or "," in part_of_speech:
+            continue
         line = "{},{},{},{}\n".format(_id, lemma, part_of_speech, language)
         f.write(line)
         lemma_key_to_id[lemma_key] = _id
@@ -51,7 +53,9 @@ with io.open("./out/words.csv", "w", encoding="latin1") as f:
     f.write("lemma_id,word,part_of_speech,language\n")
     for word_key, lemma_key in word_forms.items():
         word, part_of_speech, language = word_to_dict(word_key)
-        lemma_id = lemma_key_to_id[lemma_key]
+        lemma_id = lemma_key_to_id.get(lemma_key, None)
+        if "," in word or "," in part_of_speech or lemma_id is None:
+            continue
         line = "{},{},{},{}\n".format(lemma_id, word, part_of_speech, language)
         f.write(line)
 
