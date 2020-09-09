@@ -3,6 +3,7 @@ package main
 import (
 	"babblegraph/worker/htmlfetch"
 	"babblegraph/worker/htmlparse"
+	"babblegraph/worker/normalizetext"
 	"log"
 
 	"github.com/adeaver/babblegraph/lib/database"
@@ -29,6 +30,7 @@ func registerQueues() error {
 	queues := []queue.Queue{
 		htmlfetch.FetchQueueImpl,
 		htmlparse.ParseQueueImpl,
+		normalizetext.NormalizeTextQueueImpl,
 	}
 	for _, q := range queues {
 		if err := queue.RegisterQueue(q); err != nil {

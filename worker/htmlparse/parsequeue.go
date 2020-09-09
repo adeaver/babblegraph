@@ -1,9 +1,10 @@
 package htmlparse
 
 import (
+	"babblegraph/worker/normalizetext"
+	"babblegraph/worker/storage"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 
 	"github.com/adeaver/babblegraph/lib/queue"
@@ -11,7 +12,7 @@ import (
 )
 
 type queueMessage struct {
-	Filename string `json:"filename"`
+	Filename storage.FileIdentifier `json:"filename"`
 }
 
 var ParseQueueImpl parseQueue = parseQueue{}
@@ -30,7 +31,7 @@ func (p parseQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) error {
 		log.Println(fmt.Sprintf("Error unmarshalling message for fetch queue: %s... marking complete", err.Error()))
 		return nil
 	}
-	htmlBytes, err := ioutil.ReadFile(m.Filename)
+	htmlBytes, err := storage.ReadFile(m.Filename)
 	if err != nil {
 		return err
 	}
@@ -38,11 +39,14 @@ func (p parseQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) error {
 	if err != nil {
 		return err
 	}
-	log.Println(*text)
-	return nil
+	id, err := storage.WriteFile("txt", *text)
+	if err != nil {
+		return err
+	}
+	return normalizetext.PublishMessageToNormalizeTextQueue(*id)
 }
 
-func PublishFilenameToParseQueue(filename string) error {
+func PublishFilenameToParseQueue(filename storage.FileIdentifier) error {
 	return queue.PublishMessageToQueueByName(parseQueueTopicName, queueMessage{
 		Filename: filename,
 	})

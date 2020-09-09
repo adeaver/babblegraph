@@ -8,9 +8,9 @@ import (
 	"net/http"
 
 	"babblegraph/worker/htmlparse"
+	"babblegraph/worker/storage"
 
 	"github.com/adeaver/babblegraph/lib/queue"
-	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -41,7 +41,7 @@ func (f fetchQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) error {
 	return htmlparse.PublishFilenameToParseQueue(*filename)
 }
 
-func fetchAndStoreHTMLForURL(url string) (*string, error) {
+func fetchAndStoreHTMLForURL(url string) (*storage.FileIdentifier, error) {
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err
@@ -54,7 +54,5 @@ func fetchAndStoreHTMLForURL(url string) (*string, error) {
 	if err != nil {
 		return nil, err
 	}
-	// TODO: replace this with storage package
-	filename := fmt.Sprintf("/tmp/%s.html", uuid.New())
-	return &filename, ioutil.WriteFile(filename, data, 0644)
+	return storage.WriteFile("html", string(data))
 }
