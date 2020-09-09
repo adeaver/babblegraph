@@ -1,5 +1,7 @@
 package normalizetext
 
+import "strings"
+
 func normalizeText(textBytes []byte) []string {
 	var out []string
 	var currentLine []rune
@@ -26,7 +28,7 @@ func normalizeText(textBytes []byte) []string {
 	if len(currentLine) > 0 {
 		out = append(out, string(currentLine))
 	}
-	return out
+	return strings.Join(out, "\n")
 }
 
 func isRunePunctuation(b rune) bool {

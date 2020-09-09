@@ -35,8 +35,9 @@ func (n normalizeTextQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) error
 		return err
 	}
 	normalizedTextLines := normalizeText(textBytes)
-	for _, line := range normalizedTextLines {
-		fmt.Println(line)
+	id, err := storage.WriteFile("txt", normalizedTextLines)
+	if err != nil {
+		return err
 	}
 	return nil
 }

@@ -14,7 +14,7 @@ func TestNormalizeText(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		out := normalizeText(tc.input)
-		if out[0] != tc.expected {
+		if out != tc.expected {
 			t.Errorf("Expected %s, got %s", tc.expected, out[0])
 		}
 	}
