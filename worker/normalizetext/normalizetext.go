@@ -2,7 +2,7 @@ package normalizetext
 
 import "strings"
 
-func normalizeText(textBytes []byte) []string {
+func normalizeText(textBytes []byte) string {
 	var out []string
 	var currentLine []rune
 	text := string(textBytes)

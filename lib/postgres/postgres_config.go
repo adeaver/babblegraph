@@ -39,11 +39,11 @@ func MustPostgresConfigForEnvironment() PostgresConfig {
 		User:     env.MustEnvironmentVariable("PG_USER"),
 		Password: env.MustEnvironmentVariable("PG_PASSWORD"),
 		DBName:   env.MustEnvironmentVariable("PG_DB_NAME"),
-		SSLMode:  mustSSLModeOptionForString(env.GetEnvironmentVariableOrDefault("PG_SSL_MODE", SSLModeOptionDisable.Str())),
+		SSLMode:  MustSSLModeOptionForString(env.GetEnvironmentVariableOrDefault("PG_SSL_MODE", SSLModeOptionDisable.Str())),
 	}
 }
 
-func mustSSLModeOptionForString(o string) SSLModeOption {
+func MustSSLModeOptionForString(o string) SSLModeOption {
 	switch o {
 	case "require":
 		return SSLModeOptionRequire

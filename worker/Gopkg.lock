@@ -3,15 +3,16 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:65dcda44305971ba3663af3a9009cb843d35921787b88f2af66a6c6dd50accb5"
+  digest = "1:2d4652f87d4acee4afb6c5a11d008b3871861f2c368d4c7e47031d83066ccb58"
   name = "github.com/adeaver/babblegraph"
   packages = [
     "lib/database",
     "lib/env",
+    "lib/postgres",
     "lib/queue",
   ]
   pruneopts = "UT"
-  revision = "3b0d0bc9158735489f1a2e8fce7e477be2f8024b"
+  revision = "32e1f64bd3659c918f011b69f4e17e0b2aec296e"
 
 [[projects]]
   digest = "1:ffe5ba52b122a56df4f9854ea2918e0d9f86e74919db63dc138f8fee3253d3d6"
