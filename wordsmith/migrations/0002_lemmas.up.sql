@@ -4,7 +4,7 @@ CREATE TABLE lemmas(
     _id uuid DEFAULT uuid_generate_v4 (),
     lemma TEXT NOT NULL,
     part_of_speech TEXT NOT NULL,
-    language TEXT NOT NULL,
+    language TEXT NOT NULL REFERENCES languages(code),
 
     PRIMARY KEY (_id)
 );

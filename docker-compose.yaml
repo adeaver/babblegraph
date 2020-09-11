@@ -16,9 +16,14 @@ services:
       - PG_PASSWORD=development
       - PG_DB_NAME=babblegraph
   db:
-    # TODO: use version
     build:
       dockerfile: Dockerfile.dev
       context: ./db
     volumes:
       - ./db/data:/var/lib/postgresql/data
+  wordsmith:
+    build:
+      dockerfile: Dockerfile.dev
+      context: ./wordsmith
+    volumes:
+      - ./wordsmith/data:/var/lib/postgresql/data

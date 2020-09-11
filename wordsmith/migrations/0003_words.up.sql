@@ -5,7 +5,7 @@ CREATE TABLE words(
     word TEXT NOT NULL,
     lemma_id uuid NOT NULL REFERENCES lemmas(_id) ON DELETE CASCADE,
     part_of_speech TEXT NOT NULL,
-    language TEXT NOT NULL,
+    language TEXT NOT NULL REFERENCES languages(code),
 
     PRIMARY KEY (_id)
 );

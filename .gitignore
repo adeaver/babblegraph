@@ -1,4 +1,5 @@
 **/vendor/**
 **/.vendor-new/**
 db/data/**
-db/setup/out/**
+wordsmith/data/**
+wordsmith/setup/out/**

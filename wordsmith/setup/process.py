@@ -113,6 +113,7 @@ for idx in range(num_word_files):
 
 print("writing sql file")
 with io.open("./out/populate_db.sql", "w", encoding="latin1") as f:
+    f.write("INSERT INTO languages (code) VALUES ('es');\n\n")
     for idx in range(num_lemma_files):
         f.write(populate_lemmas_template.format(idx+1))
     for idx in range(num_word_files):
