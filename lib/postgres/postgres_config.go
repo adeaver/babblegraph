@@ -1,4 +1,4 @@
-package database
+package postgres
 
 import (
 	"fmt"
@@ -19,7 +19,7 @@ func (o SSLModeOption) Str() string {
 	return string(o)
 }
 
-type postgresConfig struct {
+type PostgresConfig struct {
 	Host     string
 	Port     string
 	User     string
@@ -28,12 +28,12 @@ type postgresConfig struct {
 	SSLMode  SSLModeOption
 }
 
-func (c *postgresConfig) makeConnectionString() string {
+func (c *PostgresConfig) MakeConnectionString() string {
 	return fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s", c.Host, c.Port, c.User, c.Password, c.DBName, c.SSLMode.Str())
 }
 
-func mustPostgresConfigForEnvironment() postgresConfig {
-	return postgresConfig{
+func MustPostgresConfigForEnvironment() PostgresConfig {
+	return PostgresConfig{
 		Host:     env.MustEnvironmentVariable("PG_HOST"),
 		Port:     env.GetEnvironmentVariableOrDefault("PG_PORT", "5432"),
 		User:     env.MustEnvironmentVariable("PG_USER"),

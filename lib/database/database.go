@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/adeaver/babblegraph/lib/postgres"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 )
@@ -23,10 +24,10 @@ func GetDatabaseForEnvironmentRetrying() error {
 		panic("database already initialized")
 	}
 	fuzzCalc := rand.New(rand.NewSource(time.Now().UnixNano()))
-	config := mustPostgresConfigForEnvironment()
+	config := postgres.MustPostgresConfigForEnvironment()
 	var err error
 	for i := 0; i < maxRetries; i++ {
-		db, err = sqlx.Connect("postgres", config.makeConnectionString())
+		db, err = sqlx.Connect("postgres", config.MakeConnectionString())
 		if err == nil {
 			return nil
 		}
