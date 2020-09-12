@@ -1,6 +1,7 @@
 package normalizetext
 
 import (
+	"babblegraph/worker/languageclassifier"
 	"babblegraph/worker/storage"
 	"encoding/json"
 	"fmt"
@@ -12,6 +13,8 @@ import (
 
 type queueMessage struct {
 	Filename storage.FileIdentifier `json:"filename"`
+	URL      string                 `json:"url"`
+	Links    []string               `json:"links"`
 }
 
 var NormalizeTextQueueImpl normalizeTextQueue = normalizeTextQueue{}
@@ -39,11 +42,13 @@ func (n normalizeTextQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) error
 	if err != nil {
 		return err
 	}
-	return languageclassifier.PublishMessageToLanguageClassifierQueue(id)
+	return languageclassifier.PublishMessageToLanguageClassifierQueue(m.URL, m.Links, *id)
 }
 
-func PublishMessageToNormalizeTextQueue(filename storage.FileIdentifier) error {
+func PublishMessageToNormalizeTextQueue(url string, links []string, filename storage.FileIdentifier) error {
 	return queue.PublishMessageToQueueByName(normalizeTextTopicName, queueMessage{
 		Filename: filename,
+		URL:      url,
+		Links:    links,
 	})
 }

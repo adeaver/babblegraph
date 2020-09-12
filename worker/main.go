@@ -13,12 +13,10 @@ import (
 )
 
 func main() {
-	err := database.GetDatabaseForEnvironmentRetrying()
-	if err != nil {
+	if err := database.GetDatabaseForEnvironmentRetrying(); err != nil {
 		log.Fatal(err.Error())
 	}
-	err := wordsmith.MustSetupWordsmithForEnvironment()
-	if err != nil {
+	if err := wordsmith.MustSetupWordsmithForEnvironment(); err != nil {
 		log.Fatal(err.Error())
 	}
 	registerQueues()

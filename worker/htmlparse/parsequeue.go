@@ -13,6 +13,7 @@ import (
 
 type queueMessage struct {
 	Filename storage.FileIdentifier `json:"filename"`
+	URL      string                 `json:"url"`
 }
 
 var ParseQueueImpl parseQueue = parseQueue{}
@@ -35,7 +36,7 @@ func (p parseQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) error {
 	if err != nil {
 		return err
 	}
-	text, _, err := getTextAndLinksForHTML(string(htmlBytes))
+	text, links, err := getTextAndLinksForHTML(string(htmlBytes))
 	if err != nil {
 		return err
 	}
@@ -43,11 +44,12 @@ func (p parseQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) error {
 	if err != nil {
 		return err
 	}
-	return normalizetext.PublishMessageToNormalizeTextQueue(*id)
+	return normalizetext.PublishMessageToNormalizeTextQueue(m.URL, links, *id)
 }
 
-func PublishFilenameToParseQueue(filename storage.FileIdentifier) error {
+func PublishFilenameToParseQueue(url string, filename storage.FileIdentifier) error {
 	return queue.PublishMessageToQueueByName(parseQueueTopicName, queueMessage{
 		Filename: filename,
+		URL:      url,
 	})
 }

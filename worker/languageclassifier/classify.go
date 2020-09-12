@@ -5,14 +5,14 @@ import (
 	"strings"
 )
 
-const minimumPercentage int = 65
+const minimumPercentage int64 = 65
 
 var classifiers []classifier = []classifier{
-	spanishClassifier{},
+	spanishClassifierImpl,
 }
 
 func classify(text string) (*wordsmith.LanguageCode, error) {
-	var currentHighest *int
+	var currentHighest *int64
 	var currentClassifier *classifier
 	tokens := tokenize(text)
 	for _, classifier := range classifiers {
@@ -31,7 +31,7 @@ func classify(text string) (*wordsmith.LanguageCode, error) {
 	if currentClassifier == nil {
 		return nil, nil
 	}
-	lang := currentClassifier.GetLanguage()
+	lang := (*currentClassifier).GetLanguage()
 	return &lang, nil
 }
 

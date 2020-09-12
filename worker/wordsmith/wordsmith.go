@@ -7,6 +7,7 @@ import (
 
 	"github.com/adeaver/babblegraph/lib/env"
 	"github.com/adeaver/babblegraph/lib/postgres"
+	"github.com/jmoiron/sqlx"
 )
 
 var db *sqlx.DB
@@ -38,17 +39,17 @@ func MustSetupWordsmithForEnvironment() error {
 }
 
 func getWordsmithPostgresConfigForEnvironment() postgres.PostgresConfig {
-	return PostgresConfig{
+	return postgres.PostgresConfig{
 		Host:     env.MustEnvironmentVariable("WORDSMITH_HOST"),
 		Port:     env.GetEnvironmentVariableOrDefault("WORDSMITH_PORT", "5432"),
 		User:     env.MustEnvironmentVariable("WORDSMITH_USER"),
 		Password: env.MustEnvironmentVariable("WORDSMITH_PASSWORD"),
 		DBName:   env.MustEnvironmentVariable("WORDSMITH_DB_NAME"),
-		SSLMode:  mustSSLModeOptionForString(env.GetEnvironmentVariableOrDefault("WORDSMITH_PG_SSL_MODE", SSLModeOptionDisable.Str())),
+		SSLMode:  postgres.MustSSLModeOptionForString(env.GetEnvironmentVariableOrDefault("WORDSMITH_PG_SSL_MODE", postgres.SSLModeOptionDisable.Str())),
 	}
 }
 
-func withTx(func(tx *sqlx.Tx) error) error {
+func withTx(f func(tx *sqlx.Tx) error) error {
 	tx := db.MustBegin()
 	if err := f(tx); err != nil {
 		if rbErr := tx.Rollback(); rbErr != nil {

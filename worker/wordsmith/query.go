@@ -1,5 +1,7 @@
 package wordsmith
 
+import "github.com/jmoiron/sqlx"
+
 func GetWords(words []string, language LanguageCode) ([]Word, error) {
 	var matches []dbWord
 	if err := withTx(func(tx *sqlx.Tx) error {
@@ -8,7 +10,7 @@ func GetWords(words []string, language LanguageCode) ([]Word, error) {
 			return err
 		}
 		sql := tx.Rebind(query)
-		return tx.Select(&dbWords, sql, args...)
+		return tx.Select(&matches, sql, args...)
 	}); err != nil {
 		return nil, err
 	}

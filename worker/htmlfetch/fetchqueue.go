@@ -38,7 +38,7 @@ func (f fetchQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) error {
 	if err != nil {
 		return err
 	}
-	return htmlparse.PublishFilenameToParseQueue(*filename)
+	return htmlparse.PublishFilenameToParseQueue(m.URL, *filename)
 }
 
 func fetchAndStoreHTMLForURL(url string) (*storage.FileIdentifier, error) {

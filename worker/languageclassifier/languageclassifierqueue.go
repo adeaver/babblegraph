@@ -5,13 +5,17 @@ import (
 	"fmt"
 	"log"
 
+	"babblegraph/worker/storage"
+
 	"github.com/adeaver/babblegraph/lib/queue"
 
 	"github.com/jmoiron/sqlx"
 )
 
 type queueMessage struct {
-	Filename storage.FileIdentifer `json:"filename"`
+	Filename storage.FileIdentifier `json:"filename"`
+	URL      string                 `json:"url"`
+	Links    []string               `json:"links"`
 }
 
 var LanguageClassifierQueueImpl languageClassifierQueue = languageClassifierQueue{}
@@ -38,12 +42,18 @@ func (l languageClassifierQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) 
 	if err != nil {
 		return err
 	}
-	log.Println(fmt.Sprintf("Got language: %s", *language.Str()))
+	if language == nil {
+		log.Println("do not recognize language: skipping")
+		return nil
+	}
+	log.Println(fmt.Sprintf("Got language: %s", (*language).Str()))
 	return nil
 }
 
-func PublishMessageToLanguageClassifierQueue(filename storage.FileIdentifier) error {
+func PublishMessageToLanguageClassifierQueue(url string, links []string, filename storage.FileIdentifier) error {
 	return queue.PublishMessageToQueueByName(languageClassifierTopicName, queueMessage{
 		Filename: filename,
+		URL:      url,
+		Links:    links,
 	})
 }
