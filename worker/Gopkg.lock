@@ -3,7 +3,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:2d4652f87d4acee4afb6c5a11d008b3871861f2c368d4c7e47031d83066ccb58"
+  digest = "1:6170930064cdfa4d736b1e00f9e6379987cae68d123dd3bff7633d35a3bdfd6d"
   name = "github.com/adeaver/babblegraph"
   packages = [
     "lib/database",
@@ -12,7 +12,7 @@
     "lib/queue",
   ]
   pruneopts = "UT"
-  revision = "32e1f64bd3659c918f011b69f4e17e0b2aec296e"
+  revision = "b0bd20d6774b21894d273979ba8c7297141990e4"
 
 [[projects]]
   digest = "1:ffe5ba52b122a56df4f9854ea2918e0d9f86e74919db63dc138f8fee3253d3d6"
@@ -61,6 +61,8 @@
   analyzer-version = 1
   input-imports = [
     "github.com/adeaver/babblegraph/lib/database",
+    "github.com/adeaver/babblegraph/lib/env",
+    "github.com/adeaver/babblegraph/lib/postgres",
     "github.com/adeaver/babblegraph/lib/queue",
     "github.com/google/uuid",
     "github.com/jmoiron/sqlx",

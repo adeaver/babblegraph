@@ -15,6 +15,10 @@ services:
       - PG_USER=dev
       - PG_PASSWORD=development
       - PG_DB_NAME=babblegraph
+      - WORDSMITH_HOST=wordsmith
+      - WORDSMITH_USER=dev
+      - WORDSMITH_PASSWORD=development
+      - WORDSMITH_DB_NAME=wordsmith
   db:
     build:
       dockerfile: Dockerfile.dev

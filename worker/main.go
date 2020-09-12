@@ -3,7 +3,9 @@ package main
 import (
 	"babblegraph/worker/htmlfetch"
 	"babblegraph/worker/htmlparse"
+	"babblegraph/worker/languageclassifier"
 	"babblegraph/worker/normalizetext"
+	"babblegraph/worker/wordsmith"
 	"log"
 
 	"github.com/adeaver/babblegraph/lib/database"
@@ -12,6 +14,10 @@ import (
 
 func main() {
 	err := database.GetDatabaseForEnvironmentRetrying()
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	err := wordsmith.MustSetupWordsmithForEnvironment()
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -31,6 +37,7 @@ func registerQueues() error {
 		htmlfetch.FetchQueueImpl,
 		htmlparse.ParseQueueImpl,
 		normalizetext.NormalizeTextQueueImpl,
+		languageclassifier.LanguageClassifierQueueImpl,
 	}
 	for _, q := range queues {
 		if err := queue.RegisterQueue(q); err != nil {

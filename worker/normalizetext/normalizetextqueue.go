@@ -35,11 +35,11 @@ func (n normalizeTextQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) error
 		return err
 	}
 	normalizedTextLines := normalizeText(textBytes)
-	_, err = storage.WriteFile("txt", normalizedTextLines)
+	id, err := storage.WriteFile("txt", normalizedTextLines)
 	if err != nil {
 		return err
 	}
-	return nil
+	return languageclassifier.PublishMessageToLanguageClassifierQueue(id)
 }
 
 func PublishMessageToNormalizeTextQueue(filename storage.FileIdentifier) error {
