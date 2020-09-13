@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 
+	"babblegraph/worker/linkhandler"
 	"babblegraph/worker/storage"
 
 	"github.com/adeaver/babblegraph/lib/queue"
@@ -47,7 +48,7 @@ func (l languageClassifierQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) 
 		return nil
 	}
 	log.Println(fmt.Sprintf("Got language: %s", (*language).Str()))
-	return nil
+	return linkhandler.PublishMessageToLinkHandlerQueue(m.Links)
 }
 
 func PublishMessageToLanguageClassifierQueue(url string, links []string, filename storage.FileIdentifier) error {

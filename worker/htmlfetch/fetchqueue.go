@@ -14,7 +14,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type QueueMessage struct {
+type queueMessage struct {
 	URL string `json:"url"`
 }
 
@@ -22,14 +22,14 @@ var FetchQueueImpl fetchQueue = fetchQueue{}
 
 type fetchQueue struct{}
 
-const FetchQueueTopicName string = "fetch-queue-topic"
+const fetchQueueTopicName string = "fetch-queue-topic"
 
 func (f fetchQueue) GetTopicName() string {
-	return FetchQueueTopicName
+	return fetchQueueTopicName
 }
 
 func (f fetchQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) error {
-	var m QueueMessage
+	var m queueMessage
 	if err := json.Unmarshal([]byte(msg.MessageBody), &m); err != nil {
 		log.Println(fmt.Sprintf("Error unmarshalling message for fetch queue: %s... marking complete", err.Error()))
 		return nil
@@ -39,6 +39,12 @@ func (f fetchQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) error {
 		return err
 	}
 	return htmlparse.PublishFilenameToParseQueue(m.URL, *filename)
+}
+
+func PublishToFetchQueue(u string) error {
+	return queue.PublishMessageToQueueByName(fetchQueueTopicName, queueMessage{
+		URL: u,
+	})
 }
 
 func fetchAndStoreHTMLForURL(url string) (*storage.FileIdentifier, error) {
