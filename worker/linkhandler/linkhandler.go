@@ -4,6 +4,7 @@ import (
 	"babblegraph/worker/links"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -28,6 +29,9 @@ func getFilteredLinksForURLs(urls []string) []links.Link {
 	// a lot of garbage. Therefore, I will absorb all the errors
 	var out []links.Link
 	for _, u := range urls {
+		if strings.Contains(u, "mailto") {
+			continue
+		}
 		link, err := links.GetLinkForURL(u)
 		if err != nil {
 			log.Println(fmt.Sprintf("Error on making link for url %s with message: %s", u, err.Error()))

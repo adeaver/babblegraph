@@ -48,6 +48,21 @@ func isTagNameForTextToken(tagName []byte) bool {
 	return len(tagName) > 0 && textTokenTagNames[string(tagName)]
 }
 
+func isWeblink(href string) bool {
+	switch {
+	case strings.HasPrefix(href, "#"),
+		strings.HasPrefix(href, "/"),
+		strings.HasPrefix(href, "."):
+		return false
+	case strings.Contains(href, ".jpeg"),
+		strings.Contains(href, ".jpg"),
+		strings.Contains(href, ".gif"),
+		strings.Contains(href, ".png"):
+		return false
+	}
+	return true
+}
+
 func getTextAndLinksForHTML(htmlStr string) (*string, []string, error) {
 	htmlReader := strings.NewReader(htmlStr)
 	htmlDoc, err := html.Parse(htmlReader)
@@ -64,7 +79,7 @@ func getTextAndLinksForHTML(htmlStr string) (*string, []string, error) {
 			_, shouldCollectText = textTokenTagNames[n.Data]
 			if n.Data == "a" {
 				for _, attr := range n.Attr {
-					if attr.Key == "href" {
+					if attr.Key == "href" && isWeblink(attr.Val) {
 						links = append(links, attr.Val)
 					}
 				}
