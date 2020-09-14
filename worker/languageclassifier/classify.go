@@ -1,9 +1,18 @@
 package languageclassifier
 
 import (
+	"babblegraph/worker/storage"
 	"babblegraph/worker/wordsmith"
 	"strings"
 )
+
+func ClassifyLanguageForFile(filename storage.FileIdentifier) (*wordsmith.LanguageCode, error) {
+	textBytes, err := storage.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+	return classify(string(textBytes))
+}
 
 const minimumPercentage int64 = 65
 

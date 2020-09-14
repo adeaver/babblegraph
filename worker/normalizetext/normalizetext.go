@@ -1,6 +1,18 @@
 package normalizetext
 
-import "strings"
+import (
+	"babblegraph/worker/storage"
+	"strings"
+)
+
+func NormalizeAndStoreTextForFilename(filename storage.FileIdentifier) (*storage.FileIdentifier, error) {
+	textBytes, err := storage.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+	normalizedTextLines := normalizeText(textBytes)
+	return storage.WriteFile("txt", normalizedTextLines)
+}
 
 func normalizeText(textBytes []byte) string {
 	var out []string

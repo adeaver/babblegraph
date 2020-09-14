@@ -1,12 +1,29 @@
 package htmlparse
 
 import (
+	"babblegraph/worker/storage"
 	"fmt"
 	"log"
 	"strings"
 
 	"golang.org/x/net/html"
 )
+
+func ParseAndStoreFileText(filename storage.FileIdentifier) (*storage.FileIdentifier, []string, error) {
+	htmlBytes, err := storage.ReadFile(filename)
+	if err != nil {
+		return nil, nil, err
+	}
+	text, links, err := getTextAndLinksForHTML(string(htmlBytes))
+	if err != nil {
+		return nil, nil, err
+	}
+	id, err := storage.WriteFile("txt", *text)
+	if err != nil {
+		return nil, nil, err
+	}
+	return id, links, nil
+}
 
 var textTokenTagNames = map[string]bool{
 	"a":       true,

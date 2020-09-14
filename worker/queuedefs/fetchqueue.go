@@ -1,0 +1,42 @@
+package queuedefs
+
+import (
+	"babblegraph/worker/htmlfetch"
+	"encoding/json"
+	"fmt"
+	"log"
+
+	"github.com/adeaver/babblegraph/lib/queue"
+	"github.com/jmoiron/sqlx"
+)
+
+const queueTopicNameFetchQueue queueTopicName = "fetch-queue-topic"
+
+type fetchQueue struct{}
+
+func (f fetchQueue) GetTopicName() string {
+	return queueTopicNameFetchQueue.Str()
+}
+
+type fetchQueueMessage struct {
+	URL string `json:"url"`
+}
+
+func (f fetchQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) error {
+	var m fetchQueueMessage
+	if err := json.Unmarshal([]byte(msg.MessageBody), &m); err != nil {
+		log.Println(fmt.Sprintf("Error unmarshalling message for fetch queue: %s... marking complete", err.Error()))
+		return nil
+	}
+	filename, err := htmlfetch.FetchAndStoreHTMLForURL(m.URL)
+	if err != nil {
+		return err
+	}
+	return publishMessageToParseQueue(m.URL, *filename)
+}
+
+func publishMessageToFetchQueue(u string) error {
+	return queue.PublishMessageToQueueByName(queueTopicNameFetchQueue.Str(), fetchQueueMessage{
+		URL: u,
+	})
+}
