@@ -39,6 +39,7 @@ func (l languageClassifierQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) 
 		log.Println("do not recognize language: skipping")
 		return nil
 	}
+	log.Println(fmt.Sprintf("Got language %s for %s", language.Str(), m.URL))
 	if err := publishMessageToLinkHandlerQueue(m.Links); err != nil {
 		return err
 	}

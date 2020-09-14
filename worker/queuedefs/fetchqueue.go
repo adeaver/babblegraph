@@ -30,7 +30,8 @@ func (f fetchQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) error {
 	}
 	filename, err := htmlfetch.FetchAndStoreHTMLForURL(m.URL)
 	if err != nil {
-		return err
+		log.Println(fmt.Sprintf("Error on url %s, message: %s... skipping", m.URL, err.Error()))
+		return nil
 	}
 	return publishMessageToParseQueue(m.URL, *filename)
 }

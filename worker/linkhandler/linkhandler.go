@@ -22,6 +22,8 @@ var forbiddenDomains = map[string]bool{
 	"instagram.com": true,
 	"pinterest.com": true,
 	"facebook.com":  true,
+	"twitter.com":   true,
+	"youtube.com":   true,
 }
 
 func getFilteredLinksForURLs(urls []string) []links.Link {
@@ -29,7 +31,9 @@ func getFilteredLinksForURLs(urls []string) []links.Link {
 	// a lot of garbage. Therefore, I will absorb all the errors
 	var out []links.Link
 	for _, u := range urls {
-		if strings.Contains(u, "mailto") {
+		switch {
+		case strings.Contains(u, "mailto"), // mailto string
+			strings.Contains(u, "//") && !strings.HasPrefix(u, "http"): // wrong protocol
 			continue
 		}
 		link, err := links.GetLinkForURL(u)
@@ -40,6 +44,7 @@ func getFilteredLinksForURLs(urls []string) []links.Link {
 		if _, isForbiddenDomain := forbiddenDomains[link.Domain.Str()]; isForbiddenDomain {
 			continue
 		}
+		log.Println(fmt.Sprintf("Adding URL: %s", u))
 		out = append(out, *link)
 	}
 	return out

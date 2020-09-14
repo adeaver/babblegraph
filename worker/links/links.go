@@ -38,7 +38,7 @@ func ensureScheme(rawURL string) string {
 	case strings.HasPrefix(rawURL, "https://"):
 		return rawURL
 	default:
-		return fmt.Sprintf("https://%s", rawURL)
+		return fmt.Sprintf("http://%s", rawURL)
 	}
 }
 

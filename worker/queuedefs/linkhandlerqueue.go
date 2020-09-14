@@ -71,13 +71,19 @@ func (q *linkHandlerQueue) sendNewLink() error {
 	if err := publishMessageToFetchQueue(topLink.URL); err != nil {
 		return err
 	}
+	log.Println(fmt.Sprintf("Sending url from domain %s: %s", topDomain.Str(), topLink.URL))
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		return links.SetURLAsFetched(tx, topLink.URL)
 	}); err != nil {
 		return err
 	}
-	q.orderedDomains = append(q.orderedDomains[1:], topDomain)
-	q.linksByDomain[topDomain] = linksForDomain[1:]
+	if len(linksForDomain) == 1 {
+		q.orderedDomains = q.orderedDomains[1:]
+		delete(q.linksByDomain, topDomain)
+	} else {
+		q.orderedDomains = append(q.orderedDomains[1:], topDomain)
+		q.linksByDomain[topDomain] = linksForDomain[1:]
+	}
 	return nil
 }
 
