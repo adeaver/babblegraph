@@ -22,12 +22,12 @@ type linkHandlerQueue struct {
 	linksByDomain  map[links.Domain][]links.Link
 }
 
-func (l linkHandlerQueue) GetTopicName() string {
+func (l *linkHandlerQueue) GetTopicName() string {
 	return queueTopicNameLinkHandler.Str()
 }
 
 func initializeLinkHandlerQueue(errs chan error) (*linkHandlerQueue, error) {
-	var q linkHandlerQueue
+	q := &linkHandlerQueue{}
 	var unfetchedLinks map[links.Domain][]links.Link
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		var err error
@@ -41,10 +41,10 @@ func initializeLinkHandlerQueue(errs chan error) (*linkHandlerQueue, error) {
 	}
 	q.linksByDomain = unfetchedLinks
 	go startLinkHandler(q, errs)
-	return &q, nil
+	return q, nil
 }
 
-func startLinkHandler(q linkHandlerQueue, errs chan error) {
+func startLinkHandler(q *linkHandlerQueue, errs chan error) {
 	for {
 		if err := q.sendNewLink(); err != nil {
 			errs <- err
@@ -54,10 +54,12 @@ func startLinkHandler(q linkHandlerQueue, errs chan error) {
 	}
 }
 
-func (q linkHandlerQueue) sendNewLink() error {
+func (q *linkHandlerQueue) sendNewLink() error {
 	q.mux.Lock()
+	log.Println("unlocked to send links")
 	defer q.mux.Unlock()
 	if len(q.orderedDomains) == 0 {
+		log.Println("no top domains")
 		return nil
 	}
 	topDomain := q.orderedDomains[0]
@@ -83,7 +85,7 @@ type linkHandlerQueueMessage struct {
 	Links []string `json:"links"`
 }
 
-func (l linkHandlerQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) error {
+func (l *linkHandlerQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) error {
 	var m linkHandlerQueueMessage
 	if err := json.Unmarshal([]byte(msg.MessageBody), &m); err != nil {
 		log.Println(fmt.Sprintf("Error unmarshalling message for fetch queue: %s... marking complete", err.Error()))
