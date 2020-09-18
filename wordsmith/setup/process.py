@@ -1,21 +1,6 @@
 import os, time, io, uuid
 from reader import Reader
 
-populate_lemmas_template = """
-COPY public.\"lemmas\"(_id, lemma, part_of_speech, language)
-FROM '/setup/out/lemmas-{}.csv'
-DELIMITER ','
-CSV HEADER
-ENCODING 'latin1';\n\n
-"""
-
-populate_words_template = """
-COPY public.\"words\"(lemma_id, word, part_of_speech, language)
-FROM '/setup/out/words-{}.csv'
-DELIMITER ','
-CSV HEADER
-ENCODING 'latin1';\n\n
-"""
 
 lemma_forms = dict()
 word_forms = dict()
