@@ -1,4 +1,5 @@
 import os, time, io, uuid
+from reader import Reader
 
 populate_lemmas_template = """
 COPY public.\"lemmas\"(_id, lemma, part_of_speech, language)
@@ -19,28 +20,22 @@ ENCODING 'latin1';\n\n
 lemma_forms = dict()
 word_forms = dict()
 
-files = os.listdir("./data")
-for idx in range(len(files)):
-    print("Currently on document {} of {}".format(idx+1, len(files)))
-    file_name = files[idx]
-    with io.open("./data/{}".format(file_name), 'r', encoding='latin1') as tagged_file:
-        for line in tagged_file.readlines():
-            parts = line.split(" ")
-            if len(parts) != 4:
-                continue
-            word, lemma, pos, _ = parts
-            if pos[0] == "F":
-                continue
-            lemma_key = "{}::{}".format(lemma, pos[0])
-            word_key = "{}::{}".format(word, pos)
-            current_word_entry = word_forms.get(word_key, None)
-            lemma_forms[lemma_key] = True
-            if current_word_entry != None:
-                if current_word_entry != lemma_key:
-                    print("Error on: {}".format(word_key))
-                    print("Got non-duplicate: {} and {}".format(current_word_entry, lemma_key))
-                continue
-            word_forms[word_key] = lemma_key
+def process_line(word, lemma, pos):
+    if pos[0] == "F":
+        return
+    lemma_key = "{}::{}".format(lemma, pos[0])
+    word_key = "{}::{}".format(word, pos)
+    current_word_entry = word_forms.get(word_key, None)
+    lemma_forms[lemma_key] = True
+    if current_word_entry != None:
+        if current_word_entry != lemma_key:
+            print("Error on: {}".format(word_key))
+            print("Got non-duplicate: {} and {}".format(current_word_entry, lemma_key))
+        continue
+    word_forms[word_key] = lemma_key
+
+r = Reader(process_line)
+r.read_data()
 
 def lemma_to_dict(lemma_key):
     lemma, pos = lemma_key.split("::")

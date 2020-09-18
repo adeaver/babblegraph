@@ -1,10 +1,9 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
-CREATE TABLE lemmas(
+CREATE TABLE corpora(
     _id uuid DEFAULT uuid_generate_v4 (),
-    lemma TEXT NOT NULL,
-    part_of_speech TEXT NOT NULL,
     language TEXT NOT NULL REFERENCES languages(code),
+    name TEXT NOT NULL,
 
     PRIMARY KEY (_id)
 );
