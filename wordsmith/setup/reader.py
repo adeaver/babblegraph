@@ -10,16 +10,18 @@ class Reader:
     def __init__(
         self,
         text_fn,
+        get_data_fn,
         start_doc_fn=None,
         empty_line_fn=None,
         end_article_fn=None,
-        end_doc_fn=None
+        end_doc_fn=None,
     ):
         self.text_fn = text_fn
         self.start_doc_fn = start_doc_fn
         self.empty_line_fn = empty_line_fn
         self.end_article_fn = end_article_fn
         self.end_doc_fn = end_doc_fn
+        self.get_data_fn = get_data_fn
 
     def read_data(self):
         files = os.listdir("./data")
@@ -27,6 +29,7 @@ class Reader:
             print("Currently on document {} of {}".format(idx+1, len(files)))
             file_name = files[idx]
             self._read_lines_in_file(file_name)
+        return self.get_data_fn()
 
     def _read_lines_in_file(self, file_name):
         with io.open("./data/{}".format(file_name), 'r', encoding='latin1') as tagged_file:

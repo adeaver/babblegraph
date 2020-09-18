@@ -6,7 +6,7 @@ CREATE TABLE lemmas(
     language TEXT NOT NULL REFERENCES languages(code),
 
     lemma_text TEXT NOT NULL,
-    part_of_speech uuid NOT NULL REFERENCES parts_of_speech(_id),
+    part_of_speech_id uuid NOT NULL REFERENCES parts_of_speech(_id),
 
     PRIMARY KEY (_id)
 );
