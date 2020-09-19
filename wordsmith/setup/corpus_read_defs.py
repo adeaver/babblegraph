@@ -15,7 +15,6 @@ def get_data_from_read():
 
 def process_text_line(word, lemma, pos):
     if not _is_text_line_valid(word, lemma, pos):
-        # print("Filtering out line ({}, {}, {})".format(word, lemma, pos))
         return
     processed_part_of_speech = _process_part_of_speech(pos)
     _handle_part_of_speech(processed_part_of_speech)

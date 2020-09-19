@@ -1,3 +1,5 @@
+import io
+
 POPULATE_TEMPLATE = """
 COPY public.\"{}\"({})
 FROM '{}'
@@ -9,7 +11,7 @@ ENCODING 'latin1';\n\n
 def _write_lines_to_file(file_name_prefix, lines_per_file, line_generator, title_line=None, file_type="csv"):
     out = []
     file_count = 1
-    make_file_name = lambda: "/setup/out/{}-{}.{}".format(file_name_prefix, file_count, file_type)
+    make_file_name = lambda: "./out/{}-{}.{}".format(file_name_prefix, file_count, file_type)
     counter = _write_file(make_file_name(), line_generator, lines_per_file, title_line)
     out.append(make_file_name())
     file_count += 1
@@ -24,7 +26,7 @@ def _write_file(file_name, line_generator, max_lines, title_line):
     with io.open(file_name, "w", encoding="latin1") as f:
         if title_line is not None:
             f.write("{}\n".format(title_line))
-        for line in line_generator:
+        for line in line_generator():
             f.write("{}\n".format(line))
             counter += 1
             if counter == max_lines:
