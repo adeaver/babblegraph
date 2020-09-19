@@ -10,19 +10,12 @@ observed_lemmas = dict()
 observed_words = dict()
 word_part_of_speech_counts = dict()
 
-corpus_reader = Reader(
-    text_fn=process_text_line,
-    get_data_fn=get_data_from_read,
-    start_doc_fn=process_start_doc,
-    empty_line_fn=process_empty_line,
-)
-
 def get_data_from_read():
     return observed_lemmas, observed_words, observed_parts_of_speech, part_of_speech_trigram_counts, word_part_of_speech_counts
 
 def process_text_line(word, lemma, pos):
     if not _is_text_line_valid(word, lemma, pos):
-        print("Filtering out line ({}, {}, {})".format(word, lemma, pos))
+        # print("Filtering out line ({}, {}, {})".format(word, lemma, pos))
         return
     processed_part_of_speech = _process_part_of_speech(pos)
     _handle_part_of_speech(processed_part_of_speech)
@@ -32,9 +25,8 @@ def process_text_line(word, lemma, pos):
 def process_empty_line():
     _reset_part_of_speech_trigrams()
 
-def process_start_doc():
+def process_start_doc(_):
     _reset_part_of_speech_trigrams()
-
 
 # Dates, numbers, and punctuation should be processed out
 invalid_part_of_speech_categories = ["F", "Z", "W"]
@@ -126,4 +118,9 @@ def _process_part_of_speech(pos):
         return ""
         """Return empty , but log"""
 
-
+corpus_reader = Reader(
+    text_fn=process_text_line,
+    get_data_fn=get_data_from_read,
+    start_doc_fn=process_start_doc,
+    empty_line_fn=process_empty_line,
+)

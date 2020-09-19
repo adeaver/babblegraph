@@ -8,9 +8,9 @@ RUN mkdir data/
 RUN tar -xzvf tagged.es.tgz -C data/
 
 RUN mkdir out/
-RUN mkdir data-dump/
 COPY process.py .
-COPY analyze.py .
 COPY reader.py .
+COPY templates.py .
+COPY corpus_read_defs.py .
 
 CMD [ "python", "-u", "process.py" ]
