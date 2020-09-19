@@ -1,24 +1,38 @@
 import uuid
 from reader import Reader
+from special_tokens import StartToken
 
-START_TOKEN = "<<START>>"
+START_TOKEN = StartToken()
 
-part_of_speech_trigrams = [START_TOKEN, START_TOKEN, START_TOKEN]
+part_of_speech_trigrams = [
+    START_TOKEN.get_token(),
+    START_TOKEN.get_token(),
+    START_TOKEN.get_token(),
+]
 part_of_speech_trigram_counts = dict()
-observed_parts_of_speech = dict()
-observed_lemmas = dict()
-observed_words = dict()
+observed_parts_of_speech = {
+    START_TOKEN.get_token(): START_TOKEN.get_part_of_speech_id()
+}
+observed_lemmas = {
+    START_TOKEN.get_lemma_key(): START_TOKEN.get_lemma_id()
+}
+observed_words = {
+    START_TOKEN.get_word_key(): START_TOKEN.get_word_key_value()
+}
 word_part_of_speech_counts = dict()
+word_bigrams = [START_TOKEN.get_word_key(), START_TOKEN.get_word_key()]
+word_bigram_counts = dict()
 
 def get_data_from_read():
-    return observed_lemmas, observed_words, observed_parts_of_speech, part_of_speech_trigram_counts, word_part_of_speech_counts
+    return observed_lemmas, observed_words, observed_parts_of_speech, word_bigram_counts, part_of_speech_trigram_counts, word_part_of_speech_counts
 
 def process_text_line(word, lemma, pos):
     if not _is_text_line_valid(word, lemma, pos):
         return
     processed_part_of_speech = _process_part_of_speech(pos)
     _handle_part_of_speech(processed_part_of_speech)
-    lemma_key = _handle_lemma(lemma, pos)
+    lemma_key = _handle_lemma(lemma, processed_part_of_speech)
+    _handle_word(word, processed_part_of_speech, lemma_key)
 
 
 def process_empty_line():
@@ -57,6 +71,10 @@ def _handle_word(word, part_of_speech, lemma_key):
     if word_key not in observed_words:
         observed_words[word_key] = "{},{}".format(uuid.uuid4(), lemma_key)
     word_part_of_speech_counts[word_key] = word_part_of_speech_counts.get(word_key, 0) + 1
+    word_bigrams.pop(0)
+    word_bigrams.append(word_key)
+    word_bigrams_key = "{},{}".format(word_bigrams[0], word_bigrams[1])
+    word_bigram_counts[word_bigrams_key] = word_bigram_counts.get(word_bigrams_key, 0) + 1
 
 def _handle_part_of_speech(processed_part_of_speech):
     if processed_part_of_speech not in observed_parts_of_speech:
