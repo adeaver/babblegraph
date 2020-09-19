@@ -19,7 +19,7 @@ fi
 echo "Building"
 docker build -f Dockerfile.dev -t wordsmith-dev .
 docker run -v $(pwd)/data:/var/lib/postgresql/data -v $(pwd)/setup:/setup --name setup-wordsmith-dev -d wordsmith-dev
-until (docker exec setup-wordsmith-dev psql -U dev -d wordsmith -c 'SELECT * FROM lemmas'); do
+until (docker exec setup-wordsmith-dev psql -U dev -d wordsmith -c 'SELECT * FROM word_bigram_counts'); do
     echo "Waiting for container to be up"
     sleep 1;
 done;

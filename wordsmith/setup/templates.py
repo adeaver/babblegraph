@@ -48,4 +48,5 @@ class SQLTemplate:
         if len(self._files) == 0:
             raise Exception("Must have written files")
         for f in self._files:
-            yield POPULATE_TEMPLATE.format(self.table_name, self.column_headers, f)
+            relative_file_name = "./setup{}".format(f)
+            yield POPULATE_TEMPLATE.format(self.table_name, self.column_headers, relative_file_name)
