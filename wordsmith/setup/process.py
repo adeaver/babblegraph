@@ -89,7 +89,7 @@ word_template.write_files_for_template(
 
 word_bigrams_template = SQLTemplate(
     "word_bigram_counts",
-    "_id,language,corpus_id,first_token_id,second_token_id,ocurrences"
+    "_id,language,corpus_id,first_token_id,second_token_id,occurrences"
 )
 print("writing word bigram counts")
 word_bigrams_template.write_files_for_template(
@@ -99,7 +99,7 @@ word_bigrams_template.write_files_for_template(
 
 part_of_speech_trigram_template =  SQLTemplate(
     "part_of_speech_trigram_counts",
-    "_id,language,corpus_id,first_token_id,second_token_id,third_token_id,ocurrences"
+    "_id,language,corpus_id,first_token_id,second_token_id,third_token_id,occurrences"
 )
 print("writing part of speech trigram files")
 part_of_speech_trigram_template.write_files_for_template(
@@ -120,7 +120,7 @@ word_part_of_speech_template.write_files_for_template(
 print("writing sql file")
 with io.open("/out/populate_db.sql", "w", encoding="latin1") as f:
     f.write("INSERT INTO public.\"languages\" (code) VALUES ('es');\n\n")
-    f.write("INSERT INTO public.\"corpora\" (_id, language, name) VALUES ({},es,{});\n\n".format(CORPUS[1], CORPUS[0]))
+    f.write("INSERT INTO public.\"corpora\" (_id, language, name) VALUES ('{}','es','{}');\n\n".format(CORPUS[1], CORPUS[0]))
     for template in part_of_speech_template.yield_sql_template():
         f.write(template)
     for template in lemma_template.yield_sql_template():
