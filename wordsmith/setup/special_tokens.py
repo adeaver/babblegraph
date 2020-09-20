@@ -18,7 +18,7 @@ class StartToken:
 
     def get_word_key_value(self):
         """Word key value is (word_id,lemma_key)"""
-        return "{},{},{}".format(self._token_text, self._token_text, self._token_text)
+        return "{},{}".format(self._word_id, self.get_lemma_key())
 
     def get_lemma_key(self):
         """Lemma key is (lemma),(part of speech)

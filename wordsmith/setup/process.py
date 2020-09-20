@@ -89,7 +89,7 @@ word_template.write_files_for_template(
 
 word_bigrams_template = SQLTemplate(
     "word_bigram_counts",
-    "_id,language,corpus,first_token_id,second_token_id,ocurrences"
+    "_id,language,corpus_id,first_token_id,second_token_id,ocurrences"
 )
 print("writing word bigram counts")
 word_bigrams_template.write_files_for_template(
