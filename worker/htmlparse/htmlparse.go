@@ -9,20 +9,32 @@ import (
 	"golang.org/x/net/html"
 )
 
-func ParseAndStoreFileText(filename storage.FileIdentifier) (*storage.FileIdentifier, []string, error) {
+type ParsedDocumentInStorage struct {
+	BodyTextFilename storage.FileIdentifier
+	Links            []string
+	Metadata         map[string]string
+	LanguageValue    *string
+}
+
+func ParseAndStoreFileText(filename storage.FileIdentifier) (*ParsedDocumentInStorage, error) {
 	htmlBytes, err := storage.ReadFile(filename)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	text, links, err := getTextAndLinksForHTML(string(htmlBytes))
+	parsedDocument, err := parseHTMLDocument(string(htmlBytes))
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	id, err := storage.WriteFile("txt", *text)
+	id, err := storage.WriteFile("txt", parsedDocument.BodyText)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	return id, links, nil
+	return &ParsedDocumentInStorage{
+		BodyTextFilename: *id,
+		Links:            parsedDocument.Links,
+		Metadata:         parsedDocument.Metadata,
+		LanguageValue:    parsedDocument.LanguageValue,
+	}, nil
 }
 
 var textTokenTagNames = map[string]bool{
@@ -63,24 +75,39 @@ func isWeblink(href string) bool {
 	return true
 }
 
-func getTextAndLinksForHTML(htmlStr string) (*string, []string, error) {
+type parsedDocument struct {
+	BodyText      string
+	Links         []string
+	Metadata      map[string]string
+	LanguageValue *string
+}
+
+func parseHTMLDocument(htmlStr string) (*parsedDocument, error) {
 	htmlReader := strings.NewReader(htmlStr)
 	htmlDoc, err := html.Parse(htmlReader)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	var links []string
-	var bodyText []string
+	var language *string
+	metadata := make(map[string]string)
+	var links, bodyText []string
 	var shouldCollectText bool
 	var f func(n *html.Node)
 	f = func(n *html.Node) {
 		switch n.Type {
 		case html.ElementNode:
 			_, shouldCollectText = textTokenTagNames[n.Data]
-			if n.Data == "a" {
+			switch n.Data {
+			case "a":
+				links = append(links, getLinksFromAnchor(n)...)
+			case "meta":
+				if name, value := getKeyValuePairFromMetaTag(n); name != nil && value != nil {
+					metadata[*name] = *value
+				}
+			case "html":
 				for _, attr := range n.Attr {
-					if attr.Key == "href" && isWeblink(attr.Val) {
-						links = append(links, attr.Val)
+					if attr.Key == "lang" {
+						language = &attr.Val
 					}
 				}
 			}
@@ -93,7 +120,7 @@ func getTextAndLinksForHTML(htmlStr string) (*string, []string, error) {
 		case html.DocumentNode, html.CommentNode, html.DoctypeNode:
 			// no-op
 		default:
-			log.Fatal("Unrecognized node type: %d", n.Type)
+			log.Fatal(fmt.Sprintf("Unrecognized node type: %d", n.Type))
 		}
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			f(c)
@@ -101,5 +128,39 @@ func getTextAndLinksForHTML(htmlStr string) (*string, []string, error) {
 	}
 	f(htmlDoc)
 	body := strings.Join(bodyText, "\n")
-	return &body, links, nil
+	return &parsedDocument{
+		BodyText:      body,
+		Links:         links,
+		Metadata:      metadata,
+		LanguageValue: language,
+	}, nil
+}
+
+func getLinksFromAnchor(n *html.Node) []string {
+	var links []string
+	for _, attr := range n.Attr {
+		if attr.Key == "href" && isWeblink(attr.Val) {
+			links = append(links, attr.Val)
+		}
+	}
+	return links
+}
+
+func getKeyValuePairFromMetaTag(n *html.Node) (_key, _value *string) {
+	var name, value string
+	var foundName, foundVal bool
+	for _, attr := range n.Attr {
+		if attr.Key == "name" || attr.Key == "property" {
+			name = attr.Val
+			foundName = true
+		}
+		if attr.Key == "content" {
+			value = attr.Val
+			foundVal = true
+		}
+	}
+	if !foundName || !foundVal {
+		return nil, nil
+	}
+	return &name, &value
 }

@@ -35,7 +35,7 @@ func (n normalizeTextQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) error
 	if err != nil {
 		return err
 	}
-	return publishMessageToLanguageClassifierQueue(m.URL, m.Links, *id)
+	return nil
 }
 
 func publishMessageToNormalizeTextQueue(url string, links []string, filename storage.FileIdentifier) error {
