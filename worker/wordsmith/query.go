@@ -5,7 +5,7 @@ import "github.com/jmoiron/sqlx"
 func GetWords(words []string, language LanguageCode) ([]Word, error) {
 	var matches []dbWord
 	if err := withTx(func(tx *sqlx.Tx) error {
-		query, args, err := sqlx.In("SELECT * FROM words WHERE language=? AND word IN (?)", language.Str(), words)
+		query, args, err := sqlx.In("SELECT * FROM words WHERE language=? AND word_text IN (?)", language.Str(), words)
 		if err != nil {
 			return err
 		}

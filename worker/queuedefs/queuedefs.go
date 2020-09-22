@@ -17,8 +17,8 @@ func RegisterQueues(errs chan error) error {
 		fetchQueue{},
 		parseQueue{},
 		normalizeTextQueue{},
-		languageClassifierQueue{},
 		linkHandlerQueue,
+		lemmatizeQueue{},
 	}
 	for _, q := range queues {
 		if err := queue.RegisterQueue(q); err != nil {

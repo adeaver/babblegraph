@@ -36,7 +36,7 @@ func (n normalizeTextQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) error
 	if err != nil {
 		return err
 	}
-	return nil
+	return publishMessageToLemmatizeQueue(*id, m.URL, m.LanguageCode)
 }
 
 func publishMessageToNormalizeTextQueue(url string, languageCode wordsmith.LanguageCode, filename storage.FileIdentifier) error {

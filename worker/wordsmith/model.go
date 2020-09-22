@@ -2,6 +2,8 @@ package wordsmith
 
 import "fmt"
 
+type CorpusID string
+
 type LemmaID string
 
 type Lemma struct {
@@ -22,11 +24,12 @@ type Word struct {
 }
 
 type dbWord struct {
-	ID           WordID  `db:"_id"`
-	Word         string  `db:"word"`
-	LemmaID      LemmaID `db:"lemma_id"`
-	PartOfSpeech string  `db:"part_of_speech"`
-	Language     string  `db:"language"`
+	ID           WordID   `db:"_id"`
+	CorpusID     CorpusID `db:"corpus_id"`
+	Word         string   `db:"word_text"`
+	LemmaID      LemmaID  `db:"lemma_id"`
+	PartOfSpeech string   `db:"part_of_speech_id"`
+	Language     string   `db:"language"`
 }
 
 func (d *dbWord) ToWord() Word {
