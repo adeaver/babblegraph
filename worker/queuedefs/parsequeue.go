@@ -47,8 +47,10 @@ func (p parseQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) error {
 		log.Println(fmt.Sprintf("Unsupported language label: %s, marking complete", *parsedDoc.LanguageValue))
 		return nil
 	}
-	// Publish to link queue here
-	return publishMessageToNormalizeTextQueue(m.URL, links, *id)
+	if err := publishMessageToLinkHandlerQueue(parsedDoc.Links); err != nil {
+		return err
+	}
+	return publishMessageToNormalizeTextQueue(m.URL, *languageCode, parsedDoc.BodyTextFilename)
 }
 
 func publishMessageToParseQueue(url string, filename storage.FileIdentifier) error {

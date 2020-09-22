@@ -3,6 +3,7 @@ package queuedefs
 import (
 	"babblegraph/worker/normalizetext"
 	"babblegraph/worker/storage"
+	"babblegraph/worker/wordsmith"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -20,9 +21,9 @@ func (n normalizeTextQueue) GetTopicName() string {
 }
 
 type normalizeTextQueueMessage struct {
-	Filename storage.FileIdentifier `json:"filename"`
-	URL      string                 `json:"url"`
-	Links    []string               `json:"links"`
+	Filename     storage.FileIdentifier `json:"filename"`
+	URL          string                 `json:"url"`
+	LanguageCode wordsmith.LanguageCode `json:"language_code"`
 }
 
 func (n normalizeTextQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) error {
@@ -38,10 +39,10 @@ func (n normalizeTextQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) error
 	return nil
 }
 
-func publishMessageToNormalizeTextQueue(url string, links []string, filename storage.FileIdentifier) error {
+func publishMessageToNormalizeTextQueue(url string, languageCode wordsmith.LanguageCode, filename storage.FileIdentifier) error {
 	return queue.PublishMessageToQueueByName(queueTopicNameNormalizeTextQueue.Str(), normalizeTextQueueMessage{
-		Filename: filename,
-		URL:      url,
-		Links:    links,
+		Filename:     filename,
+		URL:          url,
+		LanguageCode: languageCode,
 	})
 }
