@@ -32,10 +32,12 @@ func (p parseQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) error {
 		log.Println(fmt.Sprintf("Error unmarshalling message for fetch queue: %s... marking complete", err.Error()))
 		return nil
 	}
+	log.Println("got here")
 	parsedDoc, err := htmlparse.ParseAndStoreFileText(m.Filename)
 	if err != nil {
 		return err
 	}
+	log.Println("got here 2")
 	docID, err := documents.InsertDocument(tx, documents.InsertDocumentInput{
 		URL:      m.URL,
 		Language: parsedDoc.LanguageValue,
@@ -44,6 +46,7 @@ func (p parseQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) error {
 	if err != nil {
 		return err
 	}
+	log.Println("got here 3")
 	if parsedDoc.LanguageValue == nil {
 		log.Println("HTML document had no language code, marking complete...")
 		return nil

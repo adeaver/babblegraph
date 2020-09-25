@@ -2,9 +2,9 @@ package documents
 
 import (
 	"encoding/json"
-	"log"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/jmoiron/sqlx/types"
 )
 
 type InsertDocumentInput struct {
@@ -13,16 +13,16 @@ type InsertDocumentInput struct {
 	Metadata map[string]string
 }
 
-const insertDocumentQuery = "INSERT INTO documents (url, language, metadata) VALUES($1, $2, $3) RETURNING _id"
+const insertDocumentQuery = "INSERT INTO documents (url, language, metadata) VALUES ($1, $2, $3) RETURNING _id"
 
 func InsertDocument(tx *sqlx.Tx, input InsertDocumentInput) (*DocumentID, error) {
-	metadataStr, err := json.Marshal(makeMetadataPairs(input.Metadata))
+	metadataPairBytes, err := json.Marshal(makeMetadataPairs(input.Metadata))
 	if err != nil {
-		log.Println("Error on marshalling")
 		return nil, err
 	}
+	metadataPairJson := types.JsonText(string(metadataPairBytes))
 	var docID DocumentID
-	if err := tx.Select(&docID, insertDocumentQuery, input.URL, input.Language, metadataStr); err != nil {
+	if err := tx.Select(&docID, insertDocumentQuery, input.URL, input.Language, metadataPairJson); err != nil {
 		return nil, err
 	}
 	return &docID, nil
