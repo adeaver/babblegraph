@@ -1,6 +1,7 @@
 package queuedefs
 
 import (
+	"babblegraph/worker/documents"
 	"babblegraph/worker/htmlparse"
 	"babblegraph/worker/storage"
 	"babblegraph/worker/wordsmith"
@@ -35,9 +36,14 @@ func (p parseQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) error {
 	if err != nil {
 		return err
 	}
-	// TODO: this is probably a good place to store a reference to a document
-	// In the future, I want to be able to pull documents that have other languages
-	// to train classifiers - for instance
+	docID, err := documents.InsertDocument(tx, documents.InsertDocumentInput{
+		URL:      m.URL,
+		Language: parsedDoc.LanguageValue,
+		Metadata: parsedDoc.Metadata,
+	})
+	if err != nil {
+		return err
+	}
 	if parsedDoc.LanguageValue == nil {
 		log.Println("HTML document had no language code, marking complete...")
 		return nil
@@ -50,7 +56,7 @@ func (p parseQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) error {
 	if err := publishMessageToLinkHandlerQueue(parsedDoc.Links); err != nil {
 		return err
 	}
-	return publishMessageToNormalizeTextQueue(m.URL, *languageCode, parsedDoc.BodyTextFilename)
+	return publishMessageToNormalizeTextQueue(*docID, *languageCode, parsedDoc.BodyTextFilename)
 }
 
 func publishMessageToParseQueue(url string, filename storage.FileIdentifier) error {
