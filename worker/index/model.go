@@ -9,7 +9,7 @@ type DocumentTermEntryID string
 type dbDocumentTermEntry struct {
 	ID         DocumentTermEntryID  `db:"_id"`
 	DocumentID documents.DocumentID `db:"document_id"`
-	Term       string               `db:"term"`
+	Term       string               `db:"term_id"`
 	Count      int64                `db:"count"`
 }
 

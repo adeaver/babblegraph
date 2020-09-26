@@ -30,6 +30,7 @@ func InsertDocument(tx *sqlx.Tx, input InsertDocumentInput) (*DocumentID, error)
 		if err := rows.Scan(&docID); err != nil {
 			return nil, err
 		}
+		callCount++
 	}
 	if callCount == 0 {
 		log.Println("Duplicate document")
