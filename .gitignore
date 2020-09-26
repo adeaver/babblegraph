@@ -3,3 +3,4 @@
 db/data/**
 wordsmith/data/**
 wordsmith/setup/out/**
+**.DS_Store
