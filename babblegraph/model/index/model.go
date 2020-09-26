@@ -29,14 +29,16 @@ type DocumentTermEntry struct {
 	Count      int64
 }
 
-type TermWithTotalCount struct {
-	TermID     TermID `json:"term_id"`
-	TotalCount int64  `json:"total_count"`
+type TermWithStats struct {
+	TermID        TermID `json:"term_id"`
+	TotalCount    int64  `json:"total_count"`
+	DocumentCount int64  `json:"document_count"`
 }
 
-type dbTermWithTotalCount struct {
-	TermID     TermID `db:"term_id"`
-	TotalCount int64  `db:"total"`
+type dbTermWithStats struct {
+	TermID        TermID `db:"term_id"`
+	TotalCount    int64  `db:"total_count"`
+	DocumentCount int64  `db:"document_count"`
 }
 
 func (d dbTermWithTotalCount) ToNonDB() TermWithTotalCount {

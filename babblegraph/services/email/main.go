@@ -1,7 +1,16 @@
 package main
 
-import "fmt"
+import (
+	"babblegraph/util/database"
+	"babblegraph/wordsmith"
+	"log"
+)
 
 func main() {
-	fmt.Println("Hello world!")
+	if err := database.GetDatabaseForEnvironmentRetrying(); err != nil {
+		log.Fatal(err.Error())
+	}
+	if err := wordsmith.MustSetupWordsmithForEnvironment(); err != nil {
+		log.Fatal(err.Error())
+	}
 }
