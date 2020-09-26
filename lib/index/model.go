@@ -6,10 +6,12 @@ import (
 
 type DocumentTermEntryID string
 
+type TermID string
+
 type dbDocumentTermEntry struct {
 	ID         DocumentTermEntryID  `db:"_id"`
 	DocumentID documents.DocumentID `db:"document_id"`
-	Term       string               `db:"term_id"`
+	TermID     TermID               `db:"term_id"`
 	Count      int64                `db:"count"`
 }
 

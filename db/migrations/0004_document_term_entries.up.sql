@@ -9,4 +9,4 @@ CREATE TABLE document_term_entries(
     PRIMARY KEY (_id)
 );
 
-CREATE INDEX IF NOT EXISTS document_term_entries_term_idx ON document_term_entries(term);
+CREATE INDEX IF NOT EXISTS document_term_entries_term_idx ON document_term_entries(term_id);
