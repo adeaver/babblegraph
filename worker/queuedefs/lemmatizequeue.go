@@ -37,7 +37,7 @@ func (l lemmatizeQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) error {
 	if err != nil {
 		return err
 	}
-	return publishMessageToIndexQueue(m.DocumentID, *id)
+	return publishMessageToIndexQueue(m.DocumentID, m.LanguageCode, *id)
 }
 
 func publishMessageToLemmatizeQueue(filename storage.FileIdentifier, docID documents.DocumentID, languageCode wordsmith.LanguageCode) error {

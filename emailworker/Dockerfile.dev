@@ -18,4 +18,4 @@ RUN git config --global url."https://$GITHUB_ACCESS_TOKEN@github.com/".insteadOf
 COPY Gopkg.lock Gopkg.toml ./
 RUN dep ensure -v --vendor-only
 
-CMD [ "go", "run", "main.go" ]
+CMD [ "bash" ]

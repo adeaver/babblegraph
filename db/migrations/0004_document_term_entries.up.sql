@@ -3,7 +3,9 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TABLE document_term_entries(
     _id uuid DEFAULT uuid_generate_v4 (),
     document_id uuid NOT NULL REFERENCES documents(_id),
-    term_id uuid NOT NULL, -- note: this references the term id in wordsmith
+    -- note: the next two fields reference things that are in wordsmith, there is no validation
+    term_id uuid NOT NULL,
+    language_code TEXT NOT NULL,
     count NUMERIC NOT NULL,
 
     PRIMARY KEY (_id)

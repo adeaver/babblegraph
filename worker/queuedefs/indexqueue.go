@@ -9,6 +9,7 @@ import (
 
 	"github.com/adeaver/babblegraph/lib/model/documents"
 	"github.com/adeaver/babblegraph/lib/util/queue"
+	"github.com/adeaver/babblegraph/lib/wordsmith"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -21,8 +22,9 @@ func (i indexQueue) GetTopicName() string {
 }
 
 type indexQueueMessage struct {
-	Filename   storage.FileIdentifier `json:'filename'`
-	DocumentID documents.DocumentID   `json:"document_id"`
+	Filename         storage.FileIdentifier `json:'filename'`
+	DocumentID       documents.DocumentID   `json:"document_id"`
+	DocumentLanguage wordsmith.LanguageCode `json:"document_language"`
 }
 
 func (i indexQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) error {
@@ -34,9 +36,10 @@ func (i indexQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) error {
 	return indexer.IndexTermsForFile(tx, m.DocumentID, m.Filename)
 }
 
-func publishMessageToIndexQueue(docID documents.DocumentID, filename storage.FileIdentifier) error {
+func publishMessageToIndexQueue(docID documents.DocumentID, documentLanguage wordsmith.LanguageCode, filename storage.FileIdentifier) error {
 	return queue.PublishMessageToQueueByName(queueTopicNameIndexQueue.Str(), indexQueueMessage{
-		Filename:   filename,
-		DocumentID: docID,
+		Filename:         filename,
+		DocumentID:       docID,
+		DocumentLanguage: documentLanguage,
 	})
 }
