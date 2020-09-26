@@ -4,12 +4,12 @@ import (
 	"babblegraph/worker/documents"
 	"babblegraph/worker/htmlparse"
 	"babblegraph/worker/storage"
-	"babblegraph/worker/wordsmith"
 	"encoding/json"
 	"fmt"
 	"log"
 
 	"github.com/adeaver/babblegraph/lib/queue"
+	"github.com/adeaver/babblegraph/lib/wordsmith"
 	"github.com/jmoiron/sqlx"
 )
 

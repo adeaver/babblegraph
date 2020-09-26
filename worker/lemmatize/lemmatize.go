@@ -2,10 +2,11 @@ package lemmatize
 
 import (
 	"babblegraph/worker/storage"
-	"babblegraph/worker/wordsmith"
 	"fmt"
 	"log"
 	"strings"
+
+	"github.com/adeaver/babblegraph/worker/wordsmith"
 )
 
 func LemmatizeWordsForFile(filename storage.FileIdentifier, languageCode wordsmith.LanguageCode) (*storage.FileIdentifier, error) {

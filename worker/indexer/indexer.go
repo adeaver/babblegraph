@@ -2,10 +2,10 @@ package indexer
 
 import (
 	"babblegraph/worker/documents"
-	"babblegraph/worker/index"
 	"babblegraph/worker/storage"
 	"strings"
 
+	"github.com/adeaver/babblegraph/lib/index"
 	"github.com/jmoiron/sqlx"
 )
 
