@@ -3,7 +3,7 @@ services:
   worker:
     build:
       dockerfile: Dockerfile.dev
-      context: ./worker
+      context: ./babblegraph
       args:
         - BABBLEGRAPH_GIT_TOKEN=${BABBLEGRAPH_GIT_TOKEN}
     volumes:
@@ -17,6 +17,7 @@ services:
       - WORDSMITH_USER=dev
       - WORDSMITH_PASSWORD=development
       - WORDSMITH_DB_NAME=wordsmith
+    command: go run services/worker/main.go
   db:
     build:
       dockerfile: Dockerfile.dev
