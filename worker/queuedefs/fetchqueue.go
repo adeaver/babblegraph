@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/adeaver/babblegraph/lib/queue"
+	"github.com/adeaver/babblegraph/lib/util/queue"
 	"github.com/jmoiron/sqlx"
 )
 

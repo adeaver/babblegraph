@@ -9,8 +9,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/adeaver/babblegraph/lib/database"
-	"github.com/adeaver/babblegraph/lib/queue"
+	"github.com/adeaver/babblegraph/lib/util/database"
+	"github.com/adeaver/babblegraph/lib/util/queue"
 	"github.com/jmoiron/sqlx"
 )
 

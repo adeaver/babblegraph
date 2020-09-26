@@ -6,7 +6,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/adeaver/babblegraph/worker/wordsmith"
+	"github.com/adeaver/babblegraph/lib/wordsmith"
 )
 
 func LemmatizeWordsForFile(filename storage.FileIdentifier, languageCode wordsmith.LanguageCode) (*storage.FileIdentifier, error) {

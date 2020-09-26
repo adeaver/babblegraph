@@ -1,6 +1,6 @@
 package queuedefs
 
-import "github.com/adeaver/babblegraph/lib/queue"
+import "github.com/adeaver/babblegraph/lib/util/queue"
 
 type queueTopicName string
 

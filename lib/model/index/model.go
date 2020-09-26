@@ -18,13 +18,13 @@ type dbDocumentTermEntry struct {
 func (d dbDocumentTermEntry) ToNonDB() DocumentTermEntry {
 	return DocumentTermEntry{
 		DocumentID: d.DocumentID,
-		Term:       d.Term,
+		TermID:     d.TermID,
 		Count:      d.Count,
 	}
 }
 
 type DocumentTermEntry struct {
 	DocumentID documents.DocumentID
-	Term       string
+	TermID     TermID
 	Count      int64
 }

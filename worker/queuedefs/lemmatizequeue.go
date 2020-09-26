@@ -1,14 +1,14 @@
 package queuedefs
 
 import (
-	"babblegraph/worker/documents"
 	"babblegraph/worker/lemmatize"
 	"babblegraph/worker/storage"
 	"encoding/json"
 	"fmt"
 	"log"
 
-	"github.com/adeaver/babblegraph/lib/queue"
+	"github.com/adeaver/babblegraph/lib/model/documents"
+	"github.com/adeaver/babblegraph/lib/util/queue"
 	"github.com/adeaver/babblegraph/lib/wordsmith"
 	"github.com/jmoiron/sqlx"
 )

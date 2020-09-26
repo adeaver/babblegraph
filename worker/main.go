@@ -4,7 +4,7 @@ import (
 	"babblegraph/worker/queuedefs"
 	"log"
 
-	"github.com/adeaver/babblegraph/lib/database"
+	"github.com/adeaver/babblegraph/lib/util/database"
 	"github.com/adeaver/babblegraph/lib/wordsmith"
 )
 
