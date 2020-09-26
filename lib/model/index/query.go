@@ -12,3 +12,13 @@ func InsertTermEntry(tx *sqlx.Tx, documentID documents.DocumentID, term string, 
 	_, err := tx.Exec(insertTermEntry, documentID, term, documentLanguage, count)
 	return err
 }
+
+const getOrderedTermsQuery = "SELECT term_id, SUM(count) total FROM document_term_entries WHERE language_code=? GROUP BY term_id ORDER BY total DESC"
+
+func GetOrderedTermsForLanguage(tx *sqlx.Tx, languageCode wordsmith.LanguageCode) ([]TermWithTotalCount, error) {
+	var out []TermWithTotalCount
+	if err := tx.Select(&out, getOrderedTermsQuery, languageCode); err != nil {
+		return nil, err
+	}
+	return out, nil
+}

@@ -28,3 +28,20 @@ type DocumentTermEntry struct {
 	TermID     TermID
 	Count      int64
 }
+
+type TermWithTotalCount struct {
+	TermID     TermID `json:"term_id"`
+	TotalCount int64  `json:"total_count"`
+}
+
+type dbTermWithTotalCount struct {
+	TermID     TermID `db:"term_id"`
+	TotalCount int64  `db:"total"`
+}
+
+func (d dbTermWithTotalCount) ToNonDB() TermWithTotalCount {
+	return TermWithTotalCount{
+		TermID:     d.TermID,
+		TotalCount: d.TotalCount,
+	}
+}

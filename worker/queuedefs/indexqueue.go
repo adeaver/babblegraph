@@ -33,7 +33,7 @@ func (i indexQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) error {
 		log.Println(fmt.Sprintf("Error unmarshalling message for fetch queue: %s... marking complete", err.Error()))
 		return nil
 	}
-	return indexer.IndexTermsForFile(tx, m.DocumentID, m.Filename)
+	return indexer.IndexTermsForFile(tx, m.DocumentID, m.DocumentLanguage, m.Filename)
 }
 
 func publishMessageToIndexQueue(docID documents.DocumentID, documentLanguage wordsmith.LanguageCode, filename storage.FileIdentifier) error {
