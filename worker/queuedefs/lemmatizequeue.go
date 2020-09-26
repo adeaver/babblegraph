@@ -33,11 +33,11 @@ func (l lemmatizeQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) error {
 		log.Println(fmt.Sprintf("Error unmarshalling message for fetch queue: %s... marking complete", err.Error()))
 		return nil
 	}
-	_, err := lemmatize.LemmatizeWordsForFile(m.Filename, m.LanguageCode)
+	id, err := lemmatize.LemmatizeWordsForFile(m.Filename, m.LanguageCode)
 	if err != nil {
 		return err
 	}
-	return nil
+	return publishMessageToIndexQueue(m.DocumentID, *id)
 }
 
 func publishMessageToLemmatizeQueue(filename storage.FileIdentifier, docID documents.DocumentID, languageCode wordsmith.LanguageCode) error {

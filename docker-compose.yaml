@@ -8,8 +8,6 @@ services:
         - BABBLEGRAPH_GIT_TOKEN=${BABBLEGRAPH_GIT_TOKEN}
     volumes:
       - ./worker:/go/src/babblegraph/worker
-      - /go/src/babblegraph/worker/vendor
-      - /go/src/babblegraph/worker/.vendor-new
     environment:
       - PG_HOST=db
       - PG_USER=dev
