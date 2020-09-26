@@ -7,7 +7,7 @@ services:
       args:
         - BABBLEGRAPH_GIT_TOKEN=${BABBLEGRAPH_GIT_TOKEN}
     volumes:
-      - ./worker:/go/src/babblegraph/worker
+      - ./babblegraph:/go/src/babblegraph
     environment:
       - PG_HOST=db
       - PG_USER=dev
@@ -17,7 +17,7 @@ services:
       - WORDSMITH_USER=dev
       - WORDSMITH_PASSWORD=development
       - WORDSMITH_DB_NAME=wordsmith
-    command: go run services/worker/main.go
+    command: go run /go/src/babblegraph/services/worker/main.go
   db:
     build:
       dockerfile: Dockerfile.dev

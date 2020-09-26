@@ -6,10 +6,10 @@ import (
 	"log"
 
 	"babblegraph/model/documents"
+	"babblegraph/services/worker/normalizetext"
 	"babblegraph/util/queue"
 	"babblegraph/util/storage"
 	"babblegraph/wordsmith"
-	"babblegraph/worker/normalizetext"
 
 	"github.com/jmoiron/sqlx"
 )

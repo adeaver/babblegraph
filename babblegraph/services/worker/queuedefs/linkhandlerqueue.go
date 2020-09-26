@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"babblegraph/model/links"
+	"babblegraph/services/worker/linkhandler"
 	"babblegraph/util/database"
 	"babblegraph/util/queue"
-	"babblegraph/worker/linkhandler"
 
 	"github.com/jmoiron/sqlx"
 )

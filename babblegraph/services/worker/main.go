@@ -3,9 +3,9 @@ package main
 import (
 	"log"
 
+	"babblegraph/services/worker/queuedefs"
 	"babblegraph/util/database"
 	"babblegraph/wordsmith"
-	"babblegraph/worker/queuedefs"
 )
 
 func main() {

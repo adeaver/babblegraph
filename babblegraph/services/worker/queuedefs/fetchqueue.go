@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log"
 
+	"babblegraph/services/worker/htmlfetch"
 	"babblegraph/util/queue"
-	"babblegraph/worker/htmlfetch"
 
 	"github.com/jmoiron/sqlx"
 )
