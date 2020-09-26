@@ -5,7 +5,7 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/adeaver/babblegraph/lib/postgres"
+	"github.com/adeaver/babblegraph/lib/util/postgres"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 )

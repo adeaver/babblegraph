@@ -3,7 +3,7 @@ package postgres
 import (
 	"fmt"
 
-	"github.com/adeaver/babblegraph/lib/env"
+	"github.com/adeaver/babblegraph/lib/util/env"
 )
 
 type SSLModeOption string

@@ -2,10 +2,10 @@ package main
 
 import (
 	"babblegraph/worker/queuedefs"
-	"babblegraph/worker/wordsmith"
 	"log"
 
 	"github.com/adeaver/babblegraph/lib/database"
+	"github.com/adeaver/babblegraph/lib/wordsmith"
 )
 
 func main() {

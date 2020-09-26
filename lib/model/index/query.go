@@ -1,8 +1,7 @@
 package index
 
 import (
-	"babblegraph/worker/documents"
-
+	"github.com/adeaver/babblegraph/lib/model/documents"
 	"github.com/jmoiron/sqlx"
 )
 

@@ -1,7 +1,7 @@
 package index
 
 import (
-	"babblegraph/worker/documents"
+	"github.com/adeaver/babblegraph/lib/model/documents"
 )
 
 type DocumentTermEntryID string
