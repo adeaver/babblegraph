@@ -3,7 +3,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:3f4b2f3d1ccf11943f55ac4c979522e402d1527e8fc1dea0d2f725a32289ff33"
+  digest = "1:abf6ea059367301a3991513703fde9d6662b5fc1e8b485e29720d6aa68e4c5a5"
   name = "github.com/adeaver/babblegraph"
   packages = [
     "lib/model/documents",
@@ -15,7 +15,7 @@
     "lib/wordsmith",
   ]
   pruneopts = "UT"
-  revision = "e32516240c1376506c7e57c26db506304d0ffbf5"
+  revision = "4702663b5ae9b43cbbb1f5bdca271654c584d729"
 
 [[projects]]
   digest = "1:ffe5ba52b122a56df4f9854ea2918e0d9f86e74919db63dc138f8fee3253d3d6"
