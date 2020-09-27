@@ -64,11 +64,10 @@ func GetDocumentsRankedByLabel(tx *sqlx.Tx, input GetDocumentsRankedByLabelInput
 func calculateInverseDocumentFrequencyForLabel(rankedWords map[wordsmith.LemmaID]wordrank.RankedWord, labelSearchTerms []wordsmith.LemmaID, documentCount int64) decimal.Number {
 	var relevantTermDocumentCount decimal.Number
 	for _, lemmaID := range labelSearchTerms {
-		relevantTermDocumentCount.Add(decimal.FromInt64(rankedWords[lemmaID].DocumentFrequency))
+		relevantTermDocumentCount = relevantTermDocumentCount.Add(decimal.FromInt64(rankedWords[lemmaID].DocumentFrequency))
 	}
 	inverseDocumentFrequency := decimal.FromInt64(documentCount).Divide(relevantTermDocumentCount)
-	log.Println(fmt.Sprintf("Inverse document frequency %f", inverseDocumentFrequency.ToFloat64()))
-	return inverseDocumentFrequency.Log10()
+	return inverseDocumentFrequency
 }
 
 func getRelevantDocumentIDForLabel(tx *sqlx.Tx, labelSearchTerms []wordsmith.LemmaID) ([]documents.DocumentID, error) {
@@ -148,7 +147,7 @@ func scoreDocument(doc aggregateDocument, inverseDocumentFrequency decimal.Numbe
 	}
 	relevantTermFrequency := relevantTermCount.Divide(decimal.FromInt64(doc.TotalWordCount))
 	log.Println(fmt.Sprintf("Term: %f", relevantTermFrequency.ToFloat64()))
-	score := relevantTermFrequency.Log10().Add(inverseDocumentFrequency)
+	score := relevantTermFrequency.Multiply(inverseDocumentFrequency)
 	return documentWithScore{
 		DocumentID: doc.DocumentID,
 		Score:      score,

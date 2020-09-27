@@ -6,74 +6,74 @@ import (
 	"math"
 )
 
-const percision = 10000
+const percision = 1000000
 
 type Number struct {
-	tenthousandths int64
+	millionths int64
 }
 
 func FromInt64(i int64) Number {
 	return Number{
-		tenthousandths: i * percision,
+		millionths: i * percision,
 	}
 }
 
 func FromFloat64(f float64) Number {
 	return Number{
-		tenthousandths: int64(float64(percision) * f),
+		millionths: int64(float64(percision) * f),
 	}
 }
 
 func (d Number) Multiply(n Number) Number {
 	return Number{
-		tenthousandths: (d.tenthousandths * n.tenthousandths) / percision,
+		millionths: (d.millionths * n.millionths) / percision,
 	}
 }
 
 func (d Number) Divide(n Number) Number {
-	divisor := float64(d.tenthousandths) / float64(n.tenthousandths)
-	log.Println(fmt.Sprintf("top %d, bottom %d, Val %f", d.tenthousandths, n.tenthousandths, divisor))
+	divisor := float64(d.millionths) / float64(n.millionths)
+	log.Println(fmt.Sprintf("top %d, bottom %d, Val %f", d.millionths, n.millionths, divisor))
 	return Number{
-		tenthousandths: int64(divisor * float64(percision)),
+		millionths: int64(divisor * float64(percision)),
 	}
 }
 
 func (d Number) Add(n Number) Number {
 	return Number{
-		tenthousandths: (d.tenthousandths + n.tenthousandths),
+		millionths: (d.millionths + n.millionths),
 	}
 }
 
 func (d Number) Subtract(n Number) Number {
 	return Number{
-		tenthousandths: (d.tenthousandths - n.tenthousandths),
+		millionths: (d.millionths - n.millionths),
 	}
 }
 
 func (d Number) Log10() Number {
-	return FromFloat64(math.Log10(float64(d.tenthousandths)) - math.Log10(percision))
+	return FromFloat64(math.Log10(float64(d.millionths)) - math.Log10(percision))
 }
 
 func (d Number) GreaterThan(n Number) bool {
-	return d.tenthousandths > n.tenthousandths
+	return d.millionths > n.millionths
 }
 
 func (d Number) GreaterThanOrEqualTo(n Number) bool {
-	return d.tenthousandths >= n.tenthousandths
+	return d.millionths >= n.millionths
 }
 
 func (d Number) LessThan(n Number) bool {
-	return d.tenthousandths < n.tenthousandths
+	return d.millionths < n.millionths
 }
 
 func (d Number) LessThanOrEqualTo(n Number) bool {
-	return d.tenthousandths <= n.tenthousandths
+	return d.millionths <= n.millionths
 }
 
 func (d Number) EqualTo(n Number) bool {
-	return d.tenthousandths == n.tenthousandths
+	return d.millionths == n.millionths
 }
 
 func (d Number) ToFloat64() float64 {
-	return float64(d.tenthousandths) / float64(percision)
+	return float64(d.millionths) / float64(percision)
 }
