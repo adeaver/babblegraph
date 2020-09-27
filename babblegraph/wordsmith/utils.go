@@ -11,3 +11,13 @@ func LookupLanguageCodeForLanguageLabel(languageLabel string) *LanguageCode {
 	}
 	return nil
 }
+
+func LookupLanguageLabelsForLanguageCode(languageCode LanguageCode) []string {
+	var out []string
+	for label, code := range htmlLanguageValueToLanguageCode {
+		if code == languageCode {
+			out = append(out, label)
+		}
+	}
+	return out
+}

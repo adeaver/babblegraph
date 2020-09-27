@@ -30,3 +30,23 @@ services:
       context: ./wordsmith
     volumes:
       - ./wordsmith/data:/var/lib/postgresql/data
+  email:
+    build:
+      dockerfile: Dockerfile.dev
+      context: ./babblegraph
+      args:
+        - BABBLEGRAPH_GIT_TOKEN=${BABBLEGRAPH_GIT_TOKEN}
+    stdin_open: true # docker run -i
+    tty: true        # docker run -t
+    volumes:
+      - ./babblegraph:/go/src/babblegraph
+    environment:
+      - PG_HOST=db
+      - PG_USER=dev
+      - PG_PASSWORD=development
+      - PG_DB_NAME=babblegraph
+      - WORDSMITH_HOST=wordsmith
+      - WORDSMITH_USER=dev
+      - WORDSMITH_PASSWORD=development
+      - WORDSMITH_DB_NAME=wordsmith
+    command: sh

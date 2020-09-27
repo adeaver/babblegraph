@@ -1,6 +1,7 @@
 package documents
 
 import (
+	"babblegraph/wordsmith"
 	"fmt"
 	"log"
 
@@ -37,4 +38,25 @@ func InsertDocument(tx *sqlx.Tx, input InsertDocumentInput) (*DocumentID, error)
 		return nil, nil
 	}
 	return &docID, nil
+}
+
+type dbDocumentCount struct {
+	Count int64 `db:"count"`
+}
+
+func GetDocumentCountForLanguage(tx *sqlx.Tx, languageCode wordsmith.LanguageCode) (*int64, error) {
+	var count []dbDocumentCount
+	searchLabels := wordsmith.LookupLanguageLabelsForLanguageCode(languageCode)
+	query, args, err := sqlx.In("SELECT COUNT(*) count FROM documents WHERE language IN (?)", searchLabels)
+	if err != nil {
+		return nil, err
+	}
+	sql := tx.Rebind(query)
+	if err := tx.Select(&count, sql, args...); err != nil {
+		return nil, err
+	}
+	if len(count) != 1 {
+		return nil, fmt.Errorf("Did not get the right value for count. Expected 1, but got %d", len(count))
+	}
+	return &count[0].Count, nil
 }

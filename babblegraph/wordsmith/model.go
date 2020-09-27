@@ -13,6 +13,23 @@ type Lemma struct {
 	Language     LanguageCode
 }
 
+type dbLemma struct {
+	ID             LemmaID  `db:"_id"`
+	CorpusID       CorpusID `db:"corpus_id"`
+	LemmaText      string   `db:"lemma_text"`
+	PartOfSpeechID string   `db:"part_of_speech_id"`
+	Language       string   `db:"language"`
+}
+
+func (d dbLemma) ToNonDB() Lemma {
+	return Lemma{
+		ID:           d.ID,
+		Lemma:        d.LemmaText,
+		PartOfSpeech: d.PartOfSpeechID,
+		Language:     MustLanguageCodeForString(d.Language),
+	}
+}
+
 type WordID string
 
 type Word struct {

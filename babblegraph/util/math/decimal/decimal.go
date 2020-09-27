@@ -61,3 +61,7 @@ func (d Number) LessThanOrEqualTo(n Number) bool {
 func (d Number) EqualTo(n Number) bool {
 	return d.millionths == n.millionths
 }
+
+func (d Number) ToFloat64() float64 {
+	return float64(d.millionths) * float64(percision)
+}
