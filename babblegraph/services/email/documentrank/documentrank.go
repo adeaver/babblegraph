@@ -7,6 +7,8 @@ import (
 	"babblegraph/services/email/wordrank"
 	"babblegraph/util/math/decimal"
 	"babblegraph/wordsmith"
+	"fmt"
+	"log"
 	"sort"
 
 	"github.com/jmoiron/sqlx"
@@ -64,7 +66,9 @@ func calculateInverseDocumentFrequencyForLabel(rankedWords map[wordsmith.LemmaID
 	for _, lemmaID := range labelSearchTerms {
 		relevantTermDocumentCount.Add(decimal.FromInt64(rankedWords[lemmaID].DocumentFrequency))
 	}
-	return decimal.FromInt64(documentCount).Divide(relevantTermDocumentCount)
+	inverseDocumentFrequency := decimal.FromInt64(documentCount).Divide(relevantTermDocumentCount)
+	log.Println(fmt.Sprintf("Inverse document frequency %f", inverseDocumentFrequency.ToFloat64()))
+	return inverseDocumentFrequency.Log10()
 }
 
 func getRelevantDocumentIDForLabel(tx *sqlx.Tx, labelSearchTerms []wordsmith.LemmaID) ([]documents.DocumentID, error) {
@@ -140,10 +144,11 @@ type documentWithScore struct {
 func scoreDocument(doc aggregateDocument, inverseDocumentFrequency decimal.Number) documentWithScore {
 	var relevantTermCount decimal.Number
 	for _, termEntry := range doc.LabelSearchTermEntries {
-		relevantTermCount.Add(decimal.FromInt64(termEntry.Count))
+		relevantTermCount = relevantTermCount.Add(decimal.FromInt64(termEntry.Count))
 	}
 	relevantTermFrequency := relevantTermCount.Divide(decimal.FromInt64(doc.TotalWordCount))
-	score := relevantTermFrequency.Multiply(inverseDocumentFrequency)
+	log.Println(fmt.Sprintf("Term: %f", relevantTermFrequency.ToFloat64()))
+	score := relevantTermFrequency.Log10().Add(inverseDocumentFrequency)
 	return documentWithScore{
 		DocumentID: doc.DocumentID,
 		Score:      score,

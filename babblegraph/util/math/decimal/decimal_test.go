@@ -108,3 +108,34 @@ func TestFloat64(t *testing.T) {
 		t.Errorf("D8: expected %+v, Got %+v", expectedD8, d8)
 	}
 }
+
+func TestLog(t *testing.T) {
+	d1 := FromInt64(10)
+	d2 := FromInt64(100)
+	d3 := FromInt64(1000)
+
+	d4 := d1.Log10()
+	d5 := d2.Log10()
+	d6 := d3.Log10()
+
+	expectedD4 := FromInt64(1)
+	expectedD5 := FromInt64(2)
+	expectedD6 := FromFloat64(3.0)
+	if !d4.EqualTo(expectedD4) {
+		t.Errorf("D4: expected %+v, Got %+v", expectedD4, d4)
+	}
+	if !d5.EqualTo(expectedD5) {
+		t.Errorf("D5: expected %+v, Got %+v", expectedD5, d5)
+	}
+	if !d6.EqualTo(expectedD6) {
+		t.Errorf("D6: expected %+v, Got %+v", expectedD6, d6)
+	}
+}
+
+func TestFloat64Conversion(t *testing.T) {
+	d1 := FromFloat64(3.0)
+	d2 := d1.ToFloat64()
+	if !(d2 == 3.0) {
+		t.Errorf("expected 3.0, but got %f", d2)
+	}
+}

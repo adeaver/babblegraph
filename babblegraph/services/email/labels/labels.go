@@ -21,7 +21,6 @@ var keywordSearchTermsForLabelNames = map[LabelName][]string{
 		"cienca",
 		"biología",
 		"química",
-		"física",
 		"matemáticas",
 	},
 	LabelNameTechnology: []string{
