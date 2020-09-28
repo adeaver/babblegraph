@@ -1,8 +1,6 @@
 package decimal
 
 import (
-	"fmt"
-	"log"
 	"math"
 )
 
@@ -32,7 +30,6 @@ func (d Number) Multiply(n Number) Number {
 
 func (d Number) Divide(n Number) Number {
 	divisor := float64(d.millionths) / float64(n.millionths)
-	log.Println(fmt.Sprintf("top %d, bottom %d, Val %f", d.millionths, n.millionths, divisor))
 	return Number{
 		millionths: int64(divisor * float64(percision)),
 	}

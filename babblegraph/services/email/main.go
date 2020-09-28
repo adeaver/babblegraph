@@ -27,6 +27,15 @@ func main() {
 		log.Fatal(err.Error())
 	}
 	log.Println("successfully ranked words")
+	var rankedWordsAsList []wordrank.RankedWord
+	for _, value := range rankedWordsForSpanish {
+		rankedWordsAsList = append(rankedWordsAsList, value)
+	}
+	for i := 1; i < 10; i++ {
+		percentile := float64(i) * .1
+		idx := int64(float64(len(rankedWordsAsList)) * percentile)
+		log.Println("Word at %fth percentile: %s", percentile, rankedWordsAsList[idx].LemmaID)
+	}
 	labelSearchTerms, err := labels.GetLemmaIDsForLabelNames()
 	if err != nil {
 		log.Fatal(err.Error())
@@ -49,8 +58,6 @@ func main() {
 		log.Fatal(err.Error())
 	}
 	for labelName, documents := range rankedDocumentByLabel {
-		for _, doc := range documents {
-			log.Println(fmt.Sprintf("Label %s. Doc ID: %s: %f", labelName, doc.DocumentID, doc.Score.ToFloat64()))
-		}
+		log.Println(fmt.Sprintf("Label %s. Doc ID: %s: %f", labelName, documents[0].DocumentID, documents[0].Score.ToFloat64()))
 	}
 }

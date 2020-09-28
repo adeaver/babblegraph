@@ -7,8 +7,6 @@ import (
 	"babblegraph/services/email/wordrank"
 	"babblegraph/util/math/decimal"
 	"babblegraph/wordsmith"
-	"fmt"
-	"log"
 	"sort"
 
 	"github.com/jmoiron/sqlx"
@@ -146,7 +144,6 @@ func scoreDocument(doc aggregateDocument, inverseDocumentFrequency decimal.Numbe
 		relevantTermCount = relevantTermCount.Add(decimal.FromInt64(termEntry.Count))
 	}
 	relevantTermFrequency := relevantTermCount.Divide(decimal.FromInt64(doc.TotalWordCount))
-	log.Println(fmt.Sprintf("Term: %f", relevantTermFrequency.ToFloat64()))
 	score := relevantTermFrequency.Multiply(inverseDocumentFrequency)
 	return documentWithScore{
 		DocumentID: doc.DocumentID,
