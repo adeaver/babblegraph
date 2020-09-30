@@ -18,4 +18,10 @@ func TestCountSyllables(t *testing.T) {
 	testWord(t, "sábana", 3)
 	testWord(t, "oro", 2)
 	testWord(t, "sombrilla", 3)
+
+	// Not actual words
+	testWord(t, "ááá", 3)
+	testWord(t, "ue", 1)
+	testWord(t, "eu", 1)
+	testWord(t, "ee", 2)
 }

@@ -24,7 +24,7 @@ func countSyllablesForSpanish(word string) (*int64, error) {
 			r -= accentFactor
 		}
 		_, isStrongVowel := strongVowels[r]
-		_, isWeakVowel := strongVowels[r]
+		_, isWeakVowel := weakVowels[r]
 		switch {
 		case isStrongVowel:
 			if containsStrongVowel(currentSyllable) {
@@ -42,11 +42,17 @@ func countSyllablesForSpanish(word string) (*int64, error) {
 				nextRune := wordAsRunes[idx+1]
 				_, isNextRuneStrongVowel = strongVowels[nextRune]
 			}
-			if !isNextRuneStrongVowel && !isPreviousRuneStrongVowel {
+			currentSyllableContainsVowel := containsStrongVowel(currentSyllable) || containsWeakVowel(currentSyllable)
+			switch {
+			case !isNextRuneStrongVowel && !isPreviousRuneStrongVowel && currentSyllableContainsVowel:
+				// runes are not vowels
 				syllableCount++
-				currentSyllable = []rune{}
+				currentSyllable = append([]rune{}, r)
+			case isPreviousRuneStrongVowel:
+				// no-op
+			default:
+				currentSyllable = append(currentSyllable, r)
 			}
-			currentSyllable = append(currentSyllable, r)
 		case r >= 97 && r <= 122:
 			if containsStrongVowel(currentSyllable) || containsWeakVowel(currentSyllable) {
 				syllableCount++
