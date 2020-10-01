@@ -1,21 +1,6 @@
 FROM golang:1.12.5-alpine3.9
 
-ARG BABBLEGRAPH_GIT_TOKEN
-ENV GITHUB_ACCESS_TOKEN=$BABBLEGRAPH_GIT_TOKEN
+WORKDIR $GOPATH/src/babblegraph
 
-# INSTALL OS DEPENDENCIES
-RUN apk update && apk add --no-cache git
-RUN apk add --no-cache curl
-# TODO(adeaver): make this install a specific version
-RUN curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-
-WORKDIR $GOPATH/src/babblegraph/worker
-
-# CONFIGURE GIT TO BE ABLE TO RUN DEP
-RUN git config --global url."https://$GITHUB_ACCESS_TOKEN@github.com/".insteadOf "https://github.com/"
-
-# INSTALL GOLANG DEPENDENCIES
-COPY Gopkg.lock Gopkg.toml ./
-RUN dep ensure -v --vendor-only
-
+COPY go.mod ./
 CMD [ "go", "run", "main.go" ]
