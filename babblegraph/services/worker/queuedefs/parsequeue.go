@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"babblegraph/model/documents"
+	"babblegraph/babblegraph/model/htmlpages"
 	"babblegraph/services/worker/htmlparse"
 	"babblegraph/util/queue"
 	"babblegraph/util/storage"
@@ -37,7 +37,7 @@ func (p parseQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) error {
 	if err != nil {
 		return err
 	}
-	docID, err := documents.InsertDocument(tx, documents.InsertDocumentInput{
+	docID, err := htmlpages.InsertHTMLPage(tx, htmlpages.InsertHTMLPageInput{
 		URL:      m.URL,
 		Language: parsedDoc.LanguageValue,
 		Metadata: parsedDoc.Metadata,
@@ -61,7 +61,7 @@ func (p parseQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) error {
 	if err := publishMessageToLinkHandlerQueue(parsedDoc.Links); err != nil {
 		return err
 	}
-	return publishMessageToNormalizeTextQueue(*docID, *languageCode, parsedDoc.BodyTextFilename)
+	return publishMessageToNormalizeTextQueue(m.URL, *languageCode, parsedDoc.BodyTextFilename)
 }
 
 func publishMessageToParseQueue(url string, filename storage.FileIdentifier) error {

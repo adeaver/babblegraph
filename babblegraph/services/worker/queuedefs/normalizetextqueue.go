@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 
-	"babblegraph/model/documents"
 	"babblegraph/services/worker/normalizetext"
 	"babblegraph/util/queue"
 	"babblegraph/util/storage"
@@ -24,8 +23,8 @@ func (n normalizeTextQueue) GetTopicName() string {
 
 type normalizeTextQueueMessage struct {
 	Filename     storage.FileIdentifier `json:"filename"`
-	DocumentID   documents.DocumentID   `json:"document_id"`
 	LanguageCode wordsmith.LanguageCode `json:"language_code"`
+	URL          string                 `json:"url"`
 }
 
 func (n normalizeTextQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) error {
@@ -38,13 +37,14 @@ func (n normalizeTextQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) error
 	if err != nil {
 		return err
 	}
-	return publishMessageToLemmatizeQueue(*id, m.DocumentID, m.LanguageCode)
+	// calculate readability score here
+	return publishMessageToLemmatizeQueue(*id, m.URL, m.LanguageCode)
 }
 
-func publishMessageToNormalizeTextQueue(docID documents.DocumentID, languageCode wordsmith.LanguageCode, filename storage.FileIdentifier) error {
+func publishMessageToNormalizeTextQueue(url string, languageCode wordsmith.LanguageCode, filename storage.FileIdentifier) error {
 	return queue.PublishMessageToQueueByName(queueTopicNameNormalizeTextQueue.Str(), normalizeTextQueueMessage{
 		Filename:     filename,
-		DocumentID:   docID,
 		LanguageCode: languageCode,
+		URL:          url,
 	})
 }

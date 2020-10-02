@@ -1,4 +1,4 @@
-package documents
+package htmlpages
 
 import (
 	"database/sql/driver"
@@ -6,10 +6,17 @@ import (
 	"fmt"
 )
 
-type DocumentID string
+type HTMLPageID string
 
-type dbDocument struct {
-	ID       DocumentID `db:"_id"`
+type HTMLPage struct {
+	ID       HTMLPageID
+	URL      string
+	Language *string
+	Metadata map[string]string
+}
+
+type dbHTMLPage struct {
+	ID       HTMLPageID `db:"_id"`
 	URL      string     `db:"url"`
 	Language *string    `db:"language"`
 	Metadata dbMetadata `db:"metadata"`
@@ -35,11 +42,4 @@ func (d *dbMetadata) Scan(src interface{}) error {
 		return fmt.Errorf("Could not convert type")
 	}
 	return nil
-}
-
-type Document struct {
-	ID       DocumentID        `db:"_id"`
-	URL      string            `db:"url"`
-	Language *string           `db:"language"`
-	Metadata map[string]string `db:"metadata"`
 }

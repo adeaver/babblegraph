@@ -1,5 +1,45 @@
 version: '3'
 services:
+  db:
+    build:
+      dockerfile: Dockerfile.dev
+      context: ./db
+    volumes:
+      - ./db/data:/var/lib/postgresql/data
+  wordsmith:
+    build:
+      dockerfile: Dockerfile.dev
+      context: ./wordsmith
+    volumes:
+      - ./wordsmith/data:/var/lib/postgresql/data
+  es01:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.9.2
+    environment:
+      - node.name=es01
+      - cluster.name=babblegraph-es-cluster
+      - discovery.seed_hosts=es02
+      - cluster.initial_master_nodes=es01,es02
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+        - ./elasticsearch/data01:/usr/share/elasticsearch/data
+    ports:
+        - 9200:9200
+  es02:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.9.2
+    environment:
+      - node.name=es02
+      - cluster.name=babblegraph-es-cluster
+      - discovery.seed_hosts=es01
+      - cluster.initial_master_nodes=es01,es02
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+        - ./elasticsearch/data02:/usr/share/elasticsearch/data
   worker:
     build:
       dockerfile: Dockerfile.dev
@@ -16,18 +56,6 @@ services:
       - WORDSMITH_PASSWORD=development
       - WORDSMITH_DB_NAME=wordsmith
     command: go run /go/src/babblegraph/services/worker/main.go
-  db:
-    build:
-      dockerfile: Dockerfile.dev
-      context: ./db
-    volumes:
-      - ./db/data:/var/lib/postgresql/data
-  wordsmith:
-    build:
-      dockerfile: Dockerfile.dev
-      context: ./wordsmith
-    volumes:
-      - ./wordsmith/data:/var/lib/postgresql/data
   email:
     build:
       dockerfile: Dockerfile.dev

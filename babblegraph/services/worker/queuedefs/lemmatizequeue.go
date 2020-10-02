@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 
-	"babblegraph/model/documents"
 	"babblegraph/services/worker/lemmatize"
 	"babblegraph/util/queue"
 	"babblegraph/util/storage"
@@ -23,7 +22,7 @@ func (l lemmatizeQueue) GetTopicName() string {
 }
 
 type lemmatizeQueueMessage struct {
-	DocumentID   documents.DocumentID   `json:"document_id"`
+	URL          string                 `json:"url"`
 	Filename     storage.FileIdentifier `json:"file_name"`
 	LanguageCode wordsmith.LanguageCode `json:"language_code"`
 }
@@ -41,10 +40,10 @@ func (l lemmatizeQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) error {
 	return publishMessageToIndexQueue(m.DocumentID, m.LanguageCode, *id)
 }
 
-func publishMessageToLemmatizeQueue(filename storage.FileIdentifier, docID documents.DocumentID, languageCode wordsmith.LanguageCode) error {
+func publishMessageToLemmatizeQueue(filename storage.FileIdentifier, url string, languageCode wordsmith.LanguageCode) error {
 	return queue.PublishMessageToQueueByName(queueTopicNameLemmatizeQueue.Str(), lemmatizeQueueMessage{
+		URL:          url,
 		Filename:     filename,
-		DocumentID:   docID,
 		LanguageCode: languageCode,
 	})
 }
