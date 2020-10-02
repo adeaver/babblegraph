@@ -18,9 +18,11 @@ services:
       - node.name=es01
       - cluster.name=babblegraph-es-cluster
       - discovery.seed_hosts=es02
-      - cluster.initial_master_nodes=es01,es02
+      - cluster.initial_master_nodes=http://es01,http://es02
       - bootstrap.memory_lock=true
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - XPACK_SECURITY_ENABLED="true"
+      - ELASTIC_PASSWORD=babblegraph-dev
     ulimits:
       memlock:
         soft: -1
@@ -38,6 +40,8 @@ services:
       - cluster.initial_master_nodes=es01,es02
       - bootstrap.memory_lock=true
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - XPACK_SECURITY_ENABLED="true"
+      - ELASTIC_PASSWORD=babblegraph-dev
     volumes:
         - ./elasticsearch/data02:/usr/share/elasticsearch/data
     ulimits:
@@ -49,7 +53,7 @@ services:
       dockerfile: Dockerfile.dev
       context: ./babblegraph
     volumes:
-      - ./babblegraph:/go/src/babblegraph
+      - ./babblegraph:/usr/local/go/src/babblegraph
     environment:
       - PG_HOST=db
       - PG_USER=dev
@@ -59,7 +63,9 @@ services:
       - WORDSMITH_USER=dev
       - WORDSMITH_PASSWORD=development
       - WORDSMITH_DB_NAME=wordsmith
-    command: go run /go/src/babblegraph/services/worker/main.go
+      - ES_HOSTS=es01,es02
+      - ES_PASSWORD=babblegraph-dev
+    command: go run /usr/local/go/src/babblegraph/services/worker/main.go
   email:
     build:
       dockerfile: Dockerfile.dev
@@ -67,7 +73,7 @@ services:
     stdin_open: true # docker run -i
     tty: true        # docker run -t
     volumes:
-      - ./babblegraph:/go/src/babblegraph
+      - ./babblegraph:/usr/local/go/src/babblegraph
     environment:
       - PG_HOST=db
       - PG_USER=dev

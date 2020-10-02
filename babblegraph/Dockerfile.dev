@@ -1,6 +1,8 @@
-FROM golang:1.12.5-alpine3.9
+FROM golang:1.14.9-alpine3.12
 
-WORKDIR $GOPATH/src/babblegraph
+RUN apk add --no-cache git
+
+WORKDIR $GOROOT/src/babblegraph
 
 COPY go.mod ./
 CMD [ "go", "run", "main.go" ]

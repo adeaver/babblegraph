@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 
+	"babblegraph/model/documents"
 	"babblegraph/services/worker/lemmatize"
 	"babblegraph/util/math/decimal"
 	"babblegraph/util/queue"
@@ -35,9 +36,21 @@ func (l lemmatizeQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) error {
 		log.Println(fmt.Sprintf("Error unmarshalling message for fetch queue: %s... marking complete", err.Error()))
 		return nil
 	}
-	// TODO: insert Elasticsearch here
-	_, err = lemmatize.LemmatizeWordsForFile(m.Filename, m.LanguageCode)
-	return err
+	lemmaText, err := lemmatize.LemmatizeWordsForFile(m.Filename, m.LanguageCode)
+	if err != nil {
+		return err
+	}
+	docID, err := documents.AssignIDAndIndexDocument(&documents.Document{
+		URL:              m.URL,
+		ReadabilityScore: m.ReadabilityScore,
+		LanguageCode:     m.LanguageCode,
+		LemmatizedBody:   *lemmaText,
+	})
+	if err != nil {
+		return err
+	}
+	log.Println("Indexed doc with ID %s", *docID)
+	return nil
 }
 
 func publishMessageToLemmatizeQueue(filename storage.FileIdentifier, url string, languageCode wordsmith.LanguageCode, readabilityScore decimal.Number) error {

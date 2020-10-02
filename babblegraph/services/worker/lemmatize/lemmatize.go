@@ -9,7 +9,7 @@ import (
 	"babblegraph/wordsmith"
 )
 
-func LemmatizeWordsForFile(filename storage.FileIdentifier, languageCode wordsmith.LanguageCode) (*storage.FileIdentifier, error) {
+func LemmatizeWordsForFile(filename storage.FileIdentifier, languageCode wordsmith.LanguageCode) (*string, error) {
 	textBytes, err := storage.ReadFile(filename)
 	if err != nil {
 		return nil, err
@@ -21,8 +21,7 @@ func LemmatizeWordsForFile(filename storage.FileIdentifier, languageCode wordsmi
 		return nil, err
 	}
 	lemmaText := rewriteNormalizedTextWithLemmas(normalizedText, lemmaMap)
-	log.Println(lemmaText)
-	return storage.WriteFile("txt", lemmaText)
+	return &lemmaText, nil
 }
 
 func collectWords(normalizedText string) []string {

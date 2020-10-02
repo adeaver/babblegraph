@@ -12,12 +12,12 @@ type CalculateReadabilityInput struct {
 }
 
 func CalculateReadability(input CalculateReadabilityInput) (*decimal.Number, error) {
-	textBytes, err := storage.ReadFile(filename)
+	textBytes, err := storage.ReadFile(input.Filename)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	switch input.LanguageCode {
-	case wordsmith.LanguageCodeSpanish:
+	switch {
+	case input.LanguageCode == wordsmith.LanguageCodeSpanish:
 		return calculateReadabilityForSpanish(string(textBytes))
 	default:
 		panic("unsupported language")

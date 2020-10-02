@@ -1,6 +1,7 @@
 package decimal
 
 import (
+	"encoding/json"
 	"math"
 )
 
@@ -73,4 +74,21 @@ func (d Number) EqualTo(n Number) bool {
 
 func (d Number) ToFloat64() float64 {
 	return float64(d.millionths) / float64(percision)
+}
+
+type jsonNumber struct {
+	Millionths int64 `json:"millionths"`
+}
+
+func (d Number) MarshalJSON() ([]byte, error) {
+	return json.Marshal(jsonNumber{Millionths: d.millionths})
+}
+
+func (d *Number) UnmarshalJSON(data []byte) error {
+	var n jsonNumber
+	if err := json.Unmarshal(data, &n); err != nil {
+		return err
+	}
+	d.millionths = n.Millionths
+	return nil
 }
