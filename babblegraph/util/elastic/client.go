@@ -31,5 +31,5 @@ func InitializeElasticsearchClientForEnvironment() error {
 
 func getAddressesForEnvironment() []string {
 	addressesUnsplit := env.MustEnvironmentVariable(elasticsearchHostsKey)
-	return strings.Split(addressesUnsplit, " ")
+	return strings.Split(addressesUnsplit, ",")
 }

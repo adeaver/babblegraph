@@ -18,7 +18,7 @@ services:
       - node.name=es01
       - cluster.name=babblegraph-es-cluster
       - discovery.seed_hosts=es02
-      - cluster.initial_master_nodes=http://es01,http://es02
+      - cluster.initial_master_nodes=es01,es02
       - bootstrap.memory_lock=true
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
       - XPACK_SECURITY_ENABLED="true"
@@ -63,7 +63,7 @@ services:
       - WORDSMITH_USER=dev
       - WORDSMITH_PASSWORD=development
       - WORDSMITH_DB_NAME=wordsmith
-      - ES_HOSTS=es01,es02
+      - ES_HOSTS=http://es01:9200,http://es02:9200
       - ES_PASSWORD=babblegraph-dev
     command: go run /usr/local/go/src/babblegraph/services/worker/main.go
   email:
@@ -83,4 +83,6 @@ services:
       - WORDSMITH_USER=dev
       - WORDSMITH_PASSWORD=development
       - WORDSMITH_DB_NAME=wordsmith
+      - ES_HOSTS=http://es01:9200,http://es02:9200
+      - ES_PASSWORD=babblegraph-dev
     command: sh
