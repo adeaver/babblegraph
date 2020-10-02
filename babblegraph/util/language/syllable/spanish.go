@@ -60,7 +60,7 @@ func countSyllablesForSpanish(word string) (*int64, error) {
 			}
 			currentSyllable = append(currentSyllable, r)
 		default:
-			return nil, fmt.Errorf("expected lowercase word")
+			return nil, fmt.Errorf("expected lowercase word, got character %s", string(r))
 		}
 	}
 	if containsStrongVowel(currentSyllable) || containsWeakVowel(currentSyllable) {
