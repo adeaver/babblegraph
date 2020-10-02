@@ -12,7 +12,7 @@ func calculateReadabilityForSpanish(text string) (*decimal.Number, error) {
 	var wordCount, syllableCount, sentenceCount decimal.Number
 	for _, sentence := range sentences {
 		sentenceCount = sentenceCount.Add(decimal.FromInt64(1))
-		words := strings.Split(sentence, "\n")
+		words := strings.Split(sentence, " ")
 		wordCount = wordCount.Add(decimal.FromInt64(int64(len(words))))
 		for _, word := range words {
 			count, err := syllable.CountSyllablesInWord(wordsmith.LanguageCodeSpanish, word)

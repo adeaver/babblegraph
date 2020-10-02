@@ -1,8 +1,9 @@
 package syllable
 
-import "fmt"
-
-const accentFactor rune = 128
+import (
+	"babblegraph/util/language/unaccent"
+	"fmt"
+)
 
 var strongVowels = map[rune]bool{
 	97:  true, // a
@@ -20,9 +21,7 @@ func countSyllablesForSpanish(word string) (*int64, error) {
 	var currentSyllable []rune
 	var syllableCount int64
 	for idx, r := range wordAsRunes {
-		if r >= 223 && r <= 246 {
-			r -= accentFactor
-		}
+		r = unaccent.UnaccentRune(r)
 		_, isStrongVowel := strongVowels[r]
 		_, isWeakVowel := weakVowels[r]
 		switch {
@@ -60,7 +59,7 @@ func countSyllablesForSpanish(word string) (*int64, error) {
 			}
 			currentSyllable = append(currentSyllable, r)
 		default:
-			return nil, fmt.Errorf("expected lowercase word, got character %s", string(r))
+			return nil, fmt.Errorf("expected lowercase word, got character %d", r)
 		}
 	}
 	if containsStrongVowel(currentSyllable) || containsWeakVowel(currentSyllable) {

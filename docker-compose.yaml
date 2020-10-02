@@ -54,6 +54,7 @@ services:
       context: ./babblegraph
     volumes:
       - ./babblegraph:/usr/local/go/src/babblegraph
+      - ./babblegraph/services/worker/data:/tmp
     environment:
       - PG_HOST=db
       - PG_USER=dev

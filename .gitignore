@@ -6,3 +6,4 @@ wordsmith/setup/out/**
 **.DS_Store
 elasticsearch/data01/**
 elasticsearch/data02/**
+babblegraph/services/worker/data/**
