@@ -1,14 +1,13 @@
 package queuedefs
 
 import (
-	"encoding/json"
-	"fmt"
-	"log"
-
 	"babblegraph/services/worker/normalizetext"
 	"babblegraph/util/queue"
 	"babblegraph/util/storage"
 	"babblegraph/wordsmith"
+	"encoding/json"
+	"fmt"
+	"log"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -37,8 +36,7 @@ func (n normalizeTextQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) error
 	if err != nil {
 		return err
 	}
-	// calculate readability score here
-	return publishMessageToLemmatizeQueue(*id, m.URL, m.LanguageCode)
+	return publishMessageToReadabilityQueue(*id, m.URL, m.LanguageCode)
 }
 
 func publishMessageToNormalizeTextQueue(url string, languageCode wordsmith.LanguageCode, filename storage.FileIdentifier) error {

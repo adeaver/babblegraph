@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"babblegraph/babblegraph/model/htmlpages"
+	"babblegraph/model/htmlpages"
 	"babblegraph/services/worker/htmlparse"
 	"babblegraph/util/queue"
 	"babblegraph/util/storage"

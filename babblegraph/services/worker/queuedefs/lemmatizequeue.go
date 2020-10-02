@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"babblegraph/services/worker/lemmatize"
+	"babblegraph/util/math/decimal"
 	"babblegraph/util/queue"
 	"babblegraph/util/storage"
 	"babblegraph/wordsmith"
@@ -22,9 +23,10 @@ func (l lemmatizeQueue) GetTopicName() string {
 }
 
 type lemmatizeQueueMessage struct {
-	URL          string                 `json:"url"`
-	Filename     storage.FileIdentifier `json:"file_name"`
-	LanguageCode wordsmith.LanguageCode `json:"language_code"`
+	URL              string                 `json:"url"`
+	Filename         storage.FileIdentifier `json:"file_name"`
+	LanguageCode     wordsmith.LanguageCode `json:"language_code"`
+	ReadabilityScore decimal.Number         `json:"readability_score"`
 }
 
 func (l lemmatizeQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) error {
@@ -33,17 +35,16 @@ func (l lemmatizeQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) error {
 		log.Println(fmt.Sprintf("Error unmarshalling message for fetch queue: %s... marking complete", err.Error()))
 		return nil
 	}
-	id, err := lemmatize.LemmatizeWordsForFile(m.Filename, m.LanguageCode)
-	if err != nil {
-		return err
-	}
-	return publishMessageToIndexQueue(m.DocumentID, m.LanguageCode, *id)
+	// TODO: insert Elasticsearch here
+	_, err = lemmatize.LemmatizeWordsForFile(m.Filename, m.LanguageCode)
+	return err
 }
 
-func publishMessageToLemmatizeQueue(filename storage.FileIdentifier, url string, languageCode wordsmith.LanguageCode) error {
+func publishMessageToLemmatizeQueue(filename storage.FileIdentifier, url string, languageCode wordsmith.LanguageCode, readabilityScore decimal.Number) error {
 	return queue.PublishMessageToQueueByName(queueTopicNameLemmatizeQueue.Str(), lemmatizeQueueMessage{
-		URL:          url,
-		Filename:     filename,
-		LanguageCode: languageCode,
+		URL:              url,
+		Filename:         filename,
+		LanguageCode:     languageCode,
+		ReadabilityScore: readabilityScore,
 	})
 }
