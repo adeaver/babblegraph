@@ -46,7 +46,7 @@ func getLemmaMapForTokens(tokens []string, languageCode wordsmith.LanguageCode) 
 	for _, w := range words {
 		if _, ok := out[w.Word]; ok {
 			// TODO: I need to do something more clever here
-			log.Println(fmt.Sprintf("Word %s has duplicate. Replacing..."))
+			log.Println(fmt.Sprintf("Word %s has duplicate. Replacing...", w.Word))
 		}
 		out[w.Word] = w.LemmaID
 	}

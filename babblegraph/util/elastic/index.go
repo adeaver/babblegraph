@@ -16,10 +16,24 @@ type Index interface {
 	GenerateIDForDocument(document interface{}) (*string, error)
 }
 
-func CreateIndex(index Index) error {
+type CreateIndexSettings struct {
+	Analysis IndexAnalysis `json:"analysis"`
+}
+
+type settingsBody struct {
+	Settings CreateIndexSettings `json:"settings"`
+}
+
+func CreateIndex(index Index, settings *CreateIndexSettings) error {
 	createIndexRequest := esapi.IndicesCreateRequest{
-		// TODO: add more options when I understand them
 		Index: index.GetName(),
+	}
+	if settings != nil {
+		bodyBytes, err := json.Marshal(&settingsBody{Settings: *settings})
+		if err != nil {
+			return err
+		}
+		createIndexRequest.Body = strings.NewReader(string(bodyBytes))
 	}
 	res, err := createIndexRequest.Do(context.Background(), esClient)
 	if err != nil {

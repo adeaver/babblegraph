@@ -42,7 +42,7 @@ func (l lemmatizeQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) error {
 	}
 	docID, err := documents.AssignIDAndIndexDocument(&documents.Document{
 		URL:              m.URL,
-		ReadabilityScore: m.ReadabilityScore,
+		ReadabilityScore: m.ReadabilityScore.ToInt64Rounded(),
 		LanguageCode:     m.LanguageCode,
 		LemmatizedBody:   *lemmaText,
 	})

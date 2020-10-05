@@ -32,7 +32,7 @@ func (d documentIndex) GenerateIDForDocument(document interface{}) (*string, err
 }
 
 func CreateDocumentIndex() error {
-	return elastic.CreateIndex(documentIndex{})
+	return elastic.CreateIndex(documentIndex{}, nil)
 }
 
 func AssignIDAndIndexDocument(document *Document) (*DocumentID, error) {

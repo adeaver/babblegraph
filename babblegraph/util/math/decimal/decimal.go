@@ -76,6 +76,14 @@ func (d Number) ToFloat64() float64 {
 	return float64(d.millionths) / float64(percision)
 }
 
+func (d Number) ToInt64Rounded() int64 {
+	return int64(math.Round(d.ToFloat64()))
+}
+
+func (d Number) ToInt64Truncated() int64 {
+	return int64(d.ToFloat64())
+}
+
 type jsonNumber struct {
 	Millionths int64 `json:"millionths"`
 }
