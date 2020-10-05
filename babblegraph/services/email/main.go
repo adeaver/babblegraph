@@ -4,7 +4,9 @@ import (
 	"babblegraph/model/documents"
 	"babblegraph/services/email/labels"
 	"babblegraph/util/database"
+	"babblegraph/util/elastic"
 	"babblegraph/wordsmith"
+	"fmt"
 	"log"
 )
 
@@ -16,6 +18,11 @@ func main() {
 	if err := wordsmith.MustSetupWordsmithForEnvironment(); err != nil {
 		log.Fatal(err.Error())
 	}
+	log.Println("successfully connected to wordsmith db")
+	if err := elastic.InitializeElasticsearchClientForEnvironment(); err != nil {
+		return fmt.Errorf("Error setting up elasticsearch: %s", err.Error())
+	}
+	log.Println("successfully connected to elasticsearch")
 	labelSearchTerms, err := labels.GetLemmaIDsForLabelNames()
 	if err != nil {
 		log.Fatal(err.Error())
