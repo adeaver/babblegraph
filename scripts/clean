@@ -1,0 +1,10 @@
+#!/bin/bash
+echo "Removing application data"
+rm -rf services/worker/data
+
+echo "Removing database data (excluding wordsmith)"
+rm -rf db/data
+
+echo "Removing elasticsearch data"
+rm -rf elasticsearch/data01
+rm -rf elasticsearch/data02
