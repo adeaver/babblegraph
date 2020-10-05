@@ -11,8 +11,10 @@ func TestSerialization(t *testing.T) {
 			Analyzer: IndexAnalyzer{
 				Name: "custom_analyzer",
 				Body: IndexAnalyzerBody{
-					Type:      "custom",
-					Tokenizer: AnalyzerTokenizerWhitespace,
+					Type:            "custom",
+					Tokenizer:       AnalyzerTokenizerWhitespace,
+					CharacterFilter: []AnalyzerCharacterFilter{},
+					Filter:          []AnalyzerFilter{},
 				},
 			},
 		},

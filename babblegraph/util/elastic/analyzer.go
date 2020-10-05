@@ -15,7 +15,7 @@ const (
 )
 
 type IndexAnalysis struct {
-	Analyer IndexAnalyzer `json:"analyzer"`
+	Analyzer IndexAnalyzer `json:"analyzer"`
 }
 
 type IndexAnalyzer struct {
@@ -25,9 +25,9 @@ type IndexAnalyzer struct {
 
 type IndexAnalyzerBody struct {
 	Type            string                    `json:"type"`
-	CharacterFilter []AnalyzerCharacterFilter `json:"char_filter"`
+	CharacterFilter []AnalyzerCharacterFilter `json:"char_filter,omitempty"`
 	Tokenizer       AnalyzerTokenizer         `json:"tokenizer"`
-	Filter          []AnalyzerFilter          `json:"filter"`
+	Filter          []AnalyzerFilter          `json:"filter,omitempty"`
 }
 
 func (i IndexAnalyzer) MarshalJSON() ([]byte, error) {

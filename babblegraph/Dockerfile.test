@@ -4,4 +4,4 @@ RUN apk add --update --no-cache gcc git musl-dev
 
 WORKDIR /usr/local/go/src/babblegraph
 
-CMD [ "go", "test", "-v", "./..." ]
+CMD [ "./scripts/test" ]

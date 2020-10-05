@@ -39,13 +39,13 @@ func TestGetCleanURL(t *testing.T) {
 			expected: "https://www.google.com/blah",
 		}, {
 			input:    "www.google.com/blah",
-			expected: "https://www.google.com/blah",
+			expected: "http://www.google.com/blah",
 		}, {
 			input:    "https://12345678:900",
 			expected: "https://12345678",
 		}, {
 			input:    "google.com/blah",
-			expected: "https://google.com/blah",
+			expected: "http://google.com/blah",
 		},
 	}
 	for i, tc := range testCases {
