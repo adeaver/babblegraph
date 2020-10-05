@@ -1,0 +1,3 @@
+#!/bin/bash
+docker build -f babblegraph/Dockerfile.test -t babblegraph/test ./babblegraph
+docker run -v $(pwd)/babblegraph:/usr/local/go/src/babblegraph babblegraph/test

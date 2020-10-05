@@ -1,0 +1,7 @@
+FROM golang:1.14.9-alpine3.12
+
+RUN apk add --update --no-cache gcc git musl-dev
+
+WORKDIR /usr/local/go/src/babblegraph
+
+CMD [ "go", "test", "-v", "./..." ]
