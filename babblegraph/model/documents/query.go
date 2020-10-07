@@ -3,7 +3,6 @@ package documents
 import (
 	"babblegraph/util/elastic"
 	"babblegraph/wordsmith"
-	"encoding/json"
 	"fmt"
 	"log"
 )
@@ -21,31 +20,40 @@ func FindDocumentsContainingTerms(terms []wordsmith.LemmaID) ([]Document, error)
 
 // TODO: this should live in elastic package
 func extractDocuments(res map[string]interface{}) ([]Document, error) {
+	log.Println(fmt.Sprintf("response %+v", res))
 	hits, ok := res["hits"]
 	if !ok {
 		log.Println("no hits")
 		return nil, nil
 	}
-	hitResults, ok := hits["hits"]
+	hitsMap, isMap := hits.(map[string]interface{})
+	if !isMap {
+		return nil, fmt.Errorf("hits is not a map")
+	}
+	hitResults, ok := hitsMap["hits"]
 	if !ok {
 		log.Println("no hit results")
 		return nil, nil
 	}
-	hitList, isList := hitResults.([]map[string]interface{})
+	hitList, isList := hitResults.([]interface{})
 	if !isList {
-		return fmt.Errorf("results is not a list")
+		return nil, fmt.Errorf("results is not a list")
 	}
 	var out []Document
 	for _, h := range hitList {
-		source, ok := h["_source"]
+		m, isMap := h.(map[string]interface{})
+		if !isMap {
+			return nil, fmt.Errorf("not a map")
+		}
+		_source, ok := m["_source"]
 		if !ok {
 			continue
 		}
-		var doc Document
-		if err := json.Unmarshal(&doc); err != nil {
-			return nil, err
+		source, isMap := _source.(map[string]string)
+		if !isMap {
+			return nil, fmt.Errorf("source is not a map")
 		}
-		out = append(out, doc)
+		out = append(out, Document{})
 	}
 	return out, nil
 }

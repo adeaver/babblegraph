@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
+	"strings"
 )
 
 type QueryAction string
@@ -13,6 +15,10 @@ const (
 	QueryActionTerms QueryAction = "terms"
 	QueryActionMatch QueryAction = "match"
 )
+
+func (q QueryAction) Str() string {
+	return string(q)
+}
 
 type InQuery struct {
 	FieldName string
@@ -24,6 +30,7 @@ func (i InQuery) SearchIndex(index Index) (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
+	log.Println(fmt.Sprintf("Request: %+v", req))
 	res, err := req.Do(context.Background(), esClient)
 	if err != nil {
 		return nil, err
@@ -37,19 +44,19 @@ func (i InQuery) SearchIndex(index Index) (map[string]interface{}, error) {
 }
 
 func (i InQuery) MarshalJSON() ([]byte, error) {
-	bodyMap := make(map[string][]string)
-	bodyMap[i.FieldName] = i.Values
-	queryMap := make(map[QueryAction]map[string][]string)
-	queryMap[QueryActionTerms] = bodyMap
+	bodyMap := make(map[string]string)
+	bodyMap[i.FieldName] = strings.Join(i.Values, " ")
+	queryMap := make(map[QueryAction]map[string]string)
+	queryMap[QueryActionMatch] = bodyMap
 	return json.Marshal(queryMap)
 }
 
 func (i *InQuery) UnmarshalJSON(data []byte) error {
-	var queryMap map[QueryAction]map[string][]string
-	if err := json.Unmarshal(&queryMap); err != nil {
+	var queryMap map[string]map[string][]string
+	if err := json.Unmarshal(data, &queryMap); err != nil {
 		return err
 	}
-	bodyMap, ok := queryMap[QueryActionTerms]
+	bodyMap, ok := queryMap[QueryActionTerms.Str()]
 	if !ok {
 		return fmt.Errorf("malformatted terms query")
 	}
