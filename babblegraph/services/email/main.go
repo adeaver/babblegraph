@@ -36,7 +36,9 @@ func main() {
 		log.Println("Got top doc %+v, for label %s", docs[0], "none")
 	}
 	for label, terms := range labelSearchTerms {
-		docs, err := documents.FindDocumentsContainingTerms(terms)
+		docQueryBuilder := documents.NewDocumentQueryBuilder()
+		docQueryBuilder.ContainingTerms(terms)
+		docs, err := docQueryBuilder.ExecuteQuery()
 		if err != nil {
 			log.Fatal(err.Error())
 		}

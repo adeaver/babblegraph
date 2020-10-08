@@ -1,17 +1,31 @@
 package documents
 
 import (
-	"babblegraph/util/elastic"
+	"babblegraph/util/elastic/esquery"
 	"babblegraph/wordsmith"
 	"fmt"
 	"log"
+	"strings"
 )
 
-func FindDocumentsContainingTerms(terms []wordsmith.LemmaID) ([]Document, error) {
-	res, err := elastic.InQuery{
-		FieldName: "lemmatized_body",
-		Values:    termsToString(terms),
-	}.SearchIndex(documentIndex{})
+type documentsQueryBuilder struct {
+	Terms []string
+}
+
+func NewDocumentsQueryBuilder() *documentsQueryBuilder {
+	return &documentsQueryBuilder{}
+}
+
+func (d *documentsQueryBuilder) ContainingTerms(terms []wordsmith.LemmaID) {
+	d.Terms = append(d.Terms, termsToString(terms)...)
+}
+
+func (d *documentsQueryBuilder) ExecuteQuery() ([]Document, error) {
+	queryBuilder := esquery.NewBoolQueryBuilder()
+	if len(d.Terms) != nil {
+		queryBuilder.AddMust(Match("lemmatized_body", strings.Join(d.Terms, " ")))
+	}
+	res, err := esquery.ExecuteSearch(documentIndex{}, queryBuilder.BuildBoolQuery())
 	if err != nil {
 		return nil, err
 	}
