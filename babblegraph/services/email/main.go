@@ -28,7 +28,9 @@ func main() {
 		log.Fatal(err.Error())
 	}
 	log.Println("successfully got label search terms")
-	docs, err := documents.FindDocumentsContainingTerms([]wordsmith.LemmaID{wordsmith.LemmaID("11b024c4-f772-464d-90a1-9893df2d2094")})
+	docQueryBuilder := documents.NewDocumentsQueryBuilder()
+	docQueryBuilder.ContainingTerms([]wordsmith.LemmaID{wordsmith.LemmaID("11b024c4-f772-464d-90a1-9893df2d2094")})
+	docs, err := docQueryBuilder.ExecuteQuery()
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -36,7 +38,7 @@ func main() {
 		log.Println("Got top doc %+v, for label %s", docs[0], "none")
 	}
 	for label, terms := range labelSearchTerms {
-		docQueryBuilder := documents.NewDocumentQueryBuilder()
+		docQueryBuilder := documents.NewDocumentsQueryBuilder()
 		docQueryBuilder.ContainingTerms(terms)
 		docs, err := docQueryBuilder.ExecuteQuery()
 		if err != nil {
