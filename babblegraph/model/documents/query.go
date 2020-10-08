@@ -22,8 +22,8 @@ func (d *documentsQueryBuilder) ContainingTerms(terms []wordsmith.LemmaID) {
 
 func (d *documentsQueryBuilder) ExecuteQuery() ([]Document, error) {
 	queryBuilder := esquery.NewBoolQueryBuilder()
-	if len(d.Terms) != nil {
-		queryBuilder.AddMust(Match("lemmatized_body", strings.Join(d.Terms, " ")))
+	if len(d.Terms) != 0 {
+		queryBuilder.AddMust(esquery.Match("lemmatized_body", strings.Join(d.Terms, " ")))
 	}
 	res, err := esquery.ExecuteSearch(documentIndex{}, queryBuilder.BuildBoolQuery())
 	if err != nil {
