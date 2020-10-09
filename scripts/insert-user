@@ -1,0 +1,30 @@
+#!/bin/bash
+DOCKER_DB='babblegraph_db_1'
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --db)
+            shift;
+            DOCKER_DB="$1"
+            ;;
+        --email)
+            shift;
+            EMAIL="$1"
+            ;;
+        --db-name)
+            shift;
+            DB_NAME="$1"
+            ;;
+        --db-user)
+            shift;
+            DB_USER="$1"
+            ;;
+    esac
+    shift
+done
+
+if [[ -z "$EMAIL" || -z "$DB_NAME" || -z "$DB_USER" ]]; then
+    echo "No email, db name, or db user"
+    exit 1
+fi;
+docker exec -it $DOCKER_DB psql -U $DB_USER --dbName $DB_NAME "INSERT INTO users (email_address, status) VALUES ('$EMAIL', 'verified')"
+exit

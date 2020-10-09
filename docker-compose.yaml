@@ -86,4 +86,6 @@ services:
       - WORDSMITH_DB_NAME=wordsmith
       - ES_HOSTS=http://es01:9200,http://es02:9200
       - ES_PASSWORD=babblegraph-dev
+      - EMAIL_ADDRESS=$BABBLEGRAPH_EMAIL_ADDRESS
+      - EMAIL_PASSWORD=$BABBLEGRAPH_EMAIL_PASSWORD
     command: go run /usr/local/go/src/babblegraph/services/email/main.go
