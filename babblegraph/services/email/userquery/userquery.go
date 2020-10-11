@@ -36,7 +36,7 @@ func GetDocumentsForUser(tx *sqlx.Tx, userInfos []userprefs.UserEmailInfo) (map[
 			docIDs = append(docIDs, doc.ID)
 		}
 		out[userInfo.EmailAddress] = topDocs
-		log.Println("Found doc IDs %+v for user %s", docIDs, userInfo.EmailAddress)
+		log.Println(fmt.Sprintf("Found doc IDs %+v for user %s", docIDs, userInfo.EmailAddress))
 		if err := userdocuments.InsertDocumentIDsForUser(tx, userInfo.UserID, docIDs); err != nil {
 			return nil, err
 		}

@@ -8,9 +8,11 @@ import (
 )
 
 type documentsQueryBuilder struct {
-	Terms           []string
-	Language        *string
-	SentDocumentIDs []string
+	Terms                  []string
+	Language               *string
+	SentDocumentIDs        []string
+	ReadingLevelUpperBound int64
+	ReadingLevelLowerBound int64
 }
 
 func NewDocumentsQueryBuilder() *documentsQueryBuilder {
@@ -48,7 +50,7 @@ func (d *documentsQueryBuilder) ExecuteQuery() ([]Document, error) {
 		queryBuilder.AddMust(esquery.Match("lemmatized_body", strings.Join(d.Terms, " ")))
 	}
 	if len(d.SentDocumentIDs) != 0 {
-		queryBuilder.AddMustNot(esquery.IDs(d.SentDocumentIDs))
+		queryBuilder.AddMustNot(esquery.Match("id", strings.Join(d.SentDocumentIDs, " ")))
 	}
 	var docs []Document
 	if err := esquery.ExecuteSearch(documentIndex{}, queryBuilder.BuildBoolQuery(), func(source []byte) error {

@@ -38,6 +38,9 @@ func SendEmailsToUser(emailAddressesToDocuments map[string][]documents.Document)
 		panic("email client not configured")
 	}
 	for emailAddress, docs := range emailAddressesToDocuments {
+		if len(docs) == 0 {
+			log.Println(fmt.Sprintf("No docs for user %s, skipping", emailAddress))
+		}
 		body, err := makeEmailBody(emailAddress, docs)
 		if err != nil {
 			return nil
@@ -69,7 +72,7 @@ func makeEmailBody(recipient string, docs []documents.Document) (*string, error)
 	for _, doc := range docs {
 		urls = append(urls, doc.URL)
 	}
-	log.Println("Sending the following URLS %+v to %s", urls, recipient)
+	log.Println(fmt.Sprintf("Sending the following URLS %+v to %s", urls, recipient))
 	var b strings.Builder
 	if err := bodyTemplate.Execute(&b, emailBodyInfo{
 		Recipient: recipient,
