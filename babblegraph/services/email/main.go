@@ -20,11 +20,12 @@ func main() {
 	var allUserEmailInfo []userprefs.UserEmailInfo
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		var err error
-		userInfo, err = userprefs.GetActiveUserEmailInfo(tx)
+		allUserEmailInfo, err = userprefs.GetActiveUserEmailInfo(tx)
 		return err
 	}); err != nil {
 		log.Fatal(fmt.Sprintf("Error getting email info %s", err.Error()))
 	}
+	log.Println(fmt.Sprintf("Sending emails to %d address", len(allUserEmailInfo)))
 	emailAddressesToDocuments, err := userquery.GetDocumentsForUser(allUserEmailInfo)
 	if err != nil {
 		log.Fatal(fmt.Sprintf("Error getting documents for users %s", err.Error()))

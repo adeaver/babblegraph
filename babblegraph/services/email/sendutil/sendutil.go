@@ -4,6 +4,8 @@ import (
 	"babblegraph/model/documents"
 	"babblegraph/util/env"
 	"fmt"
+	"html/template"
+	"log"
 	"net/smtp"
 	"strings"
 )
@@ -36,19 +38,46 @@ func SendEmailsToUser(emailAddressesToDocuments map[string][]documents.Document)
 		panic("email client not configured")
 	}
 	for emailAddress, docs := range emailAddressesToDocuments {
-		body := makeEmailBody(docs)
-		smtpAuth := smtp.PlainAuth("", creds.from, creds.pass, creds.smtpServerHost)
-		if err := smtp.SendMail(creds.GetSMTPServerWithPort(), smtpAuth, creds.from, []string{emailAddress}, []byte(body)); err != nil {
+		body, err := makeEmailBody(emailAddress, docs)
+		if err != nil {
+			return nil
+		}
+		smtpAuth := smtp.PlainAuth("", creds.from, creds.password, creds.smtpServerHost)
+		if err := smtp.SendMail(creds.GetSMTPServerWithPort(), smtpAuth, creds.from, []string{emailAddress}, []byte(*body)); err != nil {
 			return err
 		}
+		log.Println(fmt.Sprintf("Sent an email to %s", emailAddress))
 	}
 	return nil
 }
 
-func makeEmailBody(docs []documents.Document) string {
+var emailTemplate = `To: {{.Recipient}}
+Subject: {{.Subject}}
+
+{{range $val := .URLs}}
+{{$val}}{{end}}`
+
+type emailBodyInfo struct {
+	Recipient string
+	Subject   string
+	URLs      []string
+}
+
+func makeEmailBody(recipient string, docs []documents.Document) (*string, error) {
+	bodyTemplate := template.Must(template.New("email").Parse(emailTemplate))
 	var urls []string
 	for _, doc := range docs {
 		urls = append(urls, doc.URL)
 	}
-	return strings.Join(urls, "\n")
+	log.Println("Sending the following URLS %+v to %s", urls, recipient)
+	var b strings.Builder
+	if err := bodyTemplate.Execute(&b, emailBodyInfo{
+		Recipient: recipient,
+		Subject:   "Babblegraph Daily Links",
+		URLs:      urls,
+	}); err != nil {
+		return nil, err
+	}
+	body := b.String()
+	return &body, nil
 }

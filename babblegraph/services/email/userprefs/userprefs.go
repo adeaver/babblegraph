@@ -42,7 +42,7 @@ func GetActiveUserEmailInfo(tx *sqlx.Tx) ([]UserEmailInfo, error) {
 			ReadingLevel: UserReadingLevel{
 				LowerBound: 60,
 				UpperBound: 70,
-			}
+			},
 		})
 	}
 	return userInfos, nil

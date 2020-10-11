@@ -9,7 +9,7 @@ import (
 
 type documentsQueryBuilder struct {
 	Terms    []string
-	Langauge *string
+	Language *string
 }
 
 func NewDocumentsQueryBuilder() *documentsQueryBuilder {
@@ -21,7 +21,8 @@ func (d *documentsQueryBuilder) ContainingTerms(terms []wordsmith.LemmaID) {
 }
 
 func (d *documentsQueryBuilder) ForLanguage(languageCode wordsmith.LanguageCode) {
-	d.Language = &languageCode.Str()
+	language := languageCode.Str()
+	d.Language = &language
 }
 
 func termsToString(terms []wordsmith.LemmaID) []string {

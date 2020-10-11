@@ -3,6 +3,7 @@ package userquery
 import (
 	"babblegraph/model/documents"
 	"babblegraph/services/email/labels"
+	"babblegraph/services/email/userprefs"
 	"babblegraph/wordsmith"
 	"fmt"
 	"log"
@@ -13,18 +14,20 @@ const maxDocumentsPerEmail = 5
 func GetDocumentsForUser(userInfos []userprefs.UserEmailInfo) (map[string][]documents.Document, error) {
 	labelSearchTerms, err := labels.GetLemmaIDsForLabelNames()
 	if err != nil {
-		return nil, error
+		return nil, err
 	}
 	out := make(map[string][]documents.Document)
 	for _, userInfo := range userInfos {
 		terms := getTermsForUser(labelSearchTerms, userInfo)
 		docs, err := queryDocsForUser(userInfo, terms)
 		if err != nil {
-			return nil, error
+			return nil, err
 		}
-		out[userInfo.EmailAddress] = pickTopDocuments(docs)
+		topDocs := pickTopDocuments(docs)
+		log.Println(fmt.Sprintf("Found docs %+v for %s", topDocs, userInfo.EmailAddress))
+		out[userInfo.EmailAddress] = topDocs
 	}
-	return out
+	return out, nil
 }
 
 func getTermsForUser(lemmaIDsForLabelName map[labels.LabelName][]wordsmith.LemmaID, userInfo userprefs.UserEmailInfo) []wordsmith.LemmaID {
