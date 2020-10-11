@@ -2,30 +2,44 @@ package userquery
 
 import (
 	"babblegraph/model/documents"
+	"babblegraph/model/userdocuments"
 	"babblegraph/services/email/labels"
 	"babblegraph/services/email/userprefs"
 	"babblegraph/wordsmith"
 	"fmt"
 	"log"
+
+	"github.com/jmoiron/sqlx"
 )
 
 const maxDocumentsPerEmail = 5
 
-func GetDocumentsForUser(userInfos []userprefs.UserEmailInfo) (map[string][]documents.Document, error) {
+func GetDocumentsForUser(tx *sqlx.Tx, userInfos []userprefs.UserEmailInfo) (map[string][]documents.Document, error) {
 	labelSearchTerms, err := labels.GetLemmaIDsForLabelNames()
 	if err != nil {
 		return nil, err
 	}
 	out := make(map[string][]documents.Document)
 	for _, userInfo := range userInfos {
+		sentDocumentIDs, err := userdocuments.GetDocumentIDsSentToUser(tx, userInfo.UserID)
+		if err != nil {
+			return nil, err
+		}
 		terms := getTermsForUser(labelSearchTerms, userInfo)
-		docs, err := queryDocsForUser(userInfo, terms)
+		docs, err := queryDocsForUser(userInfo, terms, sentDocumentIDs)
 		if err != nil {
 			return nil, err
 		}
 		topDocs := pickTopDocuments(docs)
-		log.Println(fmt.Sprintf("Found docs %+v for %s", topDocs, userInfo.EmailAddress))
+		var docIDs []documents.DocumentID
+		for _, doc := range topDocs {
+			docIDs = append(docIDs, doc.ID)
+		}
 		out[userInfo.EmailAddress] = topDocs
+		log.Println("Found doc IDs %+v for user %s", docIDs, userInfo.EmailAddress)
+		if err := userdocuments.InsertDocumentIDsForUser(tx, userInfo.UserID, docIDs); err != nil {
+			return nil, err
+		}
 	}
 	return out, nil
 }
@@ -43,7 +57,7 @@ func getTermsForUser(lemmaIDsForLabelName map[labels.LabelName][]wordsmith.Lemma
 	return out
 }
 
-func queryDocsForUser(userInfo userprefs.UserEmailInfo, terms []wordsmith.LemmaID) ([]documents.Document, error) {
+func queryDocsForUser(userInfo userprefs.UserEmailInfo, terms []wordsmith.LemmaID, sentDocumentIDs []documents.DocumentID) ([]documents.Document, error) {
 	docQueryBuilder := documents.NewDocumentsQueryBuilder()
 	/*
 		Later this will become a problem
@@ -52,6 +66,7 @@ func queryDocsForUser(userInfo userprefs.UserEmailInfo, terms []wordsmith.LemmaI
 	*/
 	docQueryBuilder.ContainingTerms(terms)
 	docQueryBuilder.ForLanguage(userInfo.Languages[0])
+	docQueryBuilder.NotContainingDocumentIDs(sentDocumentIDs)
 	// TODO: add reading level and docs to be removed
 	return docQueryBuilder.ExecuteQuery()
 }

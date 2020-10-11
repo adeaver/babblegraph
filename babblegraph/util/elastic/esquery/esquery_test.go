@@ -46,3 +46,27 @@ func TestRange(t *testing.T) {
 		t.Errorf("Expected %s, got %s", expected, string(out))
 	}
 }
+
+func TestTerms(t *testing.T) {
+	testQuery := Terms("_id", []string{"abc", "123"})
+	expected := `{"terms":{"_id":["abc","123"]}}`
+	out, err := json.Marshal(testQuery)
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+	if string(out) != expected {
+		t.Errorf("Expected %s, got %s", expected, string(out))
+	}
+}
+
+func TestIDs(t *testing.T) {
+	testQuery := IDs([]string{"abc", "123"})
+	expected := `{"ids":{"values":["abc","123"]}}`
+	out, err := json.Marshal(testQuery)
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+	if string(out) != expected {
+		t.Errorf("Expected %s, got %s", expected, string(out))
+	}
+}

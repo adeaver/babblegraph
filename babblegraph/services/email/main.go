@@ -26,12 +26,18 @@ func main() {
 		log.Fatal(fmt.Sprintf("Error getting email info %s", err.Error()))
 	}
 	log.Println(fmt.Sprintf("Sending emails to %d address", len(allUserEmailInfo)))
-	emailAddressesToDocuments, err := userquery.GetDocumentsForUser(allUserEmailInfo)
-	if err != nil {
-		log.Fatal(fmt.Sprintf("Error getting documents for users %s", err.Error()))
-	}
-	if err := sendutil.SendEmailsToUser(emailAddressesToDocuments); err != nil {
-		log.Fatal(fmt.Sprintf("Error sending emails to users %s", err.Error()))
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		emailAddressesToDocuments, err := userquery.GetDocumentsForUser(tx, allUserEmailInfo)
+		if err != nil {
+			return fmt.Errorf("Error getting documents for users %s", err.Error())
+		}
+		err = sendutil.SendEmailsToUser(emailAddressesToDocuments)
+		if err != nil {
+			return fmt.Errorf("Error sending emails to users %s", err.Error())
+		}
+		return err
+	}); err != nil {
+		log.Fatal(err.Error())
 	}
 }
 

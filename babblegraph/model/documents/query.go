@@ -8,8 +8,9 @@ import (
 )
 
 type documentsQueryBuilder struct {
-	Terms    []string
-	Language *string
+	Terms           []string
+	Language        *string
+	SentDocumentIDs []string
 }
 
 func NewDocumentsQueryBuilder() *documentsQueryBuilder {
@@ -25,6 +26,14 @@ func (d *documentsQueryBuilder) ForLanguage(languageCode wordsmith.LanguageCode)
 	d.Language = &language
 }
 
+func (d *documentsQueryBuilder) NotContainingDocumentIDs(docIDs []DocumentID) {
+	var ids []string
+	for _, docID := range docIDs {
+		ids = append(ids, string(docID))
+	}
+	d.SentDocumentIDs = append(d.SentDocumentIDs, ids...)
+}
+
 func termsToString(terms []wordsmith.LemmaID) []string {
 	var out []string
 	for _, t := range terms {
@@ -37,6 +46,9 @@ func (d *documentsQueryBuilder) ExecuteQuery() ([]Document, error) {
 	queryBuilder := esquery.NewBoolQueryBuilder()
 	if len(d.Terms) != 0 {
 		queryBuilder.AddMust(esquery.Match("lemmatized_body", strings.Join(d.Terms, " ")))
+	}
+	if len(d.SentDocumentIDs) != 0 {
+		queryBuilder.AddMustNot(esquery.IDs(d.SentDocumentIDs))
 	}
 	var docs []Document
 	if err := esquery.ExecuteSearch(documentIndex{}, queryBuilder.BuildBoolQuery(), func(source []byte) error {

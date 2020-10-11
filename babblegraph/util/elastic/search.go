@@ -3,8 +3,6 @@ package elastic
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"log"
 
 	"github.com/elastic/go-elasticsearch/esapi"
 )
@@ -54,9 +52,7 @@ func RunSearchRequest(req esapi.SearchRequest, fn func(sourceBytes []byte) error
 	if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
 		return err
 	}
-	log.Println(fmt.Sprintf("Got response from elasticsearch %+v", r))
 	hits := r.Hits.Hits
-	log.Println(fmt.Sprintf("Hits in response %+v", hits))
 	for _, h := range hits {
 		sourceBytes, err := json.Marshal(h.Source)
 		if err != nil {

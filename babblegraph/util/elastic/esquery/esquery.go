@@ -16,6 +16,8 @@ const (
 	queryNameMatch queryName = "match"
 	queryNameBool  queryName = "bool"
 	queryNameRange queryName = "range"
+	queryNameTerms queryName = "terms"
+	queryNameIDs   queryName = "ids"
 )
 
 func (q queryName) Str() string {
