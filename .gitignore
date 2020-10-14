@@ -7,3 +7,4 @@ wordsmith/setup/out/**
 elasticsearch/data01/**
 elasticsearch/data02/**
 babblegraph/services/worker/data/**
+**/env/**

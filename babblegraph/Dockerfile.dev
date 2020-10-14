@@ -1,7 +1,5 @@
 FROM golang:1.14.9-alpine3.12
 
-RUN apk add --no-cache git
-
 WORKDIR /usr/local/go/src/babblegraph
 
 COPY go.mod .

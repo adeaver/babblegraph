@@ -1,0 +1,21 @@
+#!/bin/bash
+set -euo pipefail
+
+echo "Building..."
+docker build \
+    --build-arg SERVICE_NAME=worker \
+    -f babblegraph/Dockerfile \
+    -t babblegraph.com/worker:$(git rev-parse --short HEAD) \
+    ./babblegraph
+
+echo "Removing old container..."
+docker stop babblegraph_worker && docker rm babblegraph_worker && true
+
+echo "Running new container..."
+docker run -v $(pwd)/worker/data:/tmp \
+    --env-file ./env/worker.env \
+    --restart unless-stopped \
+    --name babblegraph_worker \
+    -it \
+    babblegraph.com/worker:$(git rev-parse --short HEAD) \
+    sh
