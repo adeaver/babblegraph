@@ -23,8 +23,8 @@ RUN groupadd $SERVICE_USER && useradd -m -g $SERVICE_USER -l $SERVICE_USER
 RUN mkdir -p /service && chown -R $SERVICE_USER:$SERVICE_USER /service
 
 WORKDIR /service
-COPY --chown=0.0 --from=builder /usr/local/go/bin/$SERVICE_NAME ./run-service
+COPY --chown=$SERVICE_USER:$SERVICE_USER --from=builder /usr/local/go/bin/$SERVICE_NAME ./run-service
 
 USER $SERVICE_USER
 
-CMD ["./run-service"]
+CMD ["./run-service/worker"]
