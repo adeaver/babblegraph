@@ -61,7 +61,13 @@ func (p parseQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) error {
 	if err := publishMessageToLinkHandlerQueue(parsedDoc.Links); err != nil {
 		return err
 	}
-	return publishMessageToNormalizeTextQueue(m.URL, *languageCode, parsedDoc.BodyTextFilename)
+	if err := publishMessageToNormalizeTextQueue(m.URL, *languageCode, parsedDoc.BodyTextFilename); err != nil {
+		return err
+	}
+	if err := storage.DeleteFile(m.Filename); err != nil {
+		log.Println(fmt.Sprintf("Error deleting file %s, marking message as done", string(m.Filename)))
+	}
+	return nil
 }
 
 func publishMessageToParseQueue(url string, filename storage.FileIdentifier) error {

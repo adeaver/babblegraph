@@ -3,6 +3,7 @@ package storage
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 
 	"github.com/google/uuid"
 )
@@ -37,4 +38,8 @@ func WriteFile(fileType string, body string) (*FileIdentifier, error) {
 		return nil, err
 	}
 	return id.Ptr(), nil
+}
+
+func DeleteFile(id FileIdentifier) error {
+	return os.Remove(id.ToFileName())
 }

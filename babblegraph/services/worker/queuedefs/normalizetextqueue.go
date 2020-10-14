@@ -36,7 +36,13 @@ func (n normalizeTextQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) error
 	if err != nil {
 		return err
 	}
-	return publishMessageToReadabilityQueue(*id, m.URL, m.LanguageCode)
+	if err := publishMessageToReadabilityQueue(*id, m.URL, m.LanguageCode); err != nil {
+		return err
+	}
+	if err := storage.DeleteFile(m.Filename); err != nil {
+		log.Println(fmt.Sprintf("Error deleting file %s, marking message as done", string(m.Filename)))
+	}
+	return nil
 }
 
 func publishMessageToNormalizeTextQueue(url string, languageCode wordsmith.LanguageCode, filename storage.FileIdentifier) error {
