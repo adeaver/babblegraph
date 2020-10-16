@@ -1,0 +1,7 @@
+#!/bin/bash
+set -euo pipefail
+
+docker build \
+    -f db/Dockerfile \
+    -t babblegraph.com/main-db:$(git rev-parse --short HEAD) \
+    ./db
