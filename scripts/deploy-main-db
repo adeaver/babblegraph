@@ -12,6 +12,9 @@ docker stop babblegraph_main_db && docker rm babblegraph_main_db && true
 
 echo "Running new container..."
 docker run -d -v $(pwd)/db/data:/var/lib/postgresql/data \
+    -v $(pwd)/db/scripts:/home/postgres/scripts \
+    -v $(pwd)/db/migrations:/home/postgres/migrations \
+    --env-file ./env/main-db.env \
     --restart unless-stopped \
     --name babblegraph_main_db \
     -p 5432:5432 \
@@ -21,7 +24,7 @@ echo "Setting environment"
 export $(grep -v '^#' ./env/main-db.env | xargs)
 
 echo "Creating user..."
-docker exec -it babblegraph_main_db psql -c "CREATE ROLE $PG_USER LOGIN PASSWORD '$PG_PASSWORD';"
+docker exec -it babblegraph_main_db psql -c "CREATE ROLE $PG_USER WITH LOGIN SUPERUSER PASSWORD '$PG_PASSWORD';"
 
 echo "Creating database..."
 docker exec -it babblegraph_main_db psql -c "CREATE DATABASE $PG_DATABASE OWNER $PG_USER;"

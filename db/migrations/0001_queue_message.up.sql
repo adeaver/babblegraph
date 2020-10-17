@@ -1,6 +1,6 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
-CREATE TABLE queue_messages(
+CREATE TABLE IF NOT EXISTS queue_messages(
     _id uuid DEFAULT uuid_generate_v4 (),
     topic TEXT NOT NULL,
     is_enqueued BOOLEAN DEFAULT true,

@@ -1,6 +1,6 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
-CREATE TABLE html_pages(
+CREATE TABLE IF NOT EXISTS html_pages(
     _id uuid DEFAULT uuid_generate_v4 (),
     language TEXT,
     url TEXT NOT NULL,

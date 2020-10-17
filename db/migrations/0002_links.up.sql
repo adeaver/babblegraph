@@ -1,6 +1,6 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
-CREATE TABLE links(
+CREATE TABLE IF NOT EXISTS links(
     _id uuid DEFAULT uuid_generate_v4 (),
     domain TEXT NOT NULL,
     url TEXT NOT NULL,

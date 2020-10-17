@@ -1,6 +1,6 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
-CREATE TABLE user_documents(
+CREATE TABLE IF NOT EXISTS user_documents(
     _id uuid DEFAULT uuid_generate_v4 (),
     user_id uuid NOT NULL REFERENCES users(_id),
     document_id TEXT NOT NULL,
