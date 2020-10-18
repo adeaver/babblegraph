@@ -14,6 +14,7 @@ echo "Running new container..."
 docker run -d -v $(pwd)/db/data:/var/lib/postgresql/data \
     -v $(pwd)/db/scripts:/home/postgres/scripts \
     -v $(pwd)/db/migrations:/home/postgres/migrations \
+    -v $(pwd)/db/backups:/home/postgres/backups \
     --env-file ./env/main-db.env \
     --restart unless-stopped \
     --name babblegraph_main_db \

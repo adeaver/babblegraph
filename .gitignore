@@ -1,6 +1,7 @@
 **/vendor/**
 **/.vendor-new/**
 db/data/**
+db/backups/**
 wordsmith/data/**
 wordsmith/setup/out/**
 **.DS_Store

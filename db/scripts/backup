@@ -1,0 +1,25 @@
+#!/bin/bash
+DB_NAME="${PG_DATABASE}"
+DB_USER="${PG_USER}"
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --db-name)
+            shift;
+            DB_NAME="$1"
+            ;;
+        --db-user)
+            shift;
+            DB_USER="$1"
+            ;;
+    esac
+    shift
+done
+
+if [[ -z "$DB_NAME" || -z "$DB_USER" ]]; then
+    echo "No db name, or db user"
+    exit 1
+fi;
+
+BACKUP_FILE="/home/postgres/backups/${DB_NAME}_$(date +"%Y_%m_%d_%I_%M_%p").bak"
+
+PGPASSWORD=$PG_PASSWORD pg_dump -U $DB_USER -d $DB_NAME -f $BACKUP_FILE
