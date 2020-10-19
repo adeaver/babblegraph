@@ -1,2 +1,2 @@
-*/2 * * * * /service/email >> /var/log/cron.log
+*/2 * * * * /service/send-emails >> /var/log/cron.log 2>>&1
 

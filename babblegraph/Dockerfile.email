@@ -14,14 +14,20 @@ RUN go install -v babblegraph/services/email
 
 FROM ubuntu:18.04
 
-RUN apt-get update && apt-get install cron
+RUN apt-get update && \
+    apt-get -y upgrade && \
+    apt-get install -y cron && \
+    apt-get clean
 
 RUN mkdir -p /service
 
 WORKDIR /service
 COPY --from=builder /usr/local/go/bin/email .
 
-RUN chmod 0744 /service/email
+COPY scripts/email-cron-task ./send-emails
+COPY scripts/email-entry ./entry
+
+RUN chmod 0744 /service/send-emails
 
 COPY conf/email-cron /etc/cron.d/email-task
 RUN chmod 0644 /etc/cron.d/email-task
@@ -29,4 +35,4 @@ RUN chmod 0644 /etc/cron.d/email-task
 RUN crontab /etc/cron.d/email-task
 RUN touch /var/log/cron.log
 
-CMD ["cron", "-f"]
+CMD ["./entry"]
