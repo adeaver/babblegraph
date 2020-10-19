@@ -1,0 +1,18 @@
+#!/bin/bash
+set -euo pipefail
+
+echo "Building..."
+docker build \
+    -f babblegraph/Dockerfile.email \
+    -t babblegraph.com/email:$(git rev-parse --short HEAD) \
+    ./babblegraph
+
+echo "Removing old container..."
+docker stop babblegraph_email && docker rm babblegraph_email && true
+
+echo "Running new container..."
+docker run -d -v $(pwd)/worker/data:/tmp \
+    --env-file ./env/email.env \
+    --restart unless-stopped \
+    --name babblegraph_email \
+    babblegraph.com/email:$(git rev-parse --short HEAD)

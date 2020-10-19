@@ -13,4 +13,4 @@ USER postgres
 
 COPY conf/hba.conf /etc/postgresql/12/main/pg_hba.conf
 
-CMD ["/usr/lib/postgresql/12/bin/postgres", "-D", "/var/lib/postgresql/12/main", "-c", "config_file=/etc/postgresql/12/main/postgresql.conf"]
+CMD ["/home/postgres/scripts/run"]

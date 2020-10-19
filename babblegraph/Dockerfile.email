@@ -1,0 +1,32 @@
+FROM golang:1.14.9 AS builder
+
+ENV SERVICE_USER somebody
+ENV SERVICE_HOME /usr/local/go/src/babblegraph
+
+WORKDIR $SERVICE_HOME
+
+COPY . .
+
+RUN go mod download
+RUN go mod verify
+
+RUN go install -v babblegraph/services/email
+
+FROM ubuntu:18.04
+
+RUN apt-get update && apt-get install cron
+
+RUN mkdir -p /service
+
+WORKDIR /service
+COPY --from=builder /usr/local/go/bin/email .
+
+RUN chmod 0744 /service/email
+
+COPY conf/email-cron /etc/cron.d/email-task
+RUN chmod 0644 /etc/cron.d/email-task
+
+RUN crontab /etc/cron.d/email-task
+RUN touch /var/log/cron.log
+
+CMD ["cron", "-f"]

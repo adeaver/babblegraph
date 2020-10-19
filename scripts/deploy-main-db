@@ -1,6 +1,16 @@
 #!/bin/bash
 set -euo pipefail
 
+START_CRON=0
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --with-cron)
+            START_CRON=1
+            ;;
+    esac
+    shift
+done
+
 echo "Building..."
 docker build \
     -f db/Dockerfile \
@@ -32,3 +42,17 @@ docker exec -it babblegraph_main_db psql -c "CREATE DATABASE $PG_DATABASE OWNER 
 
 echo "Unsetting environment"
 unset $(grep -v '^#' ./env/main-db.env | sed -E 's/(.*)=.*/\1/' | xargs)
+
+if [[ $START_CRON ]]; then
+    if [[ -z "$BABBLEGRAPH_HOME" ]]; then
+        echo "Must set BABBLEGRAPH_HOME to run start cron"
+        exit 1
+    fi
+    echo "Setting up cron..."
+    mkdir -p /home/root/scripts
+    cp $BABBLEGRAPH_HOME/db/scripts/remote-backup /home/root/scripts
+    cp $BABBLEGRAPH_HOME/conf/backup-cron /etc/cron.d/backup-main-db
+    chmod 0644 /etc/cron.d/backup-main-db
+    echo "Starting cron..."
+    cron
+fi;
