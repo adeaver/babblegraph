@@ -1,0 +1,37 @@
+#!/bin/bash
+set -euo pipefail
+
+echo "Building..."
+docker build \
+    -f wordsmith/Dockerfile \
+    -t babblegraph.com/wordsmith-db:$(git rev-parse --short HEAD) \
+    ./wordsmith
+
+echo "Removing old container..."
+docker stop babblegraph_wordsmith_db && docker rm babblegraph_wordsmith_db && true
+
+echo "Running new container..."
+docker run -d -v $(pwd)/wordsmith/data:/var/lib/postgresql/data \
+    -v $(pwd)/wordsmith/scripts:/home/postgres/scripts \
+    -v $(pwd)/wordsmith/migrations:/home/postgres/migrations \
+    -v $(pwd)/wordsmith/setup/out:/home/postgres/wordsmith-data \
+    --env-file ./env/wordsmith-db.env \
+    --restart unless-stopped \
+    --name babblegraph_wordsmith_db \
+    -p 5432:5432 \
+    babblegraph.com/wordsmith-db:$(git rev-parse --short HEAD)
+
+echo "Setting environment"
+export $(grep -v '^#' ./env/wordsmith-db.env | xargs)
+
+echo "Creating user..."
+docker exec -it babblegraph_wordsmith_db psql -c "CREATE ROLE $PG_USER WITH LOGIN SUPERUSER PASSWORD '$PG_PASSWORD';"
+
+echo "Creating database..."
+docker exec -it babblegraph_wordsmith_db psql -c "CREATE DATABASE $PG_DATABASE OWNER $PG_USER;"
+
+echo "Seeding database..."
+docker exec -it babblegraph_wordsmith_db /home/postgres/scripts/seed-database
+
+echo "Unsetting environment"
+unset $(grep -v '^#' ./env/main-db.env | sed -E 's/(.*)=.*/\1/' | xargs)
