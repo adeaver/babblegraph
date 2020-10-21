@@ -20,11 +20,9 @@ observed_words = {
     START_TOKEN.get_word_key(): START_TOKEN.get_word_key_value()
 }
 word_part_of_speech_counts = dict()
-word_bigrams = [START_TOKEN.get_word_key(), START_TOKEN.get_word_key()]
-word_bigram_counts = dict()
 
 def get_data_from_read():
-    return observed_lemmas, observed_words, observed_parts_of_speech, word_bigram_counts, part_of_speech_trigram_counts, word_part_of_speech_counts
+    return observed_lemmas, observed_words, observed_parts_of_speech, part_of_speech_trigram_counts, word_part_of_speech_counts
 
 def process_text_line(word, lemma, pos):
     if not _is_text_line_valid(word, lemma, pos):
@@ -71,10 +69,6 @@ def _handle_word(word, part_of_speech, lemma_key):
     if word_key not in observed_words:
         observed_words[word_key] = "{},{}".format(uuid.uuid4(), lemma_key)
     word_part_of_speech_counts[word_key] = word_part_of_speech_counts.get(word_key, 0) + 1
-    word_bigrams.pop(0)
-    word_bigrams.append(word_key)
-    word_bigrams_key = "{},{}".format(word_bigrams[0], word_bigrams[1])
-    word_bigram_counts[word_bigrams_key] = word_bigram_counts.get(word_bigrams_key, 0) + 1
 
 def _handle_part_of_speech(processed_part_of_speech):
     if processed_part_of_speech not in observed_parts_of_speech:

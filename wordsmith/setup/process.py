@@ -6,7 +6,7 @@ LANGUAGE = "es"
 CORPUS = ("upc-wiki-corpus", uuid.uuid4())
 
 print("reading data")
-observed_lemmas, observed_words, observed_parts_of_speech, word_bigram_counts,  part_of_speech_trigram_counts, word_part_of_speech_counts = corpus_reader.read_data()
+observed_lemmas, observed_words, observed_parts_of_speech,  part_of_speech_trigram_counts, word_part_of_speech_counts = corpus_reader.read_data()
 
 # HELPER FUNCTIONS
 def _word_data_for_word_key(word_key):
@@ -36,16 +36,6 @@ def _make_word_generator():
         lemma_id = observed_lemmas[lemma_key]
         part_of_speech_id = observed_parts_of_speech[part_of_speech]
         yield "{},{},{},{},{},{}".format(_id, LANGUAGE, CORPUS[1], part_of_speech_id, lemma_id, word_text)
-
-def _make_word_bigram_counts_generator():
-    for bigram_key in word_bigram_counts:
-        count = word_bigram_counts[bigram_key]
-        bigram_key_parts = bigram_key.split(",") # This should contain 4 parts.
-        word_key_1 = "{},{}".format(bigram_key_parts[0], bigram_key_parts[1])
-        word_key_2 = "{},{}".format(bigram_key_parts[2], bigram_key_parts[3])
-        _, _, first_token_word_id, _ = _word_data_for_word_key(word_key_1)
-        _, _, second_token_word_id, _ = _word_data_for_word_key(word_key_2)
-        yield "{},{},{},{},{},{}".format(uuid.uuid4(), LANGUAGE, CORPUS[1], first_token_word_id, second_token_word_id, count)
 
 def _make_trigram_count_generator():
     for trigram_key in part_of_speech_trigram_counts:
@@ -87,16 +77,6 @@ word_template.write_files_for_template(
     300000
 )
 
-word_bigrams_template = SQLTemplate(
-    "word_bigram_counts",
-    "_id,language,corpus_id,first_token_id,second_token_id,occurrences"
-)
-print("writing word bigram counts")
-word_bigrams_template.write_files_for_template(
-    _make_word_bigram_counts_generator,
-    300000
-)
-
 part_of_speech_trigram_template =  SQLTemplate(
     "part_of_speech_trigram_counts",
     "_id,language,corpus_id,first_token_id,second_token_id,third_token_id,occurrences"
@@ -128,8 +108,6 @@ with io.open("/out/populate_db.sql", "w", encoding="latin1") as f:
     for template in word_template.yield_sql_template():
         f.write(template)
     for template in part_of_speech_trigram_template.yield_sql_template():
-        f.write(template)
-    for template in word_bigrams_template.yield_sql_template():
         f.write(template)
     for template in word_part_of_speech_template.yield_sql_template():
         f.write(template)
