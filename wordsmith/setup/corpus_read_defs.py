@@ -3,6 +3,7 @@ from reader import Reader
 from special_tokens import StartToken
 
 START_TOKEN = StartToken()
+MINIMUM_WORD_COUNT = 10
 
 part_of_speech_trigrams = [
     START_TOKEN.get_token(),
@@ -20,9 +21,11 @@ observed_words = {
     START_TOKEN.get_word_key(): START_TOKEN.get_word_key_value()
 }
 word_part_of_speech_counts = dict()
+lemma_counts = dict()
 
 def get_data_from_read():
-    return observed_lemmas, observed_words, observed_parts_of_speech, part_of_speech_trigram_counts, word_part_of_speech_counts
+    filtered_lemmas, filtered_words, filtered_part_of_speech_counts = _filter_data(lemma_counts, observed_lemmas, observed_words, word_part_of_speech_counts)
+    return filtered_lemmas, filtered_words, observed_parts_of_speech, part_of_speech_trigram_counts, filtered_part_of_speech_counts
 
 def process_text_line(word, lemma, pos):
     if not _is_text_line_valid(word, lemma, pos):
@@ -62,6 +65,7 @@ def _handle_lemma(lemma, part_of_speech):
     lemma_key = "{},{}".format(lemma, part_of_speech_category)
     if lemma_key not in observed_lemmas:
         observed_lemmas[lemma_key] = uuid.uuid4()
+    lemma_counts[lemma_key] = lemma_counts.get(lemma_key, 0) + 1
     return lemma_key
 
 def _handle_word(word, part_of_speech, lemma_key):
@@ -128,6 +132,17 @@ def _process_part_of_speech(pos):
         print("Unknown category: {}".format(category))
         return ""
         """Return empty , but log"""
+
+def _should_filter_word(word_key, filtered_lemma_keys):
+    word_key_parts = word_key.split(",")
+    lemma_key = word_key_parts[1:]
+    return lemma_key not in filtered_lemma_keys
+
+def _filter_data(lemma_counts, observed_lemmas, observed_words, word_part_of_speech_counts):
+    filtered_lemmas = { lemma_key: lemma_id for lemma_key, lemma_id in observed_lemmas.items() if lemma_counts.get(lemma_key, 0) >= MINIMUM_WORD_COUNT }
+    filtered_words = { word_key: value for word_key, value in observed_words.items() if not _should_filter_word(word_key, filtered_lemmas) }
+    filtered_part_of_speech_counts = { word_key: count for word_key, count in word_part_of_speech_counts.items() if word_key in observed_words }
+    return filtered_lemmas, filtered_words, filtered_part_of_speech_counts
 
 corpus_reader = Reader(
     text_fn=process_text_line,

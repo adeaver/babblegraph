@@ -18,14 +18,14 @@ fi
 
 echo "Building"
 docker build -f Dockerfile.dev -t wordsmith-dev .
-docker run -v $(pwd)/data:/var/lib/postgresql/data -v $(pwd)/setup:/setup --name setup-wordsmith-dev -d wordsmith-dev
+docker run -v $(pwd)/data:/var/lib/postgresql/data -v $(pwd)/setup/out:/home/postgres/wordsmith-data --name setup-wordsmith-dev -d wordsmith-dev
 until (docker exec setup-wordsmith-dev psql -U dev -d wordsmith -c 'SELECT * FROM word_bigram_counts'); do
     echo "Waiting for container to be up"
     sleep 1;
 done;
 
 echo "Applying file"
-docker exec setup-wordsmith-dev psql -U dev -d wordsmith -a -f /setup/out/populate_db.sql
+docker exec setup-wordsmith-dev psql -U dev -d wordsmith -a -f /home/postgres/wordsmith-data/populate_db.sql
 
 echo "Stopping"
 docker stop setup-wordsmith-dev

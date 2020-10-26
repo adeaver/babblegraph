@@ -1,0 +1,35 @@
+#!/bin/bash
+set -euo pipefail
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --node-name)
+            shift;
+            NODE_NAME="$1"
+            ;;
+        --seed-hosts)
+            shift;
+            SEED_HOSTS="$1"
+            ;;
+    esac
+    shift
+done
+
+if [[ -z "$NODE_NAME" ]]; then
+    echo "No node name specified"
+    exit 1
+fi;
+
+echo "Removing old container..."
+docker stop babblegraph_elasticsearch && docker rm babblegraph_elasticsearch && true
+
+echo "Running new container..."
+docker run -d -v $(pwd)/elasticsearch/data/:/usr/share/elasticsearch/data \
+    -v $(pwd)/elasticsearch/backups:/opt/elasticsearch/backup \
+    --env-file ./env/elasticsearch.env \
+    -e node.name=$NODE_NAME \
+    -p 9200:9200 \
+    -p 9300:9300 \
+    --restart unless-stopped \
+    --name babblegraph_elasticsearch \
+    docker.elastic.co/elasticsearch/elasticsearch:7.9.2
+
