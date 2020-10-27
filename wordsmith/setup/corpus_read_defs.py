@@ -135,13 +135,13 @@ def _process_part_of_speech(pos):
 
 def _should_filter_word(word_key, filtered_lemma_keys):
     word_key_parts = word_key.split(",")
-    lemma_key = word_key_parts[1:]
+    lemma_key = ",".join(word_key_parts[1:])
     return lemma_key not in filtered_lemma_keys
 
 def _filter_data(lemma_counts, observed_lemmas, observed_words, word_part_of_speech_counts):
     filtered_lemmas = { lemma_key: lemma_id for lemma_key, lemma_id in observed_lemmas.items() if lemma_counts.get(lemma_key, 0) >= MINIMUM_WORD_COUNT }
-    filtered_words = { word_key: value for word_key, value in observed_words.items() if not _should_filter_word(word_key, filtered_lemmas) }
-    filtered_part_of_speech_counts = { word_key: count for word_key, count in word_part_of_speech_counts.items() if word_key in observed_words }
+    filtered_words = { word_key: value for word_key, value in observed_words.items() if not _should_filter_word(value, filtered_lemmas) }
+    filtered_part_of_speech_counts = { word_key: count for word_key, count in word_part_of_speech_counts.items() if word_key in filtered_words }
     return filtered_lemmas, filtered_words, filtered_part_of_speech_counts
 
 corpus_reader = Reader(
