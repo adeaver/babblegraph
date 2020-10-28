@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 
-	"babblegraph/model/documents"
 	"babblegraph/services/worker/queuedefs"
 	"babblegraph/util/database"
 	"babblegraph/util/elastic"
@@ -13,9 +12,6 @@ import (
 
 func main() {
 	if err := setupDatabases(); err != nil {
-		log.Fatal(err.Error())
-	}
-	if err := setupElasticsearchIndices(); err != nil {
 		log.Fatal(err.Error())
 	}
 	errs := make(chan error, 1)
@@ -34,13 +30,6 @@ func setupDatabases() error {
 	}
 	if err := elastic.InitializeElasticsearchClientForEnvironment(); err != nil {
 		return fmt.Errorf("Error setting up elasticsearch: %s", err.Error())
-	}
-	return nil
-}
-
-func setupElasticsearchIndices() error {
-	if err := documents.CreateDocumentIndex(); err != nil {
-		log.Println(err.Error())
 	}
 	return nil
 }
