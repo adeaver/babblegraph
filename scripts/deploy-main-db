@@ -51,7 +51,7 @@ if [[ $START_CRON ]]; then
     echo "Setting up cron..."
     mkdir -p /home/root/scripts
     cp $BABBLEGRAPH_HOME/db/scripts/remote-backup /home/root/scripts
-    cp $BABBLEGRAPH_HOME/conf/backup-cron /etc/cron.d/backup-main-db
+    cp $BABBLEGRAPH_HOME/db/conf/backup-cron /etc/cron.d/backup-main-db
     chmod 0644 /etc/cron.d/backup-main-db
     echo "Starting cron..."
     cron
