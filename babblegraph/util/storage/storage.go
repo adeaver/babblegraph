@@ -27,7 +27,7 @@ func (f FileIdentifier) Ptr() *FileIdentifier {
 
 func (f FileIdentifier) ToFileName() string {
 	folder := env.GetEnvironmentVariableOrDefault("STORAGE_LOCATION", "/tmp")
-	return fmt.Sprintf("%s/%s", f.Str())
+	return fmt.Sprintf("%s/%s", folder, f.Str())
 }
 
 func ReadFile(id FileIdentifier) ([]byte, error) {

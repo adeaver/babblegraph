@@ -23,6 +23,7 @@ RUN mkdir -p /service
 
 WORKDIR /service
 COPY --from=builder /usr/local/go/bin/email .
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 
 COPY scripts/email-cron-task ./send-emails
 COPY scripts/email-entry ./entry
