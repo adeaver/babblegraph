@@ -18,5 +18,6 @@ RUN apt-get update && \
 USER postgres
 
 COPY conf/hba.conf /etc/postgresql/12/main/pg_hba.conf
+COPY conf/postgresql.conf /etc/postgresql/12/main/postgresql.conf
 
 CMD ["/home/postgres/scripts/run"]
