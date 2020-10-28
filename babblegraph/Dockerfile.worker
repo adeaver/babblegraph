@@ -22,7 +22,8 @@ RUN mkdir -p /service && chown -R $SERVICE_USER:$SERVICE_USER /service
 
 WORKDIR /service
 COPY --chown=$SERVICE_USER:$SERVICE_USER --from=builder /usr/local/go/bin/worker .
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 
 USER $SERVICE_USER
 
-CMD ["worker"]
+CMD ["./worker"]
