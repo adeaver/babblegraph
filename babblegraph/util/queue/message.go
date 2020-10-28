@@ -42,6 +42,6 @@ func getMostRecentMessageForQueue(tx *sqlx.Tx, topicName string) (*dbMessage, er
 }
 
 func clearMessage(tx *sqlx.Tx, messageID MessageID) error {
-	_, err := tx.Exec("UPDATE queue_messages SET is_enqueued=FALSE WHERE _id=$1", messageID)
+	_, err := tx.Exec("DELETE FROM queue_messages WHERE _id=$1", messageID)
 	return err
 }
