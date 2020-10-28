@@ -18,7 +18,7 @@ docker run -d -v $(pwd)/wordsmith/data:/var/lib/postgresql/data \
     --env-file ./env/wordsmith-db.env \
     --restart unless-stopped \
     --name babblegraph_wordsmith_db \
-    -p 5432:5432 \
+    -p 5433:5432 \
     babblegraph.com/wordsmith-db:$(git rev-parse --short HEAD)
 
 echo "Setting environment"
