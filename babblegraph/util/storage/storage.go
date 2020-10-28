@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"babblegraph/util/env"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -25,7 +26,8 @@ func (f FileIdentifier) Ptr() *FileIdentifier {
 }
 
 func (f FileIdentifier) ToFileName() string {
-	return fmt.Sprintf("/tmp/%s", f.Str())
+	folder := env.GetEnvironmentVariableOrDefault("STORAGE_LOCATION", "/tmp")
+	return fmt.Sprintf("%s/%s", f.Str())
 }
 
 func ReadFile(id FileIdentifier) ([]byte, error) {
