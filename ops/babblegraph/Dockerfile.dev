@@ -1,0 +1,6 @@
+FROM golang:1.14.9-alpine3.12
+
+WORKDIR /usr/local/go/src/babblegraph
+
+COPY go.mod .
+CMD [ "go", "run", "main.go" ]
