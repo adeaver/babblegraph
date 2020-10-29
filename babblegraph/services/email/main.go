@@ -9,9 +9,10 @@ import (
 	"babblegraph/wordsmith"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/robfig/cron"
+	cron "github.com/robfig/cron/v3"
 )
 
 func main() {
@@ -19,8 +20,13 @@ func main() {
 		log.Fatal(err.Error())
 	}
 	errs := make(chan error, 1)
-	c := cron.New()
-	c.AddFunc("34 14 * * *", func() {
+	usEastern, err := time.LoadLocation("America/New_York")
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	c := cron.New(cron.WithLocation(usEastern))
+	c.AddFunc("30 5 * * *", func() {
+		log.Println("Starting email job...")
 		var allUserEmailInfo []userprefs.UserEmailInfo
 		if err := database.WithTx(func(tx *sqlx.Tx) error {
 			var err error
@@ -48,11 +54,14 @@ func main() {
 		return
 	})
 	c.Start()
-	err := <-errs
+	log.Println(c.Entries())
+	err = <-errs
+	log.Println("Error detected")
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 	c.Stop()
+	log.Println("Ending email service")
 }
 
 func initializeDatabases() error {
