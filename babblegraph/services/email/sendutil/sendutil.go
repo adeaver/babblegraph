@@ -6,37 +6,34 @@ import (
 	"fmt"
 	"html/template"
 	"log"
-	"net/smtp"
 	"strings"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/ses"
 )
 
-var creds *emailCredentials
-
-type emailCredentials struct {
-	from           string
-	password       string
-	smtpServerHost string
-	smtpServerPort string
-}
-
-func (c emailCredentials) GetSMTPServerWithPort() string {
-	return fmt.Sprintf("%s:%s", c.smtpServerHost, c.smtpServerPort)
-}
+var sentFromEmail string
 
 func InitializeEmailClient() error {
-	creds = &emailCredentials{
-		from:           env.MustEnvironmentVariable("EMAIL_ADDRESS"),
-		password:       env.MustEnvironmentVariable("EMAIL_PASSWORD"),
-		smtpServerHost: env.GetEnvironmentVariableOrDefault("SMTP_SERVER_HOST", "smtp.gmail.com"),
-		smtpServerPort: env.GetEnvironmentVariableOrDefault("SMTP_SERVER_PORT", "587"),
-	}
+	sentFromEmail = env.MustEnvironmentVariable("EMAIL_ADDRESS")
 	return nil
 }
 
 func SendEmailsToUser(emailAddressesToDocuments map[string][]documents.Document) error {
-	if creds == nil {
-		panic("email client not configured")
+	awsAccessKey := env.MustEnvironmentVariable("AWS_SES_ACCESS_KEY")
+	awsSecretAccessKey := env.MustEnvironmentVariable("AWS_SES_SECRET_KEY")
+	sess, err := session.NewSession(&aws.Config{
+		Region:      aws.String("us-east-1"),
+		Credentials: credentials.NewStaticCredentials(awsAccessKey, awsSecretAccessKey, ""),
+	})
+	if err != nil {
+		return err
 	}
+	svc := ses.New(sess)
+
+	// Assemble the email.
 	for emailAddress, docs := range emailAddressesToDocuments {
 		if len(docs) == 0 {
 			log.Println(fmt.Sprintf("No docs for user %s, skipping", emailAddress))
@@ -45,8 +42,30 @@ func SendEmailsToUser(emailAddressesToDocuments map[string][]documents.Document)
 		if err != nil {
 			return nil
 		}
-		smtpAuth := smtp.PlainAuth("", creds.from, creds.password, creds.smtpServerHost)
-		if err := smtp.SendMail(creds.GetSMTPServerWithPort(), smtpAuth, creds.from, []string{emailAddress}, []byte(*body)); err != nil {
+		input := &ses.SendEmailInput{
+			Destination: &ses.Destination{
+				CcAddresses: []*string{},
+				ToAddresses: []*string{
+					aws.String(emailAddress),
+				},
+			},
+			Message: &ses.Message{
+				Body: &ses.Body{
+					Text: &ses.Content{
+						Charset: aws.String("UTF-8"),
+						Data:    aws.String(*body),
+					},
+				},
+				Subject: &ses.Content{
+					Charset: aws.String("UTF-8"),
+					Data:    aws.String("Babblegraph Daily Links"),
+				},
+			},
+			Source: aws.String(sentFromEmail),
+		}
+
+		// Attempt to send the email.
+		if _, err := svc.SendEmail(input); err != nil {
 			return err
 		}
 		log.Println(fmt.Sprintf("Sent an email to %s", emailAddress))
@@ -54,16 +73,11 @@ func SendEmailsToUser(emailAddressesToDocuments map[string][]documents.Document)
 	return nil
 }
 
-var emailTemplate = `To: {{.Recipient}}
-Subject: {{.Subject}}
-
-{{range $val := .URLs}}
-{{$val}}{{end}}`
+var emailTemplate = `{{range $val := .URLs}}{{$val}}
+{{end}}`
 
 type emailBodyInfo struct {
-	Recipient string
-	Subject   string
-	URLs      []string
+	URLs []string
 }
 
 func makeEmailBody(recipient string, docs []documents.Document) (*string, error) {
@@ -75,9 +89,7 @@ func makeEmailBody(recipient string, docs []documents.Document) (*string, error)
 	log.Println(fmt.Sprintf("Sending the following URLS %+v to %s", urls, recipient))
 	var b strings.Builder
 	if err := bodyTemplate.Execute(&b, emailBodyInfo{
-		Recipient: recipient,
-		Subject:   "Babblegraph Daily Links",
-		URLs:      urls,
+		URLs: urls,
 	}); err != nil {
 		return nil, err
 	}
