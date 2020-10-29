@@ -11,34 +11,48 @@ import (
 	"log"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/robfig/cron"
 )
 
 func main() {
 	if err := initializeDatabases(); err != nil {
 		log.Fatal(err.Error())
 	}
-	var allUserEmailInfo []userprefs.UserEmailInfo
-	if err := database.WithTx(func(tx *sqlx.Tx) error {
-		var err error
-		allUserEmailInfo, err = userprefs.GetActiveUserEmailInfo(tx)
-		return err
-	}); err != nil {
-		log.Fatal(fmt.Sprintf("Error getting email info %s", err.Error()))
-	}
-	log.Println(fmt.Sprintf("Sending emails to %d address", len(allUserEmailInfo)))
-	if err := database.WithTx(func(tx *sqlx.Tx) error {
-		emailAddressesToDocuments, err := userquery.GetDocumentsForUser(tx, allUserEmailInfo)
-		if err != nil {
-			return fmt.Errorf("Error getting documents for users %s", err.Error())
+	errs := make(chan error, 1)
+	c := cron.New()
+	c.AddFunc("34 14 * * *", func() {
+		var allUserEmailInfo []userprefs.UserEmailInfo
+		if err := database.WithTx(func(tx *sqlx.Tx) error {
+			var err error
+			allUserEmailInfo, err = userprefs.GetActiveUserEmailInfo(tx)
+			return err
+		}); err != nil {
+			errs <- err
+			return
 		}
-		err = sendutil.SendEmailsToUser(emailAddressesToDocuments)
-		if err != nil {
-			return fmt.Errorf("Error sending emails to users %s", err.Error())
+		log.Println(fmt.Sprintf("Sending emails to %d address", len(allUserEmailInfo)))
+		if err := database.WithTx(func(tx *sqlx.Tx) error {
+			emailAddressesToDocuments, err := userquery.GetDocumentsForUser(tx, allUserEmailInfo)
+			if err != nil {
+				return fmt.Errorf("Error getting documents for users %s", err.Error())
+			}
+			err = sendutil.SendEmailsToUser(emailAddressesToDocuments)
+			if err != nil {
+				return fmt.Errorf("Error sending emails to users %s", err.Error())
+			}
+			return err
+		}); err != nil {
+			errs <- err
+			return
 		}
-		return err
-	}); err != nil {
+		return
+	})
+	c.Start()
+	err := <-errs
+	if err != nil {
 		log.Fatal(err.Error())
 	}
+	c.Stop()
 }
 
 func initializeDatabases() error {

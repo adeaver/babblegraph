@@ -12,28 +12,18 @@ RUN go mod verify
 
 RUN go install -v babblegraph/services/email
 
-FROM ubuntu:18.04
+FROM debian:buster
 
-RUN apt-get update && \
-    apt-get -y upgrade && \
-    apt-get install -y cron && \
-    apt-get clean
+ENV SERVICE_USER somebody
+ENV SERVICE_HOME /usr/local/go/src/babblegraph
 
-RUN mkdir -p /service
+RUN groupadd $SERVICE_USER && useradd -m -g $SERVICE_USER -l $SERVICE_USER
+RUN mkdir -p /service && chown -R $SERVICE_USER:$SERVICE_USER /service
 
 WORKDIR /service
-COPY --from=builder /usr/local/go/bin/email .
+COPY --chown=$SERVICE_USER:$SERVICE_USER --from=builder /usr/local/go/bin/email .
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 
-COPY scripts/email-cron-task ./send-emails
-COPY scripts/email-entry ./entry
+USER $SERVICE_USER
 
-RUN chmod 0744 /service/send-emails
-
-COPY conf/email-cron /etc/cron.d/email-task
-RUN chmod 0644 /etc/cron.d/email-task
-
-RUN crontab /etc/cron.d/email-task
-RUN touch /var/log/cron.log
-
-CMD ["./entry"]
+CMD ["./email"]

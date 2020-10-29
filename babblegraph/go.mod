@@ -9,5 +9,7 @@ require (
 	github.com/google/uuid v1.1.2
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/lib/pq v1.8.0
+	github.com/robfig/cron v1.2.0 // indirect
+	github.com/robfig/cron/v3 v3.0.0 // indirect
 	golang.org/x/net v0.0.0-20200925080053-05aa5d4ee321
 )
