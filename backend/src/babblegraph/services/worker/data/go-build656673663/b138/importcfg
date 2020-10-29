@@ -1,0 +1,4 @@
+# import config
+packagefile babblegraph/util/language/unaccent=/tmp/go-build656673663/b139/_pkg_.a
+packagefile babblegraph/wordsmith=/tmp/go-build656673663/b120/_pkg_.a
+packagefile fmt=/usr/local/go/pkg/linux_amd64/fmt.a

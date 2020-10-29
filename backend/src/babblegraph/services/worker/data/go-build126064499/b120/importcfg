@@ -1,0 +1,3 @@
+# import config
+packagefile babblegraph/util/env=/tmp/go-build126064499/b004/_pkg_.a
+packagefile fmt=/usr/local/go/pkg/linux_amd64/fmt.a

@@ -1,0 +1,3 @@
+# import config
+packagefile encoding/json=/usr/local/go/pkg/linux_amd64/encoding/json.a
+packagefile math=/usr/local/go/pkg/linux_amd64/math.a

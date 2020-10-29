@@ -1,0 +1,22 @@
+# import config
+packagefile bufio=/usr/local/go/pkg/linux_amd64/bufio.a
+packagefile bytes=/usr/local/go/pkg/linux_amd64/bytes.a
+packagefile crypto/x509=/usr/local/go/pkg/linux_amd64/crypto/x509.a
+packagefile encoding/json=/usr/local/go/pkg/linux_amd64/encoding/json.a
+packagefile errors=/usr/local/go/pkg/linux_amd64/errors.a
+packagefile fmt=/usr/local/go/pkg/linux_amd64/fmt.a
+packagefile github.com/elastic/go-elasticsearch/v7/internal/version=/tmp/go-build126064499/b114/_pkg_.a
+packagefile io=/usr/local/go/pkg/linux_amd64/io.a
+packagefile io/ioutil=/usr/local/go/pkg/linux_amd64/io/ioutil.a
+packagefile math=/usr/local/go/pkg/linux_amd64/math.a
+packagefile net=/usr/local/go/pkg/linux_amd64/net.a
+packagefile net/http=/usr/local/go/pkg/linux_amd64/net/http.a
+packagefile net/url=/usr/local/go/pkg/linux_amd64/net/url.a
+packagefile os=/usr/local/go/pkg/linux_amd64/os.a
+packagefile regexp=/usr/local/go/pkg/linux_amd64/regexp.a
+packagefile runtime=/usr/local/go/pkg/linux_amd64/runtime.a
+packagefile sort=/usr/local/go/pkg/linux_amd64/sort.a
+packagefile strconv=/usr/local/go/pkg/linux_amd64/strconv.a
+packagefile strings=/usr/local/go/pkg/linux_amd64/strings.a
+packagefile sync=/usr/local/go/pkg/linux_amd64/sync.a
+packagefile time=/usr/local/go/pkg/linux_amd64/time.a

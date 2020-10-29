@@ -1,0 +1,12 @@
+# import config
+packagefile encoding/base64=/usr/local/go/pkg/linux_amd64/encoding/base64.a
+packagefile errors=/usr/local/go/pkg/linux_amd64/errors.a
+packagefile fmt=/usr/local/go/pkg/linux_amd64/fmt.a
+packagefile github.com/elastic/go-elasticsearch/v7/esapi=/tmp/go-build126064499/b113/_pkg_.a
+packagefile github.com/elastic/go-elasticsearch/v7/estransport=/tmp/go-build126064499/b115/_pkg_.a
+packagefile github.com/elastic/go-elasticsearch/v7/internal/version=/tmp/go-build126064499/b114/_pkg_.a
+packagefile net/http=/usr/local/go/pkg/linux_amd64/net/http.a
+packagefile net/url=/usr/local/go/pkg/linux_amd64/net/url.a
+packagefile os=/usr/local/go/pkg/linux_amd64/os.a
+packagefile strings=/usr/local/go/pkg/linux_amd64/strings.a
+packagefile time=/usr/local/go/pkg/linux_amd64/time.a

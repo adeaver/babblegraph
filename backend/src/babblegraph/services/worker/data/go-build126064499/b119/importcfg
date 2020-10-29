@@ -1,0 +1,8 @@
+# import config
+packagefile babblegraph/util/env=/tmp/go-build126064499/b004/_pkg_.a
+packagefile babblegraph/util/postgres=/tmp/go-build126064499/b120/_pkg_.a
+packagefile fmt=/usr/local/go/pkg/linux_amd64/fmt.a
+packagefile github.com/jmoiron/sqlx=/tmp/go-build126064499/b121/_pkg_.a
+packagefile log=/usr/local/go/pkg/linux_amd64/log.a
+packagefile math/rand=/usr/local/go/pkg/linux_amd64/math/rand.a
+packagefile time=/usr/local/go/pkg/linux_amd64/time.a

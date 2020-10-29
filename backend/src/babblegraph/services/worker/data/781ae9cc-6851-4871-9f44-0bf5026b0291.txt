@@ -1,0 +1,333 @@
+
+      
+Jump to navigation
+
+    
+
+  
+  
+
+
+              
+
+                
+
+              
+
+                
+
+              
+
+                
+Who We Are
+Our Team
+
+
+Board
+
+
+Members
+
+
+About NAI
+
+
+NAI in the News
+
+
+Careers
+
+
+
+
+About Online Advertising
+What is it?
+
+
+How does it work?
+
+
+How does it benefit me?
+
+
+What are my options?
+
+
+FAQs
+
+
+Glossary
+
+
+
+
+Code & Enforcement
+Code
+
+
+Enforcement
+
+
+
+
+Blog
+
+
+Public Policy
+
+
+Contact & Support
+Report a Problem
+
+
+
+
+Join NAI
+
+
+
+          
+
+        
+
+
+        
+      
+
+
+      
+
+      
+
+
+
+
+    
+
+
+
+    
+Back to top
+
+
+
+            
+Understanding
+You are here
+Home
+ › 
+Understanding Online Advertising
+ › 
+                                    
+
+            
+                        
+What Are My Options?
+
+
+Tailored Advertising helps support sites you visit to provide free content, like news and sports scores, and apps you use to provide free or cheap versions. At the same time, Tailored Advertising helps advertisers reach the right people for their products and services.
+
+
+You, as a consumer, have several choices to control the collection and use of information about your web browsing activities when NAI members use cookies.
+
+
+Your Options
+
+
+From browser controls to add-on utilities to opt-out tools, when sites use cookies, you have control over whether these sites remember what’s in your shopping cart, where you need local weather information, etc.
+
+
+Browser Controls:
+
+
+It’s likely that your web browser has built-in tools to control cookies. Cookies are used for many purposes, including for Interest-Based Advertising. Below are some of the most popular browsers and information on how to find out more about the controls they offer, including deleting cookies and other site data. In general, these controls are likely to be found in the settings.
+
+
+
+
+Chrome 
+(desktop)
+ 
+(mobile)
+
+
+Safari 
+(desktop)
+ 
+(mobile)
+
+
+Internet Explorer
+ 
+(desktop)
+ 
+(mobile)
+
+
+Firefox 
+(desktop)
+ 
+(Android)
+
+
+Android Browser: Click on top right corner of the app (labelled with “More” or three dots) -> Settings -> Privacy
+
+
+Opera 
+(desktop and mobile)
+
+
+Silk 
+(mobile)
+
+
+
+
+Mobile Advertising ID Controls:
+
+
+Most modern mobile devices (iOS 13, Android 9 Pie, and Windows 10 and above) provide advertising identifiers. These identifiers have different names depending on the brand of mobile device. For example, they are called Google Advertising ID (GAID) on Android devices and on iOS, they are called Identifier for Advertisers (IDFA).
+
+
+These operating systems let you see your advertising identifier in the settings of your mobile device, and you control how it is used. The NAI does not operate or maintain any of these controls. The menus, features, or functionality may change at the discretion of mobile operating systems. Opting out through this method is likely to only affect Cross-App Advertising, but not the interest-based advertising based on your web activity. The privacy settings for your web and browser activities are independent and usually require you to use the controls in your browser. For instructions on accessing these controls, which include options to change your identifier and opt out of Cross-App Advertising, and to learn more about Mobile Device Opt-Outs please go to the 
+NAI Opt-Out Page
+. 
+
+
+Opt-Out Tools:
+
+
+The NAI and the Digital Advertising Alliance (DAA) offer opt-out tools to assist you in managing your choices for participating companies that use cookies for Interest-Based Advertising and Cross-App Advertising. For more information about these tools please visit: 
+
+
+
+
+
+
+NAI Opt-Out Page
+ (web browser only)
+
+
+DAA Opt-Out Page
+ (web browser only)
+
+
+AppChoices
+ (apps only)
+
+
+
+
+
+
+Add-ons:
+
+
+Some browser extensions also offer additional options to manage your ad choices. You can see some of these below.
+
+
+
+
+
+
+
+
+Firefox
+ 
+
+
+Chrome
+
+
+
+
+
+
+
+
+Why am I seeing this icon?
+
+
+This is the 
+AdChoices Icon
+ or "Advertising Option Icon." The AdChoices Icon on a webpage or near an online ad lets you know that information may be used to figure out your interests to improve the ads you see. By clicking on the icon you can learn more about how the ad may have been delivered to you and your choices. 
+AdChoices Icon
+.
+
+
+What is it?
+
+
+How does it work?
+
+
+How does it benefit me?
+
+
+What are my options?
+
+
+FAQs
+
+
+Glossary
+
+
+
+
+
+          
+
+        
+
+
+      
+
+    
+
+
+  
+
+
+
+
+
+
+Main menu
+Opt Out
+
+
+Mobile Opt Out
+
+
+Privacy
+
+
+Terms
+
+
+Members Only Login
+
+
+
+
+        
+© 2020 Network Advertising Initiative. All Rights Reserved.
+
+
+
+
+  
+
+
+    
+
+
+  
+
+
+
+
+
+  
+

@@ -1,0 +1,21 @@
+# import config
+packagefile babblegraph/model/documents=/tmp/go-build881224815/b003/_pkg_.a
+packagefile babblegraph/model/htmlpages=/tmp/go-build881224815/b127/_pkg_.a
+packagefile babblegraph/model/links=/tmp/go-build881224815/b128/_pkg_.a
+packagefile babblegraph/services/worker/htmlfetch=/tmp/go-build881224815/b129/_pkg_.a
+packagefile babblegraph/services/worker/htmlparse=/tmp/go-build881224815/b131/_pkg_.a
+packagefile babblegraph/services/worker/lemmatize=/tmp/go-build881224815/b134/_pkg_.a
+packagefile babblegraph/services/worker/linkhandler=/tmp/go-build881224815/b135/_pkg_.a
+packagefile babblegraph/services/worker/normalizetext=/tmp/go-build881224815/b136/_pkg_.a
+packagefile babblegraph/services/worker/readability=/tmp/go-build881224815/b137/_pkg_.a
+packagefile babblegraph/util/database=/tmp/go-build881224815/b141/_pkg_.a
+packagefile babblegraph/util/math/decimal=/tmp/go-build881224815/b140/_pkg_.a
+packagefile babblegraph/util/queue=/tmp/go-build881224815/b146/_pkg_.a
+packagefile babblegraph/util/storage=/tmp/go-build881224815/b130/_pkg_.a
+packagefile babblegraph/wordsmith=/tmp/go-build881224815/b120/_pkg_.a
+packagefile encoding/json=/usr/local/go/pkg/linux_amd64/encoding/json.a
+packagefile fmt=/usr/local/go/pkg/linux_amd64/fmt.a
+packagefile github.com/jmoiron/sqlx=/tmp/go-build881224815/b122/_pkg_.a
+packagefile log=/usr/local/go/pkg/linux_amd64/log.a
+packagefile sync=/usr/local/go/pkg/linux_amd64/sync.a
+packagefile time=/usr/local/go/pkg/linux_amd64/time.a
