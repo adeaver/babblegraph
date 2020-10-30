@@ -1,9 +1,0 @@
-# import config
-packagefile babblegraph/util/env=/tmp/go-build881224815/b005/_pkg_.a
-packagefile context=/usr/local/go/pkg/linux_amd64/context.a
-packagefile encoding/json=/usr/local/go/pkg/linux_amd64/encoding/json.a
-packagefile fmt=/usr/local/go/pkg/linux_amd64/fmt.a
-packagefile github.com/elastic/go-elasticsearch/esapi=/tmp/go-build881224815/b044/_pkg_.a
-packagefile github.com/elastic/go-elasticsearch/v7=/tmp/go-build881224815/b113/_pkg_.a
-packagefile log=/usr/local/go/pkg/linux_amd64/log.a
-packagefile strings=/usr/local/go/pkg/linux_amd64/strings.a

@@ -1,6 +1,0 @@
-# import config
-packagefile babblegraph/util/storage=/tmp/go-build126064499/b130/_pkg_.a
-packagefile fmt=/usr/local/go/pkg/linux_amd64/fmt.a
-packagefile golang.org/x/net/html=/tmp/go-build126064499/b132/_pkg_.a
-packagefile log=/usr/local/go/pkg/linux_amd64/log.a
-packagefile strings=/usr/local/go/pkg/linux_amd64/strings.a

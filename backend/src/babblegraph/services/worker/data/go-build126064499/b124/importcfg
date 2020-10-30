@@ -1,5 +1,0 @@
-# import config
-packagefile reflect=/usr/local/go/pkg/linux_amd64/reflect.a
-packagefile runtime=/usr/local/go/pkg/linux_amd64/runtime.a
-packagefile strings=/usr/local/go/pkg/linux_amd64/strings.a
-packagefile sync=/usr/local/go/pkg/linux_amd64/sync.a

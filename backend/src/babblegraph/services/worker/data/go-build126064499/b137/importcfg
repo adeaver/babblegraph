@@ -1,6 +1,0 @@
-# import config
-packagefile babblegraph/util/language/syllable=/tmp/go-build126064499/b138/_pkg_.a
-packagefile babblegraph/util/math/decimal=/tmp/go-build126064499/b140/_pkg_.a
-packagefile babblegraph/util/storage=/tmp/go-build126064499/b130/_pkg_.a
-packagefile babblegraph/wordsmith=/tmp/go-build126064499/b119/_pkg_.a
-packagefile strings=/usr/local/go/pkg/linux_amd64/strings.a

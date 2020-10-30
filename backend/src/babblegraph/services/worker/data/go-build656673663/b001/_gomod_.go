@@ -1,5 +1,0 @@
-package main
-import _ "unsafe"
-//go:linkname __debug_modinfo__ runtime.modinfo
-var __debug_modinfo__ = "0w\xaf\f\x92t\b\x02A\xe1\xc1\a\xe6\xd6\x18\xe6path\tcommand-line-arguments\nmod\tbabblegraph.com/main\t(devel)\t\ndep\tgithub.com/elastic/go-elasticsearch\tv0.0.0\th1:Pd5fqOuBxKxv83b0+xOAJDAkziWYwFinWnBO0y+TZaA=\ndep\tgithub.com/elastic/go-elasticsearch/v7\tv7.9.0\th1:UEau+a1MiiE/F+UrDj60kqIHFWdzU1M2y/YtBU2NC2M=\ndep\tgithub.com/google/uuid\tv1.1.2\th1:EVhdT+1Kseyi1/pUmXKaFxYsDNy9RQYkMWRH68J/W7Y=\ndep\tgithub.com/jmoiron/sqlx\tv1.2.0\th1:41Ip0zITnmWNR/vHV+S4m+VoUivnWY5E4OJfLZjCJMA=\ndep\tgithub.com/lib/pq\tv1.8.0\th1:9xohqzkUwzR4Ga4ivdTcawVS89YSDVxXMa3xJX3cGzg=\ndep\tgolang.org/x/net\tv0.0.0-20200925080053-05aa5d4ee321\th1:lleNcKRbcaC8MqgLwghIkzZ2JBQAb7QQ9MiwRt1BisA=\n\xf92C1\x86\x18 r\x00\x82B\x10A\x16\xd8\xf2"
-	

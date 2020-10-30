@@ -1,6 +1,0 @@
-# import config
-packagefile fmt=/usr/local/go/pkg/linux_amd64/fmt.a
-packagefile github.com/jmoiron/sqlx=/tmp/go-build656673663/b122/_pkg_.a
-packagefile math=/usr/local/go/pkg/linux_amd64/math.a
-packagefile net/url=/usr/local/go/pkg/linux_amd64/net/url.a
-packagefile strings=/usr/local/go/pkg/linux_amd64/strings.a

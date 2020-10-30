@@ -1,6 +1,0 @@
-# import config
-packagefile database/sql/driver=/usr/local/go/pkg/linux_amd64/database/sql/driver.a
-packagefile encoding/json=/usr/local/go/pkg/linux_amd64/encoding/json.a
-packagefile fmt=/usr/local/go/pkg/linux_amd64/fmt.a
-packagefile github.com/jmoiron/sqlx=/tmp/go-build881224815/b122/_pkg_.a
-packagefile log=/usr/local/go/pkg/linux_amd64/log.a

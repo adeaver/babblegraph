@@ -1,8 +1,0 @@
-# import config
-packagefile babblegraph/util/elastic=/tmp/go-build656673663/b004/_pkg_.a
-packagefile babblegraph/util/elastic/esquery=/tmp/go-build656673663/b119/_pkg_.a
-packagefile babblegraph/wordsmith=/tmp/go-build656673663/b120/_pkg_.a
-packagefile encoding/json=/usr/local/go/pkg/linux_amd64/encoding/json.a
-packagefile fmt=/usr/local/go/pkg/linux_amd64/fmt.a
-packagefile github.com/google/uuid=/tmp/go-build656673663/b126/_pkg_.a
-packagefile strings=/usr/local/go/pkg/linux_amd64/strings.a

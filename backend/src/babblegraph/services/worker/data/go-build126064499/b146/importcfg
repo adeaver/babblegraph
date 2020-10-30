@@ -1,8 +1,0 @@
-# import config
-packagefile babblegraph/util/database=/tmp/go-build126064499/b141/_pkg_.a
-packagefile database/sql=/usr/local/go/pkg/linux_amd64/database/sql.a
-packagefile encoding/json=/usr/local/go/pkg/linux_amd64/encoding/json.a
-packagefile fmt=/usr/local/go/pkg/linux_amd64/fmt.a
-packagefile github.com/jmoiron/sqlx=/tmp/go-build126064499/b121/_pkg_.a
-packagefile log=/usr/local/go/pkg/linux_amd64/log.a
-packagefile time=/usr/local/go/pkg/linux_amd64/time.a
