@@ -3,18 +3,18 @@ set -euo pipefail
 
 echo "Building..."
 docker build \
-    -f wordsmith/Dockerfile \
+    -f ./deploy/wordsmith/Dockerfile \
     -t babblegraph.com/wordsmith-db:$(git rev-parse --short HEAD) \
-    ./wordsmith
+    ./deploy/wordsmith
 
 echo "Removing old container..."
 docker stop babblegraph_wordsmith_db && docker rm babblegraph_wordsmith_db && true
 
 echo "Running new container..."
-docker run -d -v $(pwd)/wordsmith/data:/var/lib/postgresql/data \
-    -v $(pwd)/wordsmith/scripts:/home/postgres/scripts \
-    -v $(pwd)/wordsmith/migrations:/home/postgres/migrations \
-    -v $(pwd)/wordsmith/setup/out:/home/postgres/wordsmith-data \
+docker run -d -v $(pwd)/deploy/wordsmith/data:/var/lib/postgresql/data \
+    -v $(pwd)/deploy/wordsmith/scripts:/home/postgres/scripts \
+    -v $(pwd)/deploy/wordsmith/migrations:/home/postgres/migrations \
+    -v $(pwd)/ops/wordsmith/setup/out:/home/postgres/wordsmith-data \
     --env-file ./env/wordsmith-db.env \
     --restart unless-stopped \
     --name babblegraph_wordsmith_db \

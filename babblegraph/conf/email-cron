@@ -1,2 +1,0 @@
-* 5 * * * /service/send-emails >> /var/log/cron.log
-

@@ -13,18 +13,18 @@ done
 
 echo "Building..."
 docker build \
-    -f db/Dockerfile \
+    -f deploy/main-db/Dockerfile \
     -t babblegraph.com/main-db:$(git rev-parse --short HEAD) \
-    ./db
+    ./deploy/main-db
 
 echo "Removing old container..."
 docker stop babblegraph_main_db && docker rm babblegraph_main_db && true
 
 echo "Running new container..."
-docker run -d -v $(pwd)/db/data:/var/lib/postgresql/data \
-    -v $(pwd)/db/scripts:/home/postgres/scripts \
-    -v $(pwd)/db/migrations:/home/postgres/migrations \
-    -v $(pwd)/db/backups:/home/postgres/backups \
+docker run -d -v $(pwd)/deploy/main-db/data:/var/lib/postgresql/data \
+    -v $(pwd)/deploy/main-db/scripts:/home/postgres/scripts \
+    -v $(pwd)/deploy/main-db/migrations:/home/postgres/migrations \
+    -v $(pwd)/deploy/main-db/backups:/home/postgres/backups \
     --env-file ./env/main-db.env \
     --restart unless-stopped \
     --name babblegraph_main_db \
@@ -50,8 +50,8 @@ if [[ $START_CRON ]]; then
     fi
     echo "Setting up cron..."
     mkdir -p /home/root/scripts
-    cp $BABBLEGRAPH_HOME/db/scripts/remote-backup /home/root/scripts
-    cp $BABBLEGRAPH_HOME/db/conf/backup-cron /etc/cron.d/backup-main-db
+    cp $BABBLEGRAPH_HOME/main-db/deploy/scripts/remote-backup /home/root/scripts
+    cp $BABBLEGRAPH_HOME/main-db/conf/backup-cron /etc/cron.d/backup-main-db
     chmod 0644 /etc/cron.d/backup-main-db
     echo "Starting cron..."
     cron

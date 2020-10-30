@@ -1,6 +1,0 @@
-#!/bin/bash
-
-# This is a wrapper around the email binary file so that the cron runs
-echo "Running email task"
-/service/email
-echo "Finished email task"
