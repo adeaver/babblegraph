@@ -25,6 +25,6 @@ fi;
 echo "FROM DIRECTORY \"${MIGRATIONS_HOME}\""
 for f in $MIGRATIONS
 do
-    psql -U $DB_USER -d $DB_NAME -a -f $f
+    PGPASSWORD=$PG_PASSWORD psql -U $DB_USER -d $DB_NAME -a -f $f
 done
 exit
