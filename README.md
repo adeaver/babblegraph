@@ -4,6 +4,8 @@ The main repository for Babblegraph
 
 ## To Run System Locally
 
+Get AWS SES access key and token, set them in your local environment as `$BABBLEGRAPH_SES_ACCESS_KEY` and `BABBLEGRAPH_SES_ACCESS_SECRET` respectively
+
 Start local databases:
 `./scripts/run-local-dbs`
 
@@ -35,3 +37,6 @@ Start local shell with configured GOPATH:
 
 - Apply migrations to local databases
 `docker exec -it ops_db_1 /home/postgres/scripts/apply-migrations --db-user dev --db-name babblegraph`
+
+- Insert user into local database
+`docker exec -it ops_db_1 /home/postgres/scripts/insert-user --db-name babblegraph --db-user dev --email`
