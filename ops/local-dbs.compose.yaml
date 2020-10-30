@@ -2,18 +2,18 @@ version: '3'
 services:
   db:
     build:
-      dockerfile: Dockerfile.dev
-      context: ./main-db
+      dockerfile: ../../ops/main-db/Dockerfile.dev
+      context: ../deploy/main-db
     volumes:
-      - ./main-db/data:/var/lib/postgresql/data
+      - ../deploy/main-db/data:/var/lib/postgresql/data
     ports:
       - 5432:5432
   wordsmith:
     build:
-      dockerfile: Dockerfile.dev
-      context: ./wordsmith
+      dockerfile: ../../ops/wordsmith/Dockerfile.dev
+      context: ../deploy/wordsmith
     volumes:
-      - ./wordsmith/data:/var/lib/postgresql/data
+      - ../deploy/wordsmith/data:/var/lib/postgresql/data
     ports:
       - 5433:5432
   es01:
@@ -32,7 +32,7 @@ services:
         soft: -1
         hard: -1
     volumes:
-        - ./elasticsearch/data01:/usr/share/elasticsearch/data
+        - ./ops/elasticsearch/data01:/usr/share/elasticsearch/data
     ports:
         - 9200:9200
   es02:
@@ -47,7 +47,7 @@ services:
       - XPACK_SECURITY_ENABLED="true"
       - ELASTIC_PASSWORD=babblegraph-dev
     volumes:
-        - ./elasticsearch/data02:/usr/share/elasticsearch/data
+        - ./ops/elasticsearch/data02:/usr/share/elasticsearch/data
     ulimits:
       memlock:
         soft: -1

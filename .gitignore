@@ -2,3 +2,5 @@ backend/src/babblegraph/services/worker/data/**
 ops/wordsmith/setup/out/**
 env/**
 **.DS_Store
+deploy/main-db/data/**
+deploy/wordsmith/data/**
