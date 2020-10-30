@@ -24,3 +24,14 @@ Start local shell with configured GOPATH:
 - `deploy`: configurations for all deployable services. each service gets its own directory
 - `ops`: configurations for local environment
 - `scripts`: all useful bash scripts for working with babblegraph
+
+## Other helpful commands
+
+- Restarting the worker process locally
+`docker restart babblegraph_worker_1`
+
+- Stopping local databases
+`docker-compose -f ops/local-dbs.compose.yaml down`
+
+- Apply migrations to local databases
+`docker exec -it ops_db_1 /home/postgres/scripts/apply-migrations --db-user dev --db-name babblegraph`

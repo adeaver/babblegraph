@@ -6,6 +6,7 @@ import (
 	"babblegraph/services/email/userquery"
 	"babblegraph/util/database"
 	"babblegraph/util/elastic"
+	"babblegraph/util/env"
 	"babblegraph/wordsmith"
 	"fmt"
 	"log"
@@ -20,12 +21,30 @@ func main() {
 		log.Fatal(err.Error())
 	}
 	errs := make(chan error, 1)
-	usEastern, err := time.LoadLocation("America/New_York")
+	switch env.GetEnvironmentVariableOrDefault("ENV", "prod") {
+	case "prod":
+		usEastern, err := time.LoadLocation("America/New_York")
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+		c := cron.New(cron.WithLocation(usEastern))
+		c.AddFunc("30 5 * * *", makeEmailJob(errs))
+		c.Start()
+		log.Println(c.Entries())
+	case "local":
+		makeEmailJob(errs)()
+		close(errs)
+	}
+	err := <-errs
+	log.Println("Error detected")
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	c := cron.New(cron.WithLocation(usEastern))
-	c.AddFunc("30 5 * * *", func() {
+	log.Println("Ending email service")
+}
+
+func makeEmailJob(errs chan error) func() {
+	return func() {
 		log.Println("Starting email job...")
 		var allUserEmailInfo []userprefs.UserEmailInfo
 		if err := database.WithTx(func(tx *sqlx.Tx) error {
@@ -51,17 +70,7 @@ func main() {
 			errs <- err
 			return
 		}
-		return
-	})
-	c.Start()
-	log.Println(c.Entries())
-	err = <-errs
-	log.Println("Error detected")
-	if err != nil {
-		log.Fatal(err.Error())
 	}
-	c.Stop()
-	log.Println("Ending email service")
 }
 
 func initializeDatabases() error {

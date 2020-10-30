@@ -45,4 +45,5 @@ services:
       - EMAIL_ADDRESS=$BABBLEGRAPH_EMAIL_ADDRESS
       - AWS_SES_ACCESS_KEY=$BABBLEGRAPH_SES_ACCESS_KEY
       - AWS_SES_SECRET_KEY=$BABBLEGRAPH_SES_ACCESS_SECRET
+      - ENV=local
     command: go run /usr/local/go/src/babblegraph/services/email/main.go

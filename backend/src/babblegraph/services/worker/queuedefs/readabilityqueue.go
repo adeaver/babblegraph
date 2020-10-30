@@ -45,6 +45,7 @@ func (r readabilityQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) error {
 		return err
 	}
 	return publishMessageToLemmatizeQueue(lemmatizeQueueMessage{
+		Filename:         m.Filename,
 		ReadabilityScore: *score,
 		LanguageCode:     m.LanguageCode,
 		URL:              m.URL,
