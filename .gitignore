@@ -4,3 +4,4 @@ env/**
 **.DS_Store
 deploy/main-db/data/**
 deploy/wordsmith/data/**
+ops/elasticsearch/**
