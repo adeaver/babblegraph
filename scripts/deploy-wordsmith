@@ -14,7 +14,7 @@ echo "Running new container..."
 docker run -d -v $(pwd)/deploy/wordsmith/data:/var/lib/postgresql/data \
     -v $(pwd)/deploy/wordsmith/scripts:/home/postgres/scripts \
     -v $(pwd)/deploy/wordsmith/migrations:/home/postgres/migrations \
-    -v $(pwd)/deploy/wordsmith/setup/out:/home/postgres/wordsmith-data \
+    -v $(pwd)/ops/wordsmith/setup/out:/home/postgres/wordsmith-data \
     --env-file ./env/wordsmith-db.env \
     --restart unless-stopped \
     --name babblegraph_wordsmith_db \
