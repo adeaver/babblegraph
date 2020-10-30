@@ -9,17 +9,19 @@ import (
 type HTMLPageID string
 
 type HTMLPage struct {
-	ID       HTMLPageID
-	URL      string
-	Language *string
-	Metadata map[string]string
+	ID            HTMLPageID
+	URL           string
+	Language      *string
+	Metadata      map[string]string
+	OpenGraphType *string
 }
 
 type dbHTMLPage struct {
-	ID       HTMLPageID `db:"_id"`
-	URL      string     `db:"url"`
-	Language *string    `db:"language"`
-	Metadata dbMetadata `db:"metadata"`
+	ID            HTMLPageID `db:"_id"`
+	URL           string     `db:"url"`
+	Language      *string    `db:"language"`
+	Metadata      dbMetadata `db:"metadata"`
+	OpenGraphType *string    `db:"og_type"`
 }
 
 type dbMetadata map[string]string

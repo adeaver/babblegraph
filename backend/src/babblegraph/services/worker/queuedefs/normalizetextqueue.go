@@ -1,6 +1,7 @@
 package queuedefs
 
 import (
+	"babblegraph/model/documents"
 	"babblegraph/services/worker/normalizetext"
 	"babblegraph/util/queue"
 	"babblegraph/util/storage"
@@ -24,6 +25,10 @@ type normalizeTextQueueMessage struct {
 	Filename     storage.FileIdentifier `json:"filename"`
 	LanguageCode wordsmith.LanguageCode `json:"language_code"`
 	URL          string                 `json:"url"`
+	// A null document version corresponds to version 1
+	DocumentVersion  *documents.Version `json:"document_version,omitempty"`
+	DocumentType     *documents.Type    `json:"document_type,omitempty"`
+	DocumentMetadata map[string]string  `json:"document_metadata,omitempty"`
 }
 
 func (n normalizeTextQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) error {
@@ -36,7 +41,14 @@ func (n normalizeTextQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) error
 	if err != nil {
 		return err
 	}
-	if err := publishMessageToReadabilityQueue(*id, m.URL, m.LanguageCode); err != nil {
+	if err := publishMessageToReadabilityQueue(readabilityQueueMessage{
+		Filename:         *id,
+		LanguageCode:     m.LanguageCode,
+		URL:              m.URL,
+		DocumentVersion:  m.DocumentVersion,
+		DocumentType:     m.DocumentType,
+		DocumentMetadata: m.DocumentMetadata,
+	}); err != nil {
 		return err
 	}
 	if err := storage.DeleteFile(m.Filename); err != nil {
@@ -45,10 +57,6 @@ func (n normalizeTextQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) error
 	return nil
 }
 
-func publishMessageToNormalizeTextQueue(url string, languageCode wordsmith.LanguageCode, filename storage.FileIdentifier) error {
-	return queue.PublishMessageToQueueByName(queueTopicNameNormalizeTextQueue.Str(), normalizeTextQueueMessage{
-		Filename:     filename,
-		LanguageCode: languageCode,
-		URL:          url,
-	})
+func publishMessageToNormalizeTextQueue(msg normalizeTextQueueMessage) error {
+	return queue.PublishMessageToQueueByName(queueTopicNameNormalizeTextQueue.Str(), msg)
 }

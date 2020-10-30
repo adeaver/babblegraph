@@ -1,6 +1,7 @@
 package queuedefs
 
 import (
+	"babblegraph/model/documents"
 	"babblegraph/services/worker/readability"
 	"babblegraph/util/queue"
 	"babblegraph/util/storage"
@@ -24,6 +25,10 @@ type readabilityQueueMessage struct {
 	Filename     storage.FileIdentifier `json:"filename"`
 	LanguageCode wordsmith.LanguageCode `json:"language_code"`
 	URL          string                 `json:"url"`
+	// A null document version corresponds to version 1
+	DocumentVersion  *documents.Version `json:"document_version,omitempty"`
+	DocumentType     *documents.Type    `json:"document_type,omitempty"`
+	DocumentMetadata map[string]string  `json:"document_metadata,omitempty"`
 }
 
 func (r readabilityQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) error {
@@ -39,13 +44,16 @@ func (r readabilityQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) error {
 	if err != nil {
 		return err
 	}
-	return publishMessageToLemmatizeQueue(m.Filename, m.URL, m.LanguageCode, *score)
+	return publishMessageToLemmatizeQueue(lemmatizeQueueMessage{
+		ReadabilityScore: *score,
+		LanguageCode:     m.LanguageCode,
+		URL:              m.URL,
+		DocumentVersion:  m.DocumentVersion,
+		DocumentType:     m.DocumentType,
+		DocumentMetadata: m.DocumentMetadata,
+	})
 }
 
-func publishMessageToReadabilityQueue(filename storage.FileIdentifier, url string, languageCode wordsmith.LanguageCode) error {
-	return queue.PublishMessageToQueueByName(queueTopicNameReadabilityQueue.Str(), readabilityQueueMessage{
-		URL:          url,
-		Filename:     filename,
-		LanguageCode: languageCode,
-	})
+func publishMessageToReadabilityQueue(msg readabilityQueueMessage) error {
+	return queue.PublishMessageToQueueByName(queueTopicNameReadabilityQueue.Str(), msg)
 }

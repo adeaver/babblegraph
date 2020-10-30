@@ -74,7 +74,7 @@ func readQueue(queue Queue, errs chan error) {
 		log.Println(fmt.Sprintf("Got message with ID %s for queue %s", msg.ID, queue.GetTopicName()))
 		if err := database.WithTx(func(tx *sqlx.Tx) error {
 			if err := queue.ProcessMessage(tx, msg.ToMessage()); err != nil {
-				return err
+				log.Println(fmt.Sprintf("Error processing message %s: %s", msg.ID, err.Error()))
 			}
 			return clearMessage(tx, msg.ID)
 		}); err != nil {

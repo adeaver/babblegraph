@@ -13,11 +13,15 @@ type InsertHTMLPageInput struct {
 	Metadata map[string]string
 }
 
-const insertHTMLPageQuery = "INSERT INTO html_pages (url, language, metadata) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING RETURNING _id"
+const insertHTMLPageQuery = "INSERT INTO html_pages (url, language, metadata, og_type) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING RETURNING _id"
 
 func InsertHTMLPage(tx *sqlx.Tx, input InsertHTMLPageInput) (*HTMLPageID, error) {
 	var docID HTMLPageID
-	rows, err := tx.Query(insertHTMLPageQuery, input.URL, input.Language, dbMetadata(input.Metadata))
+	var opengraphType *string
+	if ogType, ok := input.Metadata["og:type"]; ok {
+		opengraphType = &ogType
+	}
+	rows, err := tx.Query(insertHTMLPageQuery, input.URL, input.Language, dbMetadata(input.Metadata), opengraphType)
 	if err != nil {
 		return nil, err
 	}

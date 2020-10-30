@@ -28,6 +28,10 @@ type lemmatizeQueueMessage struct {
 	Filename         storage.FileIdentifier `json:"file_name"`
 	LanguageCode     wordsmith.LanguageCode `json:"language_code"`
 	ReadabilityScore decimal.Number         `json:"readability_score"`
+	// A null document version corresponds to version 1
+	DocumentVersion  *documents.Version `json:"document_version,omitempty"`
+	DocumentType     *documents.Type    `json:"document_type,omitempty"`
+	DocumentMetadata map[string]string  `json:"document_metadata,omitempty"`
 }
 
 func (l lemmatizeQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) error {
@@ -40,12 +44,19 @@ func (l lemmatizeQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) error {
 	if err != nil {
 		return err
 	}
+	documentVersion := documents.Version1
+	if m.DocumentVersion != nil {
+		documentVersion = *m.DocumentVersion
+	}
+	documentMetadata := documents.ExtractMetadataFromMap(m.DocumentMetadata)
 	docID, err := documents.AssignIDAndIndexDocument(&documents.Document{
 		URL:              m.URL,
-		Version:          documents.CurrentDocumentVersion,
+		Version:          documentVersion,
 		ReadabilityScore: m.ReadabilityScore.ToInt64Rounded(),
 		LanguageCode:     m.LanguageCode,
 		LemmatizedBody:   *lemmaText,
+		DocumentType:     m.DocumentType,
+		Metadata:         &documentMetadata,
 	})
 	if err != nil {
 		return err
@@ -57,11 +68,6 @@ func (l lemmatizeQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) error {
 	return nil
 }
 
-func publishMessageToLemmatizeQueue(filename storage.FileIdentifier, url string, languageCode wordsmith.LanguageCode, readabilityScore decimal.Number) error {
-	return queue.PublishMessageToQueueByName(queueTopicNameLemmatizeQueue.Str(), lemmatizeQueueMessage{
-		URL:              url,
-		Filename:         filename,
-		LanguageCode:     languageCode,
-		ReadabilityScore: readabilityScore,
-	})
+func publishMessageToLemmatizeQueue(msg lemmatizeQueueMessage) error {
+	return queue.PublishMessageToQueueByName(queueTopicNameLemmatizeQueue.Str(), msg)
 }

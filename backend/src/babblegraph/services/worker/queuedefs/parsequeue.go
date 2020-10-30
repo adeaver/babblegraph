@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strings"
 
+	"babblegraph/model/documents"
 	"babblegraph/model/htmlpages"
 	"babblegraph/services/worker/htmlparse"
 	"babblegraph/util/queue"
@@ -61,7 +63,18 @@ func (p parseQueue) ProcessMessage(tx *sqlx.Tx, msg queue.Message) error {
 	if err := publishMessageToLinkHandlerQueue(parsedDoc.Links); err != nil {
 		return err
 	}
-	if err := publishMessageToNormalizeTextQueue(m.URL, *languageCode, parsedDoc.BodyTextFilename); err != nil {
+	if documentType, ok := parsedDoc.Metadata["og:type"]; !ok || strings.ToLower(documentType) != "article" {
+		log.Println("Not an article, not indexing")
+		return nil
+	}
+	if err := publishMessageToNormalizeTextQueue(normalizeTextQueueMessage{
+		Filename:         parsedDoc.BodyTextFilename,
+		LanguageCode:     *languageCode,
+		URL:              m.URL,
+		DocumentVersion:  documents.Version2.Ptr(),
+		DocumentType:     documents.TypeArticle.Ptr(),
+		DocumentMetadata: parsedDoc.Metadata,
+	}); err != nil {
 		return err
 	}
 	if err := storage.DeleteFile(m.Filename); err != nil {

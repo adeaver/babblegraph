@@ -6,8 +6,12 @@ services:
       context: ../deploy/main-db
     volumes:
       - ../deploy/main-db/data:/var/lib/postgresql/data
+      - ../deploy/main-db/migrations:/home/postgres/migrations
+      - ../deploy/main-db/scripts:/home/postgres/scripts
     ports:
       - 5432:5432
+    environment:
+      - MIGRATIONS_HOME=/home/postgres/migrations
   wordsmith:
     build:
       dockerfile: ../../ops/wordsmith/Dockerfile.dev

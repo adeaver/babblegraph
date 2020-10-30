@@ -1,4 +1,6 @@
 #!/bin/bash
+set -euo pipefail
+
 docker-compose -f ops/local-dbs.compose.yaml up --build -d
 
 until (docker exec ops_wordsmith_1 psql -U dev -d wordsmith -c 'SELECT * FROM word_part_of_speech_counts'); do
