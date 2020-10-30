@@ -14,6 +14,7 @@ services:
       context: ../deploy/wordsmith
     volumes:
       - ../deploy/wordsmith/data:/var/lib/postgresql/data
+      - ./wordsmith/setup/out:/home/postgres/wordsmith-data
     ports:
       - 5433:5432
   es01:
