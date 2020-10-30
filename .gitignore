@@ -1,4 +1,5 @@
 backend/src/babblegraph/services/worker/data/**
+backend/worker/**
 backend/pkg/**
 ops/wordsmith/setup/out/**
 env/**
