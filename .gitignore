@@ -1,8 +1,10 @@
 backend/src/babblegraph/services/worker/data/**
+backend/worker/**
 backend/pkg/**
 ops/wordsmith/setup/out/**
 env/**
 **.DS_Store
 deploy/main-db/data/**
 deploy/wordsmith/data/**
-ops/elasticsearch/**
+ops/elasticsearch/data01/**
+ops/elasticsearch/data02/**

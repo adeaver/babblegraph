@@ -1,0 +1,2 @@
+#!/bin/bash
+curl -X -PUT -H "Content-Type: application/json" -d '{"settings": {"index": {"number_of_shards": 2,"number_of_replicas": 2 },"analysis":{"analyzer":{"custom_analyzer":{"type":"custom","tokenizer":"whitespace"}}}}}' http://localhost:9200/web_documents
