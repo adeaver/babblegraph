@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-var multipleSlashesRegex = regexp.MustCompile("/*")
+var multipleSlashesRegex = regexp.MustCompile("/")
 
 type ParsedURL struct {
 	Domain        string
@@ -45,9 +45,14 @@ func findURLParts(rawURL string) *urlParts {
 	var pageParts, paramParts []string
 	for _, part := range parts {
 		switch {
+		case len(part) == 0:
+			// This is a very common problem because
+			// https:// causes there to be an empty string
+			continue
 		case website == nil && strings.Count(part, ".") > 0:
 			// the first occurrence of a dot indicates a url
-			website = &part
+			p := part
+			website = &p
 		case website != nil && page == nil:
 			// now, we've captured the website name and are capturing pages
 			if strings.Count(part, "?") != 0 {
@@ -71,7 +76,7 @@ func findURLParts(rawURL string) *urlParts {
 	}
 	return &urlParts{
 		Website: *website,
-		Page:    deref.String(page, ""),
+		Page:    deref.String(page, strings.Join(pageParts, "/")),
 		Params:  strings.Join(paramParts, "&"),
 	}
 }

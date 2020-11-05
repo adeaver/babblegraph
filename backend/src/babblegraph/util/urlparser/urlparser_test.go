@@ -109,12 +109,12 @@ func TestFindURLParts(t *testing.T) {
 			expectedParams:  "",
 		}, {
 			rawURL:          "www.google.com/some-page",
-			expectedWebsite: "google.com",
+			expectedWebsite: "www.google.com",
 			expectedPage:    "some-page",
 			expectedParams:  "",
 		}, {
 			rawURL:          "www.google.com/some-page.html",
-			expectedWebsite: "google.com",
+			expectedWebsite: "www.google.com",
 			expectedPage:    "some-page.html",
 			expectedParams:  "",
 		},
