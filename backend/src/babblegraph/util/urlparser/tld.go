@@ -4,7 +4,7 @@ package urlparser
 // it is far from an exhaustive list, but we want to err on the side
 // of too strict than too loose since the penalty for missing content
 // is significantly lower than the penalty for delivering bad or duplicate content
-var validTLDs := map[string]bool {
+var validTLDs = map[string]bool{
 	".com": true,
 	".net": true,
 	".org": true,
@@ -39,6 +39,5 @@ var validTLDs := map[string]bool {
 	".pr": true, // Puerto Rico
 	".bz": true, // Belize
 
-	".musica": true // Random second level domain for Argentina
-
+	".musica": true, // Random second level domain for Argentina
 }
