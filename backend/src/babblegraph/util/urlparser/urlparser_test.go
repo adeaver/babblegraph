@@ -67,6 +67,14 @@ func TestParseURL(t *testing.T) {
 			input:                 "www.musica.ar/some-page/v2?q=123",
 			expectedDomain:        "musica.ar",
 			expectedURLIdentifier: "musica.ar|some-page/v2",
+		}, {
+			// super ambiguous url
+			input: "blog.musica.ar/some-page/v2?q=123",
+			// The reason that this parses not as a sudomain for musica.ar
+			// is that there *should* be more websites ending in multiple tlds
+			// rather than websites with a single tld as the domain name
+			expectedDomain:        "blog.musica.ar",
+			expectedURLIdentifier: "blog.musica.ar|some-page/v2",
 		},
 	}
 	for idx, tc := range testCases {
@@ -134,56 +142,73 @@ func TestFindURLParts(t *testing.T) {
 
 func TestVerifyDomain(t *testing.T) {
 	type testCase struct {
-		domain         string
-		verifiedOutput *string
+		domain            string
+		expectedDomain    *string
+		expectedSubdomain *string
 	}
 	testCases := []testCase{
 		{
-			domain:         "www.google.com",
-			verifiedOutput: ptr.String("google.com"),
+			domain:            "www.google.com",
+			expectedDomain:    ptr.String("google.com"),
+			expectedSubdomain: ptr.String(""),
 		}, {
-			domain:         "www.blog.google.com",
-			verifiedOutput: ptr.String("blog.google.com"),
+			domain:            "www.blog.google.com",
+			expectedDomain:    ptr.String("google.com"),
+			expectedSubdomain: ptr.String("blog"),
 		}, {
-			domain:         "www",
-			verifiedOutput: nil,
+			domain:            "www",
+			expectedDomain:    nil,
+			expectedSubdomain: nil,
 		}, {
-			domain:         "com",
-			verifiedOutput: nil,
+			domain:            "com",
+			expectedDomain:    nil,
+			expectedSubdomain: nil,
 		}, {
-			domain:         "mx.google.com",
-			verifiedOutput: ptr.String("mx.google.com"),
+			domain:            "mx.google.com",
+			expectedDomain:    ptr.String("google.com"),
+			expectedSubdomain: ptr.String("mx"),
 		}, {
-			domain:         "musica.ar",
-			verifiedOutput: ptr.String("musica.ar"),
+			domain:            "musica.ar",
+			expectedDomain:    ptr.String("musica.ar"),
+			expectedSubdomain: ptr.String(""),
 		}, {
-			domain:         "www.musica.ar",
-			verifiedOutput: ptr.String("musica.ar"),
+			domain:            "www.musica.ar",
+			expectedDomain:    ptr.String("musica.ar"),
+			expectedSubdomain: ptr.String(""),
 		}, {
-			domain:         "google.com",
-			verifiedOutput: ptr.String("google.com"),
+			domain:            "google.com",
+			expectedDomain:    ptr.String("google.com"),
+			expectedSubdomain: ptr.String(""),
 		}, {
-			domain:         "google.cn",
-			verifiedOutput: nil,
+			domain:            "google.cn",
+			expectedDomain:    nil,
+			expectedSubdomain: nil,
 		}, {
-			domain:         "www.google.cn",
-			verifiedOutput: nil,
+			domain:            "www.google.cn",
+			expectedDomain:    nil,
+			expectedSubdomain: nil,
 		}, {
-			domain:         "www.google.co.uk",
-			verifiedOutput: nil,
+			domain:            "www.google.co.uk",
+			expectedDomain:    nil,
+			expectedSubdomain: nil,
 		},
 	}
 	for idx, tc := range testCases {
-		result := verifyDomain(tc.domain)
-		switch {
-		case result == nil && tc.verifiedOutput != nil:
-			t.Errorf("Error on test case %d, expected %s, but got null", idx+1, *tc.verifiedOutput)
-		case result != nil && tc.verifiedOutput == nil:
-			t.Errorf("Error on test case %d, expected null, but got %s", idx+1, *result)
-		case result == nil && tc.verifiedOutput == nil:
-			// no-op
-		case *result != *tc.verifiedOutput:
-			t.Errorf("Error on test case %d, expected %s, but got %s", idx+1, *tc.verifiedOutput, *result)
-		}
+		resultDomain, resultSubdomain := verifyDomain(tc.domain)
+		testNullableString(t, idx, "domain", resultDomain, tc.expectedDomain)
+		testNullableString(t, idx, "subdomain", resultSubdomain, tc.expectedSubdomain)
+	}
+}
+
+func testNullableString(t *testing.T, testCaseIdx int, fieldName string, result, expected *string) {
+	switch {
+	case result == nil && expected != nil:
+		t.Errorf("Error on test case %d for field %s, expected %s, but got null", testCaseIdx+1, fieldName, *expected)
+	case result != nil && expected == nil:
+		t.Errorf("Error on test case %d for field %s, expected null, but got %s", testCaseIdx+1, fieldName, *result)
+	case result == nil && expected == nil:
+		// no-op
+	case *result != *expected:
+		t.Errorf("Error on test case %d for field %s, expected %s, but got %s", testCaseIdx+1, fieldName, *expected, *result)
 	}
 }
