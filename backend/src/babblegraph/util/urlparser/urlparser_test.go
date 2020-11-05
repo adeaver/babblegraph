@@ -71,6 +71,10 @@ func TestParseURL(t *testing.T) {
 	}
 	for idx, tc := range testCases {
 		result := ParseURL(tc.input)
+		if result == nil {
+			t.Errorf("Error on test case %d: got null result", idx+1)
+			continue
+		}
 		if result.Domain != tc.expectedDomain {
 			t.Errorf("Error on test case %d: expected domain %s, but got %s", idx+1, tc.expectedDomain, result.Domain)
 		}
