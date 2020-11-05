@@ -6,7 +6,7 @@ services:
       context: ./backend/src/babblegraph
     volumes:
       - ./backend/src/babblegraph:/usr/local/go/src/babblegraph
-      - ./backend/src/babblegraph/services/worker/data:/tmp
+      - ../ops/babblegraph/worker:/tmp
     environment:
       - PG_HOST=host.docker.internal
       - PG_PORT=5432
