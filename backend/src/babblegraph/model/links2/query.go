@@ -26,11 +26,7 @@ const insertLinkQuery = "INSERT INTO links2 (url_identifier, domain, url) VALUES
 
 func InsertLinks(tx *sqlx.Tx, urls []urlparser.ParsedURL) error {
 	for _, u := range urls {
-		parsedURL := urlparser.ParseURL(u)
-		if parsedURL == nil {
-			continue
-		}
-		if _, err := tx.Exec(insertLinkQuery, parsedURL.URLIdentifier, parsedURL.Domain, u); err != nil {
+		if _, err := tx.Exec(insertLinkQuery, u.URLIdentifier, u.Domain, u.URL); err != nil {
 			return err
 		}
 	}
@@ -46,7 +42,7 @@ func SetURLAsFetched(tx *sqlx.Tx, urlIdentifier URLIdentifier) error {
 
 func GetUnfetchedLinkForDomain(tx *sqlx.Tx, domain string) (*Link, error) {
 	var matches []dbLink
-	if err := tx.Select(&domainsWithUnfetchedLinks, "SELECT * FROM links2 WHERE last_fetch_version != $1 AND domain=$2 ORDER BY seq_num ASC LIMIT 1", FetchVersion1, domain); err != nil {
+	if err := tx.Select(&matches, "SELECT * FROM links2 WHERE last_fetch_version != $1 AND domain=$2 ORDER BY seq_num ASC LIMIT 1", FetchVersion1, domain); err != nil {
 		return nil, err
 	}
 	if len(matches) < 1 {

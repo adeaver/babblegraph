@@ -1,6 +1,13 @@
 package textprocessing
 
-func LemmatizeBody(languageCode wordsmith.LanguageCode, normalizedText string)
+import (
+	"babblegraph/wordsmith"
+	"fmt"
+	"log"
+	"strings"
+)
+
+func LemmatizeBody(languageCode wordsmith.LanguageCode, normalizedText string) {
 	tokens := collectWords(normalizedText)
 	lemmaMap, err := getLemmaMapForTokens(tokens, languageCode)
 	if err != nil {
