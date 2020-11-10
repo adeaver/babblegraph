@@ -19,7 +19,7 @@ func ProcessText(text string, language wordsmith.LanguageCode) (*TextMetadata, e
 		if err != nil {
 			return nil, err
 		}
-		lemmatizedBody, err := LemmatizeBody(normalizedText)
+		lemmatizedBody, err := lemmatizeBody(normalizedText)
 		if err != nil {
 			return nil, err
 		}

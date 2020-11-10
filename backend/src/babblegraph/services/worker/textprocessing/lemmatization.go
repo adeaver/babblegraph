@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func LemmatizeBody(languageCode wordsmith.LanguageCode, normalizedText string) {
+func lemmatizeBody(languageCode wordsmith.LanguageCode, normalizedText string) (*string, error) {
 	tokens := collectWords(normalizedText)
 	lemmaMap, err := getLemmaMapForTokens(tokens, languageCode)
 	if err != nil {

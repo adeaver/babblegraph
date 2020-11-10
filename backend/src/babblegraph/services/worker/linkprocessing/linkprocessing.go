@@ -51,7 +51,7 @@ func (l *LinkProcessor) GetLink() (*links2.Link, *time.Duration, error) {
 	firstDomain := l.OrderedDomains[0]
 	if firstDomain.FreeAt.After(time.Now()) {
 		waitTime := firstDomain.FreeAt.Sub(time.Now())
-		return &waitTime, nil
+		return nil, &waitTime, nil
 	}
 	l.OrderedDomains = append(l.OrderedDomains[1:], Domain{
 		Domain: firstDomain.Domain,
@@ -60,7 +60,7 @@ func (l *LinkProcessor) GetLink() (*links2.Link, *time.Duration, error) {
 	var link *links2.Link
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		var err error
-		link, err = GetUnfetchedLinkForDomain(tx, firstDomain.Domain)
+		link, err = links2.GetUnfetchedLinkForDomain(tx, firstDomain.Domain)
 		if err != nil {
 			return err
 		}
