@@ -1,4 +1,4 @@
-package readability
+package spanishprocessing
 
 import (
 	"babblegraph/util/language/syllable"

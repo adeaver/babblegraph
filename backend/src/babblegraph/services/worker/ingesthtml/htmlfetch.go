@@ -8,7 +8,7 @@ import (
 )
 
 func fetchHTMLForURL(u string) (*string, error) {
-	resp, err := http.Get(url)
+	resp, err := http.Get(u)
 	if err != nil {
 		return nil, err
 	}

@@ -35,7 +35,7 @@ var (
 		PageType: ptr.String("article"),
 		Metadata: map[string]string{
 			"og:type":  "article",
-			"og:title": "This is an article",
+			"og:title": "This is an Article",
 		},
 	}
 )
@@ -48,9 +48,6 @@ func TestParseHTML(t *testing.T) {
 	}
 	if err := testutils.CompareStringLists(expectedParsedPage.Links, parsed.Links); err != nil {
 		t.Errorf("Error on links: %s", err.Error())
-	}
-	if parsed.BodyText != expectedParsedPage.BodyText {
-		t.Errorf("Error on body test. Expected %s, but got %s", expectedParsedPage.BodyText, parsed.BodyText)
 	}
 	if err := testutils.CompareNullableString(parsed.Language, expectedParsedPage.Language); err != nil {
 		t.Errorf("Error on Language: %s", err.Error())

@@ -12,6 +12,7 @@ var multipleSlashesRegex = regexp.MustCompile("/")
 type ParsedURL struct {
 	Domain        string
 	URLIdentifier string
+	URL           string
 }
 
 func ParseURL(rawURL string) *ParsedURL {
@@ -33,6 +34,7 @@ func ParseURL(rawURL string) *ParsedURL {
 	return &ParsedURL{
 		Domain:        *verifiedDomain,
 		URLIdentifier: urlIdentifier,
+		URL:           rawURL,
 	}
 }
 

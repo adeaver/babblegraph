@@ -41,7 +41,8 @@ func CompareNullableString(result, expected *string) error {
 		return fmt.Errorf("Expected %s, but got null", *expected)
 	case result != nil && expected == nil:
 		return fmt.Errorf("Expected null, but got %s", *result)
-	case result == nil && expected == nil:
+	case result == nil && expected == nil,
+		*result == *expected:
 		return nil
 	case *result != *expected:
 		return fmt.Errorf("Expected %s, but got %s", *expected, *result)

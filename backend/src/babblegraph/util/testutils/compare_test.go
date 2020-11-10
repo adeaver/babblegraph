@@ -6,6 +6,21 @@ import (
 	"testing"
 )
 
+func compareErrors(t *testing.T, idx int, result, expected error) {
+	switch {
+	case result == nil && expected != nil:
+		t.Errorf("Error on test case %d, expected %s, but got null", idx+1, expected.Error())
+	case result != nil && expected == nil:
+		t.Errorf("Error on test case %d, expected null, but got %s", idx+1, result.Error())
+	case result == nil && expected == nil:
+		// no-op
+	case result.Error() != expected.Error():
+		t.Errorf("Error on test case %d. Expected %s. Got %s", idx+1, expected.Error(), result.Error())
+	default:
+		// no-op
+	}
+}
+
 func TestCompareStringLists(t *testing.T) {
 	type testCase struct {
 		a   []string
@@ -38,9 +53,7 @@ func TestCompareStringLists(t *testing.T) {
 	}
 	for idx, tc := range testCases {
 		result := CompareStringLists(tc.a, tc.b)
-		if result.Error() != tc.err.Error() {
-			t.Errorf("Error on test case %d. Expected %s. Got %s", idx+1, tc.err.Error(), result.Error())
-		}
+		compareErrors(t, idx, result, tc.err)
 	}
 }
 
@@ -72,9 +85,7 @@ func TestCompareNullableStrings(t *testing.T) {
 	}
 	for idx, tc := range testCases {
 		result := CompareNullableString(tc.input, tc.expected)
-		if result.Error() != tc.err.Error() {
-			t.Errorf("Error on test case %d. Expected %s. Got %s", idx+1, tc.err.Error(), result.Error())
-		}
+		compareErrors(t, idx, result, tc.err)
 	}
 }
 
@@ -106,8 +117,6 @@ func TestCompareStringMapSimple(t *testing.T) {
 	}
 	for idx, tc := range testCases {
 		result := CompareStringMap(tc.a, tc.b)
-		if result.Error() != tc.err.Error() {
-			t.Errorf("Error on test case %d. Expected %s. Got %s", idx+1, tc.err.Error(), result.Error())
-		}
+		compareErrors(t, idx, result, tc.err)
 	}
 }
