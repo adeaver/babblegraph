@@ -4,6 +4,7 @@ import (
 	"babblegraph/util/deref"
 	"babblegraph/util/elastic"
 	"babblegraph/util/opengraph"
+	"babblegraph/util/ptr"
 	"babblegraph/util/urlparser"
 	"babblegraph/wordsmith"
 	"fmt"
@@ -25,7 +26,12 @@ func (d documentIndex) ValidateDocument(document interface{}) error {
 }
 
 func (d documentIndex) GenerateIDForDocument(document interface{}) (*string, error) {
-	panic("unimplemented")
+	doc, ok := document.(Document)
+	if !ok {
+		return nil, fmt.Errorf("could not validate interface %+v, to be of type web_document", document)
+	}
+	docID := makeDocumentIndexForURL(urlparser.MustParseURL(doc.URL))
+	return ptr.String(string(docID)), nil
 }
 
 func CreateDocumentIndex() error {
