@@ -8,7 +8,7 @@ func TestNormalizeText(t *testing.T) {
 		expected string
 	}{
 		{
-			input:    []byte("En España"),
+			input:    "En España",
 			expected: "en españa",
 		},
 	}
