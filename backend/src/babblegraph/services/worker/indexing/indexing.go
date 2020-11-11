@@ -5,6 +5,7 @@ import (
 	"babblegraph/services/worker/ingesthtml"
 	"babblegraph/services/worker/textprocessing"
 	"babblegraph/wordsmith"
+	"fmt"
 	"log"
 )
 
@@ -30,6 +31,6 @@ func IndexDocument(input IndexDocumentInput) error {
 	if err != nil {
 		return err
 	}
-	log.Println("Indexed document with ID: %s", string(*docID))
+	log.Println(fmt.Sprintf("Indexed url %s with ID: %s", input.URL, string(*docID)))
 	return nil
 }
