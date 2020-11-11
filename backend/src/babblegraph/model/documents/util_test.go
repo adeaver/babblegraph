@@ -52,8 +52,8 @@ func TestMakeDocumentIndexForURL(t *testing.T) {
 		}
 		idA := makeDocumentIndexForURL(*parsedURLA)
 		idB := makeDocumentIndexForURL(*parsedURLB)
-		isDocIDTheSame := idA.Str() == idB.Str()
-		if isDocIDTheSame == tc.hasSameID {
+		isDocIDTheSame := string(idA) == string(idB)
+		if isDocIDTheSame != tc.hasSameID {
 			t.Errorf("Error on test case %d: expected %t, but got %t", idx+1, tc.hasSameID, isDocIDTheSame)
 		}
 	}
