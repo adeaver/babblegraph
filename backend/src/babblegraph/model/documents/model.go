@@ -9,8 +9,9 @@ type Version int64
 const (
 	Version1 Version = 1
 	Version2 Version = 2
+	Version3 Version = 3
 
-	CurrentDocumentVersion Version = Version2
+	CurrentDocumentVersion Version = Version3
 )
 
 func (v Version) Ptr() *Version {

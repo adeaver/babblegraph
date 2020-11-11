@@ -4,6 +4,7 @@ import (
 	"babblegraph/model/documents"
 	"babblegraph/services/worker/ingesthtml"
 	"babblegraph/services/worker/textprocessing"
+	"babblegraph/util/urlparser"
 	"babblegraph/wordsmith"
 	"fmt"
 	"log"
@@ -14,19 +15,20 @@ type IndexDocumentInput struct {
 	TextMetadata    textprocessing.TextMetadata
 	LanguageCode    wordsmith.LanguageCode
 	DocumentVersion documents.Version
-	URL             string
+	URL             urlparser.ParsedURL
 }
 
 func IndexDocument(input IndexDocumentInput) error {
-	documentMetadata := documents.ExtractMetadataFromMap(input.ParsedHTMLPage.Metadata)
-	docID, err := documents.AssignIDAndIndexDocument(&documents.Document{
+	docID, err := documents.AssignIDAndIndexDocument(documents.IndexDocumentInput{
 		URL:              input.URL,
-		Version:          input.DocumentVersion,
 		ReadabilityScore: input.TextMetadata.ReadabilityScore.ToInt64Rounded(),
 		LanguageCode:     input.LanguageCode,
 		LemmatizedBody:   input.TextMetadata.LemmatizedText,
-		DocumentType:     documents.TypeArticle.Ptr(),
-		Metadata:         &documentMetadata,
+		Metadata:         input.ParsedHTMLPage.Metadata,
+
+		// These will get changed later
+		Version: input.DocumentVersion,
+		Type:    documents.TypeArticle,
 	})
 	if err != nil {
 		return err

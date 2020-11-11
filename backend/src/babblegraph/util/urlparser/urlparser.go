@@ -15,6 +15,14 @@ type ParsedURL struct {
 	URL           string
 }
 
+func MustParseURL(rawURL string) ParsedURL {
+	u := ParseURL(rawURL)
+	if u == nil {
+		panic("did not parse URL correctly")
+	}
+	return *u
+}
+
 func ParseURL(rawURL string) *ParsedURL {
 	urlParts := findURLParts(rawURL)
 	if urlParts == nil {

@@ -40,18 +40,18 @@ func TestMakeDocumentIndexForURL(t *testing.T) {
 		},
 	}
 	for idx, tc := range testCases {
-		parsedURLA := urlparser.ParseURL(urlA)
+		parsedURLA := urlparser.ParseURL(tc.urlA)
 		if parsedURLA == nil {
 			t.Errorf("Error on test case %d: URL A parses to null URL", idx+1)
 			continue
 		}
-		parsedURLB := urlparser.ParseURL(urlB)
+		parsedURLB := urlparser.ParseURL(tc.urlB)
 		if parsedURLB == nil {
 			t.Errorf("Error on test case %d: URL B parses to null URL", idx+1)
 			continue
 		}
-		idA := makeDocumentIndexForURL(*urlA)
-		idB := makeDocumentIndexForURL(*urlB)
+		idA := makeDocumentIndexForURL(*parsedURLA)
+		idB := makeDocumentIndexForURL(*parsedURLB)
 		isDocIDTheSame := idA.Str() == idB.Str()
 		if isDocIDTheSame == tc.hasSameID {
 			t.Errorf("Error on test case %d: expected %t, but got %t", idx+1, tc.hasSameID, isDocIDTheSame)

@@ -9,6 +9,7 @@ import (
 	"babblegraph/util/database"
 	"babblegraph/util/deref"
 	"babblegraph/util/elastic"
+	"babblegraph/util/urlparser"
 	"babblegraph/wordsmith"
 	"fmt"
 	"log"
@@ -102,8 +103,8 @@ func startWorkerThread(linkProcessor *linkprocessing.LinkProcessor, errs chan er
 				ParsedHTMLPage:  *parsedHTMLPage,
 				TextMetadata:    *textMetadata,
 				LanguageCode:    *languageCode,
-				DocumentVersion: documents.Version2,
-				URL:             u,
+				DocumentVersion: documents.CurrentDocumentVersion,
+				URL:             urlparser.MustParseURL(u),
 			})
 			if err != nil {
 				log.Println(fmt.Sprintf("Got error indexing document for url %s: %s. Continuing...", u, err.Error()))
