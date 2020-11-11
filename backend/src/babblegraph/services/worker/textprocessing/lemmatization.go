@@ -1,20 +1,11 @@
-package lemmatize
+package textprocessing
 
 import (
-	"fmt"
-	"log"
-	"strings"
-
-	"babblegraph/util/storage"
 	"babblegraph/wordsmith"
+	"strings"
 )
 
-func LemmatizeWordsForFile(filename storage.FileIdentifier, languageCode wordsmith.LanguageCode) (*string, error) {
-	textBytes, err := storage.ReadFile(filename)
-	if err != nil {
-		return nil, err
-	}
-	normalizedText := string(textBytes)
+func lemmatizeBody(languageCode wordsmith.LanguageCode, normalizedText string) (*string, error) {
 	tokens := collectWords(normalizedText)
 	lemmaMap, err := getLemmaMapForTokens(tokens, languageCode)
 	if err != nil {
@@ -44,11 +35,7 @@ func getLemmaMapForTokens(tokens []string, languageCode wordsmith.LanguageCode) 
 	}
 	out := make(map[string][]wordsmith.LemmaID)
 	for _, w := range words {
-		lemmasForWord, ok := out[w.Word]
-		if ok {
-			// TODO: I need to do something more clever here
-			log.Println(fmt.Sprintf("Word %s has duplicate. Using both lemmas...", w.Word))
-		}
+		lemmasForWord, _ := out[w.Word]
 		out[w.Word] = append(lemmasForWord, w.LemmaID)
 	}
 	return out, nil

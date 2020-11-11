@@ -1,15 +1,14 @@
-package htmlfetch
+package ingesthtml
 
 import (
+	"babblegraph/util/ptr"
 	"fmt"
 	"io/ioutil"
 	"net/http"
-
-	"babblegraph/util/storage"
 )
 
-func FetchAndStoreHTMLForURL(url string) (*storage.FileIdentifier, error) {
-	resp, err := http.Get(url)
+func fetchHTMLForURL(u string) (*string, error) {
+	resp, err := http.Get(u)
 	if err != nil {
 		return nil, err
 	}
@@ -21,5 +20,5 @@ func FetchAndStoreHTMLForURL(url string) (*storage.FileIdentifier, error) {
 	if err != nil {
 		return nil, err
 	}
-	return storage.WriteFile("html", string(data))
+	return ptr.String(string(data)), nil
 }

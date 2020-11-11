@@ -1,24 +1,10 @@
-package normalizetext
+package textprocessing
 
-import (
-	"strings"
+import "strings"
 
-	"babblegraph/util/storage"
-)
-
-func NormalizeAndStoreTextForFilename(filename storage.FileIdentifier) (*storage.FileIdentifier, error) {
-	textBytes, err := storage.ReadFile(filename)
-	if err != nil {
-		return nil, err
-	}
-	normalizedTextLines := normalizeText(textBytes)
-	return storage.WriteFile("txt", normalizedTextLines)
-}
-
-func normalizeText(textBytes []byte) string {
+func normalizeText(text string) string {
 	var out []string
 	var currentLine []rune
-	text := string(textBytes)
 	for _, b := range text {
 		switch {
 		case isRunePunctuation(b):

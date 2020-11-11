@@ -1,14 +1,14 @@
-package normalizetext
+package textprocessing
 
 import "testing"
 
 func TestNormalizeText(t *testing.T) {
 	testCases := []struct {
-		input    []byte
+		input    string
 		expected string
 	}{
 		{
-			input:    []byte("En España"),
+			input:    "En España",
 			expected: "en españa",
 		},
 	}

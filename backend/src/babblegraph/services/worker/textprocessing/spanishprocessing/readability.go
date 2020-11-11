@@ -1,4 +1,4 @@
-package readability
+package spanishprocessing
 
 import (
 	"babblegraph/util/language/syllable"
@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func calculateReadabilityForSpanish(text string) (*decimal.Number, error) {
+func CalculateReadabilityForSpanish(text string) (*decimal.Number, error) {
 	sentences := strings.Split(text, "\n")
 	var wordCount, syllableCount, sentenceCount decimal.Number
 	for _, sentence := range sentences {
