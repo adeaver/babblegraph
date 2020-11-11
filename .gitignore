@@ -2,7 +2,7 @@
 backend/src/babblegraph/services/worker/data/**
 backend/worker/**
 backend/**
-!backend/src/babblegraph
+!backend/src/babblegraph/**
 
 # Ops
 ops/wordsmith/setup/out/**
