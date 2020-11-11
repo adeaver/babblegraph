@@ -11,7 +11,7 @@ echo "Removing old container..."
 docker stop babblegraph_worker && docker rm babblegraph_worker && true
 
 echo "Running new container..."
-docker run -d -v $(pwd)/backend/worker/data:/service/tmp \
+docker run -d \
     --env-file ./env/worker.env \
     --restart unless-stopped \
     --name babblegraph_worker \
