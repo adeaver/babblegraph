@@ -78,13 +78,16 @@ func startWorkerThread(linkProcessor *linkprocessing.LinkProcessor, errs chan er
 			parsedHTMLPage, err := ingesthtml.ProcessURL(u, domain)
 			if err != nil {
 				log.Println(fmt.Sprintf("Got error ingesting html for url %s: %s. Continuing...", u, err.Error()))
+				continue
 			}
 			languageCode := wordsmith.LookupLanguageCodeForLanguageLabel(deref.String(parsedHTMLPage.Language, ""))
 			if languageCode == nil {
 				log.Println(fmt.Sprintf("URL %s has unsupported language code: %s", u, deref.String(parsedHTMLPage.Language, "")))
+				continue
 			}
 			if err := linkProcessor.AddURLs(parsedHTMLPage.Links); err != nil {
 				log.Println(fmt.Sprintf("Error saving urls %+v for url %s: %s", parsedHTMLPage.Links, u, err.Error()))
+				continue
 			}
 			if strings.ToLower(deref.String(parsedHTMLPage.PageType, "")) != "article" {
 				log.Println(fmt.Sprintf("URL %s is not an article. Continuing...", u))

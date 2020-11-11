@@ -2,8 +2,6 @@ package textprocessing
 
 import (
 	"babblegraph/wordsmith"
-	"fmt"
-	"log"
 	"strings"
 )
 
@@ -37,11 +35,7 @@ func getLemmaMapForTokens(tokens []string, languageCode wordsmith.LanguageCode) 
 	}
 	out := make(map[string][]wordsmith.LemmaID)
 	for _, w := range words {
-		lemmasForWord, ok := out[w.Word]
-		if ok {
-			// TODO: I need to do something more clever here
-			log.Println(fmt.Sprintf("Word %s has duplicate. Using both lemmas...", w.Word))
-		}
+		lemmasForWord, _ := out[w.Word]
 		out[w.Word] = append(lemmasForWord, w.LemmaID)
 	}
 	return out, nil
