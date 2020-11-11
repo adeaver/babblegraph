@@ -12,6 +12,7 @@ import (
 	"babblegraph/wordsmith"
 	"fmt"
 	"log"
+	"runtime/debug"
 	"strings"
 	"time"
 )
@@ -38,8 +39,8 @@ func main() {
 	}
 	for {
 		select {
-		case err <- errs:
-			fmt.Println("Saw panic: %s. Starting new worker thread.", err.Error())
+		case err := <-errs:
+			log.Println(fmt.Sprintf("Saw panic: %s. Starting new worker thread.", err.Error()))
 			workerThread := startWorkerThread(linkProcessor, errs)
 			go workerThread()
 		}
@@ -52,43 +53,46 @@ func startWorkerThread(linkProcessor *linkprocessing.LinkProcessor, errs chan er
 			x := recover()
 			if err, ok := x.(error); ok {
 				errs <- err
+				debug.PrintStack()
 			}
 		}()
 		for {
-			var u string
+			var u, domain string
 			link, waitTime, err := linkProcessor.GetLink()
 			switch {
 			case err != nil:
-				log.Println("Error getting link...")
+				log.Println(fmt.Sprintf("Error getting link... %s", err.Error()))
 				continue
 			case waitTime != nil:
 				log.Println("No link available. Sleeping...")
-				time.Sleep(waitTime)
+				time.Sleep(*waitTime)
 				continue
 			case link != nil:
 				u = link.URL
+				domain = link.Domain
 			default:
 				log.Println("No error, but no wait time. Continuing...")
 				continue
 			}
-			parsedHTMLPage, err := ingesthtml.ProcessURL(u, "google.com")
+			log.Println(fmt.Sprintf("Processing URL %s", u))
+			parsedHTMLPage, err := ingesthtml.ProcessURL(u, domain)
 			if err != nil {
-				log.Println("Got error ingesting html for url %s: %s. Continuing...")
+				log.Println(fmt.Sprintf("Got error ingesting html for url %s: %s. Continuing...", u, err.Error()))
 			}
 			languageCode := wordsmith.LookupLanguageCodeForLanguageLabel(deref.String(parsedHTMLPage.Language, ""))
 			if languageCode == nil {
-				log.Println("URL %s has unsupported language code: %s", u, deref.String(parsedHTMLPage.Language, ""))
+				log.Println(fmt.Sprintf("URL %s has unsupported language code: %s", u, deref.String(parsedHTMLPage.Language, "")))
 			}
 			if err := linkProcessor.AddURLs(parsedHTMLPage.Links); err != nil {
-				log.Println("Error saving urls %+v for url %s: %s", parsedHTMLPage.Links, u, err.Error())
+				log.Println(fmt.Sprintf("Error saving urls %+v for url %s: %s", parsedHTMLPage.Links, u, err.Error()))
 			}
 			if strings.ToLower(deref.String(parsedHTMLPage.PageType, "")) != "article" {
-				log.Println("URL %s is not an article. Continuing...", u)
+				log.Println(fmt.Sprintf("URL %s is not an article. Continuing...", u))
 				continue
 			}
-			textMetadata, err := textprocessing.ProcessText(parsedHtmlPage.BodyText, *languageCode)
+			textMetadata, err := textprocessing.ProcessText(parsedHTMLPage.BodyText, *languageCode)
 			if err != nil {
-				log.Println("Got error processing text for url %s: %s. Continuing...")
+				log.Println(fmt.Sprintf("Got error processing text for url %s: %s. Continuing...", u, err.Error()))
 				continue
 			}
 			err = indexing.IndexDocument(indexing.IndexDocumentInput{
@@ -99,7 +103,7 @@ func startWorkerThread(linkProcessor *linkprocessing.LinkProcessor, errs chan er
 				URL:             u,
 			})
 			if err != nil {
-				log.Println("Got error indexing document for url %s: %s. Continuing...")
+				log.Println(fmt.Sprintf("Got error indexing document for url %s: %s. Continuing...", u, err.Error()))
 				continue
 			}
 		}

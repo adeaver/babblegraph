@@ -23,8 +23,8 @@ func IndexDocument(input IndexDocumentInput) error {
 		Version:          input.DocumentVersion,
 		ReadabilityScore: input.TextMetadata.ReadabilityScore.ToInt64Rounded(),
 		LanguageCode:     input.LanguageCode,
-		LemmatizedBody:   input.TextMetadata.LemmatizedBody,
-		DocumentType:     documents.TypeArticle,
+		LemmatizedBody:   input.TextMetadata.LemmatizedText,
+		DocumentType:     documents.TypeArticle.Ptr(),
 		Metadata:         &documentMetadata,
 	})
 	if err != nil {

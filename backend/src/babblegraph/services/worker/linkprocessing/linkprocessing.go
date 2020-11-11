@@ -42,7 +42,7 @@ func CreateLinkProcessor() (*LinkProcessor, error) {
 	return &LinkProcessor{
 		DomainSet:      domainHash,
 		OrderedDomains: orderedDomains,
-	}
+	}, nil
 }
 
 func (l *LinkProcessor) GetLink() (*links2.Link, *time.Duration, error) {
@@ -60,9 +60,12 @@ func (l *LinkProcessor) GetLink() (*links2.Link, *time.Duration, error) {
 	var link *links2.Link
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		var err error
-		link, err = links2.GetUnfetchedLinkForDomain(tx, firstDomain.Domain)
+		link, err = links2.LookupUnfetchedLinkForDomain(tx, firstDomain.Domain)
 		if err != nil {
 			return err
+		}
+		if link == nil {
+			return nil
 		}
 		return links2.SetURLAsFetched(tx, link.URLIdentifier)
 	}); err != nil {
