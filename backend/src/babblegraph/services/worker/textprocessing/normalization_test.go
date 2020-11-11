@@ -4,7 +4,7 @@ import "testing"
 
 func TestNormalizeText(t *testing.T) {
 	testCases := []struct {
-		input    []byte
+		input    string
 		expected string
 	}{
 		{

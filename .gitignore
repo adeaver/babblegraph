@@ -1,8 +1,8 @@
 # Backend
 backend/src/babblegraph/services/worker/data/**
 backend/worker/**
-backend/**
-!backend/src/babblegraph/**
+backend/pkg/**
+backend/bin/**
 
 # Ops
 ops/wordsmith/setup/out/**
