@@ -1,10 +1,12 @@
 package documents
 
 import (
+	"babblegraph/util/deref"
 	"babblegraph/util/elastic"
+	"babblegraph/util/opengraph"
+	"babblegraph/util/urlparser"
+	"babblegraph/wordsmith"
 	"fmt"
-
-	"github.com/google/uuid"
 )
 
 const documentIndexName string = "web_documents"
@@ -23,12 +25,7 @@ func (d documentIndex) ValidateDocument(document interface{}) error {
 }
 
 func (d documentIndex) GenerateIDForDocument(document interface{}) (*string, error) {
-	uuid, err := uuid.NewRandom()
-	if err != nil {
-		return nil, err
-	}
-	docID := fmt.Sprintf("web_doc-%s", uuid.String())
-	return &docID, nil
+	panic("unimplemented")
 }
 
 func CreateDocumentIndex() error {
@@ -45,16 +42,34 @@ func CreateDocumentIndex() error {
 	})
 }
 
-func AssignIDAndIndexDocument(document *Document) (*DocumentID, error) {
-	index := documentIndex{}
-	idStr, err := index.GenerateIDForDocument(document)
-	if err != nil {
+type IndexDocumentInput struct {
+	URL              urlparser.ParsedURL
+	Metadata         map[string]string
+	Type             Type
+	Version          Version
+	LanguageCode     wordsmith.LanguageCode
+	LemmatizedBody   string
+	ReadabilityScore int64
+}
+
+func AssignIDAndIndexDocument(input IndexDocumentInput) (*DocumentID, error) {
+	documentID := makeDocumentIndexForURL(input.URL)
+	ogMetadata := opengraph.GetBasicMetadata(input.Metadata)
+	if err := elastic.IndexDocument(documentIndex{}, Document{
+		ID:               documentID,
+		Version:          input.Version,
+		URL:              input.URL.URL,
+		ReadabilityScore: input.ReadabilityScore,
+		LemmatizedBody:   input.LemmatizedBody,
+		LanguageCode:     input.LanguageCode,
+		DocumentType:     input.Type.Ptr(),
+		Metadata: &Metadata{
+			Title: deref.String(ogMetadata.Title, ""),
+			Image: deref.String(ogMetadata.ImageURL, ""),
+			URL:   deref.String(ogMetadata.URL, ""),
+		},
+	}); err != nil {
 		return nil, err
 	}
-	docID := DocumentID(*idStr)
-	document.ID = docID
-	if err := elastic.IndexDocument(index, *document); err != nil {
-		return nil, err
-	}
-	return &docID, nil
+	return &documentID, nil
 }
