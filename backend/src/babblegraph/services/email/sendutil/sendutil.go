@@ -37,6 +37,7 @@ func SendEmailsToUser(emailAddressesToDocuments map[string][]documents.Document)
 	for emailAddress, docs := range emailAddressesToDocuments {
 		if len(docs) == 0 {
 			log.Println(fmt.Sprintf("No docs for user %s, skipping", emailAddress))
+			continue
 		}
 		body, err := makeEmailBody(emailAddress, docs)
 		if err != nil {

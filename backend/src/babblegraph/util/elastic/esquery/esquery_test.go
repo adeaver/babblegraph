@@ -58,3 +58,15 @@ func TestTerms(t *testing.T) {
 		t.Errorf("Expected %s, got %s", expected, string(out))
 	}
 }
+
+func TestMatchAll(t *testing.T) {
+	testQuery := MatchAll()
+	expected := `{"match_all":{}}`
+	out, err := json.Marshal(testQuery)
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+	if string(out) != expected {
+		t.Errorf("Expected %s, got %s", expected, string(out))
+	}
+}
