@@ -5,6 +5,7 @@ import (
 	"babblegraph/model/userdocuments"
 	"babblegraph/services/email/labels"
 	"babblegraph/services/email/userprefs"
+	"babblegraph/util/ptr"
 	"babblegraph/wordsmith"
 	"fmt"
 	"log"
@@ -15,18 +16,13 @@ import (
 const maxDocumentsPerEmail = 5
 
 func GetDocumentsForUser(tx *sqlx.Tx, userInfos []userprefs.UserEmailInfo) (map[string][]documents.Document, error) {
-	labelSearchTerms, err := labels.GetLemmaIDsForLabelNames()
-	if err != nil {
-		return nil, err
-	}
 	out := make(map[string][]documents.Document)
 	for _, userInfo := range userInfos {
 		sentDocumentIDs, err := userdocuments.GetDocumentIDsSentToUser(tx, userInfo.UserID)
 		if err != nil {
 			return nil, err
 		}
-		terms := getTermsForUser(labelSearchTerms, userInfo)
-		docs, err := queryDocsForUser(userInfo, terms, sentDocumentIDs)
+		docs, err := queryDocsForUser(userInfo, sentDocumentIDs)
 		if err != nil {
 			return nil, err
 		}
@@ -57,17 +53,15 @@ func getTermsForUser(lemmaIDsForLabelName map[labels.LabelName][]wordsmith.Lemma
 	return out
 }
 
-func queryDocsForUser(userInfo userprefs.UserEmailInfo, terms []wordsmith.LemmaID, sentDocumentIDs []documents.DocumentID) ([]documents.Document, error) {
-	docQueryBuilder := documents.NewDocumentsQueryBuilder()
-	/*
-		Later this will become a problem
-		that I will need to map label -> map[languageCode][]LemmaID
-		and likely send one email per language
-	*/
-	docQueryBuilder.ContainingTerms(terms)
-	docQueryBuilder.ForLanguage(userInfo.Languages[0])
-	docQueryBuilder.NotContainingDocumentIDs(sentDocumentIDs)
-	// TODO: add reading level and docs to be removed
+func queryDocsForUser(userInfo userprefs.UserEmailInfo, sentDocumentIDs []documents.DocumentID) ([]documents.Document, error) {
+	docQueryBuilder := documents.NewDocumentsQueryBuilderForLanguage(userInfo.Languages[0])
+	readingLevelLowerBound := ptr.Int64(userInfo.ReadingLevel.LowerBound)
+	readingLevelUpperBound := ptr.Int64(userInfo.ReadingLevel.UpperBound)
+
+	docQueryBuilder.NotContainingDocuments(sentDocumentIDs)
+	docQueryBuilder.ForVersionRange(documents.Version2.Ptr(), documents.Version3.Ptr())
+	docQueryBuilder.ForReadingLevelRange(readingLevelLowerBound, readingLevelUpperBound)
+
 	return docQueryBuilder.ExecuteQuery()
 }
 

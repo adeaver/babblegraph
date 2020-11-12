@@ -34,20 +34,6 @@ func (d documentIndex) GenerateIDForDocument(document interface{}) (*string, err
 	return ptr.String(string(docID)), nil
 }
 
-func CreateDocumentIndex() error {
-	return elastic.CreateIndex(documentIndex{}, &elastic.CreateIndexSettings{
-		Analysis: elastic.IndexAnalysis{
-			Analyzer: elastic.IndexAnalyzer{
-				Name: "custom_analyzer",
-				Body: elastic.IndexAnalyzerBody{
-					Type:      "custom",
-					Tokenizer: elastic.AnalyzerTokenizerWhitespace,
-				},
-			},
-		},
-	})
-}
-
 type IndexDocumentInput struct {
 	URL              urlparser.ParsedURL
 	Metadata         map[string]string
