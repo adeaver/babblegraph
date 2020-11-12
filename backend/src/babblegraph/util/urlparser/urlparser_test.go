@@ -200,6 +200,37 @@ func TestVerifyDomain(t *testing.T) {
 	}
 }
 
+func TestIsValidURL(t *testing.T) {
+	type testCase struct {
+		input   string
+		isValid bool
+	}
+	testCases := []testCase{
+		{
+			input:   "www.google.com",
+			isValid: true,
+		}, {
+			input:   "/some-page-on-website",
+			isValid: false,
+		}, {
+			input:   "https://some-website",
+			isValid: false,
+		}, {
+			input:   "https://some-website.com",
+			isValid: true,
+		}, {
+			input:   "?q=param",
+			isValid: false,
+		},
+	}
+	for idx, tc := range testCases {
+		result := IsValidURL(tc.input)
+		if result != tc.isValid {
+			t.Errorf("Error on test case %d: expected %t, but got %t", idx+1, tc.isValid, result)
+		}
+	}
+}
+
 func testNullableString(t *testing.T, testCaseIdx int, fieldName string, result, expected *string) {
 	switch {
 	case result == nil && expected != nil:
