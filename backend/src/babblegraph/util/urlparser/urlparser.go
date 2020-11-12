@@ -9,6 +9,18 @@ import (
 
 var multipleSlashesRegex = regexp.MustCompile("/")
 
+func IsValidURL(u string) bool {
+	urlParts := findURLParts(u)
+	if urlParts == nil {
+		return false
+	}
+	verifiedDomain, _ := verifyDomain(urlParts.Website)
+	if verifiedDomain == nil {
+		return false
+	}
+	return true
+}
+
 type ParsedURL struct {
 	Domain        string
 	URLIdentifier string

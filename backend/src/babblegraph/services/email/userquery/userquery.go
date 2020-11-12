@@ -3,10 +3,8 @@ package userquery
 import (
 	"babblegraph/model/documents"
 	"babblegraph/model/userdocuments"
-	"babblegraph/services/email/labels"
 	"babblegraph/services/email/userprefs"
 	"babblegraph/util/ptr"
-	"babblegraph/wordsmith"
 	"fmt"
 	"log"
 
@@ -38,19 +36,6 @@ func GetDocumentsForUser(tx *sqlx.Tx, userInfos []userprefs.UserEmailInfo) (map[
 		}
 	}
 	return out, nil
-}
-
-func getTermsForUser(lemmaIDsForLabelName map[labels.LabelName][]wordsmith.LemmaID, userInfo userprefs.UserEmailInfo) []wordsmith.LemmaID {
-	var out []wordsmith.LemmaID
-	for _, label := range userInfo.InterestLabels {
-		lemmaIDs, ok := lemmaIDsForLabelName[label]
-		if !ok {
-			log.Println(fmt.Sprintf("No lemmas found label %s", label))
-			continue
-		}
-		out = append(out, lemmaIDs...)
-	}
-	return out
 }
 
 func queryDocsForUser(userInfo userprefs.UserEmailInfo, sentDocumentIDs []documents.DocumentID) ([]documents.Document, error) {

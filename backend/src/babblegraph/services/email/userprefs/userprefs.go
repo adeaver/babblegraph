@@ -3,19 +3,17 @@ package userprefs
 import (
 	"babblegraph/model/documents"
 	"babblegraph/model/users"
-	"babblegraph/services/email/labels"
 	"babblegraph/wordsmith"
 
 	"github.com/jmoiron/sqlx"
 )
 
 type UserEmailInfo struct {
-	UserID         users.UserID
-	EmailAddress   string
-	ReadingLevel   UserReadingLevel
-	Languages      []wordsmith.LanguageCode
-	InterestLabels []labels.LabelName
-	SentDocuments  []documents.DocumentID
+	UserID        users.UserID
+	EmailAddress  string
+	ReadingLevel  UserReadingLevel
+	Languages     []wordsmith.LanguageCode
+	SentDocuments []documents.DocumentID
 }
 
 type UserReadingLevel struct {
@@ -35,10 +33,6 @@ func GetActiveUserEmailInfo(tx *sqlx.Tx) ([]UserEmailInfo, error) {
 			EmailAddress: user.EmailAddress,
 			// TODO: don't hardcode these
 			Languages: []wordsmith.LanguageCode{wordsmith.LanguageCodeSpanish},
-			InterestLabels: []labels.LabelName{
-				labels.LabelNameScience,
-				labels.LabelNameTechnology,
-			},
 			ReadingLevel: UserReadingLevel{
 				LowerBound: 60,
 				UpperBound: 70,
