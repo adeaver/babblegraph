@@ -52,7 +52,7 @@ func LookupUnfetchedLinkForDomain(tx *sqlx.Tx, domain string) (*Link, error) {
 	return &l, nil
 }
 
-const upsertLinkQuery = "INSERT INTO links2 (url_identifier, domain, url, last_fetch_version) VALUES ($1, $2, $3, NULL) ON CONFLICT (url_identifier) DO UPDATE SET last_fetch_version = NULL"
+const upsertLinkQuery = "INSERT INTO links2 (url_identifier, domain, url) VALUES ($1, $2, $3) ON CONFLICT (url_identifier) DO UPDATE SET last_fetch_version = NULL"
 
 func UpsertLinkWithEmptyFetchStatus(tx *sqlx.Tx, urls []urlparser.ParsedURL) error {
 	for _, u := range urls {
