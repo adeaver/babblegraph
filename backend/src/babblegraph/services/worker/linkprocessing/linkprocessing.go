@@ -2,6 +2,7 @@ package linkprocessing
 
 import (
 	"babblegraph/model/links2"
+	"babblegraph/services/worker/domains"
 	"babblegraph/util/database"
 	"babblegraph/util/urlparser"
 	"sync"
@@ -80,7 +81,7 @@ func (l *LinkProcessor) AddURLs(urls []string) error {
 	// likely to repeat
 	domainSet := make(map[string]bool)
 	for _, u := range urls {
-		if p := urlparser.ParseURL(u); p != nil {
+		if p := urlparser.ParseURL(u); p != nil && domains.IsURLAllowed(*p) {
 			domainSet[p.Domain] = true
 			parsedURLs = append(parsedURLs, *p)
 		}

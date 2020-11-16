@@ -23,3 +23,7 @@ In order to not have a restriction on metadata, I'll likely need a logistic regr
 - http://www.eluniversal.com/ (Venezuela)
 
 The requirement that sections be labeled with og:type website is not super strict as of 11/16/2020.
+
+## Notes
+
+If this package is ever removed or additional languages are ever added, see worker.go where the language code is set. It currently defaults to Spanish and it should not do that.

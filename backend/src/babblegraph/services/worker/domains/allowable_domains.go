@@ -76,4 +76,7 @@ var allowableDomains = map[string]bool{
 	"brecha.com.uy":   true,
 	"elpais.com.uy":   true,
 	"ladiaria.com.uy": true,
+
+	// Daily news, Puerto Rico
+	"periodismoinvestigativo.com": true,
 }

@@ -10,8 +10,9 @@ const (
 	Version1 Version = 1
 	Version2 Version = 2
 	Version3 Version = 3
+	Version3 Version = 4
 
-	CurrentDocumentVersion Version = Version3
+	CurrentDocumentVersion Version = Version4
 )
 
 func (v Version) Ptr() *Version {
