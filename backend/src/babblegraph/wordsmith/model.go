@@ -69,6 +69,10 @@ func (c LanguageCode) Str() string {
 	return string(c)
 }
 
+func (c LanguageCode) Ptr() *LanguageCode {
+	return &c
+}
+
 func MustLanguageCodeForString(code string) LanguageCode {
 	switch code {
 	case LanguageCodeSpanish.Str():

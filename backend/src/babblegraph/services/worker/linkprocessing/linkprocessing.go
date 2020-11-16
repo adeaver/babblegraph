@@ -23,14 +23,7 @@ type LinkProcessor struct {
 }
 
 func CreateLinkProcessor() (*LinkProcessor, error) {
-	var domains []string
-	if err := database.WithTx(func(tx *sqlx.Tx) error {
-		var err error
-		domains, err = links2.GetDomainsWithUnfetchedLinks(tx)
-		return err
-	}); err != nil {
-		return nil, err
-	}
+	domains := domains.GetSeedURLs()
 	var orderedDomains []Domain
 	domainHash := make(map[string]bool)
 	for _, d := range domains {

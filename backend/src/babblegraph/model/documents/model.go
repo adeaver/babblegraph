@@ -10,7 +10,7 @@ const (
 	Version1 Version = 1
 	Version2 Version = 2
 	Version3 Version = 3
-	Version3 Version = 4
+	Version4 Version = 4
 
 	CurrentDocumentVersion Version = Version4
 )
