@@ -27,7 +27,7 @@ func (d *documentsQueryBuilder) ExecuteQuery() ([]Document, error) {
 	queryBuilder := esquery.NewBoolQueryBuilder()
 	queryBuilder.AddMust(esquery.Match("language_code", d.language))
 	if len(d.sentDocumentIDs) != 0 {
-		queryBuilder.AddMustNot(esquery.Terms("id", d.sentDocumentIDs))
+		queryBuilder.AddMustNot(esquery.Terms("id.keyword", d.sentDocumentIDs))
 	}
 	if d.readingLevelRange != nil {
 		readingLevelRangeQueryBuilder := esquery.NewRangeQueryBuilderForFieldName("readability_score")

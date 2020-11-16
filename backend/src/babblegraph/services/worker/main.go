@@ -2,9 +2,11 @@ package main
 
 import (
 	"babblegraph/model/documents"
+	"babblegraph/services/worker/domains"
 	"babblegraph/services/worker/indexing"
 	"babblegraph/services/worker/ingesthtml"
 	"babblegraph/services/worker/linkprocessing"
+	"babblegraph/services/worker/scheduler"
 	"babblegraph/services/worker/textprocessing"
 	"babblegraph/util/database"
 	"babblegraph/util/deref"
@@ -26,17 +28,17 @@ func main() {
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	if err := linkProcessor.AddURLs([]string{
-		"elmundo.es",
-		"https://cnnespanol.cnn.com/",
-		"https://elpais.com/",
-	}); err != nil {
+	if err := linkProcessor.AddURLs(domains.GetSeedURLs()); err != nil {
 		log.Fatal(err.Error())
 	}
 	errs := make(chan error, 1)
-	for i := 0; i < 4; i++ {
+	for i := 0; i < 3; i++ {
 		workerThread := startWorkerThread(linkProcessor, errs)
 		go workerThread()
+	}
+	schedulerErrs := make(chan error, 1)
+	if err := scheduler.StartScheduler(schedulerErrs); err != nil {
+		log.Fatal(err.Error())
 	}
 	for {
 		select {
@@ -44,8 +46,23 @@ func main() {
 			log.Println(fmt.Sprintf("Saw panic: %s. Starting new worker thread.", err.Error()))
 			workerThread := startWorkerThread(linkProcessor, errs)
 			go workerThread()
+		case err := <-schedulerErrs:
+			log.Println(fmt.Sprintf("Saw panic: %s in scheduler.", err.Error()))
 		}
 	}
+}
+
+func setupDatabases() error {
+	if err := database.GetDatabaseForEnvironmentRetrying(); err != nil {
+		return fmt.Errorf("Error setting up main-db: %s", err.Error())
+	}
+	if err := wordsmith.MustSetupWordsmithForEnvironment(); err != nil {
+		return fmt.Errorf("Error setting up wordsmith: %s", err.Error())
+	}
+	if err := elastic.InitializeElasticsearchClientForEnvironment(); err != nil {
+		return fmt.Errorf("Error setting up elasticsearch: %s", err.Error())
+	}
+	return nil
 }
 
 func startWorkerThread(linkProcessor *linkprocessing.LinkProcessor, errs chan error) func() {
@@ -81,12 +98,16 @@ func startWorkerThread(linkProcessor *linkprocessing.LinkProcessor, errs chan er
 				log.Println(fmt.Sprintf("Got error ingesting html for url %s: %s. Continuing...", u, err.Error()))
 				continue
 			}
-			languageCode := wordsmith.LookupLanguageCodeForLanguageLabel(deref.String(parsedHTMLPage.Language, ""))
+			languageLabel := deref.String(parsedHTMLPage.Language, "")
+			languageCode := wordsmith.LookupLanguageCodeForLanguageLabel(languageLabel)
 			if languageCode == nil {
-				log.Println(fmt.Sprintf("URL %s has unsupported language code: %s", u, deref.String(parsedHTMLPage.Language, "")))
-				continue
+				log.Println(fmt.Sprintf("URL %s has unsupported language code: %s", u, languageLabel))
+				// This is only allowed because we're restricting domains
+				// If domains are ever non-restricted, this needs to be removed
+				// and made more robust
+				languageCode = wordsmith.LanguageCodeSpanish.Ptr()
 			}
-			log.Println(fmt.Sprintf("Got language code %s for label %s on URL %s. Processing...", languageCode.Str(), *parsedHTMLPage.Language, u))
+			log.Println(fmt.Sprintf("Got language code %s for label %s on URL %s. Processing...", languageCode.Str(), languageLabel, u))
 			if err := linkProcessor.AddURLs(parsedHTMLPage.Links); err != nil {
 				log.Println(fmt.Sprintf("Error saving urls %+v for url %s: %s", parsedHTMLPage.Links, u, err.Error()))
 				continue
@@ -115,17 +136,4 @@ func startWorkerThread(linkProcessor *linkprocessing.LinkProcessor, errs chan er
 			}
 		}
 	}
-}
-
-func setupDatabases() error {
-	if err := database.GetDatabaseForEnvironmentRetrying(); err != nil {
-		return fmt.Errorf("Error setting up main-db: %s", err.Error())
-	}
-	if err := wordsmith.MustSetupWordsmithForEnvironment(); err != nil {
-		return fmt.Errorf("Error setting up wordsmith: %s", err.Error())
-	}
-	if err := elastic.InitializeElasticsearchClientForEnvironment(); err != nil {
-		return fmt.Errorf("Error setting up elasticsearch: %s", err.Error())
-	}
-	return nil
 }

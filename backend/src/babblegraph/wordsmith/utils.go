@@ -8,6 +8,7 @@ var htmlLanguageValueToLanguageCode = map[string]LanguageCode{
 	"es-es": LanguageCodeSpanish,
 	"es-mx": LanguageCodeSpanish,
 	"es-co": LanguageCodeSpanish,
+	"es-gt": LanguageCodeSpanish,
 }
 
 func LookupLanguageCodeForLanguageLabel(languageLabel string) *LanguageCode {

@@ -2,6 +2,7 @@ package linkprocessing
 
 import (
 	"babblegraph/model/links2"
+	"babblegraph/services/worker/domains"
 	"babblegraph/util/database"
 	"babblegraph/util/urlparser"
 	"sync"
@@ -22,14 +23,7 @@ type LinkProcessor struct {
 }
 
 func CreateLinkProcessor() (*LinkProcessor, error) {
-	var domains []string
-	if err := database.WithTx(func(tx *sqlx.Tx) error {
-		var err error
-		domains, err = links2.GetDomainsWithUnfetchedLinks(tx)
-		return err
-	}); err != nil {
-		return nil, err
-	}
+	domains := domains.GetSeedURLs()
 	var orderedDomains []Domain
 	domainHash := make(map[string]bool)
 	for _, d := range domains {
@@ -80,7 +74,7 @@ func (l *LinkProcessor) AddURLs(urls []string) error {
 	// likely to repeat
 	domainSet := make(map[string]bool)
 	for _, u := range urls {
-		if p := urlparser.ParseURL(u); p != nil {
+		if p := urlparser.ParseURL(u); p != nil && domains.IsURLAllowed(*p) {
 			domainSet[p.Domain] = true
 			parsedURLs = append(parsedURLs, *p)
 		}
