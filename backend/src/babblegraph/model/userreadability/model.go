@@ -14,7 +14,7 @@ const (
 type userReadabilityLevelID string
 
 type userReadabilityLevel struct {
-	ID               UserReadabilityLevelID `db:"id"`
+	ID               userReadabilityLevelID `db:"_id"`
 	LanguageCode     wordsmith.LanguageCode `db:"language_code"`
 	UserID           users.UserID           `db:"user_id"`
 	ReadabilityLevel int64                  `db:"readability_level"`

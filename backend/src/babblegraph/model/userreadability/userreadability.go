@@ -6,6 +6,8 @@ import (
 	"babblegraph/util/math/decimal"
 	"babblegraph/wordsmith"
 	"fmt"
+
+	"github.com/jmoiron/sqlx"
 )
 
 type GetReadabilityScoreRangeForUserInput struct {
@@ -38,7 +40,7 @@ func GetReadabilityScoreRangeForUser(tx *sqlx.Tx, input GetReadabilityScoreRange
 	}
 	switch input.LanguageCode {
 	case wordsmith.LanguageCodeSpanish:
-		levelAsInt := int(readabilityLevel.ReadabilityLevel.ToInt64())
+		levelAsInt := int(readabilityLevel.ReadabilityLevel)
 		minScore, maxScore, err := spanishreadability.GetReadabilityScoreRangeForLevel(levelAsInt)
 		if err != nil {
 			return nil, err
