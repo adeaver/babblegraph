@@ -8,11 +8,8 @@ type Version int64
 
 const (
 	Version1 Version = 1
-	Version2 Version = 2
-	Version3 Version = 3
-	Version4 Version = 4
 
-	CurrentDocumentVersion Version = Version4
+	CurrentDocumentVersion Version = Version1
 )
 
 func (v Version) Ptr() *Version {
@@ -48,8 +45,6 @@ type Document struct {
 	ReadabilityScore int64                  `json:"readability_score"`
 	LanguageCode     wordsmith.LanguageCode `json:"language_code"`
 	LemmatizedBody   string                 `json:"lemmatized_body"`
-
-	// Added in version 2
-	DocumentType *Type     `json:"document_type"`
-	Metadata     *Metadata `json:"metadata"`
+	DocumentType     *Type                  `json:"document_type"`
+	Metadata         *Metadata              `json:"metadata"`
 }
