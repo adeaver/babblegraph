@@ -2,6 +2,7 @@ package userprefs
 
 import (
 	"babblegraph/model/documents"
+	"babblegraph/model/userreadability"
 	"babblegraph/model/users"
 	"babblegraph/wordsmith"
 
@@ -28,15 +29,21 @@ func GetActiveUserEmailInfo(tx *sqlx.Tx) ([]UserEmailInfo, error) {
 	}
 	var userInfos []UserEmailInfo
 	for _, user := range activeUsers {
+		readingLevel, err := userreadability.GetReadabilityScoreRangeForUser(tx, userreadability.GetReadabilityScoreRangeForUserInput{
+			UserID:       user.ID,
+			LanguageCode: wordsmith.LanguageCodeSpanish,
+		})
+		if err != nil {
+			return nil, err
+		}
 		userInfos = append(userInfos, UserEmailInfo{
 			UserID:       user.ID,
 			EmailAddress: user.EmailAddress,
-			// TODO: don't hardcode these
-			Languages: []wordsmith.LanguageCode{wordsmith.LanguageCodeSpanish},
 			ReadingLevel: UserReadingLevel{
-				LowerBound: 60,
-				UpperBound: 70,
+				LowerBound: readingLevel.MinScore.ToInt64Rounded(),
+				UpperBound: readingLevel.MaxScore.ToInt64Rounded(),
 			},
+			Languages: []wordsmith.LanguageCode{wordsmith.LanguageCodeSpanish},
 		})
 	}
 	return userInfos, nil
