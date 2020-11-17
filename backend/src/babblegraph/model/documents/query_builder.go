@@ -47,6 +47,7 @@ func (d *documentsQueryBuilder) ExecuteQuery() ([]Document, error) {
 		if maxVersion := d.version.UpperBound; maxVersion != nil {
 			versionRangeQueryBuilder.LessThanOrEqualToInt64(*maxVersion)
 		}
+		queryBuilder.AddMust(versionRangeQueryBuilder.BuildRangeQuery())
 	}
 	var docs []Document
 	if err := esquery.ExecuteSearch(documentIndex{}, queryBuilder.BuildBoolQuery(), func(source []byte) error {
