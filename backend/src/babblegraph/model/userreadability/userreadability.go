@@ -8,7 +8,7 @@ import (
 	"fmt"
 )
 
-type GetReadabilityScoreRangeForUser struct {
+type GetReadabilityScoreRangeForUserInput struct {
 	UserID       users.UserID
 	LanguageCode wordsmith.LanguageCode
 }
@@ -18,7 +18,7 @@ type ReadabilityScoreRange struct {
 	MaxScore decimal.Number
 }
 
-func GetReadabilityScoreRangeForUser(tx *sqlx.Tx, input GetReadabilityScoreRangeForUser) (*ReadabilityScoreRange, error) {
+func GetReadabilityScoreRangeForUser(tx *sqlx.Tx, input GetReadabilityScoreRangeForUserInput) (*ReadabilityScoreRange, error) {
 	readabilityLevels, err := lookupUserReadabilityForLanguage(tx, input.UserID, input.LanguageCode)
 	if err != nil {
 		return nil, err

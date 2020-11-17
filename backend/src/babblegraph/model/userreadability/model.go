@@ -2,7 +2,6 @@ package userreadability
 
 import (
 	"babblegraph/model/users"
-	"babblegraph/util/math/decimal"
 	"babblegraph/wordsmith"
 )
 
@@ -15,9 +14,9 @@ const (
 type userReadabilityLevelID string
 
 type userReadabilityLevel struct {
-	ID               UserReadabilityLevelID `json:"id"`
-	LanguageCode     wordsmith.LanguageCode `json:"language_code"`
-	UserID           users.UserID           `json:"user_id"`
-	ReadabilityLevel decimal.Number         `json:"readability_level"`
-	Version          userReadabilityVersion `json:"version"`
+	ID               UserReadabilityLevelID `db:"id"`
+	LanguageCode     wordsmith.LanguageCode `db:"language_code"`
+	UserID           users.UserID           `db:"user_id"`
+	ReadabilityLevel int64                  `db:"readability_level"`
+	Version          userReadabilityVersion `db:"version"`
 }

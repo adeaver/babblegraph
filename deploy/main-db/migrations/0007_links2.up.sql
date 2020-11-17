@@ -1,5 +1,3 @@
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
 CREATE TABLE IF NOT EXISTS links2(
     url_identifier TEXT NOT NULL,
     domain TEXT NOT NULL,

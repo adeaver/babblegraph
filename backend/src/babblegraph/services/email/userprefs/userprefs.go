@@ -28,15 +28,21 @@ func GetActiveUserEmailInfo(tx *sqlx.Tx) ([]UserEmailInfo, error) {
 	}
 	var userInfos []UserEmailInfo
 	for _, user := range activeUsers {
+        readingLevel, err := userreadability.GetReadabilityScoreRangeForUser(tx, userreadability.GetReadabilityScoreRangeForUserInput{
+            UserID: user.ID,
+            LanguageCode: wordsmith.LanguageCodeSpanish
+        })
+        if err != nil {
+            return nil, err
+        }
 		userInfos = append(userInfos, UserEmailInfo{
 			UserID:       user.ID,
 			EmailAddress: user.EmailAddress,
-			// TODO: don't hardcode these
-			Languages: []wordsmith.LanguageCode{wordsmith.LanguageCodeSpanish},
 			ReadingLevel: UserReadingLevel{
-				LowerBound: 60,
-				UpperBound: 70,
+				LowerBound: readingLevel.MinScore.ToInt64(),
+				UpperBound: readingLevel.MaxScore.ToInt64(),
 			},
+			Languages: []wordsmith.LanguageCode{wordsmith.LanguageCodeSpanish},
 		})
 	}
 	return userInfos, nil
