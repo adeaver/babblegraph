@@ -67,7 +67,7 @@ func (cl *Client) sendEmail(input sendEmailInput) error {
 				Data:    aws.String(input.Subject),
 			},
 		},
-		Source: aws.String(cl.FromAddress),
+		Source: aws.String(cl.fromAddress),
 	}
 	if _, err := svc.SendEmail(sesInput); err != nil {
 		return err

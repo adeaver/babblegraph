@@ -39,7 +39,7 @@ func main() {
 		c.Start()
 		log.Println(c.Entries())
 	case "local":
-		makeEmailJob(errs)()
+		makeEmailJob(emailClient, errs)()
 		close(errs)
 	}
 	err := <-errs
@@ -70,7 +70,7 @@ func makeEmailJob(emailClient *email.Client, errs chan error) func() {
 				return fmt.Errorf("Error getting documents for users %s", err.Error())
 			}
 			for emailAddress, documents := range emailAddressesToDocuments {
-				if err := sendutil.SendEmailsToUser(emailClient, emailAddress, documents); err != nil {
+				if err := sendutil.SendDailyEmailsForDocuments(emailClient, emailAddress, documents); err != nil {
 					return fmt.Errorf("Error sending emails to users %s", err.Error())
 				}
 			}
@@ -95,9 +95,5 @@ func initializeDatabases() error {
 		return fmt.Errorf("error connecting to elasticsearch: %s", err.Error())
 	}
 	log.Println("successfully connected to elasticsearch")
-	if err := sendutil.InitializeEmailClient(); err != nil {
-		return fmt.Errorf("error setting up email client: %s", err.Error())
-	}
-	log.Println("successfully setup email client")
 	return nil
 }

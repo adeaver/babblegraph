@@ -8,6 +8,8 @@ import (
 	"time"
 )
 
+const dailyEmailTemplateFilename = "daily_email_template.html"
+
 type DailyEmailLink struct {
 	ImageURL *string
 	Title    *string
@@ -32,7 +34,11 @@ func (cl *Client) SendDailyEmailForLinks(recipient string, links []DailyEmailLin
 }
 
 func createEmailBody(links []DailyEmailLink) (*string, error) {
-	t, err := template.New("Daily Email").ParseFiles("./templates/daily_email_template.html")
+	templateFile, err := getPathForTemplateFile(dailyEmailTemplateFilename)
+	if err != nil {
+		return nil, err
+	}
+	t, err := template.New(dailyEmailTemplateFilename).ParseFiles(*templateFile)
 	if err != nil {
 		return nil, err
 	}
