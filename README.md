@@ -40,3 +40,5 @@ Start local shell with configured GOPATH:
 
 - Insert user into local database
 `docker exec -it ops_db_1 /home/postgres/scripts/insert-user --db-name babblegraph --db-user dev --email`
+`docker exec -it ops_db_1 psql -U dev -d babblegraph -c "SELECT _id FROM users WHERE email_address='{email}'"`
+`docker exec -it ops_db_1 /home/postgres/scripts/add-user-reading-level --db-name babblegraph --db-user dev --lang es --level 4 --user {userID}`
