@@ -6,6 +6,7 @@ import (
 	"babblegraph/services/email/userquery"
 	"babblegraph/util/database"
 	"babblegraph/util/elastic"
+	"babblegraph/util/email"
 	"babblegraph/util/env"
 	"babblegraph/wordsmith"
 	"fmt"
@@ -20,6 +21,12 @@ func main() {
 	if err := initializeDatabases(); err != nil {
 		log.Fatal(err.Error())
 	}
+	emailClient := email.NewClient(email.NewClientInput{
+		AWSAccessKey:       env.MustEnvironmentVariable("AWS_SES_ACCESS_KEY"),
+		AWSSecretAccessKey: env.MustEnvironmentVariable("AWS_SES_SECRET_KEY"),
+		AWSRegion:          "us-east-1",
+		FromAddress:        env.MustEnvironmentVariable("EMAIL_ADDRESS"),
+	})
 	errs := make(chan error, 1)
 	switch env.GetEnvironmentVariableOrDefault("ENV", "prod") {
 	case "prod":
@@ -28,11 +35,11 @@ func main() {
 			log.Fatal(err.Error())
 		}
 		c := cron.New(cron.WithLocation(usEastern))
-		c.AddFunc("30 5 * * *", makeEmailJob(errs))
+		c.AddFunc("30 5 * * *", makeEmailJob(emailClient, errs))
 		c.Start()
 		log.Println(c.Entries())
 	case "local":
-		makeEmailJob(errs)()
+		makeEmailJob(emailClient, errs)()
 		close(errs)
 	}
 	err := <-errs
@@ -43,7 +50,8 @@ func main() {
 	log.Println("Ending email service")
 }
 
-func makeEmailJob(errs chan error) func() {
+func makeEmailJob(emailClient *email.Client, errs chan error) func() {
+	// TODO: refactor to not load literally everything into memory
 	return func() {
 		log.Println("Starting email job...")
 		var allUserEmailInfo []userprefs.UserEmailInfo
@@ -61,11 +69,12 @@ func makeEmailJob(errs chan error) func() {
 			if err != nil {
 				return fmt.Errorf("Error getting documents for users %s", err.Error())
 			}
-			err = sendutil.SendEmailsToUser(emailAddressesToDocuments)
-			if err != nil {
-				return fmt.Errorf("Error sending emails to users %s", err.Error())
+			for emailAddress, documents := range emailAddressesToDocuments {
+				if err := sendutil.SendDailyEmailsForDocuments(emailClient, emailAddress, documents); err != nil {
+					return fmt.Errorf("Error sending emails to users %s", err.Error())
+				}
 			}
-			return err
+			return nil
 		}); err != nil {
 			errs <- err
 			return
@@ -86,9 +95,5 @@ func initializeDatabases() error {
 		return fmt.Errorf("error connecting to elasticsearch: %s", err.Error())
 	}
 	log.Println("successfully connected to elasticsearch")
-	if err := sendutil.InitializeEmailClient(); err != nil {
-		return fmt.Errorf("error setting up email client: %s", err.Error())
-	}
-	log.Println("successfully setup email client")
 	return nil
 }
