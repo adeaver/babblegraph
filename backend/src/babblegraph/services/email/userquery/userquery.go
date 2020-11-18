@@ -44,7 +44,7 @@ func queryDocsForUser(userInfo userprefs.UserEmailInfo, sentDocumentIDs []docume
 	readingLevelUpperBound := ptr.Int64(userInfo.ReadingLevel.UpperBound)
 
 	docQueryBuilder.NotContainingDocuments(sentDocumentIDs)
-	docQueryBuilder.ForVersionRange(documents.Version4.Ptr(), nil)
+	docQueryBuilder.ForVersionRange(nil, documents.Version1.Ptr())
 	docQueryBuilder.ForReadingLevelRange(readingLevelLowerBound, readingLevelUpperBound)
 
 	return docQueryBuilder.ExecuteQuery()

@@ -1,7 +1,7 @@
 #!/bin/bash
 DB_NAME="${PG_DATABASE}"
 DB_USER="${PG_USER}"
-LANG="es"
+LANG_CODE="es"
 while [ $# -gt 0 ]; do
     case "$1" in
         --level)
@@ -28,11 +28,11 @@ while [ $# -gt 0 ]; do
     shift
 done
 
-if [[ -z "$LEVEL" || -z "$LANG" || -z "$USER" || -z "$DB_NAME" || -z "$DB_USER" ]]; then
+if [[ -z "$LEVEL" || -z "$LANG_CODE" || -z "$USER" || -z "$DB_NAME" || -z "$DB_USER" ]]; then
     echo "No level, language, user, db name, or db user"
     exit 1
 fi;
 
 
-PGPASSWORD=$PG_PASSWORD psql -U $DB_USER -d $DB_NAME -c "INSERT INTO user_readability_level (user_id, readability_level, language_code, version) VALUES ('$USER', $LEVEL, '$LANG', 1)"
+PGPASSWORD=$PG_PASSWORD psql -U $DB_USER -d $DB_NAME -c "INSERT INTO user_readability_level (user_id, readability_level, language_code, version) VALUES ('$USER', $LEVEL, '$LANG_CODE', 1)"
 exit
