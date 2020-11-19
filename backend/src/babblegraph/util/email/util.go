@@ -1,14 +1,14 @@
 package email
 
 import (
+	"babblegraph/util/env"
 	"babblegraph/util/ptr"
 	"fmt"
 	"os"
 )
 
-const templatePath = "/util/email/templates/"
-
 func getPathForTemplateFile(filename string) (*string, error) {
+	templatePath := env.GetEnvironmentVariableOrDefault("TEMPLATES_PATH", "/util/email/templates/")
 	cwd, err := os.Getwd()
 	if err != nil {
 		return nil, err
