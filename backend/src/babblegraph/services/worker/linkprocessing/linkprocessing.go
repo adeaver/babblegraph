@@ -3,13 +3,17 @@ package linkprocessing
 import (
 	"babblegraph/model/links2"
 	"babblegraph/services/worker/domains"
+	"babblegraph/util/bufferedfetch"
 	"babblegraph/util/database"
 	"babblegraph/util/urlparser"
+	"fmt"
 	"sync"
 	"time"
 
 	"github.com/jmoiron/sqlx"
 )
+
+const defaultChunkSize = 150
 
 type Domain struct {
 	Domain string
@@ -32,11 +36,32 @@ func CreateLinkProcessor() (*LinkProcessor, error) {
 			Domain: d,
 			FreeAt: time.Now(),
 		})
+		if err := bufferedfetch.Register(getBufferedFetchKeyForDomain(d), makeBufferedFetchForDomain(d)); err != nil {
+			return nil, err
+		}
 	}
 	return &LinkProcessor{
 		DomainSet:      domainHash,
 		OrderedDomains: orderedDomains,
 	}, nil
+}
+
+func makeBufferedFetchForDomain(domain string) func() (interface{}, error) {
+	return func() (interface{}, error) {
+		var links []links2.Link
+		if err := database.WithTx(func(tx *sqlx.Tx) error {
+			var err error
+			links, err = links2.LookupBulkUnfetchedLinksForDomain(tx, domain, defaultChunkSize)
+			return err
+		}); err != nil {
+			return nil, err
+		}
+		return links, nil
+	}
+}
+
+func getBufferedFetchKeyForDomain(domain string) string {
+	return fmt.Sprintf("linkprocessing-%s", domain)
 }
 
 func (l *LinkProcessor) GetLink() (*links2.Link, *time.Duration, error) {
@@ -51,21 +76,23 @@ func (l *LinkProcessor) GetLink() (*links2.Link, *time.Duration, error) {
 		Domain: firstDomain.Domain,
 		FreeAt: time.Now().Add(15 * time.Second),
 	})
-	var link *links2.Link
+	var link links2.Link
+	if err := bufferedfetch.WithNextBufferedValue(getBufferedFetchKeyForDomain(firstDomain.Domain), func(i interface{}) error {
+		var ok bool
+		link, ok = i.(links2.Link)
+		if !ok {
+			return fmt.Errorf("error getting next value for domain %s: incorrect type in buffered fetch", firstDomain.Domain)
+		}
+		return nil
+	}); err != nil {
+		return nil, nil, err
+	}
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
-		var err error
-		link, err = links2.LookupUnfetchedLinkForDomain(tx, firstDomain.Domain)
-		if err != nil {
-			return err
-		}
-		if link == nil {
-			return nil
-		}
 		return links2.SetURLAsFetched(tx, link.URLIdentifier)
 	}); err != nil {
 		return nil, nil, err
 	}
-	return link, nil, nil
+	return &link, nil, nil
 }
 
 func (l *LinkProcessor) AddURLs(urls []string) error {
