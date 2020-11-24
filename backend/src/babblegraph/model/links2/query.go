@@ -41,15 +41,26 @@ func SetURLAsFetched(tx *sqlx.Tx, urlIdentifier URLIdentifier) error {
 }
 
 func LookupUnfetchedLinkForDomain(tx *sqlx.Tx, domain string) (*Link, error) {
-	var matches []dbLink
-	if err := tx.Select(&matches, "SELECT * FROM links2 WHERE last_fetch_version IS DISTINCT FROM $1 AND domain=$2 ORDER BY seq_num ASC LIMIT 1", FetchVersion1, domain); err != nil {
+	out, err := LookupBulkUnfetchedLinksForDomain(tx, domain, 1)
+	if err != nil {
 		return nil, err
 	}
-	if len(matches) < 1 {
+	if len(out) != 1 {
 		return nil, nil
 	}
-	l := matches[0].ToNonDB()
-	return &l, nil
+	return &out[0], nil
+}
+
+func LookupBulkUnfetchedLinksForDomain(tx *sqlx.Tx, domain string, chunkSize int) ([]Link, error) {
+	var matches []dbLink
+	if err := tx.Select(&matches, "SELECT * FROM links2 WHERE last_fetch_version IS DISTINCT FROM $1 AND domain=$2 ORDER BY seq_num ASC LIMIT $3", FetchVersion1, domain, chunkSize); err != nil {
+		return nil, err
+	}
+	var out []Link
+	for _, match := range matches {
+		out = append(out, match.ToNonDB())
+	}
+	return out, nil
 }
 
 const upsertLinkQuery = "INSERT INTO links2 (url_identifier, domain, url) VALUES ($1, $2, $3) ON CONFLICT (url_identifier) DO UPDATE SET last_fetch_version = NULL"
