@@ -1,4 +1,4 @@
-package sendutil
+package dailyemail
 
 import (
 	"babblegraph/model/documents"
@@ -9,7 +9,7 @@ import (
 	"log"
 )
 
-func SendDailyEmailsForDocuments(cl *email.Client, recipient string, docs []documents.Document) error {
+func sendDailyEmailsForDocuments(cl *email.Client, recipient string, docs []documents.Document) error {
 	var links []email.DailyEmailLink
 	for _, doc := range docs {
 		var title, imageURL *string
