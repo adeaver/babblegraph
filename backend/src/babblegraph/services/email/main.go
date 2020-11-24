@@ -1,9 +1,8 @@
 package main
 
 import (
-	"babblegraph/services/email/sendutil"
-	"babblegraph/services/email/userprefs"
-	"babblegraph/services/email/userquery"
+	"babblegraph/model/users"
+	"babblegraph/services/email/dailyemail"
 	"babblegraph/util/database"
 	"babblegraph/util/elastic"
 	"babblegraph/util/email"
@@ -51,33 +50,21 @@ func main() {
 }
 
 func makeEmailJob(emailClient *email.Client, errs chan error) func() {
-	// TODO: refactor to not load literally everything into memory
 	return func() {
 		log.Println("Starting email job...")
-		var allUserEmailInfo []userprefs.UserEmailInfo
+		var activeUsers []users.User
 		if err := database.WithTx(func(tx *sqlx.Tx) error {
 			var err error
-			allUserEmailInfo, err = userprefs.GetActiveUserEmailInfo(tx)
+			activeUsers, err = users.GetAllActiveUsers(tx)
 			return err
 		}); err != nil {
 			errs <- err
 			return
 		}
-		log.Println(fmt.Sprintf("Sending emails to %d address", len(allUserEmailInfo)))
-		if err := database.WithTx(func(tx *sqlx.Tx) error {
-			emailAddressesToDocuments, err := userquery.GetDocumentsForUser(tx, allUserEmailInfo)
-			if err != nil {
-				return fmt.Errorf("Error getting documents for users %s", err.Error())
+		for _, u := range activeUsers {
+			if err := dailyemail.SendDailyEmailToUser(emailClient, u); err != nil {
+				log.Println(fmt.Sprintf("Error sending daily email to %s: %s", u.EmailAddress, err.Error()))
 			}
-			for emailAddress, documents := range emailAddressesToDocuments {
-				if err := sendutil.SendDailyEmailsForDocuments(emailClient, emailAddress, documents); err != nil {
-					return fmt.Errorf("Error sending emails to users %s", err.Error())
-				}
-			}
-			return nil
-		}); err != nil {
-			errs <- err
-			return
 		}
 	}
 }
