@@ -12,7 +12,7 @@ type domainQuery struct {
 
 func GetDomainsWithUnfetchedLinks(tx *sqlx.Tx) ([]string, error) {
 	var domainsWithUnfetchedLinks []domainQuery
-	if err := tx.Select(&domainsWithUnfetchedLinks, "SELECT DISTINCT(domain) FROM links2 WHERE last_fetch_version IS DISTINCT FROM $1", FetchVersion1); err != nil {
+	if err := tx.Select(&domainsWithUnfetchedLinks, "SELECT DISTINCT(domain) FROM links2 WHERE last_fetch_version IS DISTINCT FROM $1", CurrentFetchVersion); err != nil {
 		return nil, err
 	}
 	var out []string
@@ -34,7 +34,7 @@ func InsertLinks(tx *sqlx.Tx, urls []urlparser.ParsedURL) error {
 }
 
 func SetURLAsFetched(tx *sqlx.Tx, urlIdentifier URLIdentifier) error {
-	if _, err := tx.Exec("UPDATE links2 SET last_fetch_version=$1 WHERE url_identifier=$2", FetchVersion1, string(urlIdentifier)); err != nil {
+	if _, err := tx.Exec("UPDATE links2 SET last_fetch_version=$1 WHERE url_identifier=$2", CurrentFetchVersion, string(urlIdentifier)); err != nil {
 		return err
 	}
 	return nil
@@ -53,7 +53,7 @@ func LookupUnfetchedLinkForDomain(tx *sqlx.Tx, domain string) (*Link, error) {
 
 func LookupBulkUnfetchedLinksForDomain(tx *sqlx.Tx, domain string, chunkSize int) ([]Link, error) {
 	var matches []dbLink
-	if err := tx.Select(&matches, "SELECT * FROM links2 WHERE last_fetch_version IS DISTINCT FROM $1 AND domain=$2 ORDER BY seq_num ASC LIMIT $3", FetchVersion1, domain, chunkSize); err != nil {
+	if err := tx.Select(&matches, "SELECT * FROM links2 WHERE last_fetch_version IS DISTINCT FROM $1 AND domain=$2 ORDER BY seq_num ASC LIMIT $3", CurrentFetchVersion, domain, chunkSize); err != nil {
 		return nil, err
 	}
 	var out []Link
