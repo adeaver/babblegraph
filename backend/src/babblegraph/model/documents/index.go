@@ -8,6 +8,7 @@ import (
 	"babblegraph/util/urlparser"
 	"babblegraph/wordsmith"
 	"fmt"
+	"time"
 )
 
 const documentIndexName string = "web_documents"
@@ -55,13 +56,23 @@ func AssignIDAndIndexDocument(input IndexDocumentInput) (*DocumentID, error) {
 		LemmatizedBody:   input.LemmatizedBody,
 		LanguageCode:     input.LanguageCode,
 		DocumentType:     input.Type.Ptr(),
+		Domain:           input.URL.Domain,
 		Metadata: &Metadata{
-			Title: deref.String(ogMetadata.Title, ""),
-			Image: deref.String(ogMetadata.ImageURL, ""),
-			URL:   deref.String(ogMetadata.URL, ""),
+			Title:              deref.String(ogMetadata.Title, ""),
+			Image:              deref.String(ogMetadata.ImageURL, ""),
+			URL:                deref.String(ogMetadata.URL, ""),
+			Description:        deref.String(ogMetadata.Description, ""),
+			PublicationTimeUTC: getPublicationTimeUTCOrNil(ogMetadata.PublicationTime),
 		},
 	}); err != nil {
 		return nil, err
 	}
 	return &documentID, nil
+}
+
+func getPublicationTimeUTCOrNil(t *time.Time) *time.Time {
+	if t == nil {
+		return nil
+	}
+	return ptr.Time(t.UTC())
 }

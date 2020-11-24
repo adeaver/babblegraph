@@ -11,9 +11,10 @@ import (
 const dailyEmailTemplateFilename = "daily_email_template.html"
 
 type DailyEmailLink struct {
-	ImageURL *string
-	Title    *string
-	URL      string
+	ImageURL    *string
+	Title       *string
+	Description *string
+	URL         string
 }
 
 type dailyEmailTemplate struct {

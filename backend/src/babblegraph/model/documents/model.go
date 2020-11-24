@@ -2,14 +2,16 @@ package documents
 
 import (
 	"babblegraph/wordsmith"
+	"time"
 )
 
 type Version int64
 
 const (
 	Version1 Version = 1
+	Version2 Version = 2
 
-	CurrentDocumentVersion Version = Version1
+	CurrentDocumentVersion Version = Version2
 )
 
 func (v Version) Ptr() *Version {
@@ -31,9 +33,11 @@ func (t Type) Str() string {
 }
 
 type Metadata struct {
-	Title string `json:"title"`
-	Image string `json:"image"`
-	URL   string `json:"url"`
+	Title              string     `json:"title"`
+	Image              string     `json:"image"`
+	URL                string     `json:"url"`
+	Description        string     `json:"description"`
+	PublicationTimeUTC *time.Time `json:"publication_time_utc,omitempty"`
 }
 
 type DocumentID string
@@ -47,4 +51,5 @@ type Document struct {
 	LemmatizedBody   string                 `json:"lemmatized_body"`
 	DocumentType     *Type                  `json:"document_type"`
 	Metadata         *Metadata              `json:"metadata"`
+	Domain           string                 `json:"domain"`
 }

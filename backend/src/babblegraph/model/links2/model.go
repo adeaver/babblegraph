@@ -15,7 +15,14 @@ type Link struct {
 type FetchVersion int64
 
 const (
-	FetchVersion1 = 1
+	FetchVersion1 FetchVersion = 1
+
+	// Version 2 Updates.
+	// Adds publication time, domain, and description to documents
+	// Removes lemmatized body
+	FetchVersion2 FetchVersion = 2
+
+	CurrentFetchVersion FetchVersion = FetchVersion2
 )
 
 type dbLink struct {
