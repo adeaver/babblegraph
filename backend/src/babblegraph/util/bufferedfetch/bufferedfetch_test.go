@@ -62,8 +62,8 @@ func TestDoubleCall(t *testing.T) {
 		}); err != nil {
 			t.Errorf("Got error: %s", err.Error())
 		}
-		expected := 1
-		if i == 6 {
+		expected := i
+		if i == 5 {
 			expected = 0
 		}
 		if v != expected {
