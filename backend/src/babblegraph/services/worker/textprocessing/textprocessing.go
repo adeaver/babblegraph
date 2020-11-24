@@ -19,12 +19,8 @@ func ProcessText(text string, language wordsmith.LanguageCode) (*TextMetadata, e
 		if err != nil {
 			return nil, err
 		}
-		lemmatizedBody, err := lemmatizeBody(wordsmith.LanguageCodeSpanish, normalizedText)
-		if err != nil {
-			return nil, err
-		}
 		return &TextMetadata{
-			LemmatizedText:   *lemmatizedBody,
+			LemmatizedText:   "",
 			ReadabilityScore: *readabilityScore,
 		}, nil
 	default:
