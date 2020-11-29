@@ -75,6 +75,36 @@ func TestParseURL(t *testing.T) {
 			// rather than websites with a single tld as the domain name
 			expectedDomain:        "blog.musica.ar",
 			expectedURLIdentifier: "blog.musica.ar|some-page/v2",
+		}, {
+			// https with #, no query params or page
+			input:                 "https://www.google.com/#position",
+			expectedDomain:        "google.com",
+			expectedURLIdentifier: "google.com",
+		}, {
+			// https with #, no query params, with  page
+			input:                 "https://www.google.com/page#position",
+			expectedDomain:        "google.com",
+			expectedURLIdentifier: "google.com|page",
+		}, {
+			// https with #, with query params and page
+			input:                 "https://www.google.com/page?q=abc#position",
+			expectedDomain:        "google.com",
+			expectedURLIdentifier: "google.com|page",
+		}, {
+			// https with #, with query params and page, order reversed
+			input:                 "https://www.google.com/page#position?q=abc",
+			expectedDomain:        "google.com",
+			expectedURLIdentifier: "google.com|page",
+		}, {
+			// https with #, with query params, no page
+			input:                 "https://www.google.com/?q=abc#position",
+			expectedDomain:        "google.com",
+			expectedURLIdentifier: "google.com",
+		}, {
+			// https with #, with query params, no page, order reversed
+			input:                 "https://www.google.com/#position?q=abc",
+			expectedDomain:        "google.com",
+			expectedURLIdentifier: "google.com",
 		},
 	}
 	for idx, tc := range testCases {
