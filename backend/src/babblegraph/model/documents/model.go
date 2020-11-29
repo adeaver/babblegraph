@@ -33,10 +33,10 @@ func (t Type) Str() string {
 }
 
 type Metadata struct {
-	Title              string     `json:"title"`
-	Image              string     `json:"image"`
-	URL                string     `json:"url"`
-	Description        string     `json:"description"`
+	Title              *string    `json:"title,omitempty"`
+	Image              *string    `json:"image,omitempty"`
+	URL                *string    `json:"url,omitempty"`
+	Description        *string    `json:"description,omitempty"`
 	PublicationTimeUTC *time.Time `json:"publication_time_utc,omitempty"`
 }
 
@@ -48,8 +48,8 @@ type Document struct {
 	URL              string                 `json:"url"`
 	ReadabilityScore int64                  `json:"readability_score"`
 	LanguageCode     wordsmith.LanguageCode `json:"language_code"`
-	DocumentType     *Type                  `json:"document_type"`
-	Metadata         *Metadata              `json:"metadata"`
+	DocumentType     Type                   `json:"document_type"`
+	Metadata         Metadata               `json:"metadata"`
 	Domain           string                 `json:"domain"`
 
 	LemmatizedBodyDEPRECATED *string `json:"lemmatized_body,omitempty"`
