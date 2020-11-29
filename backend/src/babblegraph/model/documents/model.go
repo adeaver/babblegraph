@@ -48,8 +48,9 @@ type Document struct {
 	URL              string                 `json:"url"`
 	ReadabilityScore int64                  `json:"readability_score"`
 	LanguageCode     wordsmith.LanguageCode `json:"language_code"`
-	LemmatizedBody   string                 `json:"lemmatized_body"`
 	DocumentType     *Type                  `json:"document_type"`
 	Metadata         *Metadata              `json:"metadata"`
 	Domain           string                 `json:"domain"`
+
+	LemmatizedBodyDEPRECATED *string `json:"lemmatized_body,omitempty"`
 }
