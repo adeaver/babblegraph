@@ -7,7 +7,10 @@ import (
 	"strings"
 )
 
-var multipleSlashesRegex = regexp.MustCompile("/")
+var (
+	multipleSlashesRegex = regexp.MustCompile("/")
+	pageSeparatorRegex   = regexp.MustCompile("\\?|#")
+)
 
 func IsValidURL(u string) bool {
 	urlParts := findURLParts(u)
@@ -80,10 +83,10 @@ func findURLParts(rawURL string) *urlParts {
 			website = &p
 		case website != nil && page == nil:
 			// now, we've captured the website name and are capturing pages
-			if strings.Count(part, "?") != 0 {
-				pageSplit := strings.Split(part, "?")
+			if pageSeparatorRegex.MatchString(part) {
+				pageSplit := pageSeparatorRegex.Split(part, 2)
 				pageParts = append(pageParts, pageSplit[0])
-				paramParts = append(paramParts, pageSplit[1:]...)
+				paramParts = append(paramParts, pageSplit[1])
 				p := strings.Join(pageParts, "/")
 				page = &p
 				continue
