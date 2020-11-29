@@ -3,7 +3,6 @@ package dailyemail
 import (
 	"babblegraph/model/documents"
 	"babblegraph/util/email"
-	"babblegraph/util/ptr"
 	"babblegraph/util/urlparser"
 	"fmt"
 	"log"
@@ -12,18 +11,9 @@ import (
 func sendDailyEmailsForDocuments(cl *email.Client, recipient string, docs []documents.Document) error {
 	var links []email.DailyEmailLink
 	for _, doc := range docs {
-		var title, imageURL, description *string
-		if doc.Metadata != nil {
-			if len(doc.Metadata.Title) > 0 {
-				title = ptr.String(doc.Metadata.Title)
-			}
-			if len(doc.Metadata.Image) > 0 && urlparser.IsValidURL(doc.Metadata.Image) {
-				imageURL = ptr.String(doc.Metadata.Image)
-			}
-			if len(doc.Metadata.Description) > 0 {
-				description = ptr.String(doc.Metadata.Description)
-			}
-		}
+		title := doc.Metadata.Title
+		imageURL := doc.Metadata.Image
+		description := doc.Metadata.Description
 		if !urlparser.IsValidURL(doc.URL) {
 			continue
 		}
