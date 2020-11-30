@@ -13,19 +13,22 @@ type IntRange struct {
 }
 
 type documentsQueryBuilder struct {
-	language          string
+	languageCode      wordsmith.LanguageCode
 	sentDocumentIDs   []string
 	readingLevelRange *IntRange
 	version           *IntRange
 }
 
 func NewDocumentsQueryBuilderForLanguage(languageCode wordsmith.LanguageCode) *documentsQueryBuilder {
-	return &documentsQueryBuilder{language: languageCode.Str()}
+	return &documentsQueryBuilder{languageCode: languageCode}
 }
 
 func (d *documentsQueryBuilder) ExecuteQuery() ([]Document, error) {
 	queryBuilder := esquery.NewBoolQueryBuilder()
-	queryBuilder.AddMust(esquery.Match("language_code", d.language))
+	queryBuilder.AddMust(esquery.Match("language_code", d.languageCode.Str()))
+	if filteredWords, ok := filteredWordsForLanguageCode[d.languageCode]; ok {
+		queryBuilder.AddMustNot(esquery.Terms("metadata.title", filteredWords))
+	}
 	if len(d.sentDocumentIDs) != 0 {
 		queryBuilder.AddMustNot(esquery.Terms("id.keyword", d.sentDocumentIDs))
 	}
@@ -49,7 +52,6 @@ func (d *documentsQueryBuilder) ExecuteQuery() ([]Document, error) {
 		}
 		queryBuilder.AddMust(versionRangeQueryBuilder.BuildRangeQuery())
 	}
-	queryBuilder.AddMustNot(esquery.Terms("metadata.title", filteredWords))
 	var docs []Document
 	if err := esquery.ExecuteSearch(documentIndex{}, queryBuilder.BuildBoolQuery(), func(source []byte) error {
 		var doc Document

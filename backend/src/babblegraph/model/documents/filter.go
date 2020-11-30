@@ -1,8 +1,22 @@
 package documents
 
-var filteredWords = []string{
-	"disparó",
-	"arma",
-	"muerto",
-	"mató",
+import "babblegraph/wordsmith"
+
+var filteredWordsForLanguageCode = map[wordsmith.LanguageCode][]string{
+	wordsmith.LanguageCodeSpanish: []string{
+		"arma",
+		"armas",
+		"homicidio",
+		"homicidios",
+		"asesinato",
+		"asesinatos",
+		"muerte",
+		"muertos",
+		"disparó",
+		"dispararon",
+		"mató",
+		"mataron",
+		"morió",
+		"morieron",
+	},
 }
