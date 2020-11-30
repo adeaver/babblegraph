@@ -49,6 +49,7 @@ func (d *documentsQueryBuilder) ExecuteQuery() ([]Document, error) {
 		}
 		queryBuilder.AddMust(versionRangeQueryBuilder.BuildRangeQuery())
 	}
+	queryBuilder.AddMustNot(esquery.Terms("metadata.title", filteredWords))
 	var docs []Document
 	if err := esquery.ExecuteSearch(documentIndex{}, queryBuilder.BuildBoolQuery(), func(source []byte) error {
 		var doc Document
