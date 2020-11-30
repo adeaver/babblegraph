@@ -2,6 +2,7 @@ package dailyemail
 
 import (
 	"babblegraph/model/documents"
+	"babblegraph/util/deref"
 	"babblegraph/util/email"
 	"babblegraph/util/urlparser"
 	"fmt"
@@ -11,9 +12,16 @@ import (
 func sendDailyEmailsForDocuments(cl *email.Client, recipient string, docs []documents.Document) error {
 	var links []email.DailyEmailLink
 	for _, doc := range docs {
-		title := doc.Metadata.Title
-		imageURL := doc.Metadata.Image
-		description := doc.Metadata.Description
+		var title, imageURL, description *string
+		if isNotEmpty(doc.Metadata.Title) {
+			title = doc.Metadata.Title
+		}
+		if isNotEmpty(doc.Metadata.Image) {
+			imageURL = doc.Metadata.Image
+		}
+		if isNotEmpty(doc.Metadata.Description) {
+			description = doc.Metadata.Description
+		}
 		if !urlparser.IsValidURL(doc.URL) {
 			continue
 		}
@@ -26,4 +34,10 @@ func sendDailyEmailsForDocuments(cl *email.Client, recipient string, docs []docu
 		})
 	}
 	return cl.SendDailyEmailForLinks(recipient, links)
+}
+
+// TODO: remove this function when documents
+// have been reindexed
+func isNotEmpty(s *string) bool {
+	return len(deref.String(s, "")) > 0
 }
