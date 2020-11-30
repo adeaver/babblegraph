@@ -37,7 +37,6 @@ var allowableDomains = map[string]bool{
 	// Daily news, Mexico
 	"jornada.com.mx":         true,
 	"heraldodemexico.com.mx": true,
-	"la-prensa.com.mx":       true,
 
 	// Financial news, Mexico
 	"eleconomista.com.mx": true,
