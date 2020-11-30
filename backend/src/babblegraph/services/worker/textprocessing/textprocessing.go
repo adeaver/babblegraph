@@ -7,7 +7,6 @@ import (
 )
 
 type TextMetadata struct {
-	LemmatizedText   string
 	ReadabilityScore decimal.Number
 }
 
@@ -20,7 +19,6 @@ func ProcessText(text string, language wordsmith.LanguageCode) (*TextMetadata, e
 			return nil, err
 		}
 		return &TextMetadata{
-			LemmatizedText:   "",
 			ReadabilityScore: *readabilityScore,
 		}, nil
 	default:

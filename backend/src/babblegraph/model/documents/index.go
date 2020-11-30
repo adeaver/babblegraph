@@ -1,7 +1,6 @@
 package documents
 
 import (
-	"babblegraph/util/deref"
 	"babblegraph/util/elastic"
 	"babblegraph/util/opengraph"
 	"babblegraph/util/ptr"
@@ -41,7 +40,6 @@ type IndexDocumentInput struct {
 	Type             Type
 	Version          Version
 	LanguageCode     wordsmith.LanguageCode
-	LemmatizedBody   string
 	ReadabilityScore int64
 }
 
@@ -53,15 +51,14 @@ func AssignIDAndIndexDocument(input IndexDocumentInput) (*DocumentID, error) {
 		Version:          input.Version,
 		URL:              input.URL.URL,
 		ReadabilityScore: input.ReadabilityScore,
-		LemmatizedBody:   input.LemmatizedBody,
 		LanguageCode:     input.LanguageCode,
-		DocumentType:     input.Type.Ptr(),
+		DocumentType:     input.Type,
 		Domain:           input.URL.Domain,
-		Metadata: &Metadata{
-			Title:              deref.String(ogMetadata.Title, ""),
-			Image:              deref.String(ogMetadata.ImageURL, ""),
-			URL:                deref.String(ogMetadata.URL, ""),
-			Description:        deref.String(ogMetadata.Description, ""),
+		Metadata: Metadata{
+			Title:              ogMetadata.Title,
+			Image:              ogMetadata.ImageURL,
+			URL:                ogMetadata.URL,
+			Description:        ogMetadata.Description,
 			PublicationTimeUTC: getPublicationTimeUTCOrNil(ogMetadata.PublicationTime),
 		},
 	}); err != nil {

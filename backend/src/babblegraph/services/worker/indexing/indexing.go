@@ -23,7 +23,6 @@ func IndexDocument(input IndexDocumentInput) error {
 		URL:              input.URL,
 		ReadabilityScore: input.TextMetadata.ReadabilityScore.ToInt64Rounded(),
 		LanguageCode:     input.LanguageCode,
-		LemmatizedBody:   input.TextMetadata.LemmatizedText,
 		Metadata:         input.ParsedHTMLPage.Metadata,
 
 		// These will get changed later
