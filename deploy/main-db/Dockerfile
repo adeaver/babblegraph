@@ -15,6 +15,8 @@ RUN apt-get update && \
     apt-get install -y postgresql-12 && \
     apt-get clean
 
+RUN mkdir -p /home/postgres/backups && chown -R postgres:postgres /home/postgres/backups
+
 USER postgres
 
 COPY conf/hba.conf /etc/postgresql/12/main/pg_hba.conf

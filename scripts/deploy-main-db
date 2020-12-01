@@ -24,7 +24,6 @@ echo "Running new container..."
 docker run -d -v $(pwd)/deploy/main-db/data:/var/lib/postgresql/data \
     -v $(pwd)/deploy/main-db/scripts:/home/postgres/scripts \
     -v $(pwd)/deploy/main-db/migrations:/home/postgres/migrations \
-    -v $(pwd)/deploy/main-db/backups:/home/postgres/backups \
     --env-file ./env/main-db.env \
     --restart unless-stopped \
     --name babblegraph_main_db \
@@ -42,17 +41,3 @@ docker exec -it babblegraph_main_db psql -c "CREATE DATABASE $PG_DATABASE OWNER 
 
 echo "Unsetting environment"
 unset $(grep -v '^#' ./env/main-db.env | sed -E 's/(.*)=.*/\1/' | xargs)
-
-if [[ $START_CRON ]]; then
-    if [[ -z "$BABBLEGRAPH_HOME" ]]; then
-        echo "Must set BABBLEGRAPH_HOME to run start cron"
-        exit 1
-    fi
-    echo "Setting up cron..."
-    mkdir -p /home/root/scripts
-    cp $BABBLEGRAPH_HOME/main-db/deploy/scripts/remote-backup /home/root/scripts
-    cp $BABBLEGRAPH_HOME/main-db/conf/backup-cron /etc/cron.d/backup-main-db
-    chmod 0644 /etc/cron.d/backup-main-db
-    echo "Starting cron..."
-    cron
-fi;
