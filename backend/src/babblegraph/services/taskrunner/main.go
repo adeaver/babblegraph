@@ -13,7 +13,8 @@ func main() {
 	if err := setupDatabases(); err != nil {
 		log.Fatal(err.Error())
 	}
-	taskName := flag.String("task", "", "Name of task to run [daily-email]")
+	taskName := flag.String("task", "none", "Name of task to run [daily-email]")
+	flag.Parse()
 	if taskName == nil {
 		log.Fatal("No task specified")
 	}

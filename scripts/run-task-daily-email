@@ -14,5 +14,5 @@ echo "Running new container..."
 docker run -d \
     --env-file ./env/taskrunner.env \
     --name babblegraph_task_runner \
-    --entrypoint ./taskrunner --task daily-email \
-    babblegraph.com/taskrunner:$(git rev-parse --short HEAD)
+    babblegraph.com/taskrunner:$(git rev-parse --short HEAD) \
+    /bin/bash -c "./taskrunner --task=daily-email"
