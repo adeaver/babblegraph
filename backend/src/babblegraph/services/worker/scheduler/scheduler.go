@@ -23,6 +23,9 @@ func StartScheduler(errs chan error) error {
 		c.AddFunc("30 5 * * *", makeEmailJob(errs))
 	case "local":
 		makeEmailJob(errs)()
+	case "local-no-email":
+		// no-op
+	}
 	c.Start()
 	return nil
 }

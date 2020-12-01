@@ -1,0 +1,18 @@
+#!/bin/bash
+set -euo pipefail
+
+echo "Building..."
+docker build \
+    -f deploy/taskrunner/Dockerfile \
+    -t babblegraph.com/taskrunner:$(git rev-parse --short HEAD) \
+    ./backend/src/babblegraph
+
+echo "Removing old container..."
+docker stop babblegraph_task_runner && docker rm babblegraph_task_runner && true
+
+echo "Running new container..."
+docker run -d \
+    --env-file ./env/taskrunner.env \
+    --name babblegraph_task_runner \
+    --entrypoint ./taskrunner --task daily-email \
+    babblegraph.com/taskrunner:$(git rev-parse --short HEAD)
