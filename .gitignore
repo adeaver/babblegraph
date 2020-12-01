@@ -12,6 +12,7 @@ ops/babblegraph/worker/**
 
 # Deploy
 deploy/main-db/data/**
+deploy/main-db/backups/**
 deploy/wordsmith/data/**
 
 # Other
