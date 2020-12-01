@@ -20,6 +20,7 @@ if [[ -z "$DB_NAME" || -z "$DB_USER" ]]; then
     exit 1
 fi;
 
-BACKUP_FILE="/home/postgres/backups/${DB_NAME}_$(date +"%Y_%m_%d_%I_%M_%p").bak"
+BACKUP_FILE="/home/postgres/${DB_NAME}_$(date +"%Y_%m_%d_%I_%M_%p").bak"
 
 PGPASSWORD=$PG_PASSWORD pg_dump -U $DB_USER -d $DB_NAME -f $BACKUP_FILE
+cat $BACKUP_FILE
