@@ -11,7 +11,26 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func SendDailyEmailToUser(emailClient *email.Client, user users.User) error {
+func GetDailyEmailJob(emailClient *email.Client) func() error {
+	return func() error {
+		var activeUsers []users.User
+		if err := database.WithTx(func(tx *sqlx.Tx) error {
+			var err error
+			activeUsers, err = users.GetAllActiveUsers(tx)
+			return err
+		}); err != nil {
+			return err
+		}
+		for _, u := range activeUsers {
+			if err := sendDailyEmailToUser(emailClient, u); err != nil {
+				log.Println(fmt.Sprintf("Error sending daily email to %s: %s", u.EmailAddress, err.Error()))
+			}
+		}
+		return nil
+	}
+}
+
+func sendDailyEmailToUser(emailClient *email.Client, user users.User) error {
 	var documents []documents.Document
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		userPreferences, err := getPreferencesForUser(tx, user)

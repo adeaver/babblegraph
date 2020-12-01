@@ -10,7 +10,7 @@ COPY . .
 RUN go mod download
 RUN go mod verify
 
-RUN go install -v babblegraph/services/email
+RUN go install -v babblegraph/services/taskrunner
 
 FROM debian:buster
 
@@ -24,9 +24,9 @@ WORKDIR /service
 RUN mkdir -p ./templates && chown -R $SERVICE_USER:$SERVICE_USER ./templates
 COPY --chown=$SERVICE_USER:$SERVICE_USER --from=builder /usr/local/go/src/babblegraph/util/email/templates ./templates
 
-COPY --chown=$SERVICE_USER:$SERVICE_USER --from=builder /usr/local/go/bin/email .
+COPY --chown=$SERVICE_USER:$SERVICE_USER --from=builder /usr/local/go/bin/taskrunner .
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 
 USER $SERVICE_USER
 
-CMD ["./email"]
+CMD ["bash"]
