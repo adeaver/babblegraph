@@ -22,3 +22,11 @@ If there's been an error sending emails, you can use the task runner to manually
 `./scripts/run-task-daily-email`
 
 At present, there is no mechanism to send to a subset of users in the case that there is a panic on a single user.
+
+## Restoring Main-DB from backup
+
+Currently, backups of main-db are stored on `prod-db-1` - this has an issue where if something happens to the `prod-db-1` server, then the backups are lost forever - the solution is to put this on S3 or Digitalocean Spaces.
+
+The following commands will run the backup:<br />
+`docker cp $(ls -dt /root/babblegraph/deploy/main-db/backups/* | head -n 1) babblegraph_main_db:/home/postgres/backups/backup.bak`<br />
+`docker exec -it babblegraph_main_db /bin/bash -c "psql -U bgmainuser babblegraph < /home/postgres/backups/backup.bak`
