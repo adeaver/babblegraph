@@ -23,6 +23,7 @@ Start local shell with configured GOPATH:
     - `util`: all utility packages
     - `wordsmith`: special code for interacting with wordsmith database
     - `services`: all runnable go services.
+    - `jobs`: larger extraneous tasks that are runnable from multiple services
 - `deploy`: configurations for all deployable services. each service gets its own directory
 - `ops`: configurations for local environment
 - `scripts`: all useful bash scripts for working with babblegraph
@@ -39,6 +40,6 @@ Start local shell with configured GOPATH:
 `docker exec -it ops_db_1 /home/postgres/scripts/apply-migrations --db-user dev --db-name babblegraph`
 
 - Insert user into local database
-`docker exec -it ops_db_1 /home/postgres/scripts/insert-user --db-name babblegraph --db-user dev --email`
-`docker exec -it ops_db_1 psql -U dev -d babblegraph -c "SELECT _id FROM users WHERE email_address='{email}'"`
-`docker exec -it ops_db_1 /home/postgres/scripts/add-user-reading-level --db-name babblegraph --db-user dev --lang es --level 4 --user {userID}`
+`docker exec -it ops_db_1 /home/postgres/scripts/insert-user --db-name babblegraph --db-user dev --email`<br />
+`docker exec -it ops_db_1 psql -U dev -d babblegraph -c "SELECT _id FROM users WHERE email_address='{email}'"`<br />
+`docker exec -it ops_db_1 /home/postgres/scripts/add-user-reading-level --db-name babblegraph --db-user dev --lang es --level 4 --user {userID}`<br />

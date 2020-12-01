@@ -10,7 +10,7 @@ while [ $# -gt 0 ]; do
             ;;
         --lang)
             shift;
-            LANG="$1"
+            LANG_CODE="$1"
             ;;
         --user)
             shift;
