@@ -1,0 +1,19 @@
+#!/bin/bash
+set -euo pipefail
+
+echo "Building..."
+docker build \
+    -f deploy/worker/Dockerfile \
+    -t babblegraph.com/web:$(git rev-parse --short HEAD) \
+    ./backend/src/babblegraph
+
+echo "Removing old container..."
+docker stop babblegraph_web && docker rm babblegraph_web && true
+
+echo "Running new container..."
+docker run -d \
+    --env-file ./env/web.env \
+    --restart unless-stopped \
+    --name babblegraph_web \
+    -p 8080:8080
+    babblegraph.com/web:$(git rev-parse --short HEAD)

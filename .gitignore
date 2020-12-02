@@ -3,6 +3,7 @@ backend/src/babblegraph/services/worker/data/**
 backend/worker/**
 backend/pkg/**
 backend/bin/**
+backend/src/github.com/**
 
 # Ops
 ops/wordsmith/setup/out/**
