@@ -14,5 +14,5 @@ func main() {
 		fmt.Fprintf(w, "<h1>Babblegraph.com is under construction\n</h1>")
 	})
 
-	http.ListenAndServe(":80", r)
+	http.ListenAndServe(":8080", r)
 }
