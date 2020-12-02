@@ -4,7 +4,7 @@ services:
   web:
     build:
       context: ../../backend/src/babblegraph
-      dockerfile: Dockerfile
+      dockerfile: ../../../deploy/web/Dockerfile
     restart: unless-stopped
     env_file: ../../env/web.env
     networks:
@@ -32,6 +32,11 @@ services:
     depends_on:
       - proxy
     command: certonly --webroot --webroot-path=/var/www/html --email deaver.andrew@gmail.com --agree-tos --no-eff-email --staging -d babblegraph.com -d www.babblegraph.com
+
+volumes:
+  certbot-etc:
+  certbot-var:
+  web-root:
 
 networks:
   babblegraph_web_default:
