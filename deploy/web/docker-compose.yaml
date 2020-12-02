@@ -1,0 +1,38 @@
+version: '3'
+
+services:
+  web:
+    build:
+      context: ../../backend/src/babblegraph
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file: ../../env/web.env
+    networks:
+      - babblegraph_web_default
+  proxy:
+    image: nginx:mainline-alpine
+    restart: unless-stopped
+    ports:
+      - 80:80
+    volumes:
+      - web-root:/var/www/html
+      - ./conf:/etc/nginx/conf.d
+      - certbot-etc:/etc/letsencrypt
+      - certbot-var:/var/lib/letsencrypt
+    depends_on:
+      - web
+    networks:
+      - babblegraph_web_default
+  certbot:
+    image: certbot/certbot
+    volumes:
+      - certbot-etc:/etc/letsencrypt
+      - certbot-var:/var/lib/letsencrypt
+      - web-root:/var/www/html
+    depends_on:
+      - proxy
+    command: certonly --webroot --webroot-path=/var/www/html --email deaver.andrew@gmail.com --agree-tos --no-eff-email --staging -d babblegraph.com -d www.babblegraph.com
+
+networks:
+  babblegraph_web_default:
+    driver: bridge
