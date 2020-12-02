@@ -20,6 +20,7 @@ func sendDailyEmailsForDocuments(cl *email.Client, recipient string, docs []docu
 			imageURL = doc.Metadata.Image
 		}
 		if isNotEmpty(doc.Metadata.Description) {
+			log.Println(fmt.Sprintf("Found description %s for URL %s", *doc.Metadata.Description, doc.URL))
 			description = doc.Metadata.Description
 		}
 		if !urlparser.IsValidURL(doc.URL) {

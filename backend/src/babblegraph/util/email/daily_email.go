@@ -3,6 +3,7 @@ package email
 import (
 	"babblegraph/util/ptr"
 	"fmt"
+	"log"
 	"strings"
 	"text/template"
 	"time"
@@ -22,6 +23,13 @@ type dailyEmailTemplate struct {
 }
 
 func (cl *Client) SendDailyEmailForLinks(recipient string, links []DailyEmailLink) error {
+	for _, l := range links {
+		if l.Description != nil {
+			log.Println(fmt.Sprintf("Email util description found %s for URL %s", *l.Description, l.URL))
+		} else {
+			log.Println(fmt.Sprintf("Email util no description found for URL %s", l.URL))
+		}
+	}
 	emailBody, err := createEmailBody(links)
 	if err != nil {
 		return err
