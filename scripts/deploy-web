@@ -3,7 +3,7 @@ set -euo pipefail
 
 echo "Building..."
 docker build \
-    -f deploy/worker/Dockerfile \
+    -f deploy/web/Dockerfile \
     -t babblegraph.com/web:$(git rev-parse --short HEAD) \
     ./backend/src/babblegraph
 
@@ -15,5 +15,5 @@ docker run -d \
     --env-file ./env/web.env \
     --restart unless-stopped \
     --name babblegraph_web \
-    -p 8080:8080
+    -p 8080:8080 \
     babblegraph.com/web:$(git rev-parse --short HEAD)
