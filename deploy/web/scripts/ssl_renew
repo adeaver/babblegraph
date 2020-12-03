@@ -1,0 +1,6 @@
+#!/bin/bash
+set -euo pipefail
+
+docker-compose --no-ansi -f /root/babblegraph/deploy/web/docker-compose.yaml run certbot renew
+docker-compose --no-ansi -f /root/babblegraph/deploy/web/docker-compose.yaml kill -s SIGHUP proxy
+docker system prune -af
