@@ -17,6 +17,7 @@ COPY website/src ./src
 COPY website/webpack.common.js .
 COPY website/webpack.prod.js .
 COPY website/babel.config.js .
+COPY website/tsconfig.json .
 
 RUN npm run build
 
