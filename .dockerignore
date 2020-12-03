@@ -1,3 +1,5 @@
-**/vendor/**
-**/.vendor-new/**
-**/env/**
+*
+!backend/src/babblegraph/*
+!website/*
+website/dist/bundle.js
+website/node_modules/**

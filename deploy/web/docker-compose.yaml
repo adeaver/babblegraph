@@ -3,8 +3,8 @@ version: '3'
 services:
   web:
     build:
-      context: ../../backend/src/babblegraph
-      dockerfile: ../../../deploy/web/Dockerfile
+      context: ../../
+      dockerfile: ./deploy/web/Dockerfile
     restart: unless-stopped
     env_file: ../../env/web.env
     networks:
