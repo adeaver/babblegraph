@@ -4,7 +4,9 @@ import ReactDOM from 'react-dom';
 class App extends React.Component{
     render() {
         return (
-            <div>If you're seeing this, everything is doubly fine.</div>
+            <div>
+                <h1>Babblegraph.com is currently under construction</h1>
+            </div>
         );
     }
 }
