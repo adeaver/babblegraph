@@ -1,6 +1,7 @@
 package main
 
 import (
+	"babblegraph/util/env"
 	"fmt"
 	"net/http"
 
@@ -9,9 +10,13 @@ import (
 
 func main() {
 	r := mux.NewRouter()
+	staticFileDirName := env.MustEnvironmentVariable("STATIC_DIR")
 
-	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "<h1>Babblegraph.com is under construction\n</h1>")
+	// TODO: put API router in
+	// apiRouter := r.PathPrefix("/api")
+	r.PathPrefix("/dist").Handler(http.FileServer(http.Dir(staticFileDirName)))
+	r.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, fmt.Sprintf("%s/index.html", staticFileDirName))
 	})
 
 	http.ListenAndServe(":8080", r)
