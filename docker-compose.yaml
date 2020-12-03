@@ -31,6 +31,7 @@ services:
       context: ./backend/src/babblegraph
     volumes:
       - ./backend/src/babblegraph:/usr/local/go/src/babblegraph
+      - ./website/dist:/usr/local/go/src/babblegraph/dist
     ports:
       - 8080:8080
     environment:
@@ -49,5 +50,13 @@ services:
       - EMAIL_ADDRESS=$BABBLEGRAPH_EMAIL_ADDRESS
       - AWS_SES_ACCESS_KEY=$BABBLEGRAPH_SES_ACCESS_KEY
       - AWS_SES_SECRET_KEY=$BABBLEGRAPH_SES_ACCESS_SECRET
+      - STATIC_DIR=/usr/local/go/src/babblegraph/dist
       - ENV=local-no-email
     command: go run /usr/local/go/src/babblegraph/services/web/main.go
+  frontend:
+    build:
+      dockerfile: ../ops/website/Dockerfile.dev
+      context: ./website
+    volumes:
+      - ./website/dist:/usr/app/dist
+      - ./website:/usr/app

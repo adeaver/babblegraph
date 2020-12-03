@@ -5,6 +5,11 @@ backend/pkg/**
 backend/bin/**
 backend/src/github.com/**
 
+# Frontend
+website/node_modules/**
+website/dist/*
+!website/dist/index.html
+
 # Ops
 ops/wordsmith/setup/out/**
 ops/elasticsearch/data01/**
