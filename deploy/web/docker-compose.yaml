@@ -13,12 +13,14 @@ services:
     image: nginx:mainline-alpine
     restart: unless-stopped
     ports:
-      - 80:80
+      - "80:80"
+      - "443:443"
     volumes:
       - web-root:/var/www/html
       - ./conf:/etc/nginx/conf.d
       - certbot-etc:/etc/letsencrypt
       - certbot-var:/var/lib/letsencrypt
+      - dhparam:/etc/ssl/certs
     depends_on:
       - web
     networks:
@@ -31,12 +33,18 @@ services:
       - web-root:/var/www/html
     depends_on:
       - proxy
-    command: certonly --webroot --webroot-path=/var/www/html --email deaver.andrew@gmail.com --agree-tos --no-eff-email --staging -d babblegraph.com -d www.babblegraph.com
+    command: certonly --webroot --webroot-path=/var/www/html --email deaver.andrew@gmail.com --agree-tos --no-eff-email --force-renewal -d babblegraph.com -d www.babblegraph.com
 
 volumes:
   certbot-etc:
   certbot-var:
   web-root:
+  dhparam:
+    driver: local
+    driver_opts:
+      type: none
+      device: /root/babblegraph/deploy/web/dhparam/
+      o: bind
 
 networks:
   babblegraph_web_default:

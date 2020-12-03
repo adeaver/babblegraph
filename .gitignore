@@ -12,6 +12,7 @@ ops/elasticsearch/data02/**
 ops/babblegraph/worker/**
 
 # Deploy
+deploy/web/dhparam/**
 deploy/main-db/data/**
 deploy/main-db/backups/**
 deploy/wordsmith/data/**
