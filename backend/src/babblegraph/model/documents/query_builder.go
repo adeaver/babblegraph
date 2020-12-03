@@ -5,6 +5,8 @@ import (
 	"babblegraph/util/ptr"
 	"babblegraph/wordsmith"
 	"encoding/json"
+	"fmt"
+	"log"
 )
 
 type IntRange struct {
@@ -54,6 +56,7 @@ func (d *documentsQueryBuilder) ExecuteQuery() ([]Document, error) {
 	}
 	var docs []Document
 	if err := esquery.ExecuteSearch(documentIndex{}, queryBuilder.BuildBoolQuery(), func(source []byte) error {
+		log.Println(fmt.Sprintf("Document search got body %s", string(source)))
 		var doc Document
 		if err := json.Unmarshal(source, &doc); err != nil {
 			return err
