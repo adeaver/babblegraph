@@ -1,0 +1,19 @@
+{
+  "name": "babblegraph-frontend",
+  "version": "1.0.0",
+  "description": "Frontend for babblegraph.com",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "github.com/adeaver/babblegraph"
+  },
+  "author": "Andrew Deaver",
+  "license": "ISC",
+  "dependencies": {
+    "react": "^17.0.1",
+    "react-dom": "^17.0.1"
+  }
+}
