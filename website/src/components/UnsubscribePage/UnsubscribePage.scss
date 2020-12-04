@@ -11,3 +11,9 @@
 .UnsubscribePage__header {
     background-color: $primary-purple;
 }
+
+.UnsubscribePage__content-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}

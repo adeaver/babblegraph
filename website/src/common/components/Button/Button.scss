@@ -1,0 +1,24 @@
+@import 'common/styles/colors';
+
+.Button__root {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    border-radius: 5px;
+    border: 2px solid;
+    font-family: 'Roboto', sans-serif;
+    font-size: 14pt;
+    padding: 5px 10px;
+}
+
+.Button__primary {
+    background-color: $white;
+    border-color: $primary-purple;
+    color: $primary-purple;
+}
+
+.Button__primary:hover,
+.Button__primary:focus {
+    background-color: $primary-purple;
+    color: $white;
+}
