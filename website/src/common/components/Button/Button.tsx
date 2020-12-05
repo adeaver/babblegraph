@@ -15,6 +15,7 @@ type ButtonProps = {
     className?: string,
     type: ButtonType,
     isLoading?: boolean,
+    onClick: () => void,
 };
 
 type ButtonState = {
@@ -44,7 +45,11 @@ export default class Button extends React.Component<ButtonProps, ButtonState> {
             'Button__warning': this.props.type === ButtonType.Warning,
         });
         return (
-            <button onMouseOver={this.onMouseOver} onMouseOut={this.onMouseOut} className={className}>
+            <button
+                onMouseOver={this.onMouseOver}
+                onMouseOut={this.onMouseOut}
+                className={className}
+                onClick={this.props.onClick}>
                 { !!this.props.isLoading && <Spinner sizeInPx={24} innerRingColor={this.state.spinnerRingColor} outerRingColor={this.state.spinnerRingColor} /> }
                 {this.props.children}
             </button>
