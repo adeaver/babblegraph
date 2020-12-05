@@ -17,6 +17,7 @@ type UnsubscribePageProps = RouteComponentProps<Params>
 
 export default (props: UnsubscribePageProps) => {
     const [email, setEmail] = useState<string | undefined>(undefined);
+    const [isLoading, setIsLoading] = useState<boolean>(false);
 
     return (
         <div className="UnsubscribePage__root">
@@ -27,9 +28,13 @@ export default (props: UnsubscribePageProps) => {
                 </Heading3>
             </Header>
             <div className="UnsubscribePage__content-container">
-                    <Paragraph className="UnsubscribePage__explanation">By unsubscribing, you will no longer receive daily emails from Babblegraph.</Paragraph>
-                    <Input type={InputType.EMAIL} value={email} onChange={setEmail} placeholder="Email address" />
-                    <Button type={ButtonType.Primary}>Submit</Button>
+                    <Paragraph className="UnsubscribePage__explanation">
+                        By unsubscribing, you will no longer receive any emails from Babblegraph, including:<br />
+                        • Marketing emails<br />
+                        • Daily emails
+                    </Paragraph>
+                    <Input className="UnsubscribePage__email-input" type={InputType.EMAIL} value={email} onChange={setEmail} placeholder="Email address" />
+                    <Button className="UnsubscribePage__submit-button" isLoading={isLoading} type={ButtonType.Primary}>Submit</Button>
             </div>
         </div>
     );
