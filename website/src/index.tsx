@@ -7,15 +7,17 @@ import {
     Link
 } from 'react-router-dom';
 import HomePage from 'components/HomePage/HomePage';
+import UnsubscribePage from 'components/UnsubscribePage/UnsubscribePage';
+import NotFoundPage from 'components/NotFoundPage/NotFoundPage';
 
 class App extends React.Component{
     render() {
         return (
             <Router>
                 <Switch>
-                    <Route path="/">
-                        <HomePage />
-                    </Route>
+                    <Route path="/unsubscribe/:userID" component={UnsubscribePage} />
+                    <Route exact path="/" component={HomePage} />
+                    <Route component={NotFoundPage} />
                 </Switch>
             </Router>
         );

@@ -9,7 +9,7 @@ import (
 	"log"
 )
 
-func sendDailyEmailsForDocuments(cl *email.Client, recipient string, docs []documents.Document) error {
+func sendDailyEmailsForDocuments(cl *email.Client, recipient email.Recipient, docs []documents.Document) error {
 	var links []email.DailyEmailLink
 	for _, doc := range docs {
 		var title, imageURL, description *string
@@ -26,7 +26,7 @@ func sendDailyEmailsForDocuments(cl *email.Client, recipient string, docs []docu
 		if !urlparser.IsValidURL(doc.URL) {
 			continue
 		}
-		log.Println(fmt.Sprintf("Sending URL %s to recipient %s", doc.URL, recipient))
+		log.Println(fmt.Sprintf("Sending URL %s to recipient %s", doc.URL, recipient.EmailAddress))
 		links = append(links, email.DailyEmailLink{
 			ImageURL:    imageURL,
 			Title:       title,
