@@ -1,7 +1,9 @@
 package router
 
 import (
+	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 )
 
@@ -17,7 +19,7 @@ func makeMuxRouter(processRequest RouteHandler) func(http.ResponseWriter, *http.
 		// TODO: add tracking and logging
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-            log.Println(fmt.Sprintf("ERROR: %s", err.Error())
+			log.Println(fmt.Sprintf("ERROR: %s", err.Error()))
 			writeErrorJSONResponse(w, errorResponse{
 				Message: "Request is not valid",
 			})
@@ -25,7 +27,7 @@ func makeMuxRouter(processRequest RouteHandler) func(http.ResponseWriter, *http.
 		}
 		resp, err := processRequest(body)
 		if err != nil {
-            log.Println(fmt.Sprintf("ERROR: %s", err.Error())
+			log.Println(fmt.Sprintf("ERROR: %s", err.Error()))
 			writeErrorJSONResponse(w, errorResponse{
 				Message: "Error processing request",
 			})
