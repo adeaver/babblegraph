@@ -1,17 +1,17 @@
 import { makePostRequest } from 'api/bgfetch/bgfetch';
 
 export type UnsubscribeRequest = {
-    UserID: string;
+    Token: string;
     EmailAddress: string;
 }
 
 type apiEncodedUnsubscribeRequest = {
-    user_id: string;
+    token: string;
     email_address: string;
 }
 
 const makeAPIEncodedUnsubscribeRequest = (req: UnsubscribeRequest) => ({
-    user_id: req.UserID,
+    token: req.Token,
     email_address: req.EmailAddress,
 });
 

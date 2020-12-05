@@ -4,7 +4,9 @@ import (
 	"babblegraph/model/users"
 	"babblegraph/services/web/router"
 	"babblegraph/util/database"
+	"babblegraph/util/encrypt"
 	"encoding/json"
+	"fmt"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -22,8 +24,8 @@ func RegisterRouteGroups() error {
 }
 
 type unsubscribeUserRequest struct {
-	UserID       users.UserID `json:"user_id"`
-	EmailAddress string       `json:"email_address"`
+	Token        string `json:"token"`
+	EmailAddress string `json:"email_address"`
 }
 
 type unsubscribeUserResponse struct {
@@ -36,10 +38,22 @@ func handleUnsubscribeUser(body []byte) (interface{}, error) {
 		return nil, err
 	}
 	var didUpdate bool
-	if err := database.WithTx(func(tx *sqlx.Tx) error {
-		var err error
-		didUpdate, err = users.UnsubscribeUserForIDAndEmail(tx, r.UserID, r.EmailAddress)
-		return err
+	if err := encrypt.WithDecodedToken(r.Token, func(t encrypt.TokenPair) error {
+		if t.Key != "unsubscribe" {
+			return fmt.Errorf("incorrect key")
+		}
+		userID, ok := t.Value.(string)
+		if !ok {
+			return fmt.Errorf("incorrect type")
+		}
+		if err := database.WithTx(func(tx *sqlx.Tx) error {
+			var err error
+			didUpdate, err = users.UnsubscribeUserForIDAndEmail(tx, users.UserID(userID), r.EmailAddress)
+			return err
+		}); err != nil {
+			return err
+		}
+		return nil
 	}); err != nil {
 		return nil, err
 	}
