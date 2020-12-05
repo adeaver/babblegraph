@@ -15,7 +15,7 @@ class App extends React.Component{
         return (
             <Router>
                 <Switch>
-                    <Route path="/unsubscribe/:userID" component={UnsubscribePage} />
+                    <Route path="/unsubscribe/:token" component={UnsubscribePage} />
                     <Route exact path="/" component={HomePage} />
                     <Route component={NotFoundPage} />
                 </Switch>

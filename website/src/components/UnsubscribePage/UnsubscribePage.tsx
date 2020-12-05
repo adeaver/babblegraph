@@ -12,11 +12,11 @@ import Button, { ButtonType } from 'common/components/Button/Button';
 import { UnsubscribeUser, UnsubscribeRequest, UnsubscribeResponse } from 'api/user/unsubscribe';
 
 type Params = {
-    userID: string
+    token: string
 }
 
 type UnsubscribePageInitialProps = {
-    userID: string;
+    token: string;
     email: string | undefined;
     isLoading: boolean;
 
@@ -74,7 +74,7 @@ const UnsubscribePageRequestSuccessful = (props: UnsubscribePageRequestSuccessfu
 }
 
 type UnsubscribePageRequestFailedProps = {
-    userID: string;
+    token: string;
     email: string | undefined;
     isLoading: boolean;
 
@@ -112,7 +112,7 @@ const UnsubscribePageRequestFailed = (props: UnsubscribePageRequestFailedProps) 
 }
 
 const handleSubmit = (
-    userID: string,
+    token: string,
     emailAddress: string,
     setIsLoading: (boolean) => void,
     onSuccess: (didUpdate: boolean | null) => void,
@@ -121,7 +121,7 @@ const handleSubmit = (
     return () => {
         setIsLoading(true);
         const req: UnsubscribeRequest = {
-            UserID: userID,
+            Token: token,
             EmailAddress: emailAddress,
         }
         UnsubscribeUser(req,
@@ -145,27 +145,27 @@ const UnsubscribePage = (props: UnsubscribePageProps) => {
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [requestSuccessful, setSuccess] = useState<boolean | null>(null);
     const [requestErrored, setError] = useState<Error | null>(null);
-    const { userID } = props.match.params;
+    const { token } = props.match.params;
 
     if (!!requestSuccessful) {
         return <UnsubscribePageRequestSuccessful />
     } else if ((requestSuccessful != null && !requestSuccessful) || requestErrored) {
         return (
             <UnsubscribePageRequestFailed
-                userID={userID}
+                token={token}
                 email={email}
                 isLoading={isLoading}
                 handleEmailUpdate={setEmail}
-                handleClick={handleSubmit(userID, email || '', setIsLoading, setSuccess, setError)} />
+                handleClick={handleSubmit(token, email || '', setIsLoading, setSuccess, setError)} />
         );
     } else {
         return (
             <UnsubscribePageInitial
-                userID={userID}
+                token={token}
                 email={email}
                 isLoading={isLoading}
                 handleEmailUpdate={setEmail}
-                handleClick={handleSubmit(userID, email || '', setIsLoading, setSuccess, setError)} />
+                handleClick={handleSubmit(token, email || '', setIsLoading, setSuccess, setError)} />
         );
     }
 }

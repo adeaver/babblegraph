@@ -32,8 +32,13 @@ func (cl *Client) SendDailyEmailForLinks(recipient Recipient, links []DailyEmail
 			log.Println(fmt.Sprintf("Email util no description found for URL %s", l.URL))
 		}
 	}
+	// TODO: this should probably live with the caller
+	unsubscribeLink, err := routes.MakeUnsubscribeRouteForUserID(recipient.UserID)
+	if err != nil {
+		return err
+	}
 	emailBody, err := createEmailBody(dailyEmailTemplate{
-		UnsubscribeLink: routes.MakeUnsubscribeRouteForUserID(recipient.UserID),
+		UnsubscribeLink: *unsubscribeLink,
 		Links:           links,
 	})
 	if err != nil {
