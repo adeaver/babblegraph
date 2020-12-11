@@ -64,5 +64,29 @@ const (
 )
 
 func GetReadingLevelClassificationsForUser(tx *sqlx.Tx, userID users.UserID) (map[wordsmith.LanguageCode]ReadingLevelClassification, error) {
-	return nil, nil
+	readabilityLevels, err := lookupUserReadabilitiesForUser(tx, userID)
+	if err != nil {
+		return nil, err
+	}
+	out := make(map[wordsmith.LanguageCode]ReadingLevelClassification)
+	for _, readabilityLevel := range readabilityLevels {
+		var readabilityClassification ReadingLevelClassification
+		switch readabilityLevel.LanguageCode {
+		case wordsmith.LanguageCodeSpanish:
+			switch readabilityLevel.ReadabilityLevel {
+			case 1, 2:
+				readabilityClassification = ReadingLevelClassificationBeginner
+			case 3, 4:
+				readabilityClassification = ReadingLevelClassificationIntermediate
+			case 5, 6:
+				readabilityClassification = ReadingLevelClassificationAdvanced
+			default:
+				readabilityClassification = ReadingLevelClassificationProfessional
+			}
+		default:
+			panic(fmt.Sprintf("Unrecognized language code %s", readabilityLevel.LanguageCode))
+		}
+		out[readabilityLevel.LanguageCode] = readabilityClassification
+	}
+	return out, nil
 }

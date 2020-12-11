@@ -7,11 +7,22 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-const lookupUserReadabilityForLanguageQuery = "SELECT * FROM user_readability_level WHERE user_id = $1 AND language_code = $2"
+const (
+	lookupUserReadabilityForLanguageQuery  = "SELECT * FROM user_readability_level WHERE user_id = $1 AND language_code = $2"
+	lookupAllUserReadabilitiesForUserQuery = "SELECT * FROM user_readability_level WHERE user_id = $1 AND version = $2"
+)
 
 func lookupUserReadabilityForLanguage(tx *sqlx.Tx, userID users.UserID, languageCode wordsmith.LanguageCode) ([]userReadabilityLevel, error) {
 	var matches []userReadabilityLevel
 	if err := tx.Select(&matches, lookupUserReadabilityForLanguageQuery, userID, languageCode); err != nil {
+		return nil, err
+	}
+	return matches, nil
+}
+
+func lookupUserReadabilitiesForUser(tx *sqlx.Tx, userID users.UserID) ([]userReadabilityLevel, error) {
+	var matches []userReadabilityLevel
+	if err := tx.Select(&matches, lookupAllUserReadabilitiesForUserQuery, userID, version1); err != nil {
 		return nil, err
 	}
 	return matches, nil
