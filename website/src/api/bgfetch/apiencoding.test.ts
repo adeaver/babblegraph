@@ -4,30 +4,30 @@ import {
 } from './apiencoding';
 
 type SimpleObject = {
-    Name: string;
-    EmailAddress: string;
-    FavoriteTypeOfMovie: string;
+    name: string;
+    emailAddress: string;
+    favoriteTypeOfMovie: string;
 }
 
 type ComplexObject = {
-    Name: string;
-    ListOfStrings: string[];
-    ListOfObjects: Array<SimpleObject>;
-    Subobject: SimpleObject;
-    MultilevelObject: MappingObject;
+    name: string;
+    listOfStrings: string[];
+    listOfObjects: Array<SimpleObject>;
+    subobject: SimpleObject;
+    multilevelObject: MappingObject;
 }
 
 type MappingObject = {
-    Name: string;
-    Value: SimpleObject;
+    name: string;
+    value: SimpleObject;
 }
 
 describe("converts object to API encoding", () => {
     it("correctly converts a simple object", () => {
         const out = encodeToAPIObject<SimpleObject>({
-            Name: "Andrew",
-            EmailAddress: "example@example.com",
-            FavoriteTypeOfMovie: "Action Movie",
+            name: "Andrew",
+            emailAddress: "example@example.com",
+            favoriteTypeOfMovie: "Action Movie",
         });
         expect(out).toEqual({
             name: "Andrew",
@@ -38,28 +38,28 @@ describe("converts object to API encoding", () => {
 
     it("correctly converts a complex object", () => {
         const out = encodeToAPIObject<ComplexObject>({
-            Name: "Andrew",
-            ListOfStrings: ["Javascript", "Works", "I guess"],
-            ListOfObjects: [{
-                Name: "Andrew",
-                EmailAddress: "example@example.com",
-                FavoriteTypeOfMovie: "Action Movie",
+            name: "Andrew",
+            listOfStrings: ["Javascript", "Works", "I guess"],
+            listOfObjects: [{
+                name: "Andrew",
+                emailAddress: "example@example.com",
+                favoriteTypeOfMovie: "Action Movie",
             }, {
-                Name: "Andrew",
-                EmailAddress: "example@example.com",
-                FavoriteTypeOfMovie: "Comedy Movie",
+                name: "Andrew",
+                emailAddress: "example@example.com",
+                favoriteTypeOfMovie: "Comedy Movie",
             }],
-            Subobject: {
-                Name: "Jeff",
-                EmailAddress: "example1@example.com",
-                FavoriteTypeOfMovie: "Romance Movie",
+            subobject: {
+                name: "Jeff",
+                emailAddress: "example1@example.com",
+                favoriteTypeOfMovie: "Romance Movie",
             },
-            MultilevelObject: {
-                Name: "Moviegoer",
-                Value: {
-                    Name: "Brenna",
-                    EmailAddress: "example2@example.com",
-                    FavoriteTypeOfMovie: "Foreign Movie",
+            multilevelObject: {
+                name: "Moviegoer",
+                value: {
+                    name: "Brenna",
+                    emailAddress: "example2@example.com",
+                    favoriteTypeOfMovie: "Foreign Movie",
                 },
             }
         });
@@ -100,9 +100,9 @@ describe("correctly decodes an API object", () => {
             favorite_type_of_movie: "Action Movie",
         });
         expect(out).toEqual({
-            Name: "Andrew",
-            EmailAddress: "example@example.com",
-            FavoriteTypeOfMovie: "Action Movie",
+            name: "Andrew",
+            emailAddress: "example@example.com",
+            favoriteTypeOfMovie: "Action Movie",
         });
     });
 
@@ -134,28 +134,28 @@ describe("correctly decodes an API object", () => {
             },
         });
         expect(out).toEqual({
-            Name: "Andrew",
-            ListOfStrings: ["Javascript", "Works", "I guess"],
-            ListOfObjects: [{
-                Name: "Andrew",
-                EmailAddress: "example@example.com",
-                FavoriteTypeOfMovie: "Action Movie",
+            name: "Andrew",
+            listOfStrings: ["Javascript", "Works", "I guess"],
+            listOfObjects: [{
+                name: "Andrew",
+                emailAddress: "example@example.com",
+                favoriteTypeOfMovie: "Action Movie",
             }, {
-                Name: "Andrew",
-                EmailAddress: "example@example.com",
-                FavoriteTypeOfMovie: "Comedy Movie",
+                name: "Andrew",
+                emailAddress: "example@example.com",
+                favoriteTypeOfMovie: "Comedy Movie",
             }],
-            Subobject: {
-                Name: "Jeff",
-                EmailAddress: "example1@example.com",
-                FavoriteTypeOfMovie: "Romance Movie",
+            subobject: {
+                name: "Jeff",
+                emailAddress: "example1@example.com",
+                favoriteTypeOfMovie: "Romance Movie",
             },
-            MultilevelObject: {
-                Name: "Moviegoer",
-                Value: {
-                    Name: "Brenna",
-                    EmailAddress: "example2@example.com",
-                    FavoriteTypeOfMovie: "Foreign Movie",
+            multilevelObject: {
+                name: "Moviegoer",
+                value: {
+                    name: "Brenna",
+                    emailAddress: "example2@example.com",
+                    favoriteTypeOfMovie: "Foreign Movie",
                 },
             }
         });

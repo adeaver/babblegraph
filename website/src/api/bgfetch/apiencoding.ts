@@ -1,6 +1,6 @@
 import {
-    convertPascalCaseToSnakeCase,
-    convertSnakeCaseToPascalCase
+    convertCamelCaseToSnakeCase,
+    convertSnakeCaseToCamelCase
 } from 'util/string/StringConvert';
 
 export function encodeToAPIObject<T>(
@@ -9,10 +9,10 @@ export function encodeToAPIObject<T>(
     if (inputObject instanceof Function) {
         return inputObject;
     } else if (inputObject instanceof Array) {
-        return inputObject.map((entry: object) => encodeToAPIObject<T>(entry));
+        return inputObject.map((entry: object) => encodeToAPIObject<object>(entry));
     } else if (inputObject instanceof Object) {
         return Object.keys(inputObject).reduce((outputObject: object, key: string) => {
-            const snakeCasedKey = convertPascalCaseToSnakeCase(key);
+            const snakeCasedKey = convertCamelCaseToSnakeCase(key);
             return {
                 ...outputObject,
                 [snakeCasedKey]: encodeToAPIObject<object>(inputObject[key]),
@@ -31,7 +31,7 @@ export function decodeAPIObject<T>(
         return apiEncodedObject.map((entry: object) => decodeAPIObject<object>(entry));
     } else if (apiEncodedObject instanceof Object) {
         return Object.keys(apiEncodedObject).reduce((outputObject: T, key: string) => {
-                const pascalCasedString = convertSnakeCaseToPascalCase(key);
+                const pascalCasedString = convertSnakeCaseToCamelCase(key);
                 return {
                     ...outputObject,
                     [pascalCasedString]: decodeAPIObject<object>(apiEncodedObject[key]),
