@@ -9,6 +9,7 @@ import Paragraph from 'common/typography/Paragraph';
 import Input, { InputType} from 'common/components/Input/Input';
 import Button, { ButtonType } from 'common/components/Button/Button';
 import Spinner, { RingColor } from 'common/ui/icons/Spinner/Spinner';
+import Selector from 'common/components/Selector/Selector';
 
 import {
     GetUserPreferencesForTokenRequest,
@@ -23,12 +24,44 @@ type Params = {
 
 type SubscriptionManagementPageInitialProps = {
     readingClassifications: Array<ReadingLevelClassificationForLanguage>;
+    updateReadingClassifications: (classifications: Array<ReadingLevelClassificationForLanguage>) => void;
+
+    emailAddress: string | null;
+    handleEmailUpdate: (string) => void;
 }
 
 const SubscriptionManagementPageInitial = (props: SubscriptionManagementPageInitialProps) => {
+    const handleSelectNewReadingLevel = (language: string) => {
+        return (newReadingLevel: string) => {
+            props.updateReadingClassifications(
+                props.readingClassifications.map((classification: ReadingLevelClassificationForLanguage) => {
+                    const readingLevel = classification.languageCode ? newReadingLevel : classification.readingLevelClassification;
+                    return {
+                        ...classification,
+                        readingLevelClassification: readingLevel,
+                    };
+                })
+            );
+        }
+    }
     return (
         <div className="SubscriptionManagementPageInitial__root">
-            <Paragraph>Your currently receiving emails at the following level: {props.readingClassifications[0].ReadingLevelClassification}</Paragraph>
+            <Paragraph>You can change what reading level you receive emails at here.</Paragraph>
+            <Selector
+                className="SubscriptionManagementPageInitial__selector"
+                options={["Beginner", "Intermediate", "Advanced", "Professional"]}
+                initialValue={props.readingClassifications[0].readingLevelClassification}
+                onValueChange={handleSelectNewReadingLevel("es")} />
+            <Paragraph>Confirm your email to submit changes</Paragraph>
+            <Input className="SubscriptionManagementPageInitial__input" type={InputType.EMAIL} value={props.emailAddress} onChange={props.handleEmailUpdate} placeholder="Email address" />
+            <Button
+                onClick={() => { console.log("clicked") }}
+                className="SubscriptionManagementPageInitial__submit-button"
+                isLoading={false}
+                type={ButtonType.Primary}
+                isDisabled={props.emailAddress == null}>
+                Submit
+            </Button>
         </div>
     )
 }
@@ -64,26 +97,32 @@ const SubscriptionManagementPageRequestFailed = (props: SubscriptionManagementPa
 type SubscriptionManagementPageProps = RouteComponentProps<Params>
 
 const SubscriptionManagementPage = (props: SubscriptionManagementPageProps) => {
+    const [ emailAddress, setEmailAddress ] = useState<string | null>(null);
     const [ isLoading, setIsLoading ] = useState<boolean>(true);
     const [ readingLevelClassifications, setReadingLevelClassifications ] = useState<Array<ReadingLevelClassificationForLanguage>>([]);
     const { token } = props.match.params;
 
     useEffect(() => {
-        getUserPreferencesForToken({
-            Token: token,
-        },
-        (resp: GetUserPreferencesForTokenResponse) => {
-            setIsLoading(false);
-        },
-        (e: Error) => {
-            setIsLoading(false);
-        });
+        if (!readingLevelClassifications.length) {
+            getUserPreferencesForToken({
+                token: token,
+            },
+            (resp: GetUserPreferencesForTokenResponse) => {
+                setReadingLevelClassifications(resp.classificationsByLanguage);
+                setIsLoading(false);
+            },
+            (e: Error) => {
+                setIsLoading(false);
+            });
+        }
     });
 
     let body = (
         <SubscriptionManagementPageInitial
-            token={token}
-            />
+            emailAddress={emailAddress}
+            handleEmailUpdate={setEmailAddress}
+            updateReadingClassifications={setReadingLevelClassifications}
+            readingClassifications={readingLevelClassifications} />
     );
     if (isLoading) {
         body = (

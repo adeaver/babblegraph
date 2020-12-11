@@ -1,16 +1,16 @@
 import { makePostRequestWithStandardEncoding } from 'api/bgfetch/bgfetch';
 
 export type GetUserPreferencesForTokenRequest = {
-    Token: string;
+    token: string;
 }
 
 export type GetUserPreferencesForTokenResponse = {
-    ClassificationsByLanguage: Array<ReadingLevelClassificationForLanguage>;
+    classificationsByLanguage: Array<ReadingLevelClassificationForLanguage>;
 }
 
 export type ReadingLevelClassificationForLanguage = {
-    LanguageCode: string;
-    ReadingLevelClassification: string;
+    languageCode: string;
+    readingLevelClassification: string;
 }
 
 export function getUserPreferencesForToken(
