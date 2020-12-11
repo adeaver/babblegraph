@@ -8,6 +8,7 @@ import {
 } from 'react-router-dom';
 import HomePage from 'components/HomePage/HomePage';
 import UnsubscribePage from 'components/UnsubscribePage/UnsubscribePage';
+import SubscriptionManagementPage from 'components/SubscriptionManagementPage/SubscriptionManagementPage';
 import NotFoundPage from 'components/NotFoundPage/NotFoundPage';
 
 class App extends React.Component{
@@ -16,6 +17,7 @@ class App extends React.Component{
             <Router>
                 <Switch>
                     <Route path="/unsubscribe/:token" component={UnsubscribePage} />
+                    <Route path="/manage/:token" component={SubscriptionManagementPage} />
                     <Route exact path="/" component={HomePage} />
                     <Route component={NotFoundPage} />
                 </Switch>

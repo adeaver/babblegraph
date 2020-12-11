@@ -1,0 +1,27 @@
+@import 'common/styles/colors';
+
+.SubscriptionManagementPage__heading {
+    color: #FFFFFF;
+}
+
+.SubscriptionManagementPage__subheading {
+    color: #FFFFFF;
+}
+
+.SubscriptionManagementPage__header {
+    background-color: $primary-purple;
+}
+
+.SubscriptionManagementPage__content-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.SubscriptionManagementPage__submit-button {
+    margin-top: 10px;
+}
+
+.SubscriptionManagementPage__email-input {
+    min-width: 30%;
+}

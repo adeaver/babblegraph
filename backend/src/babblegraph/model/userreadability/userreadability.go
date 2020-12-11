@@ -53,3 +53,16 @@ func GetReadabilityScoreRangeForUser(tx *sqlx.Tx, input GetReadabilityScoreRange
 		panic(fmt.Sprintf("Unrecognized language %s", input.LanguageCode.Str()))
 	}
 }
+
+type ReadingLevelClassification string
+
+const (
+	ReadingLevelClassificationBeginner     ReadingLevelClassification = "Beginner"
+	ReadingLevelClassificationIntermediate ReadingLevelClassification = "Intermediate"
+	ReadingLevelClassificationAdvanced     ReadingLevelClassification = "Advanced"
+	ReadingLevelClassificationProfessional ReadingLevelClassification = "Professional"
+)
+
+func GetReadingLevelClassificationsForUser(tx *sqlx.Tx, userID users.UserID) (map[wordsmith.LanguageCode]ReadingLevelClassification, error) {
+	return nil, nil
+}
