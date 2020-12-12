@@ -90,3 +90,25 @@ func GetReadingLevelClassificationsForUser(tx *sqlx.Tx, userID users.UserID) (ma
 	}
 	return out, nil
 }
+
+func UpdateReadingLevelClassificationForUser(tx *sqlx.Tx, userID users.UserID, languageCode wordsmith.LanguageCode, classification ReadingLevelClassification) (_didUpdate bool, _err error) {
+	var newLevel int
+	switch languageCode {
+	case wordsmith.LanguageCodeSpanish:
+		switch classification {
+		case ReadingLevelClassificationBeginner:
+			newLevel = 2
+		case ReadingLevelClassificationIntermediate:
+			newLevel = 3
+		case ReadingLevelClassificationAdvanced:
+			newLevel = 5
+		case ReadingLevelClassificationProfessional:
+			newLevel = 7
+		default:
+			panic(fmt.Sprintf("Unrecognized reading level: %s", classification))
+		}
+	default:
+		panic(fmt.Sprintf("Unrecognized language code %s", languageCode))
+	}
+	return updateUserReadabilityForUser(tx, userID, languageCode, newLevel)
+}
