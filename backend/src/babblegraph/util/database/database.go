@@ -2,6 +2,7 @@ package database
 
 import (
 	"babblegraph/util/postgres"
+	"fmt"
 	"log"
 	"math/rand"
 	"time"
@@ -31,7 +32,7 @@ func GetDatabaseForEnvironmentRetrying() error {
 		if err == nil {
 			return nil
 		}
-		log.Println("Got error: %s. Retrying...", err.Error())
+		log.Println(fmt.Sprintf("Got error: %s. Retrying...", err.Error()))
 		fuzzMilliseconds := time.Duration(minSleepFuzzMilliseconds + fuzzCalc.Intn(maxSleepFuzzAdditionMilliseconds))
 		time.Sleep(fuzzMilliseconds * time.Millisecond)
 	}
