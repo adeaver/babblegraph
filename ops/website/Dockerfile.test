@@ -1,0 +1,25 @@
+FROM alpine:3.11.5
+
+# npm
+RUN apk update && apk add npm
+
+WORKDIR /usr/app
+
+# Install dependencies
+COPY package.json .
+COPY package-lock.json .
+RUN npm install
+
+# Make required directories
+RUN mkdir __mocks__
+RUN mkdir src
+
+# Copy source and required config
+COPY ./src ./src
+COPY ./__mocks__ ./__mocks__
+COPY webpack.common.js .
+COPY webpack.prod.js .
+COPY babel.config.js .
+COPY tsconfig.json .
+
+CMD ["npm", "run", "test"]

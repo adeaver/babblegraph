@@ -1,0 +1,3 @@
+#!/bin/bash
+DOCKER_BUILDKIT=1 docker build -f ops/website/Dockerfile.test -t babblegraph/frontend-test ./website
+docker run babblegraph/frontend-test

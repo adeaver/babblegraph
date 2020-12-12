@@ -1,2 +1,2 @@
 #!/bin/sh
-go test -v `go list ./... | grep -v "experimental/*" | grep -v "scripts/*" | grep -v "conf/*" | grep -v "services/worker2/*"`
+go test -v -cover `go list ./... | grep -v "experimental/*" | grep -v "scripts/*" | grep -v "conf/*" | grep -v "services/worker2/*"`
