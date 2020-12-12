@@ -15,7 +15,10 @@ import {
     GetUserPreferencesForTokenRequest,
     GetUserPreferencesForTokenResponse,
     ReadingLevelClassificationForLanguage,
-    getUserPreferencesForToken
+    getUserPreferencesForToken,
+    UpdateUserPreferencesForTokenRequest,
+    UpdateUserPreferencesForTokenResponse,
+    updateUserPreferencesForToken
 } from 'api/user/management';
 
 type Params = {
@@ -28,6 +31,8 @@ type SubscriptionManagementPageInitialProps = {
 
     emailAddress: string | null;
     handleEmailUpdate: (string) => void;
+
+    handleSubmit: () => void;
 }
 
 const SubscriptionManagementPageInitial = (props: SubscriptionManagementPageInitialProps) => {
@@ -55,7 +60,7 @@ const SubscriptionManagementPageInitial = (props: SubscriptionManagementPageInit
             <Paragraph>Confirm your email to submit changes</Paragraph>
             <Input className="SubscriptionManagementPageInitial__input" type={InputType.EMAIL} value={props.emailAddress} onChange={props.handleEmailUpdate} placeholder="Email address" />
             <Button
-                onClick={() => { console.log("clicked") }}
+                onClick={props.handleSubmit}
                 className="SubscriptionManagementPageInitial__submit-button"
                 isLoading={false}
                 type={ButtonType.Primary}
@@ -117,8 +122,24 @@ const SubscriptionManagementPage = (props: SubscriptionManagementPageProps) => {
         }
     });
 
+    const handleSubmit = () => {
+        setIsLoading(true);
+        updateUserPreferencesForToken({
+            token: token,
+            emailAddress: emailAddress || '',
+            classificationsByLanguage: readingLevelClassifications,
+        },
+        (resp: UpdateUserPreferencesForTokenResponse) => {
+            setIsLoading(false);
+        },
+        (e: Error) => {
+            setIsLoading(false);
+        });
+    }
+
     let body = (
         <SubscriptionManagementPageInitial
+            handleSubmit={handleSubmit}
             emailAddress={emailAddress}
             handleEmailUpdate={setEmailAddress}
             updateReadingClassifications={setReadingLevelClassifications}
