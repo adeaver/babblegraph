@@ -25,7 +25,7 @@ type Params = {
     token: string
 }
 
-type SubscriptionManagementPageInitialProps = {
+type SubscriptionManagementPageBodyProps = {
     readingClassifications: Array<ReadingLevelClassificationForLanguage>;
     updateReadingClassifications: (classifications: Array<ReadingLevelClassificationForLanguage>) => void;
 
@@ -35,7 +35,7 @@ type SubscriptionManagementPageInitialProps = {
     handleSubmit: () => void;
 }
 
-const SubscriptionManagementPageInitial = (props: SubscriptionManagementPageInitialProps) => {
+const SubscriptionManagementPageBody = (props: SubscriptionManagementPageBodyProps) => {
     const handleSelectNewReadingLevel = (language: string) => {
         return (newReadingLevel: string) => {
             props.updateReadingClassifications(
@@ -50,18 +50,18 @@ const SubscriptionManagementPageInitial = (props: SubscriptionManagementPageInit
         }
     }
     return (
-        <div className="SubscriptionManagementPageInitial__root">
+        <div className="SubscriptionManagementPageBody__root">
             <Paragraph>You can change what reading level you receive emails at here.</Paragraph>
             <Selector
-                className="SubscriptionManagementPageInitial__selector"
+                className="SubscriptionManagementPageBody__selector"
                 options={["Beginner", "Intermediate", "Advanced", "Professional"]}
                 initialValue={props.readingClassifications[0].readingLevelClassification}
                 onValueChange={handleSelectNewReadingLevel("es")} />
             <Paragraph>Confirm your email to submit changes</Paragraph>
-            <Input className="SubscriptionManagementPageInitial__input" type={InputType.EMAIL} value={props.emailAddress} onChange={props.handleEmailUpdate} placeholder="Email address" />
+            <Input className="SubscriptionManagementPageBody__input" type={InputType.EMAIL} value={props.emailAddress} onChange={props.handleEmailUpdate} placeholder="Email address" />
             <Button
                 onClick={props.handleSubmit}
-                className="SubscriptionManagementPageInitial__submit-button"
+                className="SubscriptionManagementPageBody__submit-button"
                 isLoading={false}
                 type={ButtonType.Primary}
                 isDisabled={props.emailAddress == null}>
@@ -71,40 +71,15 @@ const SubscriptionManagementPageInitial = (props: SubscriptionManagementPageInit
     )
 }
 
-type SubscriptionManagementPageRequestSuccessfulProps = {}
-
-const SubscriptionManagementPageRequestSuccessful = (props: SubscriptionManagementPageRequestSuccessfulProps) => {
-    return (
-        <div className="SubscriptionManagementPage__root">
-            <Header className="SubscriptionManagementPage__header">
-                <Heading1 className="SubscriptionManagementPage__heading">Manage your subscription</Heading1>
-            </Header>
-            <div className="SubscriptionManagementPage__content-container">
-            </div>
-        </div>
-    );
-}
-
-type SubscriptionManagementPageRequestFailedProps = {}
-
-const SubscriptionManagementPageRequestFailed = (props: SubscriptionManagementPageRequestFailedProps) => {
-    return (
-        <div className="SubscriptionManagementPage__root">
-            <Header className="SubscriptionManagementPage__header">
-                <Heading1 className="SubscriptionManagementPage__heading">Manage your subscription</Heading1>
-            </Header>
-            <div className="SubscriptionManagementPage__content-container">
-            </div>
-        </div>
-    );
-}
-
 type SubscriptionManagementPageProps = RouteComponentProps<Params>
 
 const SubscriptionManagementPage = (props: SubscriptionManagementPageProps) => {
     const [ emailAddress, setEmailAddress ] = useState<string | null>(null);
     const [ isLoading, setIsLoading ] = useState<boolean>(true);
     const [ readingLevelClassifications, setReadingLevelClassifications ] = useState<Array<ReadingLevelClassificationForLanguage>>([]);
+    const [ error, setError ] = useState<Error | null>(null);
+    const [ didUpdate, setDidUpdate ] = useState<boolean | null>(null);
+
     const { token } = props.match.params;
 
     useEffect(() => {
@@ -118,12 +93,15 @@ const SubscriptionManagementPage = (props: SubscriptionManagementPageProps) => {
             },
             (e: Error) => {
                 setIsLoading(false);
+                setError(e);
             });
         }
     });
 
     const handleSubmit = () => {
         setIsLoading(true);
+        setError(null);
+        setDidUpdate(null);
         updateUserPreferencesForToken({
             token: token,
             emailAddress: emailAddress || '',
@@ -131,33 +109,39 @@ const SubscriptionManagementPage = (props: SubscriptionManagementPageProps) => {
         },
         (resp: UpdateUserPreferencesForTokenResponse) => {
             setIsLoading(false);
+            setDidUpdate(resp.didUpdate);
         },
         (e: Error) => {
             setIsLoading(false);
+            setError(e);
         });
     }
 
-    let body = (
-        <SubscriptionManagementPageInitial
-            handleSubmit={handleSubmit}
-            emailAddress={emailAddress}
-            handleEmailUpdate={setEmailAddress}
-            updateReadingClassifications={setReadingLevelClassifications}
-            readingClassifications={readingLevelClassifications} />
-    );
-    if (isLoading) {
-        body = (
-            <Spinner sizeInPx={200} innerRingColor={RingColor.PrimaryPurple} outerRingColor={RingColor.PrimaryPurple} />
-        );
+    let subheading = null;
+    if (didUpdate) {
+        subheading = "Your subscription has been updated successfully!"
+    } else if (didUpdate != null || error) {
+        subheading = "Something wasn't quite right. Make sure the email is correct."
     }
-
     return (
         <div className="SubscriptionManagementPage__root">
             <Header className="SubscriptionManagementPage__header">
                 <Heading1 className="SubscriptionManagementPage__heading">Manage your subscription</Heading1>
+                { subheading && <Paragraph className="SubscriptionManagementPage__heading">{subheading}</Paragraph> }
             </Header>
             <div className="SubscriptionManagementPage__content-container">
-                { body }
+                {
+                    isLoading ? (
+                        <Spinner sizeInPx={200} innerRingColor={RingColor.PrimaryPurple} outerRingColor={RingColor.PrimaryPurple} />
+                    ) : (
+                        <SubscriptionManagementPageBody
+                            handleSubmit={handleSubmit}
+                            emailAddress={emailAddress}
+                            handleEmailUpdate={setEmailAddress}
+                            updateReadingClassifications={setReadingLevelClassifications}
+                            readingClassifications={readingLevelClassifications} />
+                    )
+                }
             </div>
         </div>
     );
