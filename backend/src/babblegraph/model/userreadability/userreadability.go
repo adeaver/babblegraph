@@ -53,3 +53,62 @@ func GetReadabilityScoreRangeForUser(tx *sqlx.Tx, input GetReadabilityScoreRange
 		panic(fmt.Sprintf("Unrecognized language %s", input.LanguageCode.Str()))
 	}
 }
+
+type ReadingLevelClassification string
+
+const (
+	ReadingLevelClassificationBeginner     ReadingLevelClassification = "Beginner"
+	ReadingLevelClassificationIntermediate ReadingLevelClassification = "Intermediate"
+	ReadingLevelClassificationAdvanced     ReadingLevelClassification = "Advanced"
+	ReadingLevelClassificationProfessional ReadingLevelClassification = "Professional"
+)
+
+func GetReadingLevelClassificationsForUser(tx *sqlx.Tx, userID users.UserID) (map[wordsmith.LanguageCode]ReadingLevelClassification, error) {
+	readabilityLevels, err := lookupUserReadabilitiesForUser(tx, userID)
+	if err != nil {
+		return nil, err
+	}
+	out := make(map[wordsmith.LanguageCode]ReadingLevelClassification)
+	for _, readabilityLevel := range readabilityLevels {
+		var readabilityClassification ReadingLevelClassification
+		switch readabilityLevel.LanguageCode {
+		case wordsmith.LanguageCodeSpanish:
+			switch readabilityLevel.ReadabilityLevel {
+			case 1, 2:
+				readabilityClassification = ReadingLevelClassificationBeginner
+			case 3, 4:
+				readabilityClassification = ReadingLevelClassificationIntermediate
+			case 5, 6:
+				readabilityClassification = ReadingLevelClassificationAdvanced
+			default:
+				readabilityClassification = ReadingLevelClassificationProfessional
+			}
+		default:
+			panic(fmt.Sprintf("Unrecognized language code %s", readabilityLevel.LanguageCode))
+		}
+		out[readabilityLevel.LanguageCode] = readabilityClassification
+	}
+	return out, nil
+}
+
+func UpdateReadingLevelClassificationForUser(tx *sqlx.Tx, userID users.UserID, languageCode wordsmith.LanguageCode, classification ReadingLevelClassification) (_didUpdate bool, _err error) {
+	var newLevel int
+	switch languageCode {
+	case wordsmith.LanguageCodeSpanish:
+		switch classification {
+		case ReadingLevelClassificationBeginner:
+			newLevel = 2
+		case ReadingLevelClassificationIntermediate:
+			newLevel = 3
+		case ReadingLevelClassificationAdvanced:
+			newLevel = 5
+		case ReadingLevelClassificationProfessional:
+			newLevel = 7
+		default:
+			panic(fmt.Sprintf("Unrecognized reading level: %s", classification))
+		}
+	default:
+		panic(fmt.Sprintf("Unrecognized language code %s", languageCode))
+	}
+	return updateUserReadabilityForUser(tx, userID, languageCode, newLevel)
+}

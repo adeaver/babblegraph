@@ -8,9 +8,20 @@ import (
 	"fmt"
 )
 
+func MakeSubscriptionManagementRouteForUserID(userID users.UserID) (*string, error) {
+	token, err := encrypt.GetToken(encrypt.TokenPair{
+		Key:   SubscriptionManagementRouteEncryptionKey.Str(),
+		Value: userID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return ptr.String(env.GetAbsoluteURLForEnvironment(fmt.Sprintf("manage/%s", *token))), nil
+}
+
 func MakeUnsubscribeRouteForUserID(userID users.UserID) (*string, error) {
 	token, err := encrypt.GetToken(encrypt.TokenPair{
-		Key:   "unsubscribe",
+		Key:   UnsubscribeRouteEncryptionKey.Str(),
 		Value: userID,
 	})
 	if err != nil {

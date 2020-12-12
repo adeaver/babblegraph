@@ -1,8 +1,8 @@
 package email
 
 import (
+	"babblegraph/model/routes"
 	"babblegraph/util/ptr"
-	"babblegraph/util/routes"
 	"fmt"
 	"log"
 	"strings"
@@ -20,8 +20,8 @@ type DailyEmailLink struct {
 }
 
 type dailyEmailTemplate struct {
-	UnsubscribeLink string
-	Links           []DailyEmailLink
+	BaseEmailTemplate
+	Links []DailyEmailLink
 }
 
 func (cl *Client) SendDailyEmailForLinks(recipient Recipient, links []DailyEmailLink) error {
@@ -32,14 +32,20 @@ func (cl *Client) SendDailyEmailForLinks(recipient Recipient, links []DailyEmail
 			log.Println(fmt.Sprintf("Email util no description found for URL %s", l.URL))
 		}
 	}
-	// TODO: this should probably live with the caller
 	unsubscribeLink, err := routes.MakeUnsubscribeRouteForUserID(recipient.UserID)
 	if err != nil {
 		return err
 	}
+	subscriptionManagementLink, err := routes.MakeSubscriptionManagementRouteForUserID(recipient.UserID)
+	if err != nil {
+		return err
+	}
 	emailBody, err := createEmailBody(dailyEmailTemplate{
-		UnsubscribeLink: *unsubscribeLink,
-		Links:           links,
+		BaseEmailTemplate: BaseEmailTemplate{
+			SubscriptionManagementLink: *subscriptionManagementLink,
+			UnsubscribeLink:            *unsubscribeLink,
+		},
+		Links: links,
 	})
 	if err != nil {
 		return err

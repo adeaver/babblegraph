@@ -6,7 +6,11 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-const getAllUsersByStatusQuery = "SELECT * FROM users WHERE status='%s'"
+const (
+	getAllUsersByStatusQuery      = "SELECT * FROM users WHERE status='%s'"
+	updateUserStatusByQuery       = "UPDATE users SET status = $1 WHERE email_address = $2 and _id = $3"
+	lookupUserByEmailAddressAndID = "SELECT * FROM users WHERE _id = $1 AND email_address = $2"
+)
 
 func GetAllActiveUsers(tx *sqlx.Tx) ([]User, error) {
 	var matches []dbUser
@@ -20,8 +24,6 @@ func GetAllActiveUsers(tx *sqlx.Tx) ([]User, error) {
 	return out, nil
 }
 
-const updateUserStatusByQuery = "UPDATE users SET status = $1 WHERE email_address = $2 and _id = $3"
-
 func UnsubscribeUserForIDAndEmail(tx *sqlx.Tx, userID UserID, emailAddress string) (_didUpdate bool, _err error) {
 	res, err := tx.Exec(updateUserStatusByQuery, string(UserStatusUnsubscribed), emailAddress, string(userID))
 	if err != nil {
@@ -33,4 +35,16 @@ func UnsubscribeUserForIDAndEmail(tx *sqlx.Tx, userID UserID, emailAddress strin
 	}
 	didUpdate := numRows > 0
 	return didUpdate, nil
+}
+
+func LookupUserForIDAndEmail(tx *sqlx.Tx, userID UserID, emailAddress string) (*User, error) {
+	var matches []dbUser
+	if err := tx.Select(&matches, lookupUserByEmailAddressAndID, userID, emailAddress); err != nil {
+		return nil, err
+	}
+	if len(matches) != 1 {
+		return nil, nil
+	}
+	user := matches[0].ToNonDB()
+	return &user, nil
 }

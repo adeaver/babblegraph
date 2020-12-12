@@ -6,3 +6,9 @@ type Recipient struct {
 	EmailAddress string
 	UserID       users.UserID
 }
+
+// All email templates should use this
+type BaseEmailTemplate struct {
+	SubscriptionManagementLink string
+	UnsubscribeLink            string
+}
