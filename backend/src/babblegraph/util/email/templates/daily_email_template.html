@@ -121,8 +121,12 @@
                                   <tbody>
                                     <tr>
                                       <td style="font-family: sans-serif; font-size: 14px; vertical-align: top; text-align: center;">
-                                        {{if $page.ImageURL}}<img src="{{$page.ImageURL}}" alt="" width="100%" height="auto" />{{end}}
-                                        <a href="{{$page.URL}}" target="_blank" style="display: inline-block; color: #000000; cursor: pointer; text-decoration: none; font-size: 14px; font-weight: bold; margin: 0; padding: 12px 25px; text-transform: capitalize;">{{if $page.Title}}{{$page.Title}}{{else}}{{$page.URL}}{{end}}</a>
+                                        {{if $page.ImageURL}}
+                                            <a href="{{$page.URL}}" target="_blank" style="display: inline-block; cursor: pointer; text-decoration: none; margin: 0;">
+                                                <img src="{{$page.ImageURL}}" alt="" width="100%" height="auto" />
+                                            </a>
+                                            {{end}}
+                                        <a href="{{$page.URL}}" target="_blank" style="display: inline-block; color: #A663CC; cursor: pointer; text-decoration: none; font-size: 14px; font-weight: bold; margin: 0; padding: 12px 25px; text-transform: capitalize;">{{if $page.Title}}{{$page.Title}}{{else}}{{$page.URL}}{{end}}</a>
                                         {{if $page.Description}}<p style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; Margin-bottom: 15px;">{{$page.Description}}</p>{{end}}
                                       </td>
                                     </tr>
