@@ -5,9 +5,11 @@ type UserID string
 type UserStatus string
 
 const (
-	UserStatusVerified     UserStatus = "verified"
-	UserStatusUnverified   UserStatus = "unverified"
-	UserStatusUnsubscribed UserStatus = "unsubscribed"
+	UserStatusVerified           UserStatus = "verified"
+	UserStatusUnverified         UserStatus = "unverified"
+	UserStatusUnsubscribed       UserStatus = "unsubscribed"
+	UserStatusBlocklistBounced   UserStatus = "blocklist-bounced"
+	UserStatusBlocklistComplaint UserStatus = "blocklist-complaint"
 )
 
 type dbUser struct {

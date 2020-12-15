@@ -7,9 +7,10 @@ import (
 )
 
 const (
-	getAllUsersByStatusQuery      = "SELECT * FROM users WHERE status='%s'"
-	updateUserStatusByQuery       = "UPDATE users SET status = $1 WHERE email_address = $2 and _id = $3"
-	lookupUserByEmailAddressAndID = "SELECT * FROM users WHERE _id = $1 AND email_address = $2"
+	getAllUsersByStatusQuery       = "SELECT * FROM users WHERE status='%s'"
+	updateUserStatusByQuery        = "UPDATE users SET status = $1 WHERE email_address = $2 and _id = $3"
+	updateUserStatusByEmailAddress = "UPDATE users SET status = $1 WHERE email_address = $2" // prefer update by query
+	lookupUserByEmailAddressAndID  = "SELECT * FROM users WHERE _id = $1 AND email_address = $2"
 )
 
 func GetAllActiveUsers(tx *sqlx.Tx) ([]User, error) {
@@ -47,4 +48,28 @@ func LookupUserForIDAndEmail(tx *sqlx.Tx, userID UserID, emailAddress string) (*
 	}
 	user := matches[0].ToNonDB()
 	return &user, nil
+}
+
+func AddUserToBlocklistByEmailAddress(tx *sqlx.Tx, emailAddress string, newStatus UserStatus) (_didUpdate bool, _err error) {
+	switch newStatus {
+	case UserStatusBlocklistBounced,
+		UserStatusBlocklistComplaint:
+		// no-op
+	case UserStatusVerified,
+		UserStatusUnverified,
+		UserStatusUnsubscribed:
+		return false, fmt.Errorf("User status %s not a blocklist", newStatus)
+	default:
+		return false, fmt.Errorf("Unrecognized status %s", newStatus)
+	}
+	res, err := tx.Exec(updateUserStatusByEmailAddress, string(newStatus), emailAddress)
+	if err != nil {
+		return false, err
+	}
+	numRows, err := res.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+	didUpdate := numRows > 0
+	return didUpdate, nil
 }
