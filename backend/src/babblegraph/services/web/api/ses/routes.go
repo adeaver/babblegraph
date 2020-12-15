@@ -1,6 +1,7 @@
 package ses
 
 import (
+	"babblegraph/model/sesnotifications"
 	"babblegraph/model/users"
 	"babblegraph/services/web/router"
 	"babblegraph/util/database"
@@ -34,11 +35,13 @@ func handleBounceNotification(body []byte) (interface{}, error) {
 	if err := json.Unmarshal(body, &req); err != nil {
 		return nil, err
 	}
-	// TODO: persist the body here
 	if req.Bounce == nil {
 		return nil, fmt.Errorf("Bounce does not have a body")
 	}
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		if err := sesnotifications.InsertSESNotification(tx, req); err != nil {
+			log.Println(fmt.Sprintf("Error persisting SES notification: %s. Continuing...", err.Error()))
+		}
 		for _, recipient := range req.Bounce.BouncedRecipients {
 			didUpdate, err := users.AddUserToBlocklistByEmailAddress(tx, recipient.EmailAddress, users.UserStatusBlocklistBounced)
 			if err != nil {
@@ -63,11 +66,13 @@ func handleComplaintNotification(body []byte) (interface{}, error) {
 	if err := json.Unmarshal(body, &req); err != nil {
 		return nil, err
 	}
-	// TODO: persist the body here
 	if req.Complaint == nil {
 		return nil, fmt.Errorf("Complaint does not have a body")
 	}
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		if err := sesnotifications.InsertSESNotification(tx, req); err != nil {
+			log.Println(fmt.Sprintf("Error persisting SES notification: %s. Continuing...", err.Error()))
+		}
 		for _, recipient := range req.Complaint.ComplainedRecipients {
 			didUpdate, err := users.AddUserToBlocklistByEmailAddress(tx, recipient.EmailAddress, users.UserStatusBlocklistComplaint)
 			if err != nil {
