@@ -1,6 +1,7 @@
 package main
 
 import (
+	"babblegraph/services/web/api/ses"
 	"babblegraph/services/web/api/user"
 	"babblegraph/services/web/router"
 	"babblegraph/util/database"
@@ -43,6 +44,9 @@ func setupDatabases() error {
 func registerAPI(r *mux.Router) error {
 	router.CreateNewAPIRouter(r)
 	if err := user.RegisterRouteGroups(); err != nil {
+		return err
+	}
+	if err := ses.RegisterRouteGroups(); err != nil {
 		return err
 	}
 	return nil
