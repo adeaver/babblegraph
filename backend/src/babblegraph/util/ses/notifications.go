@@ -23,7 +23,7 @@ type Mail struct {
 	FromAddress         string         `json:"source"`
 	FromAddressARN      string         `json:"sourceArn"`
 	FromIP              string         `json:"sourceIp"`
-	SendingAccountID    string         `json:"sendingAccountId`
+	SendingAccountID    string         `json:"sendingAccountId"`
 	Destination         []string       `json:"destination"`
 	AreHeadersTruncated *bool          `json:"headersTruncated,omitempty"`
 	Headers             []Header       `json:"headers,omitempty"`
