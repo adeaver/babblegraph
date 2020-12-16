@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS email_records(
     ses_message_id TEXT NOT NULL,
     user_id uuid NOT NULL REFERENCES users(_id),
     first_opened_at TIMESTAMP,
+    type TEXT NOT NULL,
 
     PRIMARY KEY (_id)
 );

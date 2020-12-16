@@ -13,6 +13,7 @@ type Email struct {
 	UserID        users.UserID
 	SentAt        time.Time
 	FirstOpenedAt *time.Time
+	Type          EmailType
 }
 
 type dbEmail struct {
@@ -21,4 +22,11 @@ type dbEmail struct {
 	UserID        users.UserID `db:"user_id"`
 	SentAt        time.Time    `db:"sent_at"`
 	FirstOpenedAt *time.Time   `db:"first_opened_at"`
+	Type          EmailType    `db:"type"`
 }
+
+type EmailType string
+
+const (
+	EmailTypeDaily EmailType = "daily-email"
+)
