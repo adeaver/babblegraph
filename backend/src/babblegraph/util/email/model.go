@@ -11,4 +11,6 @@ type Recipient struct {
 type BaseEmailTemplate struct {
 	SubscriptionManagementLink string
 	UnsubscribeLink            string
+	HeroImageURL               string
+	HomePageURL                string
 }

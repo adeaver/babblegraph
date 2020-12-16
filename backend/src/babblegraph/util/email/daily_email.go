@@ -32,20 +32,13 @@ func (cl *Client) SendDailyEmailForLinks(recipient Recipient, links []DailyEmail
 			log.Println(fmt.Sprintf("Email util no description found for URL %s", l.URL))
 		}
 	}
-	unsubscribeLink, err := routes.MakeUnsubscribeRouteForUserID(recipient.UserID)
-	if err != nil {
-		return nil, err
-	}
-	subscriptionManagementLink, err := routes.MakeSubscriptionManagementRouteForUserID(recipient.UserID)
+	baseTemplate, err := createBaseTemplate(recipient)
 	if err != nil {
 		return nil, err
 	}
 	emailBody, err := createEmailBody(dailyEmailTemplate{
-		BaseEmailTemplate: BaseEmailTemplate{
-			SubscriptionManagementLink: *subscriptionManagementLink,
-			UnsubscribeLink:            *unsubscribeLink,
-		},
-		Links: links,
+		BaseEmailTemplate: *baseTemplate,
+		Links:             links,
 	})
 	if err != nil {
 		return nil, err
@@ -72,4 +65,19 @@ func createEmailBody(emailData dailyEmailTemplate) (*string, error) {
 		return nil, err
 	}
 	return ptr.String(b.String()), nil
+}
+
+func createBaseTemplate(recipient Recipient) (*BaseEmailTemplate, error) {
+	unsubscribeLink, err := routes.MakeUnsubscribeRouteForUserID(recipient.UserID)
+	if err != nil {
+		return nil, err
+	}
+	subscriptionManagementLink, err := routes.MakeSubscriptionManagementRouteForUserID(recipient.UserID)
+	if err != nil {
+		return nil, err
+	}
+	return &BaseEmailTemplate{
+		SubscriptionManagementLink: *subscriptionManagementLink,
+		UnsubscribeLink:            *unsubscribeLink,
+	}, nil
 }
