@@ -9,6 +9,10 @@ import (
 	"fmt"
 )
 
+func MustGetHomePageURL() string {
+	return env.GetAbsoluteURLForEnvironment("")
+}
+
 func MakeSubscriptionManagementRouteForUserID(userID users.UserID) (*string, error) {
 	token, err := encrypt.GetToken(encrypt.TokenPair{
 		Key:   SubscriptionManagementRouteEncryptionKey.Str(),

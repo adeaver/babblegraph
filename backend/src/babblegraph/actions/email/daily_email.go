@@ -31,7 +31,7 @@ type dailyEmailLink struct {
 
 func SendDailyEmailForDocuments(tx *sqlx.Tx, cl *ses.Client, recipient email.Recipient, docs []documents.Document) (*email.ID, error) {
 	emailRecordID := email.NewEmailRecordID()
-	template, err := createDailyEmailTemplate(recipient, docs)
+	template, err := createDailyEmailTemplate(emailRecordID, recipient, docs)
 	if err != nil {
 		return nil, err
 	}
@@ -54,8 +54,8 @@ func SendDailyEmailForDocuments(tx *sqlx.Tx, cl *ses.Client, recipient email.Rec
 	return &emailRecordID, nil
 }
 
-func createDailyEmailTemplate(recipient email.Recipient, documents []documents.Document) (*dailyEmailTemplate, error) {
-	baseTemplate, err := createBaseTemplate(recipient)
+func createDailyEmailTemplate(emailRecordID email.ID, recipient email.Recipient, documents []documents.Document) (*dailyEmailTemplate, error) {
+	baseTemplate, err := createBaseTemplate(emailRecordID, recipient)
 	if err != nil {
 		return nil, err
 	}

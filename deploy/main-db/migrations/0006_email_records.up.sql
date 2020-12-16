@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS email_records(
     sent_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()),
     ses_message_id TEXT NOT NULL,
     user_id uuid NOT NULL REFERENCES users(_id),
-    first_opened_at TIMESTAMP,
+    first_opened_at TIMESTAMP WITH TIME ZONE,
     type TEXT NOT NULL,
 
     PRIMARY KEY (_id)

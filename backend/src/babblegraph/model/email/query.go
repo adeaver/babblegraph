@@ -16,6 +16,15 @@ func InsertEmailRecord(tx *sqlx.Tx, id ID, sesMessageID string, userID users.Use
 	return nil
 }
 
+const setEmailFirstOpenedQuery = "UPDATE email_records SET first_opened_at = timezone('utc', now()) WHERE _id = $1 AND first_opened_at IS NULL"
+
+func SetEmailFirstOpened(tx *sqlx.Tx, id ID) error {
+	if _, err := tx.Exec(setEmailFirstOpenedQuery, id); err != nil {
+		return err
+	}
+	return nil
+}
+
 func NewEmailRecordID() ID {
 	return ID(uuid.New().String())
 }

@@ -18,7 +18,7 @@ func getPathForTemplateFile(filename string) (*string, error) {
 	return ptr.String(fmt.Sprintf("%s%s%s", cwd, templatePath, filename)), nil
 }
 
-func createBaseTemplate(recipient email.Recipient) (*email.BaseEmailTemplate, error) {
+func createBaseTemplate(emailRecordID email.ID, recipient email.Recipient) (*email.BaseEmailTemplate, error) {
 	unsubscribeLink, err := routes.MakeUnsubscribeRouteForUserID(recipient.UserID)
 	if err != nil {
 		return nil, err
@@ -27,8 +27,14 @@ func createBaseTemplate(recipient email.Recipient) (*email.BaseEmailTemplate, er
 	if err != nil {
 		return nil, err
 	}
+	heroImageURL, err := routes.MakeLogoURLForEmailRecordID(emailRecordID)
+	if err != nil {
+		return nil, err
+	}
 	return &email.BaseEmailTemplate{
 		SubscriptionManagementLink: *subscriptionManagementLink,
 		UnsubscribeLink:            *unsubscribeLink,
+		HeroImageURL:               *heroImageURL,
+		HomePageURL:                routes.MustGetHomePageURL(),
 	}, nil
 }
