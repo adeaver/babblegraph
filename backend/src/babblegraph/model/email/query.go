@@ -6,10 +6,10 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-const createEmailRecordQuery = "INSERT INTO email_records (ses_message_id, user_id) VALUES ($1, $2) RETURNING _id"
+const createEmailRecordQuery = "INSERT INTO email_records (ses_message_id, user_id, type) VALUES ($1, $2, $3) RETURNING _id"
 
-func CreateEmailRecord(tx *sqlx.Tx, sesMessageID string, userID users.UserID) (*ID, error) {
-	rows, err := tx.Queryx(createEmailRecordQuery, sesMessageID, userID)
+func CreateEmailRecord(tx *sqlx.Tx, sesMessageID string, userID users.UserID, emailType EmailType) (*ID, error) {
+	rows, err := tx.Queryx(createEmailRecordQuery, sesMessageID, userID, emailType)
 	if err != nil {
 		return nil, err
 	}

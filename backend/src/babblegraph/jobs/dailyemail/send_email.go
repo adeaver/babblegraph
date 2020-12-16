@@ -15,6 +15,7 @@ import (
 
 func sendDailyEmailsForDocuments(tx *sqlx.Tx, cl *email.Client, recipient email.Recipient, docs []documents.Document) error {
 	var links []email.DailyEmailLink
+	var docIDs []documents.DocumentID
 	for _, doc := range docs {
 		var title, imageURL, description *string
 		if isNotEmpty(doc.Metadata.Title) {
@@ -37,12 +38,13 @@ func sendDailyEmailsForDocuments(tx *sqlx.Tx, cl *email.Client, recipient email.
 			Description: description,
 			URL:         doc.URL,
 		})
+		docIDs = append(docIDs, doc.ID)
 	}
 	sesMessageID, err := cl.SendDailyEmailForLinks(recipient, links)
 	if err != nil {
 		return err
 	}
-	return insertEmailRecordAndUpdateUserDocuments(tx, recipient, *sesMessageID, docs)
+	return insertEmailRecordAndUpdateUserDocuments(tx, recipient, *sesMessageID, docIDs)
 }
 
 // TODO: remove this function when documents
@@ -51,10 +53,10 @@ func isNotEmpty(s *string) bool {
 	return len(deref.String(s, "")) > 0
 }
 
-func insertEmailRecordAndUpdateUserDocuments(tx *sqlx.Tx, recipient email.Recipient, sesMessageID string, documents []documents.Document) error {
-	emailRecordID, err := email_model.CreateEmailRecord(tx, *sesMessageID, recipient.UserID)
+func insertEmailRecordAndUpdateUserDocuments(tx *sqlx.Tx, recipient email.Recipient, sesMessageID string, docIDs []documents.DocumentID) error {
+	emailRecordID, err := email_model.CreateEmailRecord(tx, sesMessageID, recipient.UserID, email_model.EmailTypeDaily)
 	if err != nil {
 		return err
 	}
-	return userdocuments.InsertDocumentIDsForUser(tx, recipient.UserID, *emailRecordID, docs)
+	return userdocuments.InsertDocumentIDsForUser(tx, recipient.UserID, *emailRecordID, docIDs)
 }

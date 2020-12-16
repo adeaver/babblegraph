@@ -14,7 +14,7 @@ type dbUserDocument struct {
 	UserID     users.UserID         `db:"user_id"`
 	DocumentID documents.DocumentID `db:"document_id"`
 	SentOn     time.Time            `db:"sent_on"`
-	EmailID    email.ID             `db:"email_id"`
+	EmailID    *email.ID            `db:"email_id"`
 }
 
 func (d dbUserDocument) ToNonDB() UserDocument {
@@ -32,5 +32,5 @@ type UserDocument struct {
 	UserID     users.UserID         `json:"user_id"`
 	DocumentID documents.DocumentID `json:"document_id"`
 	SentOn     time.Time            `json:"sent_on"`
-	EmailID    email.ID             `json:"email_id"`
+	EmailID    *email.ID            `json:"email_id"`
 }
