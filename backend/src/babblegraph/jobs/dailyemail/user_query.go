@@ -2,10 +2,7 @@ package dailyemail
 
 import (
 	"babblegraph/model/documents"
-	"babblegraph/model/userdocuments"
 	"babblegraph/util/ptr"
-	"fmt"
-	"log"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -21,10 +18,6 @@ func getDocumentsForUser(tx *sqlx.Tx, userInfo userEmailInfo) ([]documents.Docum
 	var docIDs []documents.DocumentID
 	for _, doc := range topDocs {
 		docIDs = append(docIDs, doc.ID)
-	}
-	log.Println(fmt.Sprintf("Found doc IDs %+v for user %s", docIDs, userInfo.EmailAddress))
-	if err := userdocuments.InsertDocumentIDsForUser(tx, userInfo.UserID, docIDs); err != nil {
-		return nil, err
 	}
 	return topDocs, nil
 }

@@ -24,7 +24,7 @@ type dailyEmailTemplate struct {
 	Links []DailyEmailLink
 }
 
-func (cl *Client) SendDailyEmailForLinks(recipient Recipient, links []DailyEmailLink) error {
+func (cl *Client) SendDailyEmailForLinks(recipient Recipient, links []DailyEmailLink) (*string, error) {
 	for _, l := range links {
 		if l.Description != nil {
 			log.Println(fmt.Sprintf("Email util description found %s for URL %s", *l.Description, l.URL))
@@ -34,11 +34,11 @@ func (cl *Client) SendDailyEmailForLinks(recipient Recipient, links []DailyEmail
 	}
 	unsubscribeLink, err := routes.MakeUnsubscribeRouteForUserID(recipient.UserID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	subscriptionManagementLink, err := routes.MakeSubscriptionManagementRouteForUserID(recipient.UserID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	emailBody, err := createEmailBody(dailyEmailTemplate{
 		BaseEmailTemplate: BaseEmailTemplate{
@@ -48,7 +48,7 @@ func (cl *Client) SendDailyEmailForLinks(recipient Recipient, links []DailyEmail
 		Links: links,
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 	today := time.Now()
 	return cl.sendEmail(sendEmailInput{

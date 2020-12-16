@@ -2,17 +2,18 @@ package userdocuments
 
 import (
 	"babblegraph/model/documents"
+	"babblegraph/model/email"
 	"babblegraph/model/users"
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
 )
 
-const insertQuery = `INSERT INTO user_documents (user_id, document_id) VALUES ($1, $2)`
+const insertQuery = `INSERT INTO user_documents (user_id, document_id, email_id) VALUES ($1, $2, $3)`
 
-func InsertDocumentIDsForUser(tx *sqlx.Tx, userID users.UserID, docIDs []documents.DocumentID) error {
+func InsertDocumentIDsForUser(tx *sqlx.Tx, userID users.UserID, emailRecordID email.ID, docIDs []documents.DocumentID) error {
 	for _, docID := range docIDs {
-		if _, err := tx.Exec(insertQuery, userID, docID); err != nil {
+		if _, err := tx.Exec(insertQuery, userID, docID, emailRecordID); err != nil {
 			return err
 		}
 	}

@@ -32,25 +32,23 @@ func GetDailyEmailJob(emailClient *email.Client) func() error {
 
 func sendDailyEmailToUser(emailClient *email.Client, user users.User) error {
 	var documents []documents.Document
-	if err := database.WithTx(func(tx *sqlx.Tx) error {
+	return database.WithTx(func(tx *sqlx.Tx) error {
 		userPreferences, err := getPreferencesForUser(tx, user)
 		if err != nil {
 			return err
 		}
 		documents, err = getDocumentsForUser(tx, *userPreferences)
-		return err
-	}); err != nil {
-		return err
-	}
-	if len(documents) == 0 {
-		log.Println(fmt.Sprintf("No documents for user %s", user.EmailAddress))
-	}
-	recipient := email.Recipient{
-		UserID:       user.ID,
-		EmailAddress: user.EmailAddress,
-	}
-	if err := sendDailyEmailsForDocuments(emailClient, recipient, documents); err != nil {
-		return err
-	}
-	return nil
+		if err != nil {
+			return err
+		}
+		if len(documents) == 0 {
+			log.Println(fmt.Sprintf("No documents for user %s", user.EmailAddress))
+			return nil
+		}
+		recipient := email.Recipient{
+			UserID:       user.ID,
+			EmailAddress: user.EmailAddress,
+		}
+		return sendDailyEmailsForDocuments(tx, emailClient, recipient, documents)
+	})
 }

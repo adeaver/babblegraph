@@ -2,6 +2,7 @@ package userdocuments
 
 import (
 	"babblegraph/model/documents"
+	"babblegraph/model/email"
 	"babblegraph/model/users"
 	"time"
 )
@@ -13,6 +14,7 @@ type dbUserDocument struct {
 	UserID     users.UserID         `db:"user_id"`
 	DocumentID documents.DocumentID `db:"document_id"`
 	SentOn     time.Time            `db:"sent_on"`
+	EmailID    email.ID             `db:"email_id"`
 }
 
 func (d dbUserDocument) ToNonDB() UserDocument {
@@ -21,6 +23,7 @@ func (d dbUserDocument) ToNonDB() UserDocument {
 		UserID:     d.UserID,
 		DocumentID: d.DocumentID,
 		SentOn:     d.SentOn,
+		EmailID:    d.EmailID,
 	}
 }
 
@@ -29,4 +32,5 @@ type UserDocument struct {
 	UserID     users.UserID         `json:"user_id"`
 	DocumentID documents.DocumentID `json:"document_id"`
 	SentOn     time.Time            `json:"sent_on"`
+	EmailID    email.ID             `json:"email_id"`
 }
