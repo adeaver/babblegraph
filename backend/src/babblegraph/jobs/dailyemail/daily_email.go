@@ -2,16 +2,18 @@ package dailyemail
 
 import (
 	"babblegraph/model/documents"
+	"babblegraph/model/email"
+	"babblegraph/model/userdocuments"
 	"babblegraph/model/users"
 	"babblegraph/util/database"
-	"babblegraph/util/email"
+	"babblegraph/util/ses"
 	"fmt"
 	"log"
 
 	"github.com/jmoiron/sqlx"
 )
 
-func GetDailyEmailJob(emailClient *email.Client) func() error {
+func GetDailyEmailJob(emailClient *ses.Client) func() error {
 	return func() error {
 		var activeUsers []users.User
 		if err := database.WithTx(func(tx *sqlx.Tx) error {
@@ -30,18 +32,18 @@ func GetDailyEmailJob(emailClient *email.Client) func() error {
 	}
 }
 
-func sendDailyEmailToUser(emailClient *email.Client, user users.User) error {
-	var documents []documents.Document
+func sendDailyEmailToUser(emailClient *ses.Client, user users.User) error {
+	var docs []documents.Document
 	return database.WithTx(func(tx *sqlx.Tx) error {
 		userPreferences, err := getPreferencesForUser(tx, user)
 		if err != nil {
 			return err
 		}
-		documents, err = getDocumentsForUser(tx, *userPreferences)
+		docs, err = getDocumentsForUser(tx, *userPreferences)
 		if err != nil {
 			return err
 		}
-		if len(documents) == 0 {
+		if len(docs) == 0 {
 			log.Println(fmt.Sprintf("No documents for user %s", user.EmailAddress))
 			return nil
 		}
@@ -49,6 +51,14 @@ func sendDailyEmailToUser(emailClient *email.Client, user users.User) error {
 			UserID:       user.ID,
 			EmailAddress: user.EmailAddress,
 		}
-		return sendDailyEmailsForDocuments(tx, emailClient, recipient, documents)
+		emailRecordID, err := email.SendDailyEmailForDocuments(tx, emailClient, recipient, docs)
+		if err != nil {
+			return err
+		}
+		var docIDs []documents.DocumentID
+		for _, doc := range docs {
+			docIDs = append(docIDs, doc.ID)
+		}
+		return userdocuments.InsertDocumentIDsForUser(tx, user.ID, *emailRecordID, docIDs)
 	})
 }

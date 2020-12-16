@@ -1,7 +1,7 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE TABLE IF NOT EXISTS email_records(
-    _id uuid DEFAULT uuid_generate_v4 (),
+    _id TEXT NOT NULL,
     sent_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()),
     ses_message_id TEXT NOT NULL,
     user_id uuid NOT NULL REFERENCES users(_id),

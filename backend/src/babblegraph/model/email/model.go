@@ -7,26 +7,30 @@ import (
 
 type ID string
 
-type Email struct {
-	ID            ID
-	SESMessageID  string
-	UserID        users.UserID
-	SentAt        time.Time
-	FirstOpenedAt *time.Time
-	Type          EmailType
-}
-
 type dbEmail struct {
 	ID            ID           `db:"_id"`
 	SESMessageID  string       `db:"ses_message_id"`
 	UserID        users.UserID `db:"user_id"`
 	SentAt        time.Time    `db:"sent_at"`
 	FirstOpenedAt *time.Time   `db:"first_opened_at"`
-	Type          EmailType    `db:"type"`
+	Type          emailType    `db:"type"`
 }
 
-type EmailType string
+type emailType string
 
 const (
-	EmailTypeDaily EmailType = "daily-email"
+	emailTypeDaily emailType = "daily-email"
 )
+
+type Recipient struct {
+	EmailAddress string
+	UserID       users.UserID
+}
+
+// All email templates should use this
+type BaseEmailTemplate struct {
+	SubscriptionManagementLink string
+	UnsubscribeLink            string
+	HeroImageURL               string
+	HomePageURL                string
+}
