@@ -2,6 +2,7 @@ package email
 
 import (
 	"babblegraph/model/documents"
+	"babblegraph/model/email"
 	"babblegraph/util/deref"
 	"babblegraph/util/ptr"
 	"babblegraph/util/ses"
@@ -17,7 +18,7 @@ import (
 const dailyEmailTemplateFilename = "daily_email_template.html"
 
 type dailyEmailTemplate struct {
-	BaseEmailTemplate
+	email.BaseEmailTemplate
 	Links []dailyEmailLink
 }
 
@@ -28,8 +29,8 @@ type dailyEmailLink struct {
 	URL         string
 }
 
-func SendDailyEmailForDocuments(tx *sqlx.Tx, cl *ses.Client, recipient Recipient, docs []documents.Document) (*ID, error) {
-	emailRecordID := newEmailRecordID()
+func SendDailyEmailForDocuments(tx *sqlx.Tx, cl *ses.Client, recipient email.Recipient, docs []documents.Document) (*email.ID, error) {
+	emailRecordID := email.NewEmailRecordID()
 	template, err := createDailyEmailTemplate(recipient, docs)
 	if err != nil {
 		return nil, err
@@ -47,13 +48,13 @@ func SendDailyEmailForDocuments(tx *sqlx.Tx, cl *ses.Client, recipient Recipient
 	if err != nil {
 		return nil, err
 	}
-	if err := insertEmailRecord(tx, emailRecordID, *sesMessageID, recipient.UserID, emailTypeDaily); err != nil {
+	if err := email.InsertEmailRecord(tx, emailRecordID, *sesMessageID, recipient.UserID, email.EmailTypeDaily); err != nil {
 		return nil, err
 	}
 	return &emailRecordID, nil
 }
 
-func createDailyEmailTemplate(recipient Recipient, documents []documents.Document) (*dailyEmailTemplate, error) {
+func createDailyEmailTemplate(recipient email.Recipient, documents []documents.Document) (*dailyEmailTemplate, error) {
 	baseTemplate, err := createBaseTemplate(recipient)
 	if err != nil {
 		return nil, err

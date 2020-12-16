@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"babblegraph/model/email"
 	"babblegraph/model/users"
 	"babblegraph/util/encrypt"
 	"babblegraph/util/env"
@@ -28,4 +29,15 @@ func MakeUnsubscribeRouteForUserID(userID users.UserID) (*string, error) {
 		return nil, err
 	}
 	return ptr.String(env.GetAbsoluteURLForEnvironment(fmt.Sprintf("unsubscribe/%s", *token))), nil
+}
+
+func MakeLogoURLForEmailRecordID(emailRecordID email.ID) (*string, error) {
+	token, err := encrypt.GetToken(encrypt.TokenPair{
+		Key:   EmailOpenedKey.Str(),
+		Value: emailRecordID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return ptr.String(env.GetAbsoluteURLForEnvironment(fmt.Sprintf("dist/%s/logo.png", *token))), nil
 }

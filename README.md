@@ -19,6 +19,7 @@ Start local shell with configured GOPATH:
 
 ## Structure of this repository
 - `backend`: all of the go code to run all babblegraph services.
+    - `actions`: actions are any functionality based on models. This helps reduce cyclical dependencies.
     - `model`: all database models
     - `util`: all utility packages
     - `wordsmith`: special code for interacting with wordsmith database

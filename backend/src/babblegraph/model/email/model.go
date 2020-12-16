@@ -13,13 +13,13 @@ type dbEmail struct {
 	UserID        users.UserID `db:"user_id"`
 	SentAt        time.Time    `db:"sent_at"`
 	FirstOpenedAt *time.Time   `db:"first_opened_at"`
-	Type          emailType    `db:"type"`
+	Type          EmailType    `db:"type"`
 }
 
-type emailType string
+type EmailType string
 
 const (
-	emailTypeDaily emailType = "daily-email"
+	EmailTypeDaily EmailType = "daily-email"
 )
 
 type Recipient struct {

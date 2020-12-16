@@ -1,6 +1,7 @@
 package email
 
 import (
+	"babblegraph/model/email"
 	"babblegraph/model/routes"
 	"babblegraph/util/env"
 	"babblegraph/util/ptr"
@@ -9,7 +10,7 @@ import (
 )
 
 func getPathForTemplateFile(filename string) (*string, error) {
-	templatePath := env.GetEnvironmentVariableOrDefault("TEMPLATES_PATH", "/model/email/templates/")
+	templatePath := env.GetEnvironmentVariableOrDefault("TEMPLATES_PATH", "/actions/email/templates/")
 	cwd, err := os.Getwd()
 	if err != nil {
 		return nil, err
@@ -17,7 +18,7 @@ func getPathForTemplateFile(filename string) (*string, error) {
 	return ptr.String(fmt.Sprintf("%s%s%s", cwd, templatePath, filename)), nil
 }
 
-func createBaseTemplate(recipient Recipient) (*BaseEmailTemplate, error) {
+func createBaseTemplate(recipient email.Recipient) (*email.BaseEmailTemplate, error) {
 	unsubscribeLink, err := routes.MakeUnsubscribeRouteForUserID(recipient.UserID)
 	if err != nil {
 		return nil, err
@@ -26,7 +27,7 @@ func createBaseTemplate(recipient Recipient) (*BaseEmailTemplate, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &BaseEmailTemplate{
+	return &email.BaseEmailTemplate{
 		SubscriptionManagementLink: *subscriptionManagementLink,
 		UnsubscribeLink:            *unsubscribeLink,
 	}, nil

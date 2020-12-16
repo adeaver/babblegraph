@@ -1,6 +1,7 @@
 package dailyemail
 
 import (
+	email_actions "babblegraph/actions/email"
 	"babblegraph/model/documents"
 	"babblegraph/model/email"
 	"babblegraph/model/userdocuments"
@@ -51,7 +52,7 @@ func sendDailyEmailToUser(emailClient *ses.Client, user users.User) error {
 			UserID:       user.ID,
 			EmailAddress: user.EmailAddress,
 		}
-		emailRecordID, err := email.SendDailyEmailForDocuments(tx, emailClient, recipient, docs)
+		emailRecordID, err := email_actions.SendDailyEmailForDocuments(tx, emailClient, recipient, docs)
 		if err != nil {
 			return err
 		}
