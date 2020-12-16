@@ -47,10 +47,6 @@ func SendDailyEmailForDocuments(tx *sqlx.Tx, cl *ses.Client, recipient Recipient
 	if err != nil {
 		return nil, err
 	}
-	var docIDs []documents.DocumentID
-	for _, doc := range docs {
-		docIDs = append(docIDs, doc.ID)
-	}
 	if err := insertEmailRecord(tx, emailRecordID, *sesMessageID, recipient.UserID, emailTypeDaily); err != nil {
 		return nil, err
 	}

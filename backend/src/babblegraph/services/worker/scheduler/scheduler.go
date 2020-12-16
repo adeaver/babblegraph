@@ -2,8 +2,8 @@ package scheduler
 
 import (
 	"babblegraph/jobs/dailyemail"
-	"babblegraph/util/email"
 	"babblegraph/util/env"
+	"babblegraph/util/ses"
 	"log"
 	"runtime/debug"
 	"time"
@@ -54,7 +54,7 @@ func makeEmailJob(errs chan error) func() {
 				debug.PrintStack()
 			}
 		}()
-		emailClient := email.NewClient(email.NewClientInput{
+		emailClient := ses.NewClient(ses.NewClientInput{
 			AWSAccessKey:       env.MustEnvironmentVariable("AWS_SES_ACCESS_KEY"),
 			AWSSecretAccessKey: env.MustEnvironmentVariable("AWS_SES_SECRET_KEY"),
 			AWSRegion:          "us-east-1",
