@@ -1,4 +1,4 @@
-package email
+package ses
 
 import (
 	"fmt"
@@ -33,19 +33,19 @@ func NewClient(input NewClientInput) *Client {
 	}
 }
 
-type sendEmailInput struct {
+type SendEmailInput struct {
 	Recipient string
 	HTMLBody  string
 	Subject   string
 }
 
-func (cl *Client) sendEmail(input sendEmailInput) error {
+func (cl *Client) SendEmail(input SendEmailInput) (*string, error) {
 	sess, err := session.NewSession(&aws.Config{
 		Region:      aws.String(cl.awsRegion),
 		Credentials: credentials.NewStaticCredentials(cl.awsAccessKey, cl.awsSecretAccessKey, ""),
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 	svc := ses.New(sess)
 	sesInput := &ses.SendEmailInput{
@@ -69,9 +69,10 @@ func (cl *Client) sendEmail(input sendEmailInput) error {
 		},
 		Source: aws.String(cl.fromAddress),
 	}
-	if _, err := svc.SendEmail(sesInput); err != nil {
-		return err
+	output, err := svc.SendEmail(sesInput)
+	if err != nil {
+		return nil, err
 	}
-	log.Println(fmt.Sprintf("Sent an email to %s", input.Recipient))
-	return nil
+	log.Println(fmt.Sprintf("Sent email with id %s to %s", *output.MessageId, input.Recipient))
+	return output.MessageId, nil
 }

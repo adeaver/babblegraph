@@ -2,13 +2,13 @@ package tasks
 
 import (
 	"babblegraph/jobs/dailyemail"
-	"babblegraph/util/email"
 	"babblegraph/util/env"
+	"babblegraph/util/ses"
 	"log"
 )
 
 func SendDailyEmail() error {
-	emailClient := email.NewClient(email.NewClientInput{
+	emailClient := ses.NewClient(ses.NewClientInput{
 		AWSAccessKey:       env.MustEnvironmentVariable("AWS_SES_ACCESS_KEY"),
 		AWSSecretAccessKey: env.MustEnvironmentVariable("AWS_SES_SECRET_KEY"),
 		AWSRegion:          "us-east-1",
