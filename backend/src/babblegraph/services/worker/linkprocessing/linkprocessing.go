@@ -13,7 +13,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-const defaultChunkSize = 150
+const defaultChunkSize = 500
 
 type Domain struct {
 	Domain string
