@@ -64,7 +64,7 @@ func (b *bulkInsertQueryBuilder) buildQuery() (*string, error) {
 	}
 	var conflictString *string
 	if b.onConflict != nil {
-		conflictString = ptr.String(fmt.Sprintf(" ON CONFLICT %s", b.onConflict))
+		conflictString = ptr.String(fmt.Sprintf(" ON CONFLICT %s", *b.onConflict))
 	}
 	query := fmt.Sprintf("%s %s%s", queryStart, strings.Join(valueGroups, ", "), deref.String(conflictString, ""))
 	return ptr.String(query), nil
