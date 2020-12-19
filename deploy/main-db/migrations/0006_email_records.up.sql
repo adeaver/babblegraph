@@ -13,5 +13,5 @@ CREATE TABLE IF NOT EXISTS email_records(
 
 CREATE INDEX IF NOT EXISTS email_records_user_id ON email_records(user_id);
 
-ALTER TABLE user_documents ADD COLUMN IF NOT EXISTS email_id uuid REFERENCES email_records(_id);
+ALTER TABLE user_documents ADD COLUMN IF NOT EXISTS email_id TEXT REFERENCES email_records(_id);
 CREATE INDEX IF NOT EXISTS user_documents_email ON user_documents(email_id);
