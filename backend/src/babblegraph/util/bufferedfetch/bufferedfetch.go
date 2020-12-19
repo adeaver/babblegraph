@@ -2,6 +2,7 @@ package bufferedfetch
 
 import (
 	"fmt"
+	"log"
 	"reflect"
 )
 
@@ -30,6 +31,7 @@ func WithNextBufferedValue(key string, fn func(interface{}) error) error {
 		return fmt.Errorf("Cannot get next value for bufferedfetch with key %s: does not exist", key)
 	}
 	if len(fs.i) == 0 {
+		log.Println(fmt.Sprintf("Bufferedfetch refilling key: %s", key))
 		refill, err := fs.refillFn()
 		if err != nil {
 			return fmt.Errorf("Error refilling bufferedfetch with key %s: %s", key, err.Error())

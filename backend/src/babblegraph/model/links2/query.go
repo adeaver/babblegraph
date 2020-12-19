@@ -1,7 +1,10 @@
 package links2
 
 import (
+	"babblegraph/util/database"
 	"babblegraph/util/urlparser"
+	"fmt"
+	"log"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -63,13 +66,16 @@ func LookupBulkUnfetchedLinksForDomain(tx *sqlx.Tx, domain string, chunkSize int
 	return out, nil
 }
 
-const upsertLinkQuery = "INSERT INTO links2 (url_identifier, domain, url) VALUES ($1, $2, $3) ON CONFLICT (url_identifier) DO UPDATE SET last_fetch_version = NULL"
-
 func UpsertLinkWithEmptyFetchStatus(tx *sqlx.Tx, urls []urlparser.ParsedURL) error {
+	queryBuilder, err := database.NewBulkInsertQueryBuilder("links2", "url_identifier", "domain", "url")
+	if err != nil {
+		return err
+	}
+	queryBuilder.AddConflictResolution("(url_identifier) DO UPDATE SET last_fetch_version = NULL")
 	for _, u := range urls {
-		if _, err := tx.Exec(upsertLinkQuery, u.URLIdentifier, u.Domain, u.URL); err != nil {
-			return err
+		if err := queryBuilder.AddValues(u.URLIdentifier, u.Domain, u.URL); err != nil {
+			log.Println(fmt.Sprintf("Error inserting url with identifier %s: %s", u.URLIdentifier, err.Error()))
 		}
 	}
-	return nil
+	return queryBuilder.Execute(tx)
 }

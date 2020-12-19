@@ -7,6 +7,7 @@ import (
 	"babblegraph/util/database"
 	"babblegraph/util/urlparser"
 	"fmt"
+	"log"
 	"sync"
 	"time"
 
@@ -49,6 +50,7 @@ func CreateLinkProcessor() (*LinkProcessor, error) {
 func makeBufferedFetchForDomain(domain string) func() (interface{}, error) {
 	return func() (interface{}, error) {
 		var links []links2.Link
+		log.Println(fmt.Sprintf("Fetching links for domain: %s", domain))
 		if err := database.WithTx(func(tx *sqlx.Tx) error {
 			var err error
 			links, err = links2.LookupBulkUnfetchedLinksForDomain(tx, domain, defaultChunkSize)
