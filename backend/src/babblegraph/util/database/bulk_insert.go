@@ -39,7 +39,7 @@ func (b *bulkInsertQueryBuilder) AddValues(values ...interface{}) error {
 	if len(values) != len(b.columnNames) {
 		return fmt.Errorf("Number of values must equal number of columns")
 	}
-	b.values = append(b.values, values)
+	b.values = append(b.values, values...)
 	return nil
 }
 
@@ -75,7 +75,7 @@ func (b *bulkInsertQueryBuilder) Execute(tx *sqlx.Tx) error {
 	if err != nil {
 		return err
 	}
-	if _, err := tx.Exec(*query, b.values); err != nil {
+	if _, err := tx.Exec(*query, b.values...); err != nil {
 		return err
 	}
 	return nil

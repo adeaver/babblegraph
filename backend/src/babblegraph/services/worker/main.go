@@ -92,7 +92,7 @@ func startWorkerThread(linkProcessor *linkprocessing.LinkProcessor, errs chan er
 				log.Println("No error, but no wait time. Continuing...")
 				continue
 			}
-			log.Println(fmt.Sprintf("Processing URL %s", u))
+			log.Println(fmt.Sprintf("Processing URL %s with identifier %s", u, link.URLIdentifier))
 			parsedHTMLPage, err := ingesthtml.ProcessURL(u, domain)
 			if err != nil {
 				log.Println(fmt.Sprintf("Got error ingesting html for url %s: %s. Continuing...", u, err.Error()))

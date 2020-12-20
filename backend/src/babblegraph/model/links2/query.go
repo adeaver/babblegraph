@@ -28,12 +28,17 @@ func GetDomainsWithUnfetchedLinks(tx *sqlx.Tx) ([]string, error) {
 const insertLinkQuery = "INSERT INTO links2 (url_identifier, domain, url) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING"
 
 func InsertLinks(tx *sqlx.Tx, urls []urlparser.ParsedURL) error {
+	queryBuilder, err := database.NewBulkInsertQueryBuilder("links2", "url_identifier", "domain", "url")
+	if err != nil {
+		return err
+	}
+	queryBuilder.AddConflictResolution("DO NOTHING")
 	for _, u := range urls {
-		if _, err := tx.Exec(insertLinkQuery, u.URLIdentifier, u.Domain, u.URL); err != nil {
-			return err
+		if err := queryBuilder.AddValues(u.URLIdentifier, u.Domain, u.URL); err != nil {
+			log.Println(fmt.Sprintf("Error inserting url with identifier %s: %s", u.URLIdentifier, err.Error()))
 		}
 	}
-	return nil
+	return queryBuilder.Execute(tx)
 }
 
 func SetURLAsFetched(tx *sqlx.Tx, urlIdentifier URLIdentifier) error {
