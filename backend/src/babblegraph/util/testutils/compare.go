@@ -73,3 +73,19 @@ func CompareStringMap(a, b map[string]string) error {
 	}
 	return nil
 }
+
+func CompareErrors(result, expected error) error {
+	switch {
+	case result == nil && expected != nil:
+		return fmt.Errorf("Expected %s, but got null", expected.Error())
+	case result != nil && expected == nil:
+		return fmt.Errorf("Expected null, but got %s", result.Error())
+	case result == nil && expected == nil,
+		result.Error() == expected.Error():
+		return nil
+	case result.Error() != expected.Error():
+		return fmt.Errorf("Expected %s, but got %s", expected.Error(), result.Error())
+	default:
+		panic("unreachable")
+	}
+}

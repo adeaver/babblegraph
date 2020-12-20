@@ -7,6 +7,7 @@ import (
 	"babblegraph/util/database"
 	"babblegraph/util/urlparser"
 	"fmt"
+	"log"
 	"sync"
 	"time"
 
@@ -49,6 +50,7 @@ func CreateLinkProcessor() (*LinkProcessor, error) {
 func makeBufferedFetchForDomain(domain string) func() (interface{}, error) {
 	return func() (interface{}, error) {
 		var links []links2.Link
+		log.Println(fmt.Sprintf("Fetching links for domain: %s", domain))
 		if err := database.WithTx(func(tx *sqlx.Tx) error {
 			var err error
 			links, err = links2.LookupBulkUnfetchedLinksForDomain(tx, domain, defaultChunkSize)
@@ -72,27 +74,38 @@ func (l *LinkProcessor) GetLink() (*links2.Link, *time.Duration, error) {
 		waitTime := firstDomain.FreeAt.Sub(time.Now())
 		return nil, &waitTime, nil
 	}
-	l.OrderedDomains = append(l.OrderedDomains[1:], Domain{
-		Domain: firstDomain.Domain,
-		FreeAt: time.Now().Add(15 * time.Second),
-	})
-	var link links2.Link
+	var shouldKeepDomain bool
+	defer func() {
+		if !shouldKeepDomain {
+			delete(l.DomainSet, firstDomain.Domain)
+		}
+	}()
+	l.OrderedDomains = append([]Domain{}, l.OrderedDomains[1:]...)
+	var link *links2.Link
 	if err := bufferedfetch.WithNextBufferedValue(getBufferedFetchKeyForDomain(firstDomain.Domain), func(i interface{}) error {
-		var ok bool
-		link, ok = i.(links2.Link)
+		l, ok := i.(links2.Link)
 		if !ok {
 			return fmt.Errorf("error getting next value for domain %s: incorrect type in buffered fetch", firstDomain.Domain)
 		}
+		link = &l
 		return nil
 	}); err != nil {
 		return nil, nil, err
 	}
+	if link == nil {
+		return nil, nil, nil
+	}
+	shouldKeepDomain = true
+	l.OrderedDomains = append(l.OrderedDomains, Domain{
+		Domain: firstDomain.Domain,
+		FreeAt: time.Now().Add(15 * time.Second),
+	})
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		return links2.SetURLAsFetched(tx, link.URLIdentifier)
 	}); err != nil {
 		return nil, nil, err
 	}
-	return &link, nil, nil
+	return link, nil, nil
 }
 
 func (l *LinkProcessor) AddURLs(urls []string) error {

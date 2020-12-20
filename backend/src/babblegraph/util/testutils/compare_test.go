@@ -120,3 +120,39 @@ func TestCompareStringMapSimple(t *testing.T) {
 		compareErrors(t, idx, result, tc.err)
 	}
 }
+
+func TestCompareErrors(t *testing.T) {
+	type testCase struct {
+		a   error
+		b   error
+		err error
+	}
+
+	testCases := []testCase{
+		{
+			a:   nil,
+			b:   nil,
+			err: nil,
+		}, {
+			a:   nil,
+			b:   fmt.Errorf("an error"),
+			err: fmt.Errorf("Expected an error, but got null"),
+		}, {
+			a:   fmt.Errorf("an error"),
+			b:   fmt.Errorf("an error"),
+			err: nil,
+		}, {
+			a:   fmt.Errorf("an error"),
+			b:   nil,
+			err: fmt.Errorf("Expected null, but got an error"),
+		}, {
+			a:   fmt.Errorf("another error"),
+			b:   fmt.Errorf("an error"),
+			err: fmt.Errorf("Expected an error, but got another error"),
+		},
+	}
+	for idx, tc := range testCases {
+		result := CompareErrors(tc.a, tc.b)
+		compareErrors(t, idx, result, tc.err)
+	}
+}
