@@ -1,7 +1,7 @@
 import io, uuid
 from corpus_read_defs import corpus_reader
 from templates import SQLTemplate
-from heapq import heapify
+from heapq import heapify, heappop
 from util import make_word_ranking_id
 
 LANGUAGE = "es"
@@ -55,10 +55,10 @@ def _make_word_generator():
 def _make_word_text_ranking_generator():
     word_rankings = [(count, word_text) for word_text, count in word_text_counts.items()]
     heapify(word_rankings)
-    for idx in range(len(word_rankings)):
-        word = word_rankings[idx][1]
-        ranking = len(word_rankings) - idx
-        yield "{},{},{}".format(make_word_ranking_id(word), word, ranking)
+    while len(word_rankings) != 0:
+        rank = len(word_rankings)
+        count, word = heappop(word_rankings)
+        yield "{},{},{},{},{},{}".format(make_word_ranking_id(word), CORPUS[1], LANGUAGE, word, rank, count)
 
 part_of_speech_template = SQLTemplate(
     "parts_of_speech",
@@ -89,7 +89,7 @@ word_template.write_files_for_template(
 
 word_ranking_template = SQLTemplate(
     "word_rankings",
-    "_id,word,ranking"
+    "_id,language,corpus_id,word,ranking,count"
 )
 print("writing word ranking files")
 word_ranking_template.write_files_for_template(
