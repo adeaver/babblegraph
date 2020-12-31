@@ -63,10 +63,10 @@ type WordStatsVersion1 struct {
 	TotalNumberOfWords  int64 `json:"total_number_of_words"` // Includes repeats
 	NumberOfUniqueWords int64 `json:"number_of_unique_words"`
 
-	LeastFrequentWordRanking         int64         `json:"least_frequent_word_ranking"`
-	LeastFrequentWordExclusion       WordExclusion `json:"least_frequent_word_exclusion"`
-	SecondLeastFrequentWordExclusion WordExclusion `json:"second_least_frequent_word_exclusion"`
-	ThirdLeastFrequentWordExclusion  WordExclusion `json:"third_least_frequent_word_exclusion"`
+	LeastFrequentWordRanking         int64          `json:"least_frequent_word_ranking"`
+	LeastFrequentWordExclusion       *WordExclusion `json:"least_frequent_word_exclusion,omitempty"`
+	SecondLeastFrequentWordExclusion *WordExclusion `json:"second_least_frequent_word_exclusion,omitempty"`
+	ThirdLeastFrequentWordExclusion  *WordExclusion `json:"third_least_frequent_word_exclusion,omitempty"`
 }
 
 type WordExclusion struct {
