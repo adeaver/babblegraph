@@ -2,6 +2,7 @@ package wordsmith
 
 import "strings"
 
+// TODO: get rid of this with new website model
 // A language is considered supported if there is a code available for it in wordsmith
 var htmlLanguageValueToLanguageCode = map[string]LanguageCode{
 	"es":    LanguageCodeSpanish,
