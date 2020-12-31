@@ -82,7 +82,7 @@ def _handle_lemma(lemma, part_of_speech, part_of_speech_category_id):
 def _handle_word(word, part_of_speech, lemma):
     word_key = "{},{}".format(word, part_of_speech.processed_part_of_speech)
     if word_key not in observed_words:
-        observed_words[word_key] = "{},{}".format(make_word_id(word, lemma.id), lemma.key)
+        observed_words[word_key] = "{},{}".format(make_word_id(word, lemma.id, part_of_speech.id), lemma.key)
     word_text_counts[word] = word_text_counts.get(word, 0) + 1
 
 

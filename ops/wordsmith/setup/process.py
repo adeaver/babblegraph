@@ -58,7 +58,7 @@ def _make_word_text_ranking_generator():
     while len(word_rankings) != 0:
         rank = len(word_rankings)
         count, word = heappop(word_rankings)
-        yield "{},{},{},{},{},{}".format(make_word_ranking_id(word), CORPUS[1], LANGUAGE, word, rank, count)
+        yield "{},{},{},{},{},{}".format(make_word_ranking_id(word), LANGUAGE, CORPUS[1], word, rank, count)
 
 part_of_speech_template = SQLTemplate(
     "parts_of_speech",
