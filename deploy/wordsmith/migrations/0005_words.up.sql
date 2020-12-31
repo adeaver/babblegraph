@@ -1,4 +1,4 @@
-CREATE TABLE words(
+CREATE TABLE IF NOT EXISTS words(
     _id TEXT NOT NULL,
     language TEXT NOT NULL REFERENCES languages(code),
     corpus_id TEXT NOT NULL REFERENCES corpora(_id),

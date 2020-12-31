@@ -1,6 +1,6 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
-CREATE TABLE languages(
+CREATE TABLE IF NOT EXISTS languages(
     _id uuid DEFAULT uuid_generate_v4 (),
     code TEXT NOT NULL,
 

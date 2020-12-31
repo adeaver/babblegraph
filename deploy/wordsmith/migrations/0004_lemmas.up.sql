@@ -1,4 +1,4 @@
-CREATE TABLE lemmas(
+CREATE TABLE IF NOT EXISTS lemmas(
     _id TEXT NOT NULL,
     language TEXT NOT NULL REFERENCES languages(code),
     corpus_id TEXT NOT NULL REFERENCES corpora(_id),
