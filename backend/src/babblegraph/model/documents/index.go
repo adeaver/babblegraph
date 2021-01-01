@@ -35,12 +35,14 @@ func (d documentIndex) GenerateIDForDocument(document interface{}) (*string, err
 }
 
 type IndexDocumentInput struct {
-	URL              urlparser.ParsedURL
-	Metadata         map[string]string
-	Type             Type
-	Version          Version
-	LanguageCode     wordsmith.LanguageCode
-	ReadabilityScore int64
+	URL               urlparser.ParsedURL
+	Metadata          map[string]string
+	Type              Type
+	Version           Version
+	LanguageCode      wordsmith.LanguageCode
+	ReadabilityScore  int64
+	WordStatsVersion1 *WordStatsVersion1
+	Labels            []string
 }
 
 func AssignIDAndIndexDocument(input IndexDocumentInput) (*DocumentID, error) {
@@ -61,6 +63,8 @@ func AssignIDAndIndexDocument(input IndexDocumentInput) (*DocumentID, error) {
 			Description:        ogMetadata.Description,
 			PublicationTimeUTC: getPublicationTimeUTCOrNil(ogMetadata.PublicationTime),
 		},
+		WordStatsVersion1: input.WordStatsVersion1,
+		Labels:            input.Labels,
 	}); err != nil {
 		return nil, err
 	}

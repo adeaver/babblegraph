@@ -2,19 +2,23 @@ package textprocessing
 
 import (
 	"babblegraph/model/documents"
+	"babblegraph/util/math/decimal"
 	"babblegraph/wordsmith"
 	"strings"
 )
 
-func GetWordStatsForText(languageCode wordsmith.LanguageCode, normalizedText string) (*documents.WordStatsVersion1, error) {
+func getWordStatsForText(languageCode wordsmith.LanguageCode, normalizedText string) (*documents.WordStatsVersion1, error) {
 	tokens := tokenizeText(normalizedText)
 	uniqueWords := getUniqueWordsForText(tokens)
+	tokenCounts := getTokenCounts(tokens)
 	rankings, err := wordsmith.GetSortedRankingsForWords(languageCode, uniqueWords)
 	if err != nil {
 		return nil, err
 	}
 	wordExclusions := extractWordExclusionsFromRankings(rankings)
 	out := &documents.WordStatsVersion1{
+		AverageWordRanking:  calculateMeanWordRanking(tokenCounts, rankings),
+		MedianWordRanking:   calculateMedianWordRanking(tokenCounts, rankings),
 		TotalNumberOfWords:  int64(len(tokens)),
 		NumberOfUniqueWords: int64(len(uniqueWords)),
 	}
@@ -39,6 +43,14 @@ func tokenizeText(normalizedText string) []string {
 	var out []string
 	for _, line := range lines {
 		out = append(out, strings.Split(line, " ")...)
+	}
+	return out
+}
+
+func getTokenCounts(tokenizedText []string) map[string]int64 {
+	out := make(map[string]int64)
+	for _, t := range tokenizedText {
+		out[t]++
 	}
 	return out
 }
@@ -68,4 +80,32 @@ func extractWordExclusionsFromRankings(rankings []wordsmith.WordRanking) []docum
 		})
 	}
 	return out
+}
+
+func calculateMedianWordRanking(tokenCounts map[string]int64, rankings []wordsmith.WordRanking) int64 {
+	var sortedRankings []int64
+	for _, r := range rankings {
+		if count, ok := tokenCounts[r.Word]; ok {
+			var i int64 = 0
+			for ; i < count; i++ {
+				sortedRankings = append(sortedRankings, r.CorpusRanking)
+			}
+		}
+	}
+	midIdx := len(sortedRankings) / 2
+	if len(sortedRankings)%2 == 0 {
+		return (sortedRankings[midIdx] + sortedRankings[midIdx+1]) / 2
+	}
+	return sortedRankings[midIdx]
+}
+
+func calculateMeanWordRanking(tokenCounts map[string]int64, rankings []wordsmith.WordRanking) int64 {
+	var totalRanking, rankedWordsCount decimal.Number
+	for _, r := range rankings {
+		if count, ok := tokenCounts[r.Word]; ok {
+			totalRanking.Add(decimal.FromInt64(count * r.CorpusRanking))
+			rankedWordsCount.Add(decimal.FromInt64(count))
+		}
+	}
+	return totalRanking.Divide(rankedWordsCount).ToInt64Rounded()
 }

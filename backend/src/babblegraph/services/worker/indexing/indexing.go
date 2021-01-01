@@ -20,10 +20,14 @@ type IndexDocumentInput struct {
 
 func IndexDocument(input IndexDocumentInput) error {
 	docID, err := documents.AssignIDAndIndexDocument(documents.IndexDocumentInput{
-		URL:              input.URL,
-		ReadabilityScore: input.TextMetadata.ReadabilityScore.ToInt64Rounded(),
-		LanguageCode:     input.LanguageCode,
-		Metadata:         input.ParsedHTMLPage.Metadata,
+		URL:               input.URL,
+		ReadabilityScore:  input.TextMetadata.ReadabilityScore.ToInt64Rounded(),
+		LanguageCode:      input.LanguageCode,
+		Metadata:          input.ParsedHTMLPage.Metadata,
+		WordStatsVersion1: &input.TextMetadata.WordStats,
+
+		// TODO: fill this in
+		Labels: []string{},
 
 		// These will get changed later
 		Version: input.DocumentVersion,

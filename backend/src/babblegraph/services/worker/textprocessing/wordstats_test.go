@@ -80,9 +80,52 @@ func TestExtractWordExclusionsFromRankings(t *testing.T) {
 		expected []documents.WordExclusion
 	}
 	testCases := []testCase{
-		// TODO: write some test cases
+		{
+			input: []wordsmith.WordRanking{
+				{
+					Word:          "uno",
+					CorpusRanking: 10,
+				}, {
+					Word:          "dos",
+					CorpusRanking: 300,
+				}, {
+					Word:          "tres",
+					CorpusRanking: 1000,
+				}, {
+					Word:          "cuatro",
+					CorpusRanking: 3000,
+				},
+			},
+			expected: []documents.WordExclusion{
+				{
+					WordText:                        "cuatro",
+					LeastFrequentRankingWithoutWord: 1000,
+				}, {
+					WordText:                        "tres",
+					LeastFrequentRankingWithoutWord: 300,
+				}, {
+					WordText:                        "dos",
+					LeastFrequentRankingWithoutWord: 10,
+				}, {
+					WordText:                        "uno",
+					LeastFrequentRankingWithoutWord: 0,
+				},
+			},
+		}, {
+			input: []wordsmith.WordRanking{
+				{
+					Word:          "uno",
+					CorpusRanking: 10,
+				},
+			},
+			expected: []documents.WordExclusion{
+				{
+					WordText:                        "uno",
+					LeastFrequentRankingWithoutWord: 0,
+				},
+			},
+		},
 	}
-	t.Errorf("Write some test cases")
 	for idx, tc := range testCases {
 		result := extractWordExclusionsFromRankings(tc.input)
 		if err := compareWordExclusionLists(result, tc.expected); err != nil {
@@ -104,4 +147,182 @@ func compareWordExclusionLists(result, expected []documents.WordExclusion) error
 		}
 	}
 	return nil
+}
+
+func TestCalculateMedianWordRanking(t *testing.T) {
+	type testCase struct {
+		inputTokenCounts map[string]int64
+		inputRankings    []wordsmith.WordRanking
+		expected         int64
+	}
+	testCases := []testCase{
+		{
+			inputTokenCounts: map[string]int64{
+				"uno":  1,
+				"dos":  1,
+				"tres": 1,
+			},
+			inputRankings: []wordsmith.WordRanking{
+				{
+					Word:          "uno",
+					CorpusRanking: 10,
+				}, {
+					Word:          "dos",
+					CorpusRanking: 20,
+				}, {
+					Word:          "tres",
+					CorpusRanking: 30,
+				},
+			},
+			expected: 20,
+		}, {
+			inputTokenCounts: map[string]int64{
+				"uno":  1,
+				"dos":  1,
+				"tres": 1,
+			},
+			inputRankings: []wordsmith.WordRanking{
+				{
+					Word:          "uno",
+					CorpusRanking: 10,
+				}, {
+					Word:          "tres",
+					CorpusRanking: 30,
+				},
+			},
+			expected: 20,
+		}, {
+			inputTokenCounts: map[string]int64{
+				"uno":  1,
+				"tres": 1,
+			},
+			inputRankings: []wordsmith.WordRanking{
+				{
+					Word:          "uno",
+					CorpusRanking: 10,
+				}, {
+					Word:          "tres",
+					CorpusRanking: 30,
+				},
+			},
+			expected: 20,
+		}, {
+			inputTokenCounts: map[string]int64{
+				"uno":  1,
+				"tres": 1,
+			},
+			inputRankings: []wordsmith.WordRanking{},
+			expected:      0,
+		}, {
+			inputTokenCounts: map[string]int64{
+				"uno":  2,
+				"tres": 1,
+			},
+			inputRankings: []wordsmith.WordRanking{
+				{
+					Word:          "uno",
+					CorpusRanking: 10,
+				}, {
+					Word:          "tres",
+					CorpusRanking: 30,
+				},
+			},
+			expected: 10,
+		},
+	}
+	for idx, tc := range testCases {
+		result := calculateMedianWordRanking(tc.inputTokenCounts, tc.inputRankings)
+		if result != tc.expected {
+			t.Errorf("Error on test case %d: expected %d, but got %d", idx+1, tc.expected, result)
+		}
+	}
+}
+
+func TestCalculateMeanWordRanking(t *testing.T) {
+	type testCase struct {
+		inputTokenCounts map[string]int64
+		inputRankings    []wordsmith.WordRanking
+		expected         int64
+	}
+	testCases := []testCase{
+		{
+			inputTokenCounts: map[string]int64{
+				"uno":  1,
+				"dos":  1,
+				"tres": 1,
+			},
+			inputRankings: []wordsmith.WordRanking{
+				{
+					Word:          "uno",
+					CorpusRanking: 10,
+				}, {
+					Word:          "dos",
+					CorpusRanking: 20,
+				}, {
+					Word:          "tres",
+					CorpusRanking: 30,
+				},
+			},
+			expected: 20,
+		}, {
+			inputTokenCounts: map[string]int64{
+				"uno":  1,
+				"dos":  1,
+				"tres": 1,
+			},
+			inputRankings: []wordsmith.WordRanking{
+				{
+					Word:          "uno",
+					CorpusRanking: 10,
+				}, {
+					Word:          "tres",
+					CorpusRanking: 30,
+				},
+			},
+			expected: 20,
+		}, {
+			inputTokenCounts: map[string]int64{
+				"uno":  1,
+				"tres": 1,
+			},
+			inputRankings: []wordsmith.WordRanking{
+				{
+					Word:          "uno",
+					CorpusRanking: 10,
+				}, {
+					Word:          "tres",
+					CorpusRanking: 30,
+				},
+			},
+			expected: 20,
+		}, {
+			inputTokenCounts: map[string]int64{
+				"uno":  1,
+				"tres": 1,
+			},
+			inputRankings: []wordsmith.WordRanking{},
+			expected:      0,
+		}, {
+			inputTokenCounts: map[string]int64{
+				"uno":  3,
+				"tres": 1,
+			},
+			inputRankings: []wordsmith.WordRanking{
+				{
+					Word:          "uno",
+					CorpusRanking: 10,
+				}, {
+					Word:          "tres",
+					CorpusRanking: 30,
+				},
+			},
+			expected: 15,
+		},
+	}
+	for idx, tc := range testCases {
+		result := calculateMeanWordRanking(tc.inputTokenCounts, tc.inputRankings)
+		if result != tc.expected {
+			t.Errorf("Error on test case %d: expected %d, but got %d", idx+1, tc.expected, result)
+		}
+	}
 }
