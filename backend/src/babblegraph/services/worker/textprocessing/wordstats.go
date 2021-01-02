@@ -2,7 +2,6 @@ package textprocessing
 
 import (
 	"babblegraph/model/documents"
-	"babblegraph/util/math/decimal"
 	"babblegraph/wordsmith"
 	"strings"
 )
@@ -25,13 +24,13 @@ func getWordStatsForText(languageCode wordsmith.LanguageCode, normalizedText str
 	if len(rankings) > 0 {
 		out.LeastFrequentWordRanking = rankings[len(rankings)-1].CorpusRanking
 	}
-	for i := len(wordExclusions) - 1; i >= 0; i-- {
+	for i := 0; i < len(wordExclusions); i++ {
 		switch i {
-		case len(wordExclusions) - 1:
+		case 0:
 			out.LeastFrequentWordExclusion = &wordExclusions[i]
-		case len(wordExclusions) - 2:
+		case 1:
 			out.SecondLeastFrequentWordExclusion = &wordExclusions[i]
-		case len(wordExclusions) - 3:
+		case 2:
 			out.ThirdLeastFrequentWordExclusion = &wordExclusions[i]
 		}
 	}
@@ -56,7 +55,7 @@ func getTokenCounts(tokenizedText []string) map[string]int64 {
 }
 
 func getUniqueWordsForText(tokenizedText []string) []string {
-	var tokenSet map[string]bool
+	tokenSet := make(map[string]bool)
 	var out []string
 	for _, token := range tokenizedText {
 		if _, ok := tokenSet[token]; !ok {
@@ -100,12 +99,12 @@ func calculateMedianWordRanking(tokenCounts map[string]int64, rankings []wordsmi
 }
 
 func calculateMeanWordRanking(tokenCounts map[string]int64, rankings []wordsmith.WordRanking) int64 {
-	var totalRanking, rankedWordsCount decimal.Number
+	var totalRanking, rankedWordsCount int64
 	for _, r := range rankings {
 		if count, ok := tokenCounts[r.Word]; ok {
-			totalRanking.Add(decimal.FromInt64(count * r.CorpusRanking))
-			rankedWordsCount.Add(decimal.FromInt64(count))
+			totalRanking += count * r.CorpusRanking
+			rankedWordsCount += count
 		}
 	}
-	return totalRanking.Divide(rankedWordsCount).ToInt64Rounded()
+	return totalRanking / rankedWordsCount
 }
