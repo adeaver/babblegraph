@@ -50,13 +50,13 @@ func TestGetUniqueWordsForTest(t *testing.T) {
 			tokenizedText: []string{"uno", "uno", "uno", "dos", "uno", "dos", "dos", "tres"},
 			expected:      []string{"uno", "dos", "tres"},
 		}, {
-			tokenizedText: []string{"dos uno uno uno uno uno dos"},
+			tokenizedText: []string{"dos", "uno", "uno", "uno", "uno", "uno", "dos"},
 			expected:      []string{"dos", "uno"},
 		}, {
-			tokenizedText: []string{""},
+			tokenizedText: []string{},
 			expected:      []string{},
 		}, {
-			tokenizedText: []string{"uno uno dos dos dos tres dos"},
+			tokenizedText: []string{"uno", "uno", "dos", "dos", "dos", "tres", "dos"},
 			expected:      []string{"uno", "dos", "tres"},
 		}, {
 			tokenizedText: []string{"uno", "dos", "uno", "uno"},

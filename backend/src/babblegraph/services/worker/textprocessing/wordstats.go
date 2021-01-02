@@ -93,7 +93,7 @@ func calculateMedianWordRanking(tokenCounts map[string]int64, rankings []wordsmi
 	}
 	midIdx := len(sortedRankings) / 2
 	if len(sortedRankings)%2 == 0 {
-		return (sortedRankings[midIdx] + sortedRankings[midIdx+1]) / 2
+		return (sortedRankings[midIdx-1] + sortedRankings[midIdx]) / 2
 	}
 	return sortedRankings[midIdx]
 }
