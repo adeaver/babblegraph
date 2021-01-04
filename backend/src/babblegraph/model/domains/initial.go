@@ -8,6 +8,7 @@ import (
 var domainMap map[string]AllowableDomain
 
 func initializeDomainMap() {
+	domainMap = make(map[string]AllowableDomain)
 	for _, d := range allowableDomains {
 		domainMap[string(d.Domain)] = d
 	}
