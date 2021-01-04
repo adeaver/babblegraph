@@ -15,7 +15,7 @@ const (
 	// Version 3 adds content topics
 	Version3 Version = 3
 
-	CurrentDocumentVersion Version = Version2
+	CurrentDocumentVersion Version = Version3
 )
 
 func (v Version) Ptr() *Version {

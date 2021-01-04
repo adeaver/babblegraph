@@ -1,8 +1,9 @@
 package linkprocessing
 
 import (
+	"babblegraph/model/contenttopics"
+	"babblegraph/model/domains"
 	"babblegraph/model/links2"
-	"babblegraph/services/worker/domains"
 	"babblegraph/util/bufferedfetch"
 	"babblegraph/util/database"
 	"babblegraph/util/urlparser"
@@ -31,7 +32,7 @@ func CreateLinkProcessor() (*LinkProcessor, error) {
 	domains := domains.GetSeedURLs()
 	var orderedDomains []Domain
 	domainHash := make(map[string]bool)
-	for _, d := range domains {
+	for d := range domains {
 		domainHash[d] = true
 		orderedDomains = append(orderedDomains, Domain{
 			Domain: d,
@@ -108,7 +109,7 @@ func (l *LinkProcessor) GetLink() (*links2.Link, *time.Duration, error) {
 	return link, nil, nil
 }
 
-func (l *LinkProcessor) AddURLs(urls []string) error {
+func (l *LinkProcessor) AddURLs(urls []string, topics []contenttopics.ContentTopic) error {
 	var parsedURLs []urlparser.ParsedURL
 	// using a hash set because the domains are
 	// likely to repeat
@@ -121,7 +122,7 @@ func (l *LinkProcessor) AddURLs(urls []string) error {
 	}
 	l.mu.Lock()
 	defer l.mu.Unlock()
-	for domain, _ := range domainSet {
+	for domain := range domainSet {
 		if _, ok := l.DomainSet[domain]; !ok {
 			l.DomainSet[domain] = true
 			l.OrderedDomains = append(l.OrderedDomains, Domain{
@@ -131,6 +132,17 @@ func (l *LinkProcessor) AddURLs(urls []string) error {
 		}
 	}
 	return database.WithTx(func(tx *sqlx.Tx) error {
-		return links2.InsertLinks(tx, parsedURLs)
+		if err := links2.InsertLinks(tx, parsedURLs); err != nil {
+			return err
+		}
+		if len(topics) == 0 {
+			return nil
+		}
+		for _, u := range parsedURLs {
+			if err := contenttopics.ApplyContentTopicsToURL(tx, u.URL, topics); err != nil {
+				return err
+			}
+		}
+		return nil
 	})
 }

@@ -1,19 +1,27 @@
 package contenttopics
 
 import (
+	"babblegraph/util/database"
 	"babblegraph/util/urlparser"
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
 )
 
-func ApplyContentTopicToURL(tx *sqlx.Tx, url string, topic ContentTopic) error {
+func ApplyContentTopicsToURL(tx *sqlx.Tx, url string, topics []ContentTopic) error {
 	parsedURL := urlparser.ParseURL(url)
 	if parsedURL == nil {
 		return fmt.Errorf("url is invalid: %s", url)
 	}
-	_, err := tx.Exec("INSERT INTO content_topic_mappings (url_identifier, content_topic) VALUES ($1, $2)", parsedURL.URLIdentifier, topic)
-	return err
+	queryBuilder, err := database.NewBulkInsertQueryBuilder("content_topic_mappings", "url_identifier", "content_topic")
+	if err != nil {
+		return err
+	}
+	queryBuilder.AddConflictResolution("DO NOTHING")
+	for _, t := range topics {
+		queryBuilder.AddValues(parsedURL.URLIdentifier, t)
+	}
+	return queryBuilder.Execute(tx)
 }
 
 func GetTopicsForURL(tx *sqlx.Tx, url string) ([]ContentTopic, error) {

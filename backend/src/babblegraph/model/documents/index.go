@@ -1,6 +1,7 @@
 package documents
 
 import (
+	"babblegraph/model/contenttopics"
 	"babblegraph/util/elastic"
 	"babblegraph/util/opengraph"
 	"babblegraph/util/ptr"
@@ -41,6 +42,7 @@ type IndexDocumentInput struct {
 	Version          Version
 	LanguageCode     wordsmith.LanguageCode
 	ReadabilityScore int64
+	Topics           []contenttopics.ContentTopic
 }
 
 func AssignIDAndIndexDocument(input IndexDocumentInput) (*DocumentID, error) {
@@ -54,6 +56,7 @@ func AssignIDAndIndexDocument(input IndexDocumentInput) (*DocumentID, error) {
 		LanguageCode:     input.LanguageCode,
 		DocumentType:     input.Type,
 		Domain:           input.URL.Domain,
+		Topics:           input.Topics,
 		Metadata: Metadata{
 			Title:              ogMetadata.Title,
 			Image:              ogMetadata.ImageURL,

@@ -1,8 +1,9 @@
 package main
 
 import (
+	"babblegraph/model/contenttopics"
 	"babblegraph/model/documents"
-	"babblegraph/services/worker/domains"
+	"babblegraph/model/domains"
 	"babblegraph/services/worker/indexing"
 	"babblegraph/services/worker/ingesthtml"
 	"babblegraph/services/worker/linkprocessing"
@@ -18,6 +19,8 @@ import (
 	"runtime/debug"
 	"strings"
 	"time"
+
+	"github.com/jmoiron/sqlx"
 )
 
 func main() {
@@ -28,8 +31,10 @@ func main() {
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	if err := linkProcessor.AddURLs(domains.GetSeedURLs()); err != nil {
-		log.Fatal(err.Error())
+	for u, topics := range domains.GetSeedURLs() {
+		if err := linkProcessor.AddURLs([]string{u}, topics); err != nil {
+			log.Fatal(err.Error())
+		}
 	}
 	errs := make(chan error, 1)
 	for i := 0; i < 3; i++ {
@@ -98,17 +103,13 @@ func startWorkerThread(linkProcessor *linkprocessing.LinkProcessor, errs chan er
 				log.Println(fmt.Sprintf("Got error ingesting html for url %s: %s. Continuing...", u, err.Error()))
 				continue
 			}
-			languageLabel := deref.String(parsedHTMLPage.Language, "")
-			languageCode := wordsmith.LookupLanguageCodeForLanguageLabel(languageLabel)
-			if languageCode == nil {
-				log.Println(fmt.Sprintf("URL %s has unsupported language code: %s", u, languageLabel))
-				// This is only allowed because we're restricting domains
-				// If domains are ever non-restricted, this needs to be removed
-				// and made more robust
-				languageCode = wordsmith.LanguageCodeSpanish.Ptr()
+			domainMetadata, err := domains.GetDomainMetadata(domain)
+			if err != nil {
+				log.Println(fmt.Sprintf("Got error getting metadata for domain %s on url %s: %s. Continuing...", domain, u, err.Error()))
+				continue
 			}
-			log.Println(fmt.Sprintf("Got language code %s for label %s on URL %s. Processing...", languageCode.Str(), languageLabel, u))
-			if err := linkProcessor.AddURLs(parsedHTMLPage.Links); err != nil {
+			languageCode := domainMetadata.LanguageCode
+			if err := linkProcessor.AddURLs(parsedHTMLPage.Links, domainMetadata.Topics); err != nil {
 				log.Println(fmt.Sprintf("Error saving urls %+v for url %s: %s", parsedHTMLPage.Links, u, err.Error()))
 				continue
 			}
@@ -117,18 +118,28 @@ func startWorkerThread(linkProcessor *linkprocessing.LinkProcessor, errs chan er
 				continue
 			}
 			log.Println(fmt.Sprintf("Processing text for url %s", u))
-			textMetadata, err := textprocessing.ProcessText(parsedHTMLPage.BodyText, *languageCode)
+			textMetadata, err := textprocessing.ProcessText(parsedHTMLPage.BodyText, languageCode)
 			if err != nil {
 				log.Println(fmt.Sprintf("Got error processing text for url %s: %s. Continuing...", u, err.Error()))
+				continue
+			}
+			var topicsForURL []contenttopics.ContentTopic
+			if err := database.WithTx(func(tx *sqlx.Tx) error {
+				var err error
+				topicsForURL, err = contenttopics.GetTopicsForURL(tx, u)
+				return err
+			}); err != nil {
+				log.Println(fmt.Sprintf("Error getting topics for url %s: %s. Continuing...", u, err.Error()))
 				continue
 			}
 			log.Println(fmt.Sprintf("Indexing text for URL %s", u))
 			err = indexing.IndexDocument(indexing.IndexDocumentInput{
 				ParsedHTMLPage:  *parsedHTMLPage,
 				TextMetadata:    *textMetadata,
-				LanguageCode:    *languageCode,
+				LanguageCode:    languageCode,
 				DocumentVersion: documents.CurrentDocumentVersion,
 				URL:             urlparser.MustParseURL(u),
+				TopicsForURL:    topicsForURL,
 			})
 			if err != nil {
 				log.Println(fmt.Sprintf("Got error indexing document for url %s: %s. Continuing...", u, err.Error()))
