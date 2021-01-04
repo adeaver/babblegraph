@@ -1,6 +1,7 @@
 package documents
 
 import (
+	"babblegraph/model/contenttopics"
 	"babblegraph/wordsmith"
 	"time"
 )
@@ -10,6 +11,9 @@ type Version int64
 const (
 	Version1 Version = 1
 	Version2 Version = 2
+
+	// Version 3 adds content topics
+	Version3 Version = 3
 
 	CurrentDocumentVersion Version = Version2
 )
@@ -43,14 +47,15 @@ type Metadata struct {
 type DocumentID string
 
 type Document struct {
-	ID               DocumentID             `json:"id"`
-	Version          Version                `json:"version"`
-	URL              string                 `json:"url"`
-	ReadabilityScore int64                  `json:"readability_score"`
-	LanguageCode     wordsmith.LanguageCode `json:"language_code"`
-	DocumentType     Type                   `json:"document_type"`
-	Metadata         Metadata               `json:"metadata"`
-	Domain           string                 `json:"domain"`
+	ID               DocumentID                   `json:"id"`
+	Version          Version                      `json:"version"`
+	URL              string                       `json:"url"`
+	ReadabilityScore int64                        `json:"readability_score"`
+	LanguageCode     wordsmith.LanguageCode       `json:"language_code"`
+	DocumentType     Type                         `json:"document_type"`
+	Metadata         Metadata                     `json:"metadata"`
+	Domain           string                       `json:"domain"`
+	Topics           []contenttopics.ContentTopic `json:"content_topics"`
 
 	LemmatizedBodyDEPRECATED *string `json:"lemmatized_body,omitempty"`
 }
