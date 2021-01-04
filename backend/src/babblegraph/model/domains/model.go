@@ -3,13 +3,15 @@ package domains
 import (
 	"babblegraph/model/contenttopics"
 	"babblegraph/util/geo"
+	"babblegraph/wordsmith"
 )
 
 type Domain string
 
 type AllowableDomain struct {
-	Domain  Domain
-	Country geo.CountryCode
+	Domain       Domain
+	Country      geo.CountryCode
+	LanguageCode wordsmith.LanguageCode
 
 	// This is to be used if an entire domain maps to a specific topic.
 	// i.e. Motortrend magazine is all about cars
