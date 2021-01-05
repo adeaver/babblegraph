@@ -125,5 +125,50 @@ var seedURLs = []SeedURL{
 		Topics: []contenttopics.ContentTopic{
 			contenttopics.ContentTopicLiterature,
 		},
+	}, {
+		URL: "https://www.emol.com/nacional",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCurrentEventsChile,
+		},
+	}, {
+		URL: "https://www.emol.com/internacional",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicWorldNews,
+		},
+	}, {
+		URL: "https://www.emol.com/tecnologia",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicTechnology,
+		},
+	}, {
+		URL: "https://www.emol.com/economia",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEconomy,
+		},
+	}, {
+		URL: "https://www.emol.com/deportes",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicSports,
+		},
+	}, {
+		URL: "https://www.emol.com/espectaculos",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEntertainment,
+		},
+	}, {
+		URL: "https://www.emol.com/tendencias/salud",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicHealth,
+		},
+	}, {
+		URL: "https://www.emol.com/tendencias/belleza",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicFashion,
+		},
+	}, {
+		URL: "https://www.emol.com/autos",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicAutomotive,
+		},
 	},
 }

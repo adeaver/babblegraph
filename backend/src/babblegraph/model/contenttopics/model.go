@@ -10,6 +10,7 @@ const (
 	ContentTopicLifestyle              ContentTopic = "lifestyle"
 	ContentTopicOpinion                ContentTopic = "opinion"
 	ContentTopicCurrentEventsArgentina ContentTopic = "current-events-argentina"
+	ContentTopicCurrentEventsChile     ContentTopic = "current-events-chile"
 	ContentTopicWorldNews              ContentTopic = "world-news"
 	ContentTopicEntertainment          ContentTopic = "entertainment"
 	ContentTopicAutomotive             ContentTopic = "automotive"
@@ -17,6 +18,8 @@ const (
 	ContentTopicScience                ContentTopic = "science"
 	ContentTopicHealth                 ContentTopic = "health"
 	ContentTopicLiterature             ContentTopic = "literature"
+	ContentTopicTechnology             ContentTopic = "technology"
+	ContentTopicFashion                ContentTopic = "fashion"
 )
 
 type contentTopicMappingID string
