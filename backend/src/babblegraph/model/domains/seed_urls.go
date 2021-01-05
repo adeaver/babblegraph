@@ -58,5 +58,31 @@ var seedURLs = []SeedURL{
 		Topics: []contenttopics.ContentTopic{
 			contenttopics.ContentTopicSports,
 		},
+	}, {
+		URL: "https://www.cronista.com/apertura-negocio",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicBusiness,
+		},
+	}, {
+		URL: "https://www.cronista.com/seccion/economia_politica",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEconomy,
+			contenttopics.ContentTopicPolitics,
+		},
+	}, {
+		URL: "https://www.cronista.com/seccion/finanzas_mercados",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicFinance,
+		},
+	}, {
+		URL: "https://www.cronista.com/seccion/internacionales",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicWorldNews,
+		},
+	}, {
+		URL: "https://www.cronista.com/seccion/columnistas",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicOpinion,
+		},
 	},
 }
