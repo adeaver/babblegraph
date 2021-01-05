@@ -14,6 +14,9 @@ const (
 	ContentTopicEntertainment          ContentTopic = "entertainment"
 	ContentTopicAutomotive             ContentTopic = "automotive"
 	ContentTopicSports                 ContentTopic = "sports"
+	ContentTopicScience                ContentTopic = "science"
+	ContentTopicHealth                 ContentTopic = "health"
+	ContentTopicLiterature             ContentTopic = "literature"
 )
 
 type contentTopicMappingID string

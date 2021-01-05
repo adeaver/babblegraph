@@ -84,5 +84,46 @@ var seedURLs = []SeedURL{
 		Topics: []contenttopics.ContentTopic{
 			contenttopics.ContentTopicOpinion,
 		},
+	}, {
+		URL: "http://www.laprensa.com.ar/category.aspx?category=114",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicPolitics,
+		},
+	}, {
+		URL: "http://www.laprensa.com.ar/category.aspx?category=115",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEconomy,
+		},
+	}, {
+		URL: "http://www.laprensa.com.ar/category.aspx?category=116",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicOpinion,
+		},
+	}, {
+		URL: "http://www.laprensa.com.ar/category.aspx?category=117",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicWorldNews,
+		},
+	}, {
+		URL: "http://www.laprensa.com.ar/category.aspx?category=119",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicSports,
+		},
+	}, {
+		URL: "http://www.laprensa.com.ar/category.aspx?category=120",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEntertainment,
+		},
+	}, {
+		URL: "http://www.laprensa.com.ar/category.aspx?category=150",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicScience,
+			contenttopics.ContentTopicHealth,
+		},
+	}, {
+		URL: "http://www.laprensa.com.ar/category.aspx?category=160",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicLiterature,
+		},
 	},
 }
