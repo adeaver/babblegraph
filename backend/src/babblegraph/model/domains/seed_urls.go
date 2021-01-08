@@ -417,5 +417,120 @@ var seedURLs = []SeedURL{
 		Topics: []contenttopics.ContentTopic{
 			contenttopics.ContentTopicHealth,
 		},
+	}, {
+		URL: "https://www.nacion.com/el-pais",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCurrentEventsCostaRica,
+		},
+	}, {
+		URL: "https://www.nacion.com/puro-deporte",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicSports,
+		},
+	}, {
+		URL: "https://www.nacion.com/economia",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEconomy,
+		},
+	}, {
+		URL: "https://www.nacion.com/opinion",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicOpinion,
+		},
+	}, {
+		URL: "https://www.nacion.com/viva/cine",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicFilm,
+		},
+	}, {
+		URL: "https://www.nacion.com/viva/entretenimiento",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEntertainment,
+		},
+	}, {
+		URL: "https://www.nacion.com/viva/musica",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicMusic,
+		},
+	}, {
+		URL: "https://www.nacion.com/viva/moda",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicFashion,
+		},
+	}, {
+		URL: "https://www.nacion.com/el-mundo",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicWorldNews,
+		},
+	}, {
+		URL: "https://www.nacion.com/ciencia",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicScience,
+		},
+	}, {
+		URL: "https://www.nacion.com/ciencia/salud",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicHealth,
+		},
+	}, {
+		URL: "https://www.nacion.com/tecnologia",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicTechnology,
+		},
+	}, {
+		URL: "https://www.nacion.com/tecnologia/videojuegos",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicVideoGames,
+		},
+	}, {
+		URL: "https://www.nacion.com/sabores",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCooking,
+		},
+	}, {
+		URL: "https://www.elsalvador.com/category/noticias/internacional",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicWorldNews,
+		},
+	}, {
+		URL: "https://www.elsalvador.com/category/noticias/nacional",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCurrentEventsElSalvador,
+		},
+	}, {
+		URL: "https://www.elsalvador.com/category/entretenimiento/espectaculos",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEntertainment,
+		},
+	}, {
+		URL: "https://www.elsalvador.com/category/entretenimiento/tecnologia",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicTechnology,
+		},
+	}, {
+		URL: "https://www.elsalvador.com/category/entretenimiento/turismo",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicTravel,
+		},
+	}, {
+		URL: "https://www.elsalvador.com/category/entretenimiento/cultura",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCulture,
+		},
+	}, {
+		URL: "https://www.elsalvador.com/category/vida/salud",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicHealth,
+		},
+	}, {
+		URL: "https://www.elsalvador.com/category/deportes",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicSports,
+		},
+	}, {
+		URL: "https://www.elsalvador.com/category/opinion",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicOpinion,
+		},
 	},
 }
