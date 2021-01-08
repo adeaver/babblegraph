@@ -532,5 +532,80 @@ var seedURLs = []SeedURL{
 		Topics: []contenttopics.ContentTopic{
 			contenttopics.ContentTopicOpinion,
 		},
+	}, {
+		URL: "https://diario.elmundo.sv/category/politica",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicPolitics,
+		},
+	}, {
+		URL: "https://diario.elmundo.sv/category/economia",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEconomy,
+		},
+	}, {
+		URL: "https://diario.elmundo.sv/category/nacionales",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCurrentEventsElSalvador,
+		},
+	}, {
+		URL: "https://diario.elmundo.sv/category/internacionales",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicWorldNews,
+		},
+	}, {
+		URL: "https://diario.elmundo.sv/category/entretenimiento",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEntertainment,
+		},
+	}, {
+		URL: "https://diario.elmundo.sv/category/deportes",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicSports,
+		},
+	}, {
+		URL: "https://diario.elmundo.sv/category/empresarial",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicBusiness,
+		},
+	}, {
+		URL: "https://diario.elmundo.sv/category/opinion",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicOpinion,
+		},
+	}, {
+		URL: "https://dca.gob.gt/noticias-guatemala-diario-centro-america/category/nacionales",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCurrentEventsGuatemala,
+		},
+	}, {
+		URL: "https://dca.gob.gt/noticias-guatemala-diario-centro-america/category/opinion",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicOpinion,
+		},
+	}, {
+		URL: "https://dca.gob.gt/noticias-guatemala-diario-centro-america/category/deportes",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicSports,
+		},
+	}, {
+		URL: "https://dca.gob.gt/noticias-guatemala-diario-centro-america/category/artes",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCulture,
+		},
+	}, {
+		URL: "https://dca.gob.gt/noticias-guatemala-diario-centro-america/category/economicas",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEconomy,
+		},
+	}, {
+		URL: "https://dca.gob.gt/noticias-guatemala-diario-centro-america/category/internacionales/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicWorldNews,
+		},
+	}, {
+		URL: "https://dca.gob.gt/noticias-guatemala-diario-centro-america/category/salud/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicHealth,
+		},
 	},
 }
