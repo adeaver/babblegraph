@@ -677,5 +677,86 @@ var seedURLs = []SeedURL{
 		Topics: []contenttopics.ContentTopic{
 			contenttopics.ContentTopicOpinion,
 		},
+	}, {
+		URL: "https://jornada.com.mx/category/politica.html",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicPolitics,
+		},
+	}, {
+		URL: "https://jornada.com.mx/category/economia.html",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEconomy,
+		},
+	}, {
+		URL: "https://jornada.com.mx/category/mundo.html",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicWorldNews,
+		},
+	}, {
+		URL: "https://jornada.com.mx/category/estados.html",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCurrentEventsMexico,
+		},
+	}, {
+		URL: "https://jornada.com.mx/category/deportes.html",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicSports,
+		},
+	}, {
+		URL: "https://jornada.com.mx/category/cultura.html",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEntertainment,
+		},
+	}, {
+		URL: "https://jornada.com.mx/category/ciencia-y-tecnologia.html",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicScience,
+			contenttopics.ContentTopicTechnology,
+		},
+	}, {
+		URL: "https://jornada.com.mx/category/autos.html",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicAutomotive,
+		},
+	}, {
+		URL: "https://heraldodemexico.com.mx/nacional",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCurrentEventsMexico,
+		},
+	}, {
+		URL: "https://heraldodemexico.com.mx/mundo/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicWorldNews,
+		},
+	}, {
+		URL: "https://heraldodemexico.com.mx/economia/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEconomy,
+		},
+	}, {
+		URL: "https://heraldodemexico.com.mx/espectaculos/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEntertainment,
+		},
+	}, {
+		URL: "https://heraldodemexico.com.mx/temas/viajes-1865.html",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicTravel,
+		},
+	}, {
+		URL: "https://heraldodemexico.com.mx/temas/autos-1868.html",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicAutomotive,
+		},
+	}, {
+		URL: "https://heraldodemexico.com.mx/cultura/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCulture,
+		},
+	}, {
+		URL: "https://heraldodemexico.com.mx/tecnologia/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicTechnology,
+		},
 	},
 }
