@@ -170,5 +170,92 @@ var seedURLs = []SeedURL{
 		Topics: []contenttopics.ContentTopic{
 			contenttopics.ContentTopicAutomotive,
 		},
+	}, {
+		URL: "https://www.latercera.com/canal/el-deportivo/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicSports,
+		},
+	}, {
+		URL: "https://www.latercera.com/canal/politica",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicPolitics,
+		},
+	}, {
+		URL: "https://www.latercera.com/etiqueta/empresas-mercados",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicBusiness,
+		},
+	}, {
+		URL: "https://www.latercera.com/etiqueta/economia-dinero",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEconomy,
+		},
+	}, {
+		URL: "https://www.latercera.com/canal/pulso",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEconomy,
+			contenttopics.ContentTopicBusiness,
+		},
+	}, {
+		URL: "https://www.latercera.com/etiqueta/practico-tecnologia/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicTechnology,
+		},
+	}, {
+		URL: "https://www.latercera.com/etiqueta/practico-belleza-y-salud/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicFashion,
+		},
+	}, {
+		URL: "https://www.latercera.com/etiqueta/practico-casa-y-cocina/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicHome,
+			contenttopics.ContentTopicCooking,
+		},
+	}, {
+		URL: "https://www.latercera.com/canal/nacional",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCurrentEventsChile,
+		},
+	}, {
+		URL: "https://www.latercera.com/canal/mundo",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicWorldNews,
+		},
+	}, {
+		URL: "https://www.latercera.com/canal/opinion",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicOpinion,
+		},
+	}, {
+		URL: "http://glamorama.latercera.com/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCelebrityNews,
+		},
+	}, {
+		URL: "https://www.latercera.com/etiqueta/libros",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicLiterature,
+		},
+	}, {
+		URL: "https://www.latercera.com/etiqueta/musica",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicMusic,
+		},
+	}, {
+		URL: "https://www.latercera.com/etiqueta/cine/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicFilm,
+		},
+	}, {
+		URL: "https://www.latercera.com/etiqueta/videojuegos-de-culto",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicVideoGames,
+		},
+	}, {
+		URL: "https://www.latercera.com/etiqueta/arte",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicArt,
+		},
 	},
 }

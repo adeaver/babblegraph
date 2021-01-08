@@ -20,6 +20,13 @@ const (
 	ContentTopicLiterature             ContentTopic = "literature"
 	ContentTopicTechnology             ContentTopic = "technology"
 	ContentTopicFashion                ContentTopic = "fashion"
+	ContentTopicHome                   ContentTopic = "home"
+	ContentTopicCooking                ContentTopic = "cooking"
+	ContentTopicCelebrityNews          ContentTopic = "celebrity-news"
+	ContentTopicMusic                  ContentTopic = "music"
+	ContentTopicFilm                   ContentTopic = "film"
+	ContentTopicVideoGames             ContentTopic = "video-games"
+	ContentTopicArt                    ContentTopic = "art"
 )
 
 type contentTopicMappingID string
