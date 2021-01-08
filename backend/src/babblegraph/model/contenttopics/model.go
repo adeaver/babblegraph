@@ -19,6 +19,7 @@ const (
 	ContentTopicCurrentEventsMexico     ContentTopic = "current-events-mexico"
 	ContentTopicCurrentEventsNicaragua  ContentTopic = "current-events-nicaragua"
 	ContentTopicCurrentEventsPanama     ContentTopic = "current-events-panama"
+	ContentTopicCurrentEventsPeru       ContentTopic = "current-events-peru"
 	ContentTopicEconomy                 ContentTopic = "economy"
 	ContentTopicEntertainment           ContentTopic = "entertainment"
 	ContentTopicFashion                 ContentTopic = "fashion"

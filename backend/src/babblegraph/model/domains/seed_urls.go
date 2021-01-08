@@ -923,5 +923,80 @@ var seedURLs = []SeedURL{
 		Topics: []contenttopics.ContentTopic{
 			contenttopics.ContentTopicOpinion,
 		},
+	}, {
+		URL: "https://larepublica.pe/politica/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicPolitics,
+		},
+	}, {
+		URL: "https://larepublica.pe/economia/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEconomy,
+		},
+	}, {
+		URL: "https://larepublica.pe/mundo/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicWorldNews,
+		},
+	}, {
+		URL: "https://larepublica.pe/deportes/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicSports,
+		},
+	}, {
+		URL: "https://larepublica.pe/salud/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicHealth,
+		},
+	}, {
+		URL: "https://larepublica.pe/cultural/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCulture,
+		},
+	}, {
+		URL: "https://larepublica.pe/ciencia/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicScience,
+		},
+	}, {
+		URL: "https://larepublica.pe/turismo/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicTravel,
+		},
+	}, {
+		URL: "https://larepublica.pe/espectaculos/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEntertainment,
+		},
+	}, {
+		URL: "https://larepublica.pe/tecnologia/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicTechnology,
+		},
+	}, {
+		URL: "https://larepublica.pe/cine-series/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicFilm,
+		},
+	}, {
+		URL: "https://larepublica.pe/videojuegos/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicVideoGames,
+		},
+	}, {
+		URL: "https://larepublica.pe/estilo/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicFashion,
+		},
+	}, {
+		URL: "https://larepublica.pe/region-norte/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCurrentEventsPeru,
+		},
+	}, {
+		URL: "https://larepublica.pe/region-sur/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCurrentEventsPeru,
+		},
 	},
 }
