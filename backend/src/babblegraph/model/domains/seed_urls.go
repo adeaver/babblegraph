@@ -257,5 +257,90 @@ var seedURLs = []SeedURL{
 		Topics: []contenttopics.ContentTopic{
 			contenttopics.ContentTopicArt,
 		},
+	}, {
+		URL: "https://www.lacuarta.com/canal/mundo",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicWorldNews,
+		},
+	}, {
+		URL: "https://www.lacuarta.com/canal/deportes",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicSports,
+		},
+	}, {
+		URL: "https://www.lacuarta.com/canal/espectaculos",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEntertainment,
+		},
+	}, {
+		URL: "https://www.elcolombiano.com/colombia",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCurrentEventsColombia,
+		},
+	}, {
+		URL: "https://www.elcolombiano.com/internacional",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicWorldNews,
+		},
+	}, {
+		URL: "https://www.elcolombiano.com/negocios",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicBusiness,
+		},
+	}, {
+		URL: "https://www.elcolombiano.com/negocios/economia",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEconomy,
+		},
+	}, {
+		URL: "https://www.elcolombiano.com/negocios/finanzas",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicFinance,
+		},
+	}, {
+		URL: "https://www.elcolombiano.com/deportes",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicSports,
+		},
+	}, {
+		URL: "https://www.elcolombiano.com/opinion",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicOpinion,
+		},
+	}, {
+		URL: "https://www.elcolombiano.com/cultura/cine",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicFilm,
+		},
+	}, {
+		URL: "https://www.elcolombiano.com/cultura/literatura",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicLiterature,
+		},
+	}, {
+		URL: "https://www.elcolombiano.com/cultura/musica",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicMusic,
+		},
+	}, {
+		URL: "https://www.elcolombiano.com/tecnologia",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicTechnology,
+		},
+	}, {
+		URL: "https://www.elcolombiano.com/tecnologia",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicTechnology,
+		},
+	}, {
+		URL: "https://www.elcolombiano.com/tecnologia/videojuegos",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicVideoGames,
+		},
+	}, {
+		URL: "https://www.elcolombiano.com/entretenimiento",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEntertainment,
+		},
 	},
 }
