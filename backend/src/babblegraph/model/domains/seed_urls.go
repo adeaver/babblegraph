@@ -758,5 +758,170 @@ var seedURLs = []SeedURL{
 		Topics: []contenttopics.ContentTopic{
 			contenttopics.ContentTopicTechnology,
 		},
+	}, {
+		URL: "https://www.eleconomista.com.mx/seccion/empresas/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicBusiness,
+		},
+	}, {
+		URL: "https://www.eleconomista.com.mx/seccion/sector-financiero/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicFinance,
+		},
+	}, {
+		URL: "https://www.eleconomista.com.mx/seccion/internacionales/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicWorldNews,
+		},
+	}, {
+		URL: "https://www.eleconomista.com.mx/seccion/tecnologia/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicTechnology,
+		},
+	}, {
+		URL: "https://www.eleconomista.com.mx/seccion/opinion/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicOpinion,
+		},
+	}, {
+		URL: "https://www.eleconomista.com.mx/seccion/arte-ideas/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCulture,
+		},
+	}, {
+		URL: "https://www.eleconomista.com.mx/seccion/economia/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEconomy,
+		},
+	}, {
+		URL: "https://www.eleconomista.com.mx/seccion/politica/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicPolitics,
+		},
+	}, {
+		URL: "https://www.eleconomista.com.mx/seccion/deportes/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicSports,
+		},
+	}, {
+		URL: "https://www.laprensa.com.ni/nacionales",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCurrentEventsNicaragua,
+		},
+	}, {
+		URL: "https://www.laprensa.com.ni/politica",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicPolitics,
+		},
+	}, {
+		URL: "https://www.laprensa.com.ni/economia",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEconomy,
+		},
+	}, {
+		URL: "https://www.laprensa.com.ni/deportes",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicSports,
+		},
+	}, {
+		URL: "https://www.laprensa.com.ni/internacionales",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicWorldNews,
+		},
+	}, {
+		URL: "https://www.laprensa.com.ni/espectaculo",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEntertainment,
+		},
+	}, {
+		URL: "https://www.laprensa.com.ni/suplemento/empresariales",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicBusiness,
+		},
+	}, {
+		URL: "https://www.laprensa.com.ni/opinion-main",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicOpinion,
+		},
+	}, {
+		URL: "https://www.laprensa.com.ni/salud",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicHealth,
+		},
+	}, {
+		URL: "https://www.lajornadanet.com/index.php/noticias/nicaragua",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCurrentEventsNicaragua,
+		},
+	}, {
+		URL: "https://www.lajornadanet.com/index.php/noticias/nicaragua/politica",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicPolitics,
+		},
+	}, {
+		URL: "https://www.lajornadanet.com/index.php/noticias/empresariales/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicBusiness,
+		},
+	}, {
+		URL: "https://www.lajornadanet.com/index.php/noticias/economia/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEconomy,
+		},
+	}, {
+		URL: "https://www.lajornadanet.com/index.php/noticias/mundo/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicWorldNews,
+		},
+	}, {
+		URL: "https://www.lajornadanet.com/index.php/noticias/ciencia/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicScience,
+		},
+	}, {
+		URL: "https://www.lajornadanet.com/index.php/noticias/mexico/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCurrentEventsMexico,
+		},
+	}, {
+		URL: "https://www.lajornadanet.com/index.php/noticias/costa-rica/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCurrentEventsCostaRica,
+		},
+	}, {
+		URL: "https://www.lajornadanet.com/index.php/noticias/tecno/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicTechnology,
+		},
+	}, {
+		URL: "http://elsiglo.com.pa/tag/panama/13",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCurrentEventsPanama,
+		},
+	}, {
+		URL: "http://elsiglo.com.pa/tag/internacional/17",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicWorldNews,
+		},
+	}, {
+		URL: "http://elsiglo.com.pa/tag/economia/18",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEconomy,
+		},
+	}, {
+		URL: "http://elsiglo.com.pa/tag/deportes/19",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicSports,
+		},
+	}, {
+		URL: "http://elsiglo.com.pa/tag/espectaculos/20",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEntertainment,
+		},
+	}, {
+		URL: "http://elsiglo.com.pa/tag/opinion/22",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicOpinion,
+		},
 	},
 }
