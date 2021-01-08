@@ -342,5 +342,80 @@ var seedURLs = []SeedURL{
 		Topics: []contenttopics.ContentTopic{
 			contenttopics.ContentTopicEntertainment,
 		},
+	}, {
+		URL: "https://www.elbogotano.com.co/category/poder",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicPolitics,
+		},
+	}, {
+		URL: "https://www.elbogotano.com.co/category/noticias",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCurrentEventsColombia,
+		},
+	}, {
+		URL: "https://www.elespectador.com/opinion",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicOpinion,
+		},
+	}, {
+		URL: "https://www.elespectador.com/noticias/economia",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEconomy,
+		},
+	}, {
+		URL: "https://www.elespectador.com/noticias/tecnologia",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicTechnology,
+		},
+	}, {
+		URL: "https://www.elespectador.com/entretenimiento",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEntertainment,
+		},
+	}, {
+		URL: "https://www.elespectador.com/entretenimiento/cine",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicFilm,
+		},
+	}, {
+		URL: "https://www.elespectador.com/entretenimiento/musica",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicMusic,
+		},
+	}, {
+		URL: "https://www.elespectador.com/deportes",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicSports,
+		},
+	}, {
+		URL: "https://www.elespectador.com/noticias/autos",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicAutomotive,
+		},
+	}, {
+		URL: "https://www.elespectador.com/noticias/politica",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicPolitics,
+		},
+	}, {
+		URL: "https://www.elespectador.com/noticias/nacional",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCurrentEventsColombia,
+		},
+	}, {
+		URL: "https://www.elespectador.com/noticias/el-mundo",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicWorldNews,
+		},
+	}, {
+		URL: "https://www.elespectador.com/noticias/ciencia",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicScience,
+		},
+	}, {
+		URL: "https://www.elespectador.com/noticias/salud",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicHealth,
+		},
 	},
 }
