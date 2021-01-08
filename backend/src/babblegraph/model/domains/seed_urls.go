@@ -607,5 +607,75 @@ var seedURLs = []SeedURL{
 		Topics: []contenttopics.ContentTopic{
 			contenttopics.ContentTopicHealth,
 		},
+	}, {
+		URL: "https://www.prensalibre.com/guatemala",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCurrentEventsGuatemala,
+		},
+	}, {
+		URL: "https://www.prensalibre.com/deportes",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicSports,
+		},
+	}, {
+		URL: "https://www.prensalibre.com/internacional",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicWorldNews,
+		},
+	}, {
+		URL: "https://www.prensalibre.com/economia",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEconomy,
+		},
+	}, {
+		URL: "https://www.prensalibre.com/vida",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicLifestyle,
+		},
+	}, {
+		URL: "https://www.prensalibre.com/opinion",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicOpinion,
+		},
+	}, {
+		URL: "https://www.prensalibre.com/vida/tecnologia/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicTechnology,
+		},
+	}, {
+		URL: "https://www.prensalibre.com/vida/salud-y-familia/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicHealth,
+		},
+	}, {
+		URL: "https://www.laprensa.hn/honduras",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCurrentEventsHonduras,
+		},
+	}, {
+		URL: "http://www.laprensa.hn/deportes",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicSports,
+		},
+	}, {
+		URL: "http://www.laprensa.hn/espectaculos",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEntertainment,
+		},
+	}, {
+		URL: "https://www.laprensa.hn/mundo",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicWorldNews,
+		},
+	}, {
+		URL: "http://www.laprensa.hn/tecnologia",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicTechnology,
+		},
+	}, {
+		URL: "http://www.laprensa.hn/opinion",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicOpinion,
+		},
 	},
 }
