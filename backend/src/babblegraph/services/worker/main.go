@@ -42,7 +42,7 @@ func main() {
 		go workerThread()
 	}
 	schedulerErrs := make(chan error, 1)
-	if err := scheduler.StartScheduler(schedulerErrs); err != nil {
+	if err := scheduler.StartScheduler(linkProcessor, schedulerErrs); err != nil {
 		log.Fatal(err.Error())
 	}
 	for {
@@ -95,6 +95,10 @@ func startWorkerThread(linkProcessor *linkprocessing.LinkProcessor, errs chan er
 				domain = link.Domain
 			default:
 				log.Println("No error, but no wait time. Continuing...")
+				continue
+			}
+			if p := urlparser.ParseURL(u); p != nil && domains.IsSeedURL(*p) {
+				log.Println(fmt.Sprintf("Received url %s, which is a seed url. Skipping...", u))
 				continue
 			}
 			log.Println(fmt.Sprintf("Processing URL %s with identifier %s", u, link.URLIdentifier))

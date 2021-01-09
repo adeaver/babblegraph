@@ -29,10 +29,10 @@ type LinkProcessor struct {
 }
 
 func CreateLinkProcessor() (*LinkProcessor, error) {
-	domains := domains.GetSeedURLs()
+	domains := domains.GetDomains()
 	var orderedDomains []Domain
 	domainHash := make(map[string]bool)
-	for d := range domains {
+	for _, d := range domains {
 		domainHash[d] = true
 		orderedDomains = append(orderedDomains, Domain{
 			Domain: d,
@@ -131,6 +131,9 @@ func (l *LinkProcessor) AddURLs(urls []string, topics []contenttopics.ContentTop
 			})
 		}
 	}
+	if len(parsedURLs) == 0 {
+		return nil
+	}
 	return database.WithTx(func(tx *sqlx.Tx) error {
 		if err := links2.InsertLinks(tx, parsedURLs); err != nil {
 			return err
@@ -145,4 +148,21 @@ func (l *LinkProcessor) AddURLs(urls []string, topics []contenttopics.ContentTop
 		}
 		return nil
 	})
+}
+
+func (l *LinkProcessor) ReseedDomains() {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	domains := domains.GetDomains()
+	var orderedDomains []Domain
+	domainHash := make(map[string]bool)
+	for _, d := range domains {
+		domainHash[d] = true
+		orderedDomains = append(orderedDomains, Domain{
+			Domain: d,
+			FreeAt: time.Now(),
+		})
+	}
+	l.DomainSet = domainHash
+	l.OrderedDomains = orderedDomains
 }
