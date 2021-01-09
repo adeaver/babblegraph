@@ -149,3 +149,20 @@ func (l *LinkProcessor) AddURLs(urls []string, topics []contenttopics.ContentTop
 		return nil
 	})
 }
+
+func (l *LinkProcessor) ReseedDomains() {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	domains := domains.GetDomains()
+	var orderedDomains []Domain
+	domainHash := make(map[string]bool)
+	for _, d := range domains {
+		domainHash[d] = true
+		orderedDomains = append(orderedDomains, Domain{
+			Domain: d,
+			FreeAt: time.Now(),
+		})
+	}
+	l.DomainSet = domainHash
+	l.OrderedDomains = orderedDomains
+}

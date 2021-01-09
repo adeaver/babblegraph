@@ -2,8 +2,10 @@ package scheduler
 
 import (
 	"babblegraph/jobs/dailyemail"
+	"babblegraph/services/worker/linkprocessing"
 	"babblegraph/util/env"
 	"babblegraph/util/ses"
+	"fmt"
 	"log"
 	"runtime/debug"
 	"time"
@@ -11,7 +13,7 @@ import (
 	cron "github.com/robfig/cron/v3"
 )
 
-func StartScheduler(errs chan error) error {
+func StartScheduler(linkProcessor *linkprocessing.LinkProcessor, errs chan error) error {
 	usEastern, err := time.LoadLocation("America/New_York")
 	if err != nil {
 		return err
@@ -19,20 +21,20 @@ func StartScheduler(errs chan error) error {
 	c := cron.New(cron.WithLocation(usEastern))
 	switch env.GetEnvironmentVariableOrDefault("ENV", "prod") {
 	case "prod":
-		c.AddFunc("30 2 * * *", makeRefetchSeedDomainJob(errs))
+		c.AddFunc("30 2 * * *", makeRefetchSeedDomainJob(linkProcessor, errs))
 		c.AddFunc("30 5 * * *", makeEmailJob(errs))
 	case "local":
 		makeEmailJob(errs)()
-		makeRefetchSeedDomainJob(errs)()
+		makeRefetchSeedDomainJob(linkProcessor, errs)()
 	case "local-no-email":
 		// no-op
-		makeRefetchSeedDomainJob(errs)()
+		makeRefetchSeedDomainJob(linkProcessor, errs)()
 	}
 	c.Start()
 	return nil
 }
 
-func makeRefetchSeedDomainJob(errs chan error) func() {
+func makeRefetchSeedDomainJob(linkProcessor *linkprocessing.LinkProcessor, errs chan error) func() {
 	return func() {
 		defer func() {
 			x := recover()
@@ -44,6 +46,8 @@ func makeRefetchSeedDomainJob(errs chan error) func() {
 		if err := RefetchSeedDomainsForNewContent(); err != nil {
 			errs <- err
 		}
+		log.Println(fmt.Sprintf("Finished refetch. Reseeding link processor"))
+		linkProcessor.ReseedDomains()
 	}
 }
 

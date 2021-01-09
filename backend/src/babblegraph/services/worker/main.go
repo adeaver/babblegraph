@@ -42,7 +42,7 @@ func main() {
 		go workerThread()
 	}
 	schedulerErrs := make(chan error, 1)
-	if err := scheduler.StartScheduler(schedulerErrs); err != nil {
+	if err := scheduler.StartScheduler(linkProcessor, schedulerErrs); err != nil {
 		log.Fatal(err.Error())
 	}
 	for {
