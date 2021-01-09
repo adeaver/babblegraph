@@ -17,14 +17,16 @@ func StartScheduler(errs chan error) error {
 		return err
 	}
 	c := cron.New(cron.WithLocation(usEastern))
-	c.AddFunc("30 2 * * *", makeRefetchSeedDomainJob(errs))
 	switch env.GetEnvironmentVariableOrDefault("ENV", "prod") {
 	case "prod":
+		c.AddFunc("30 2 * * *", makeRefetchSeedDomainJob(errs))
 		c.AddFunc("30 5 * * *", makeEmailJob(errs))
 	case "local":
 		makeEmailJob(errs)()
+		makeRefetchSeedDomainJob(errs)()
 	case "local-no-email":
 		// no-op
+		makeRefetchSeedDomainJob(errs)()
 	}
 	c.Start()
 	return nil

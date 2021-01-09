@@ -43,6 +43,7 @@ func RefetchSeedDomainsForNewContent() error {
 			if err := processSeedURL(toProcess); err != nil {
 				log.Println(fmt.Sprintf("Error processing seed url %s: %s", toProcess.URL, err.Error()))
 			}
+			log.Println(fmt.Sprintf("Refetch finished processing seed url %s", toProcess.URL))
 			if len(seedURLs) == 1 {
 				delete(urlsByDomain, domain)
 			} else {
@@ -63,15 +64,19 @@ func processSeedURL(seedURL domains.SeedURL) error {
 	if err != nil {
 		return err
 	}
-	var parsedURLs []urlparser.ParsedURL
+	parsedURLs := make(map[string]urlparser.ParsedURL)
 	for _, l := range parsedHTMLPage.Links {
-		if p := urlparser.ParseURL(l); p != nil && domains.IsURLAllowed(*p) {
-			parsedURLs = append(parsedURLs, *p)
+		if p := urlparser.ParseURL(l); p != nil && domains.IsURLAllowed(*p) && !domains.IsSeedURL(*p) {
+			parsedURLs[p.URLIdentifier] = *p
 		}
 	}
 	log.Println(fmt.Sprintf("Inserting refetched urls for %s", seedURL.URL))
 	return database.WithTx(func(tx *sqlx.Tx) error {
-		if err := links2.UpsertLinkWithEmptyFetchStatus(tx, parsedURLs); err != nil {
+		var toInsert []urlparser.ParsedURL
+		for _, p := range parsedURLs {
+			toInsert = append(toInsert, p)
+		}
+		if err := links2.UpsertLinkWithEmptyFetchStatus(tx, toInsert); err != nil {
 			return err
 		}
 		if len(seedURL.Topics) == 0 {

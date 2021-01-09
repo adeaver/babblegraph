@@ -97,6 +97,10 @@ func startWorkerThread(linkProcessor *linkprocessing.LinkProcessor, errs chan er
 				log.Println("No error, but no wait time. Continuing...")
 				continue
 			}
+			if p := urlparser.ParseURL(u); p != nil && domains.IsSeedURL(*p) {
+				log.Println(fmt.Sprintf("Received url %s, which is a seed url. Skipping...", u))
+				continue
+			}
 			log.Println(fmt.Sprintf("Processing URL %s with identifier %s", u, link.URLIdentifier))
 			parsedHTMLPage, err := ingesthtml.ProcessURL(u, domain)
 			if err != nil {

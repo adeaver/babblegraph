@@ -131,6 +131,9 @@ func (l *LinkProcessor) AddURLs(urls []string, topics []contenttopics.ContentTop
 			})
 		}
 	}
+	if len(parsedURLs) == 0 {
+		return nil
+	}
 	return database.WithTx(func(tx *sqlx.Tx) error {
 		if err := links2.InsertLinks(tx, parsedURLs); err != nil {
 			return err
