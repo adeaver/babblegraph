@@ -998,5 +998,31 @@ var seedURLs = []SeedURL{
 		Topics: []contenttopics.ContentTopic{
 			contenttopics.ContentTopicCurrentEventsPeru,
 		},
+	}, {
+		URL: "https://www.abc.com.py/edicion-impresa",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicBusiness,
+		},
+	}, {
+		URL: "https://www.abc.com.py/nacionales",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCurrentEventsParaguay,
+		},
+	}, {
+		URL: "https://www.abc.com.py/deportes",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicSports,
+		},
+	}, {
+		URL: "https://www.abc.com.py/espectaculos",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEntertainment,
+		},
+	}, {
+		URL: "https://www.abc.com.py/internacionales",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicWorldNews,
+		},
 	},
+},
 }
