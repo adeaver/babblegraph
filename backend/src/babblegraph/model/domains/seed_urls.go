@@ -999,11 +999,6 @@ var seedURLs = []SeedURL{
 			contenttopics.ContentTopicCurrentEventsPeru,
 		},
 	}, {
-		URL: "https://www.abc.com.py/edicion-impresa",
-		Topics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicBusiness,
-		},
-	}, {
 		URL: "https://www.abc.com.py/nacionales",
 		Topics: []contenttopics.ContentTopic{
 			contenttopics.ContentTopicCurrentEventsParaguay,
@@ -1023,6 +1018,235 @@ var seedURLs = []SeedURL{
 		Topics: []contenttopics.ContentTopic{
 			contenttopics.ContentTopicWorldNews,
 		},
+	}, {
+		URL: "https://www.ultimahora.com/contenidos/nacional.html",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCurrentEventsParaguay,
+		},
+	}, {
+		URL: "https://d10.ultimahora.com/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicSports,
+		},
+	}, {
+		URL: "https://tvo.ultimahora.com/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCelebrityNews,
+		},
+	}, {
+		URL: "https://www.ultimahora.com/contenidos/gaming.html",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicVideoGames,
+		},
+	}, {
+		URL: "https://www.ultimahora.com/contenidos/arte-y-espectaculos.html",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEntertainment,
+		},
+	}, {
+		URL: "https://www.ultimahora.com/contenidos/mundo.html",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicWorldNews,
+		},
+	}, {
+		URL: "https://www.ultimahora.com/contenidos/turismo.html",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicTravel,
+		},
+	}, {
+		URL: "https://www.abc.es/espana/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCurrentEventsSpain,
+		},
+	}, {
+		URL: "https://www.abc.es/internacional",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicWorldNews,
+		},
+	}, {
+		URL: "https://www.abc.es/economia/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEconomy,
+		},
+	}, {
+		URL: "https://www.abc.es/opinion/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicOpinion,
+		},
+	}, {
+		URL: "https://www.abc.es/deportes/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicSports,
+		},
+	}, {
+		URL: "https://www.abc.es/estilo/moda/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicFashion,
+		},
+	}, {
+		URL: "https://www.abc.es/cultura/libros/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicLiterature,
+		},
+	}, {
+		URL: "https://www.abc.es/cultura/musica/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicMusic,
+		},
+	}, {
+		URL: "https://www.abc.es/cultura/arte/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicArt,
+		},
+	}, {
+		URL: "https://www.abc.es/cultura/teatros/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicTheater,
+		},
+	}, {
+		URL: "https://www.abc.es/ciencia/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicScience,
+		},
+	}, {
+		URL: "https://www.abc.es/viajar/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicTravel,
+		},
+	}, {
+		URL: "https://www.elmundo.es/espana.html",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCurrentEventsSpain,
+		},
+	}, {
+		URL: "https://www.elmundo.es/opinion.html",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicOpinion,
+		},
+	}, {
+		URL: "https://www.elmundo.es/economia.html",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEconomy,
+		},
+	}, {
+		URL: "https://www.elmundo.es/internacional.html",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicWorldNews,
+		},
+	}, {
+		URL: "https://www.elmundo.es/deportes.html",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicSports,
+		},
+	}, {
+		URL: "https://www.elmundo.es/cultura/cine.html",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicFilm,
+		},
+	}, {
+		URL: "https://www.elmundo.es/cultura/literatura.html",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicLiterature,
+		},
+	}, {
+		URL: "https://www.elmundo.es/cultura/musica.html",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicMusic,
+		},
+	}, {
+		URL: "https://www.elmundo.es/cultura/teatro.html",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicTheater,
+		},
+	}, {
+		URL: "https://www.elmundo.es/cultura/arte.html",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicArt,
+		},
+	}, {
+		URL: "https://www.elmundo.es/ciencia-y-salud/ciencia.html",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicScience,
+		},
+	}, {
+		URL: "https://www.elmundo.es/ciencia-y-salud/salud.html",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicHealth,
+		},
+	}, {
+		URL: "https://www.elmundo.es/tecnologia.html",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicTechnology,
+		},
+	}, {
+		URL: "https://www.elmundo.es/tecnologia/videojuegos.html",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicVideoGames,
+		},
+	}, {
+		URL: "https://elpais.com/internacional/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicWorldNews,
+		},
+	}, {
+		URL: "https://elpais.com/opinion/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicOpinion,
+		},
+	}, {
+		URL: "https://elpais.com/espana/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCurrentEventsSpain,
+		},
+	}, {
+		URL: "https://elpais.com/ciencia/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicScience,
+		},
+	}, {
+		URL: "https://elpais.com/tecnologia/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicTechnology,
+		},
+	}, {
+		URL: "https://elpais.com/noticias/libros/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicLiterature,
+		},
+	}, {
+		URL: "https://elpais.com/noticias/cine/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicFilm,
+		},
+	}, {
+		URL: "https://elpais.com/noticias/musica/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicMusic,
+		},
+	}, {
+		URL: "https://elpais.com/noticias/teatro/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicTheater,
+		},
+	}, {
+		URL: "https://elpais.com/noticias/arte/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicArt,
+		},
+	}, {
+		URL: "https://elpais.com/noticias/arquitectura/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicArchitecture,
+		},
+	}, {
+		URL: "https://elpais.com/deportes/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicSports,
+		},
+	}, {
+		URL: "https://motor.elpais.com/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicAutomotive,
+		},
 	},
-},
 }
