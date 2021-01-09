@@ -1248,5 +1248,60 @@ var seedURLs = []SeedURL{
 		Topics: []contenttopics.ContentTopic{
 			contenttopics.ContentTopicAutomotive,
 		},
+	}, {
+		URL: "https://elviajero.elpais.com/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicTravel,
+		},
+	}, {
+		URL: "https://elpais.com/economia/negocios/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicBusiness,
+		},
+	}, {
+		URL: "https://www.elcomercio.es/asturias/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCurrentEventsSpain,
+		},
+	}, {
+		URL: "https://www.elcomercio.es/politica/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicPolitics,
+		},
+	}, {
+		URL: "https://www.elcomercio.es/internacional/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicWorldNews,
+		},
+	}, {
+		URL: "https://www.elcomercio.es/economia/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEconomy,
+		},
+	}, {
+		URL: "https://www.elcomercio.es/deportes/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicSports,
+		},
+	}, {
+		URL: "https://www.elcomercio.es/culturas/cine/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicFilm,
+		},
+	}, {
+		URL: "https://www.elcomercio.es/culturas/libros/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicLiterature,
+		},
+	}, {
+		URL: "https://www.elcomercio.es/culturas/arte/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicArt,
+		},
+	}, {
+		URL: "https://www.elcomercio.es/culturas/musica/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicMusic,
+		},
 	},
 }
