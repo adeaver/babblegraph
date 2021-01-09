@@ -1303,5 +1303,427 @@ var seedURLs = []SeedURL{
 		Topics: []contenttopics.ContentTopic{
 			contenttopics.ContentTopicMusic,
 		},
+	}, {
+		URL: "https://www.diariolasamericas.com/contenidos/mundo.html",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicWorldNews,
+		},
+	}, {
+		URL: "https://www.diariolasamericas.com/contenidos/eeuu.html",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCurrentEventsUnitedStates,
+		},
+	}, {
+		URL: "https://www.diariolasamericas.com/contenidos/deportes.html",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicSports,
+		},
+	}, {
+		URL: "https://www.diariolasamericas.com/contenidos/cultura.html",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCulture,
+		},
+	}, {
+		URL: "https://www.diariolasamericas.com/contenidos/opini%C3%B3n.html",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicOpinion,
+		},
+	}, {
+		URL: "https://www.diariolasamericas.com/contenidos/tecnologia.html",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicTechnology,
+		},
+	}, {
+		URL: "https://www.diariolasamericas.com/contenidos/economia.html",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEconomy,
+		},
+	}, {
+		URL: "https://laopinion.com/categoria/entretenimiento/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEntertainment,
+		},
+	}, {
+		URL: "https://laopinion.com/categoria/deportes/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicSports,
+		},
+	}, {
+		URL: "https://laopinion.com/categoria/autos/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicAutomotive,
+		},
+	}, {
+		URL: "https://laopinion.com/categoria/estilo/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicLifestyle,
+		},
+	}, {
+		URL: "https://laopinion.com/categoria/dinero/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicFinance,
+		},
+	}, {
+		URL: "https://laopinion.com/categoria/tecnologia/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicTechnology,
+		},
+	}, {
+		URL: "https://laopinion.com/categoria/opinion/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicOpinion,
+		},
+	}, {
+		URL: "https://laopinion.com/categoria-guia-de-compras/salud/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicHealth,
+		},
+	}, {
+		URL: "https://laopinion.com/categoria-guia-de-compras/tecnologia/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicTechnology,
+		},
+	}, {
+		URL: "https://laopinion.com/categoria-guia-de-compras/ropa-y-accesorios/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicFashion,
+		},
+	}, {
+		URL: "https://eldiariony.com/categoria/entretenimiento/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEntertainment,
+		},
+	}, {
+		URL: "https://eldiariony.com/categoria/deportes/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicSports,
+		},
+	}, {
+		URL: "https://eldiariony.com/categoria/salud/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicHealth,
+		},
+	}, {
+		URL: "https://eldiariony.com/categoria/comida/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCooking,
+		},
+	}, {
+		URL: "https://eldiariony.com/categoria/estilo/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicLifestyle,
+		},
+	}, {
+		URL: "https://eldiariony.com/categoria/dinero/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicFinance,
+		},
+	}, {
+		URL: "https://eldiariony.com/categoria/tecnologia/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicTechnology,
+		},
+	}, {
+		URL: "https://eldiariony.com/categoria/opinion/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicOpinion,
+		},
+	}, {
+		URL: "https://www.hoylosangeles.com/espectaculos/musica",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicMusic,
+		},
+	}, {
+		URL: "https://www.hoylosangeles.com/espectaculos/cine",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicFilm,
+		},
+	}, {
+		URL: "https://www.hoylosangeles.com/espectaculos",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEntertainment,
+		},
+	}, {
+		URL: "https://www.hoylosangeles.com/deportes",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicSports,
+		},
+	}, {
+		URL: "https://www.hoylosangeles.com/vidayestilo/salud",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicHealth,
+		},
+	}, {
+		URL: "https://www.hoylosangeles.com/vidayestilo/cienciaytecnologia",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicScience,
+		},
+	}, {
+		URL: "https://www.hoylosangeles.com/vidayestilo/viajes",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicTravel,
+		},
+	}, {
+		URL: "https://www.hoylosangeles.com/vidayestilo/autos",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicAutomotive,
+		},
+	}, {
+		URL: "https://www.hoylosangeles.com/vidayestilo/cocina",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCooking,
+		},
+	}, {
+		URL: "https://www.hoylosangeles.com/vidayestilo/libros",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicLiterature,
+		},
+	}, {
+		URL: "https://www.hoylosangeles.com/opinion",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicOpinion,
+		},
+	}, {
+		URL: "https://www.hoylosangeles.com/noticias/estadosunidos",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCurrentEventsUnitedStates,
+		},
+	}, {
+		URL: "https://www.elnacional.com/venezuela/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCurrentEventsVenezuela,
+		},
+	}, {
+		URL: "https://www.elnacional.com/mundo/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicWorldNews,
+		},
+	}, {
+		URL: "https://www.elnacional.com/economia/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEconomy,
+		},
+	}, {
+		URL: "https://www.elnacional.com/deportes/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicSports,
+		},
+	}, {
+		URL: "https://www.elnacional.com/salud-ciencia-tecnologia",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicHealth,
+		},
+	}, {
+		URL: "https://www.elnacional.com/gamers",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicVideoGames,
+		},
+	}, {
+		URL: "https://www.elnacional.com/gadgets",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicTechnology,
+		},
+	}, {
+		URL: "https://www.elnacional.com/cine",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicFilm,
+		},
+	}, {
+		URL: "https://www.elnacional.com/literatura",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicLiterature,
+		},
+	}, {
+		URL: "https://www.elnacional.com/musica",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicMusic,
+		},
+	}, {
+		URL: "https://www.elnacional.com/teatro",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicTheater,
+		},
+	}, {
+		URL: "https://www.elnacional.com/opinion/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicOpinion,
+		},
+	}, {
+		URL: "https://www.elnacional.com/gastronomia",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCooking,
+		},
+	}, {
+		URL: "https://www.elnacional.com/moda",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicFashion,
+		},
+	}, {
+		URL: "https://www.elnacional.com/viajes-turismo",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicTravel,
+		},
+	}, {
+		URL: "https://eldiario.com/seccion/politica/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicPolitics,
+		},
+	}, {
+		URL: "https://eldiario.com/seccion/economia/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEconomy,
+		},
+	}, {
+		URL: "https://eldiario.com/seccion/venezuela/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCurrentEventsVenezuela,
+		},
+	}, {
+		URL: "https://eldiario.com/seccion/mundo/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicWorldNews,
+		},
+	}, {
+		URL: "https://eldiario.com/seccion/deportes/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicSports,
+		},
+	}, {
+		URL: "https://eldiario.com/seccion/cultura/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCulture,
+		},
+	}, {
+		URL: "https://eldiario.com/seccion/tecnologia/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicTechnology,
+		},
+	}, {
+		URL: "https://brecha.com.uy/category/politica/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicPolitics,
+		},
+	}, {
+		URL: "https://brecha.com.uy/category/cultura/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCulture,
+		},
+	}, {
+		URL: "https://brecha.com.uy/category/mundo/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicWorldNews,
+		},
+	}, {
+		URL: "https://brecha.com.uy/category/columnas-de-opinion/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicOpinion,
+		},
+	}, {
+		URL: "https://www.elpais.com.uy/mundo",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicWorldNews,
+		},
+	}, {
+		URL: "https://www.elpais.com.uy/opinion",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicOpinion,
+		},
+	}, {
+		URL: "https://www.elpais.com.uy/negocios",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicBusiness,
+		},
+	}, {
+		URL: "https://www.elpais.com.uy/ovacion",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicSports,
+		},
+	}, {
+		URL: "https://ladiaria.com.uy/seccion/politica-nacional/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicPolitics,
+			contenttopics.ContentTopicCurrentEventsUruguay,
+		},
+	}, {
+		URL: "https://ladiaria.com.uy/seccion/politica-internacional/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicPolitics,
+			contenttopics.ContentTopicWorldNews,
+		},
+	}, {
+		URL: "https://ladiaria.com.uy/opinion/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicOpinion,
+		},
+	}, {
+		URL: "https://ladiaria.com.uy/seccion/arte/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicArt,
+		},
+	}, {
+		URL: "https://ladiaria.com.uy/seccion/cine-tv-streaming/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicFilm,
+		},
+	}, {
+		URL: "https://ladiaria.com.uy/seccion/teatro/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicTheater,
+		},
+	}, {
+		URL: "https://ladiaria.com.uy/seccion/musica/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicMusic,
+		},
+	}, {
+		URL: "https://ladiaria.com.uy/seccion/videojuegos/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicVideoGames,
+		},
+	}, {
+		URL: "https://ladiaria.com.uy/seccion/casa/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicHome,
+		},
+	}, {
+		URL: "https://ladiaria.com.uy/seccion/comer-y-beber/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCooking,
+		},
+	}, {
+		URL: "https://ladiaria.com.uy/seccion/tecnologia/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicTechnology,
+		},
+	}, {
+		URL: "https://ladiaria.com.uy/seccion/turismo/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicTravel,
+		},
+	}, {
+		URL: "https://ladiaria.com.uy/seccion/vida-saludable/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicHealth,
+		},
+	}, {
+		URL: "https://ladiaria.com.uy/deporte/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicSports,
+		},
+	}, {
+		URL: "https://ladiaria.com.uy/ciencia/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicScience,
+		},
+	}, {
+		URL: "https://ladiaria.com.uy/economia/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEconomy,
+		},
+	}, {
+		URL: "https://ladiaria.com.uy/salud/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicHealth,
+		},
 	},
 }
