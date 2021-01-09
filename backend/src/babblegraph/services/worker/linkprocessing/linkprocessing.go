@@ -29,10 +29,10 @@ type LinkProcessor struct {
 }
 
 func CreateLinkProcessor() (*LinkProcessor, error) {
-	domains := domains.GetSeedURLs()
+	domains := domains.GetDomains()
 	var orderedDomains []Domain
 	domainHash := make(map[string]bool)
-	for d := range domains {
+	for _, d := range domains {
 		domainHash[d] = true
 		orderedDomains = append(orderedDomains, Domain{
 			Domain: d,

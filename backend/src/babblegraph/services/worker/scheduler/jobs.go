@@ -15,37 +15,73 @@ import (
 
 func RefetchSeedDomainsForNewContent() error {
 	log.Println(fmt.Sprintf("Starting refetch of seed domains..."))
+	urlsByDomain := make(map[string][]domains.SeedURL)
+	for _, domain := range domains.GetDomains() {
+		urlsByDomain[domain] = []domains.SeedURL{}
+	}
 	for u, topics := range domains.GetSeedURLs() {
-		log.Println(fmt.Sprintf("Refetch processing seed domain %s", u))
-		parsedHTMLPage, err := ingesthtml.ProcessURL(u, u)
-		if err != nil {
-			log.Println(fmt.Sprintf("Got error ingesting html for url %s: %s. Continuing...", u, err.Error()))
-			continue
+		if p := urlparser.ParseURL(u); p != nil && domains.IsURLAllowed(*p) {
+			domain := p.Domain
+			seedURLs, ok := urlsByDomain[domain]
+			if !ok {
+				log.Println(fmt.Sprintf("Error processing seed url %s: its domain of %s not found in allowable domains", u, domain))
+				continue
+			}
+			urlsByDomain[domain] = append(seedURLs, domains.SeedURL{
+				URL:    u,
+				Topics: topics,
+			})
 		}
-		var parsedURLs []urlparser.ParsedURL
-		for _, l := range parsedHTMLPage.Links {
-			if p := urlparser.ParseURL(l); p != nil && domains.IsURLAllowed(*p) {
-				parsedURLs = append(parsedURLs, *p)
+	}
+	for len(urlsByDomain) != 0 {
+		// In order to rate limit ourselves (more or less), we go through each domain one by one
+		// And remove the first seed url, process it, and delete from the list.
+		// Once the list for that domain is empty, we delete that list
+		for domain := range urlsByDomain {
+			seedURLs := urlsByDomain[domain]
+			toProcess := seedURLs[0]
+			if err := processSeedURL(toProcess); err != nil {
+				log.Println(fmt.Sprintf("Error processing seed url %s: %s", toProcess.URL, err.Error()))
 			}
-		}
-		log.Println(fmt.Sprintf("Inserting refetched urls for %s", u))
-		if err := database.WithTx(func(tx *sqlx.Tx) error {
-			if err := links2.UpsertLinkWithEmptyFetchStatus(tx, parsedURLs); err != nil {
-				return err
+			if len(seedURLs) == 1 {
+				delete(urlsByDomain, domain)
+			} else {
+				urlsByDomain[domain] = append([]domains.SeedURL{}, seedURLs[1:]...)
 			}
-			if len(topics) == 0 {
-				return nil
-			}
-			for _, u := range parsedURLs {
-				if err := contenttopics.ApplyContentTopicsToURL(tx, u.URL, topics); err != nil {
-					return err
-				}
-			}
-			return nil
-		}); err != nil {
-			log.Println(fmt.Sprintf("Error inserting refetched urls for %s: %s", u, err.Error()))
-			continue
 		}
 	}
 	return nil
+}
+
+func processSeedURL(seedURL domains.SeedURL) error {
+	log.Println(fmt.Sprintf("Refetch is processing seed url %s", seedURL.URL))
+	parsedSeedURL := urlparser.ParseURL(seedURL.URL)
+	if parsedSeedURL == nil {
+		return fmt.Errorf("something went wrong parsing url, got null parsed url for seed url %s", seedURL.URL)
+	}
+	parsedHTMLPage, err := ingesthtml.ProcessURL(seedURL.URL, parsedSeedURL.Domain)
+	if err != nil {
+		return err
+	}
+	var parsedURLs []urlparser.ParsedURL
+	for _, l := range parsedHTMLPage.Links {
+		if p := urlparser.ParseURL(l); p != nil && domains.IsURLAllowed(*p) {
+			parsedURLs = append(parsedURLs, *p)
+		}
+	}
+	log.Println(fmt.Sprintf("Inserting refetched urls for %s", seedURL.URL))
+	return database.WithTx(func(tx *sqlx.Tx) error {
+		if err := links2.UpsertLinkWithEmptyFetchStatus(tx, parsedURLs); err != nil {
+			return err
+		}
+		if len(seedURL.Topics) == 0 {
+			return nil
+		}
+		for _, u := range parsedURLs {
+			if err := contenttopics.ApplyContentTopicsToURL(tx, u.URL, seedURL.Topics); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }

@@ -43,11 +43,21 @@ func GetDomainMetadata(d string) (*AllowableDomain, error) {
 	return &metadata, nil
 }
 
+func GetDomains() []string {
+	var out []string
+	for _, d := range allowableDomains {
+		out = append(out, string(d.Domain))
+	}
+	return out
+}
+
 func GetSeedURLs() map[string][]contenttopics.ContentTopic {
 	out := make(map[string][]contenttopics.ContentTopic)
 	for _, d := range allowableDomains {
 		out[string(d.Domain)] = d.Topics
 	}
-	// TODO: add seed urls initial data
+	for _, d := range seedURLs {
+		out[d.URL] = d.Topics
+	}
 	return out
 }
