@@ -22,6 +22,7 @@ const styleClasses = makeStyles({
         "&:hover": {
             boxShadow: "0 0 4px 2px gray",
         },
+        cursor: 'pointer',
     },
     headerArrow: {
         alignSelf: 'center',
