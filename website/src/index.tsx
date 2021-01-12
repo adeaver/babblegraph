@@ -12,6 +12,7 @@ import HomePage from 'components/HomePage/HomePage';
 import SubscriptionManagementDashboardPage from 'components/SubscriptionManagement/SubscriptionManagementDashboardPage';
 import InterestSelectionPage from 'components/SubscriptionManagement/InterestSelectionPage';
 import DifficultyLevelSettingPage from 'components/SubscriptionManagement/DifficultyLevelSettingPage';
+import UnsubscribePage from 'components/SubscriptionManagement/UnsubscribePage';
 
 import NotFoundPage from 'components/NotFoundPage/NotFoundPage';
 
@@ -20,10 +21,16 @@ class App extends React.Component{
         return (
             <Router>
                 <Switch>
+                    { /* Subscription Management */ }
+                    <Route path="/manage/:token/unsubscribe" component={UnsubscribePage} />
                     <Route path="/manage/:token/level" component={DifficultyLevelSettingPage} />
                     <Route path="/manage/:token/interests" component={InterestSelectionPage} />
                     <Route exact path="/manage/:token" component={SubscriptionManagementDashboardPage} />
+
+                    { /* Home Page */ }
                     <Route exact path="/" component={HomePage} />
+
+                    { /* 404 Page */ }
                     <Route component={NotFoundPage} />
                 </Switch>
             </Router>
