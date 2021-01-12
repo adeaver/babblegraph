@@ -1,5 +1,5 @@
 import React from 'react';
-import { RouteComponentProps } from 'react-router-dom';
+import { RouteComponentProps, useHistory } from 'react-router-dom';
 
 import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
@@ -33,14 +33,16 @@ const styleClasses = makeStyles({
 
 type ActionCardProps = {
     title: string;
+    redirectURL: string;
     children: string;
 }
 
 const ActionCard = (props: ActionCardProps) => {
     const classes = styleClasses();
+    const history = useHistory();
     return (
         <Grid className={classes.gridComponent} item xs={12} md={6}>
-            <Card className={classes.actionCard} variant='outlined'>
+            <Card onClick={() => { history.push(props.redirectURL) }} className={classes.actionCard} variant='outlined'>
                 <Grid container>
                     <Grid item xs={11}>
                         <Paragraph size={Size.Large} color={Color.Primary} align={Alignment.Left}>{props.title}</Paragraph>
@@ -56,20 +58,21 @@ const ActionCard = (props: ActionCardProps) => {
     );
 }
 
-type SubscriptionManagementPageProps = RouteComponentProps<Params>
+type SubscriptionManagementDashboardPageProps = RouteComponentProps<Params>
 
-const SubscriptionManagementPage = (props: SubscriptionManagementPageProps) => {
+const SubscriptionManagementDashboardPage = (props: SubscriptionManagementDashboardPageProps) => {
     const classes = styleClasses();
+    const { token } = props.match.params;
     return (
         <Page>
             <Grid container spacing={2}>
-                <ActionCard title='Manage Your Interests'>
+                <ActionCard redirectURL={`/manage/${token}/interests`} title='Manage Your Interests'>
                     Select some topics you’re interested in reading more about or deselect some topics you’d like to read about less. This is a great way to make sure that the content you get is fun and engaging.
                 </ActionCard>
-                <ActionCard title='Set your difficulty level'>
+                <ActionCard redirectURL={`/manage/${token}/level`} title='Set your difficulty level'>
                     If your daily email is too hard or too easy, you can change the difficulty level here.
                 </ActionCard>
-                <ActionCard title='Unsubscribe'>
+                <ActionCard redirectURL={`/manage/${token}/unsubscribe`} title='Unsubscribe'>
                     If you’re no longer interested in receiving daily emails, you can unsubscribe here. By unsubscribing, we won’t send you any more emails about anything.
                 </ActionCard>
             </Grid>
@@ -77,4 +80,4 @@ const SubscriptionManagementPage = (props: SubscriptionManagementPageProps) => {
     );
 }
 
-export default SubscriptionManagementPage;
+export default SubscriptionManagementDashboardPage;
