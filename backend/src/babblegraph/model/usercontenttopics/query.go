@@ -29,10 +29,15 @@ func UpdateContentTopicsForUser(tx *sqlx.Tx, userID users.UserID, contentTopics 
 	if _, err := tx.Exec(setAllContentTopicsToInactiveForUserQuery, userID); err != nil {
 		return err
 	}
-	queryBuilder := database.NewBulkInsertQueryBuilder("user_content_topic_mappings", "user_id", "content_topic", "is_active")
+	queryBuilder, err := database.NewBulkInsertQueryBuilder("user_content_topic_mappings", "user_id", "content_topic", "is_active")
+	if err != nil {
+		return err
+	}
 	queryBuilder.AddConflictResolution("DO UPDATE SET is_active = TRUE")
 	for _, contentTopic := range contentTopics {
-		queryBuilder.AddValues(userID, contentTopic, true)
+		if err := queryBuilder.AddValues(userID, contentTopic, true); err != nil {
+			return err
+		}
 	}
 	return queryBuilder.Execute(tx)
 }

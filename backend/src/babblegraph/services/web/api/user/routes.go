@@ -1,12 +1,15 @@
 package user
 
 import (
+	"babblegraph/model/contenttopics"
 	"babblegraph/model/routes"
+	"babblegraph/model/usercontenttopics"
 	"babblegraph/model/userreadability"
 	"babblegraph/model/users"
 	"babblegraph/services/web/router"
 	"babblegraph/util/database"
 	"babblegraph/util/encrypt"
+	"babblegraph/util/ptr"
 	"babblegraph/wordsmith"
 	"encoding/json"
 	"fmt"
@@ -38,9 +41,9 @@ func RegisterRouteGroups() error {
 	})
 }
 
-func parseSubscriptionManagementToken(token string) (*users.UserID, error) {
+func parseSubscriptionManagementToken(token string, emailAddress *string) (*users.UserID, error) {
 	var userID users.UserID
-	if err := encrypt.WithDecodedToken(r.Token, func(t encrypt.TokenPair) error {
+	if err := encrypt.WithDecodedToken(token, func(t encrypt.TokenPair) error {
 		if t.Key != routes.SubscriptionManagementRouteEncryptionKey.Str() {
 			return fmt.Errorf("incorrect key")
 		}
@@ -52,6 +55,20 @@ func parseSubscriptionManagementToken(token string) (*users.UserID, error) {
 		return nil
 	}); err != nil {
 		return nil, err
+	}
+	if emailAddress != nil {
+		if err := database.WithTx(func(tx *sqlx.Tx) error {
+			user, err := users.LookupUserForIDAndEmail(tx, *userID, req.EmailAddress)
+			if err != nil {
+				return err
+			}
+			if user == nil {
+				return fmt.Errorf("Invalid email address for token")
+			}
+			return nil
+		}); err != nil {
+			return nil, err
+		}
 	}
 	return &userID, nil
 }
@@ -70,7 +87,7 @@ func handleUnsubscribeUser(body []byte) (interface{}, error) {
 	if err := json.Unmarshal(body, &r); err != nil {
 		return nil, err
 	}
-	userID, err := parseSubscriptionManagementToken(r.Token)
+	userID, err := parseSubscriptionManagementToken(r.Token, ptr.String(r.EmailAddress))
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +122,7 @@ func handleGetUserPreferencesForToken(body []byte) (interface{}, error) {
 	if err := json.Unmarshal(body, &req); err != nil {
 		return nil, err
 	}
-	userID, err := parseSubscriptionManagementToken(req.Token)
+	userID, err := parseSubscriptionManagementToken(req.Token, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -144,19 +161,12 @@ func handleUpdateUserPreferencesForToken(body []byte) (interface{}, error) {
 	if err := json.Unmarshal(body, &req); err != nil {
 		return nil, err
 	}
-	userID, err := parseSubscriptionManagementToken(req.Token)
+	userID, err := parseSubscriptionManagementToken(req.Token, ptr.String(req.EmailAddress))
 	if err != nil {
 		return nil, err
 	}
 	var didUpdate bool
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
-		user, err := users.LookupUserForIDAndEmail(tx, *userID, req.EmailAddress)
-		if err != nil {
-			return err
-		}
-		if user == nil {
-			return fmt.Errorf("Invalid email address for token")
-		}
 		for _, classification := range req.ClassificationsByLanguage {
 			update, err := userreadability.UpdateReadingLevelClassificationForUser(tx, *userID, classification.LanguageCode, classification.ReadingLevelClassification)
 			if err != nil {
@@ -177,21 +187,36 @@ type getUserContentTopicsForTokenRequest struct {
 	Token string `json:"token"`
 }
 
+type getUserContentTopicsForTokenResponse struct {
+	ContentTopics []contenttopics.ContentTopic `json:"content_topics"`
+}
+
 func handleGetUserContentTopicsForToken(body []byte) (interface{}, error) {
 	var req getUserContentTopicsForTokenRequest
 	if err := json.Unmarshal(body, &req); err != nil {
 		return nil, err
 	}
-	userID, err := parseSubscriptionManagementToken(req.Token)
+	userID, err := parseSubscriptionManagementToken(req.Token, nil)
 	if err != nil {
 		return nil, err
 	}
-	return nil, nil
+	var contentTopics []contenttopics.ContentTopic
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		var err error
+		contentTopics, err = usercontenttopics.GetContentTopicsForUser(tx, *userID)
+		return err
+	}); err != nil {
+		return nil, err
+	}
+	return getUserContentTopicsForTokenResponse{
+		ContentTopics: contentTopics,
+	}, nil
 }
 
 type updateUserContentTopicsForTokenRequest struct {
-	Token        string `json:"token"`
-	EmailAddress string `json:"email_address"`
+	Token         string                       `json:"token"`
+	EmailAddress  string                       `json:"email_address"`
+	ContentTopics []contenttopics.ContentTopic `json:"content_topics"`
 }
 
 func handleUpdateUserContentTopicsForToken(body []byte) (interface{}, error) {
@@ -199,9 +224,14 @@ func handleUpdateUserContentTopicsForToken(body []byte) (interface{}, error) {
 	if err := json.Unmarshal(body, &req); err != nil {
 		return nil, err
 	}
-	userID, err := parseSubscriptionManagementToken(req.Token)
+	userID, err := parseSubscriptionManagementToken(req.Token, ptr.String(req.EmailAddress))
 	if err != nil {
 		return nil, err
 	}
-	return nil, nil
+    if err := database.WithTx(func(tx *sqlx.Tx) error {
+        return usercontenttopics.UpdateContentTopicsForUser(tx, *userID, req.ContentTopics)
+    }); err != nil {
+        return nil, err
+    }
+	return struct{}, nil
 }
