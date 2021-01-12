@@ -9,7 +9,7 @@ import ArrowForwardIcon from '@material-ui/icons/ArrowForward';
 
 import Page from 'common/components/Page/Page';
 import Paragraph, { Size } from 'common/typography/Paragraph';
-import { Alignment, Color } from 'common/typography/common';
+import { Alignment, TypographyColor } from 'common/typography/common';
 
 type Params = {
     token: string
@@ -17,7 +17,7 @@ type Params = {
 
 const styleClasses = makeStyles({
     actionCard: {
-        padding: '5px',
+        padding: '10px',
         height: '100%',
         "&:hover": {
             boxShadow: "0 0 4px 2px gray",
@@ -28,7 +28,7 @@ const styleClasses = makeStyles({
         alignSelf: 'center',
     },
     gridComponent: {
-        marginTop: '10px',
+        marginTop: '15px',
     },
 });
 
@@ -46,14 +46,14 @@ const ActionCard = (props: ActionCardProps) => {
             <Card onClick={() => { history.push(props.redirectURL) }} className={classes.actionCard} variant='outlined'>
                 <Grid container>
                     <Grid item xs={11}>
-                        <Paragraph size={Size.Large} color={Color.Primary} align={Alignment.Left}>{props.title}</Paragraph>
+                        <Paragraph size={Size.Large} color={TypographyColor.Primary} align={Alignment.Left}>{props.title}</Paragraph>
                     </Grid>
                     <Grid className={classes.headerArrow} item xs={1}>
                         <ArrowForwardIcon color="action" />
                     </Grid>
                 </Grid>
                 <Divider />
-                <Paragraph size={Size.Medium} color={Color.Gray} align={Alignment.Left}>{props.children}</Paragraph>
+                <Paragraph size={Size.Medium} color={TypographyColor.Gray} align={Alignment.Left}>{props.children}</Paragraph>
             </Card>
         </Grid>
     );

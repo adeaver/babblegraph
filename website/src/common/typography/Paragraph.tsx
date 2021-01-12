@@ -1,16 +1,23 @@
-import './Paragraph.scss';
-import './common.scss';
-
 import React from 'react';
 import classNames from 'classnames';
 
+import { makeStyles } from '@material-ui/core/styles';
+
 import { asTypography, TypographyProps } from './common';
 
+const styleClasses = makeStyles({
+    paragraphStyle: (props: ParagraphProps) => ({
+        fontFamily: "'Roboto', sans-serif",
+        lineHeight: 1.5,
+        fontSize: props.size != null ? props.size : Size.Medium,
+    }),
+})
+
 export enum Size {
-    Small,
-    Medium,
-    Large,
-    ExtraLarge,
+    Small = '12px',
+    Medium = '16px',
+    Large = '20px',
+    ExtraLarge = '24px',
 }
 
 type ParagraphProps = {
@@ -18,12 +25,12 @@ type ParagraphProps = {
 } & TypographyProps;
 
 const Paragraph = asTypography((props: ParagraphProps) => {
-    const className = classNames('Paragraph__root', props.className, {
-        'Paragraph__size-small': props.size === Size.Small,
-        'Paragraph__size-medium': props.size == null || props.size === Size.Medium,
-        'Paragraph__size-large': props.size === Size.Large,
-        'Paragraph__size-extra-large': props.size === Size.ExtraLarge,
-    });
+    const classes = styleClasses(props);
+    const className = classNames(
+        'Paragraph__root',
+        props.className,
+        `${classes.paragraphStyle}`
+    );
     return (
         <p className={className}>{props.children}</p>
     );

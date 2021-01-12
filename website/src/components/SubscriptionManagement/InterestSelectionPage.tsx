@@ -9,7 +9,7 @@ import ArrowBackIcon from '@material-ui/icons/ArrowBack';
 
 import Page from 'common/components/Page/Page';
 import Paragraph, { Size } from 'common/typography/Paragraph';
-import { Alignment, Color } from 'common/typography/common';
+import { Alignment, TypographyColor } from 'common/typography/common';
 
 const styleClasses = makeStyles({
     displayCard: {
@@ -34,7 +34,7 @@ const ContentHeader = (props: ContentHeaderProps) => {
                 <ArrowBackIcon color='action' />
             </Grid>
             <Grid item xs={11}>
-                <Paragraph size={Size.Large} color={Color.Primary} align={Alignment.Left}>
+                <Paragraph size={Size.Large} color={TypographyColor.Primary} align={Alignment.Left}>
                     Manage Your Interests
                 </Paragraph>
             </Grid>
@@ -54,7 +54,7 @@ const InterestSelectionPage = (props: InterestSelectionPageProps) => {
     return (
         <Page>
             <Grid container>
-                <Grid item xs={0} md={3}>
+                <Grid item xs={false} md={3}>
                     &nbsp;
                 </Grid>
                 <Grid item xs={12} md={6}>
