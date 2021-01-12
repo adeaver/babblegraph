@@ -1,3 +1,5 @@
+@import 'common/styles/colors';
+
 .Typography__centered {
     text-align: center;
 }
@@ -8,4 +10,24 @@
 
 .Typography__right-aligned {
     text-align: right;
+}
+
+.Typography__gray-color {
+    color: $text-gray;
+}
+
+.Typography__black-color {
+    color: $black;
+}
+
+.Typography__white-color {
+    color: $white;
+}
+
+.Typography__primary-color {
+    color: $primary;
+}
+
+.Typography__secondary-color {
+    color: $secondary;
 }
