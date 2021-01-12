@@ -1,4 +1,14 @@
+@import 'common/styles/colors';
+
 .Header__root {
-    width: 100%;
-    padding: 5% 0;
+    height: 80px;
+    margin-bottom: 15px;
+}
+
+.Header__container {
+    padding: 0 10px;
+}
+
+.Header__divider {
+    color: $primary;
 }

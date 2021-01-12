@@ -23,6 +23,9 @@ const styleClasses = makeStyles({
     headerArrow: {
         alignSelf: 'center',
     },
+    gridComponent: {
+        marginTop: '10px',
+    },
 });
 
 type ActionCardProps = {
@@ -33,7 +36,7 @@ type ActionCardProps = {
 const ActionCard = (props: ActionCardProps) => {
     const classes = styleClasses();
     return (
-        <Grid item xs={12} md={6}>
+        <Grid className={classes.gridComponent} item xs={12} md={6}>
             <Card className={classes.actionCard} variant='outlined'>
                 <Grid container>
                     <Grid item xs={11}>

@@ -1,20 +1,23 @@
+import './Header.scss';
+
 import React from 'react';
 
 import Grid from '@material-ui/core/Grid';
 
-import { Heading1 } from 'common/typography/Heading';
+import { Heading2 } from 'common/typography/Heading';
+import { Color, Alignment } from 'common/typography/common';
 
 type HeaderProps = {};
 
 const Header = (props: HeaderProps) => {
     return (
         <div className="Header__root">
-            <Grid container>
+            <Grid className="Header__container" container>
                 <Grid item xs={11} md={3}>
-                    <Heading1>babblegraph</Heading1>
+                    <Heading2 color={Color.Primary} align={Alignment.Left}>babblegraph</Heading2>
                 </Grid>
             </Grid>
-            <hr />
+            <hr className="Header__divider" />
         </div>
     );
 }
