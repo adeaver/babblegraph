@@ -30,7 +30,6 @@ type Recipient struct {
 // All email templates should use this
 type BaseEmailTemplate struct {
 	SubscriptionManagementLink string
-	UnsubscribeLink            string
 	HeroImageURL               string
 	HomePageURL                string
 }

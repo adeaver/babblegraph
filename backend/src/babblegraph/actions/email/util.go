@@ -19,10 +19,6 @@ func getPathForTemplateFile(filename string) (*string, error) {
 }
 
 func createBaseTemplate(emailRecordID email.ID, recipient email.Recipient) (*email.BaseEmailTemplate, error) {
-	unsubscribeLink, err := routes.MakeUnsubscribeRouteForUserID(recipient.UserID)
-	if err != nil {
-		return nil, err
-	}
 	subscriptionManagementLink, err := routes.MakeSubscriptionManagementRouteForUserID(recipient.UserID)
 	if err != nil {
 		return nil, err
@@ -33,7 +29,6 @@ func createBaseTemplate(emailRecordID email.ID, recipient email.Recipient) (*ema
 	}
 	return &email.BaseEmailTemplate{
 		SubscriptionManagementLink: *subscriptionManagementLink,
-		UnsubscribeLink:            *unsubscribeLink,
 		HeroImageURL:               *heroImageURL,
 		HomePageURL:                routes.MustGetHomePageURL(),
 	}, nil

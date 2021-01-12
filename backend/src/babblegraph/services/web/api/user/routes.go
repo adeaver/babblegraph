@@ -27,9 +27,33 @@ func RegisterRouteGroups() error {
 			}, {
 				Path:    "update_user_preferences_for_token_1",
 				Handler: handleUpdateUserPreferencesForToken,
+			}, {
+				Path:    "get_user_content_topics_for_token_1",
+				Handler: handleGetUserContentTopicsForToken,
+			}, {
+				Path:    "update_user_content_topics_for_token_1",
+				Handler: handleUpdateUserContentTopicsForToken,
 			},
 		},
 	})
+}
+
+func parseSubscriptionManagementToken(token string) (*users.UserID, error) {
+	var userID users.UserID
+	if err := encrypt.WithDecodedToken(r.Token, func(t encrypt.TokenPair) error {
+		if t.Key != routes.SubscriptionManagementRouteEncryptionKey.Str() {
+			return fmt.Errorf("incorrect key")
+		}
+		userIDStr, ok := t.Value.(string)
+		if !ok {
+			return fmt.Errorf("incorrect type")
+		}
+		userID = users.UserID(userIDStr)
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	return &userID, nil
 }
 
 type unsubscribeUserRequest struct {
@@ -46,23 +70,15 @@ func handleUnsubscribeUser(body []byte) (interface{}, error) {
 	if err := json.Unmarshal(body, &r); err != nil {
 		return nil, err
 	}
+	userID, err := parseSubscriptionManagementToken(r.Token)
+	if err != nil {
+		return nil, err
+	}
 	var didUpdate bool
-	if err := encrypt.WithDecodedToken(r.Token, func(t encrypt.TokenPair) error {
-		if t.Key != "unsubscribe" {
-			return fmt.Errorf("incorrect key")
-		}
-		userID, ok := t.Value.(string)
-		if !ok {
-			return fmt.Errorf("incorrect type")
-		}
-		if err := database.WithTx(func(tx *sqlx.Tx) error {
-			var err error
-			didUpdate, err = users.UnsubscribeUserForIDAndEmail(tx, users.UserID(userID), r.EmailAddress)
-			return err
-		}); err != nil {
-			return err
-		}
-		return nil
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		var err error
+		didUpdate, err = users.UnsubscribeUserForIDAndEmail(tx, *userID, r.EmailAddress)
+		return err
 	}); err != nil {
 		return nil, err
 	}
@@ -89,20 +105,15 @@ func handleGetUserPreferencesForToken(body []byte) (interface{}, error) {
 	if err := json.Unmarshal(body, &req); err != nil {
 		return nil, err
 	}
+	userID, err := parseSubscriptionManagementToken(req.Token)
+	if err != nil {
+		return nil, err
+	}
 	var readingLevelsByLanguageCode map[wordsmith.LanguageCode]userreadability.ReadingLevelClassification
-	if err := encrypt.WithDecodedToken(req.Token, func(t encrypt.TokenPair) error {
-		if t.Key != routes.SubscriptionManagementRouteEncryptionKey.Str() {
-			return fmt.Errorf("Invalid key")
-		}
-		userID, ok := t.Value.(string)
-		if !ok {
-			return fmt.Errorf("Invalid type")
-		}
-		return database.WithTx(func(tx *sqlx.Tx) error {
-			var err error
-			readingLevelsByLanguageCode, err = userreadability.GetReadingLevelClassificationsForUser(tx, users.UserID(userID))
-			return err
-		})
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		var err error
+		readingLevelsByLanguageCode, err = userreadability.GetReadingLevelClassificationsForUser(tx, *userID)
+		return err
 	}); err != nil {
 		return nil, err
 	}
@@ -133,37 +144,64 @@ func handleUpdateUserPreferencesForToken(body []byte) (interface{}, error) {
 	if err := json.Unmarshal(body, &req); err != nil {
 		return nil, err
 	}
+	userID, err := parseSubscriptionManagementToken(req.Token)
+	if err != nil {
+		return nil, err
+	}
 	var didUpdate bool
-	if err := encrypt.WithDecodedToken(req.Token, func(t encrypt.TokenPair) error {
-		if t.Key != routes.SubscriptionManagementRouteEncryptionKey.Str() {
-			return fmt.Errorf("Invalid key")
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		user, err := users.LookupUserForIDAndEmail(tx, *userID, req.EmailAddress)
+		if err != nil {
+			return err
 		}
-		userIDStr, ok := t.Value.(string)
-		if !ok {
-			return fmt.Errorf("Invalid type")
+		if user == nil {
+			return fmt.Errorf("Invalid email address for token")
 		}
-		userID := users.UserID(userIDStr)
-		return database.WithTx(func(tx *sqlx.Tx) error {
-			user, err := users.LookupUserForIDAndEmail(tx, userID, req.EmailAddress)
+		for _, classification := range req.ClassificationsByLanguage {
+			update, err := userreadability.UpdateReadingLevelClassificationForUser(tx, *userID, classification.LanguageCode, classification.ReadingLevelClassification)
 			if err != nil {
 				return err
 			}
-			if user == nil {
-				return fmt.Errorf("Invalid email address for token")
-			}
-			for _, classification := range req.ClassificationsByLanguage {
-				update, err := userreadability.UpdateReadingLevelClassificationForUser(tx, userID, classification.LanguageCode, classification.ReadingLevelClassification)
-				if err != nil {
-					return err
-				}
-				didUpdate = didUpdate || update
-			}
-			return nil
-		})
+			didUpdate = didUpdate || update
+		}
+		return nil
 	}); err != nil {
 		return nil, err
 	}
 	return updateUserPreferencesForTokenResponse{
 		DidUpdate: didUpdate,
 	}, nil
+}
+
+type getUserContentTopicsForTokenRequest struct {
+	Token string `json:"token"`
+}
+
+func handleGetUserContentTopicsForToken(body []byte) (interface{}, error) {
+	var req getUserContentTopicsForTokenRequest
+	if err := json.Unmarshal(body, &req); err != nil {
+		return nil, err
+	}
+	userID, err := parseSubscriptionManagementToken(req.Token)
+	if err != nil {
+		return nil, err
+	}
+	return nil, nil
+}
+
+type updateUserContentTopicsForTokenRequest struct {
+	Token        string `json:"token"`
+	EmailAddress string `json:"email_address"`
+}
+
+func handleUpdateUserContentTopicsForToken(body []byte) (interface{}, error) {
+	var req updateUserContentTopicsForTokenRequest
+	if err := json.Unmarshal(body, &req); err != nil {
+		return nil, err
+	}
+	userID, err := parseSubscriptionManagementToken(req.Token)
+	if err != nil {
+		return nil, err
+	}
+	return nil, nil
 }
