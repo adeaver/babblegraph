@@ -7,6 +7,7 @@ import Card from '@material-ui/core/Card';
 import Divider from '@material-ui/core/Divider';
 import ArrowForwardIcon from '@material-ui/icons/ArrowForward';
 
+import Page from 'common/components/Page/Page';
 import Paragraph, { Size } from 'common/typography/Paragraph';
 import { Alignment, Color } from 'common/typography/common';
 
@@ -54,17 +55,19 @@ type SubscriptionManagementPageProps = RouteComponentProps<Params>
 const SubscriptionManagementPage = (props: SubscriptionManagementPageProps) => {
     const classes = styleClasses();
     return (
-        <Grid container spacing={2}>
-            <ActionCard title='Manage Your Interests'>
-                Select some topics you’re interested in reading more about or deselect some topics you’d like to read about less. This is a great way to make sure that the content you get is fun and engaging.
-            </ActionCard>
-            <ActionCard title='Set your difficulty level'>
-                If your daily email is too hard or too easy, you can change the difficulty level here.
-            </ActionCard>
-            <ActionCard title='Unsubscribe'>
-                If you’re no longer interested in receiving daily emails, you can unsubscribe here. By unsubscribing, we won’t send you any more emails about anything.
-            </ActionCard>
-        </Grid>
+        <Page>
+            <Grid container spacing={2}>
+                <ActionCard title='Manage Your Interests'>
+                    Select some topics you’re interested in reading more about or deselect some topics you’d like to read about less. This is a great way to make sure that the content you get is fun and engaging.
+                </ActionCard>
+                <ActionCard title='Set your difficulty level'>
+                    If your daily email is too hard or too easy, you can change the difficulty level here.
+                </ActionCard>
+                <ActionCard title='Unsubscribe'>
+                    If you’re no longer interested in receiving daily emails, you can unsubscribe here. By unsubscribing, we won’t send you any more emails about anything.
+                </ActionCard>
+            </Grid>
+        </Page>
     );
 }
 
