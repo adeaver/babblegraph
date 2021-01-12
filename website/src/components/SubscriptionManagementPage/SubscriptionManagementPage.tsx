@@ -19,6 +19,9 @@ const styleClasses = makeStyles({
     actionCard: {
         padding: '5px',
         height: '100%',
+        "&:hover": {
+            boxShadow: "0 0 4px 2px gray",
+        },
     },
     headerArrow: {
         alignSelf: 'center',
