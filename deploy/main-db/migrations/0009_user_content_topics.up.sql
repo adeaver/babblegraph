@@ -9,4 +9,4 @@ CREATE TABLE IF NOT EXISTS user_content_topic_mappings(
     PRIMARY KEY(_id)
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS user_content_topic_mappings_user_idx ON (user_id, content_topic);
+CREATE UNIQUE INDEX IF NOT EXISTS user_content_topic_mappings_user_idx ON user_content_topic_mappings(user_id, content_topic);

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { RouteComponentProps, useHistory } from 'react-router-dom';
 
 import { makeStyles } from '@material-ui/core/styles';
+import CircularProgress from '@material-ui/core/CircularProgress';
 import Grid from '@material-ui/core/Grid';
 import Card from '@material-ui/core/Card';
 import Divider from '@material-ui/core/Divider';
@@ -9,6 +10,7 @@ import ArrowBackIcon from '@material-ui/icons/ArrowBack';
 import FormGroup from '@material-ui/core/FormGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 
+import Color from 'common/styles/colors';
 import Page from 'common/components/Page/Page';
 import Paragraph, { Size } from 'common/typography/Paragraph';
 import { PrimaryCheckbox } from 'common/components/Checkbox/Checkbox';
@@ -17,6 +19,8 @@ import { Alignment, TypographyColor } from 'common/typography/common';
 import {
     contentTopicDisplayMappings,
     ContentTopicDisplayMapping,
+    getUserContentTopicsForToken,
+    GetUserContentTopicsForTokenResponse,
 } from 'api/user/contentTopics';
 
 const styleClasses = makeStyles({
@@ -26,6 +30,11 @@ const styleClasses = makeStyles({
     contentHeaderBackArrow: {
         alignSelf: 'center',
         cursor: 'pointer',
+    },
+    loadingSpinner: {
+        color: Color.Primary,
+        display: 'block',
+        margin: 'auto',
     },
 });
 
@@ -39,15 +48,36 @@ const InterestSelectionPage = (props: InterestSelectionPageProps) => {
     const classes = styleClasses();
     const { token } = props.match.params;
 
+    const [ isLoading, setIsLoading ] = useState<boolean>(true);
+    const [ error, setError ] = useState<Error>(null);
+    const [ hasFetched, setHasFetched ] = useState<boolean>(false);
     const [ selectedContentTopics, setSelectedContentTopics ] = useState<Object>({});
 
+    useEffect(() => {
+        if (!hasFetched) {
+            getUserContentTopicsForToken({
+                token: token,
+            },
+            (resp: GetUserContentTopicsForTokenResponse) => {
+                setIsLoading(false);
+                setSelectedContentTopics((resp.contentTopics || []).reduce((accumulator: Object, next: string) => ({
+                    ...accumulator,
+                    [next]: true,
+                }), {}));
+            },
+            (e: Error) => {
+                setIsLoading(false);
+                setError(e);
+            })
+        }
+        setHasFetched(true);
+    });
+
     const handleSelectContentTopicMapping = (apiValue: string[]) => {
-        setSelectedContentTopics(apiValue.reduce((accumulator: Object, next: string) => {
-            return {
-                ...accumulator,
-                [next]: !accumulator[next],
-            }
-        }, selectedContentTopics));
+        setSelectedContentTopics(apiValue.reduce((accumulator: Object, next: string) => ({
+            ...accumulator,
+            [next]: !accumulator[next],
+        }), selectedContentTopics));
     };
 
     return (
@@ -63,17 +93,43 @@ const InterestSelectionPage = (props: InterestSelectionPageProps) => {
                         <Paragraph size={Size.Medium} align={Alignment.Left}>
                             Click on the topics that interest you to receive emails with content on that topic. You can select as many as you’d like. When you’re done, enter your email at the bottom and click ‘Update’ to complete the process. Not every email will contain content with all the topics you’ve picked.
                         </Paragraph>
-                        <ContentTopicSelectionForm
-                            contentTopicDisplayMappings={contentTopicDisplayMappings.map((m: ContentTopicDisplayMapping) => ({
-                                ...m,
-                                isChecked: m.apiValue.reduce((val: boolean, next: string) => val || !!selectedContentTopics[next], false),
-                            }))}
-                            handleSelectContentTopicMapping={handleSelectContentTopicMapping} />
+                        {
+                            isLoading ? (
+                                <LoadingScreen />
+                            ) : (
+                                <ContentTopicSelectionForm
+                                    contentTopicDisplayMappings={contentTopicDisplayMappings.map((m: ContentTopicDisplayMapping) => ({
+                                            ...m,
+                                            isChecked: m.apiValue.reduce((val: boolean, next: string) => (
+                                                val || !!selectedContentTopics[next]
+                                            ), false),
+                                        })
+                                    )}
+                                    handleSelectContentTopicMapping={handleSelectContentTopicMapping} />
+                            )
+                        }
                     </Card>
                 </Grid>
             </Grid>
         </Page>
     );
+}
+
+const LoadingScreen = () => {
+    const classes = styleClasses();
+    return (
+        <Grid container>
+            <Grid item xs={false} md={3}>
+                &nbsp;
+            </Grid>
+            <Grid item xs={12} md={6}>
+                <CircularProgress className={classes.loadingSpinner} />
+                <Paragraph size={Size.Medium} align={Alignment.Center}>
+                    Loading, please wait.
+                </Paragraph>
+            </Grid>
+        </Grid>
+    )
 }
 
 type ContentHeaderProps = {
