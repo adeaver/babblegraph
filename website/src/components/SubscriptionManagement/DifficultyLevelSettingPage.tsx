@@ -90,7 +90,7 @@ const DifficultyLevelSettingPage = (props: DifficultyLevelSettingPageProps) => {
     const [ didUpdate, setDidUpdate ] = useState<boolean | null>(null);
 
     const handleSetReadingLevel = (newReadingLevel: string) => {
-        setReadingLevelClassifications(readingLevelClassifications.map((classification: ReadingLevelClassificationForLanguage) => {
+        const newClassifications = (readingLevelClassifications || []).map((classification: ReadingLevelClassificationForLanguage) => {
             if (classification.languageCode !== "es") {
                 return classification;
             }
@@ -98,7 +98,14 @@ const DifficultyLevelSettingPage = (props: DifficultyLevelSettingPageProps) => {
                 ...classification,
                 readingLevelClassification: newReadingLevel,
             }
-        }))
+        });
+        if (!newClassifications.length) {
+            newClassifications.push({
+                languageCode: "es",
+                readingLevelClassification: newReadingLevel,
+            });
+        }
+        setReadingLevelClassifications(newClassifications);
     }
     const getReadingLevel = () => {
         return (readingLevelClassifications || []).reduce((accumulator: string | null, next: ReadingLevelClassificationForLanguage) => {
