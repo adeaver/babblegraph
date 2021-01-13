@@ -24,9 +24,10 @@ import { PrimaryRadio } from 'common/components/Radio/Radio';
 
 import {
     getUserPreferencesForToken,
-    GetUserPreferencesForTokenRequest,
     GetUserPreferencesForTokenResponse,
-    ReadingLevelClassificationForLanguage
+    ReadingLevelClassificationForLanguage,
+    updateUserPreferencesForToken,
+    UpdateUserPreferencesForTokenResponse,
 } from 'api/user/difficultyLevel';
 
 const styleClasses = makeStyles({
@@ -116,7 +117,22 @@ const DifficultyLevelSettingPage = (props: DifficultyLevelSettingPageProps) => {
         }, null);
     }
     const handleSubmit = () => {
-        console.log(emailAddress);
+        setIsLoading(true);
+        setError(null);
+        setDidUpdate(null);
+        updateUserPreferencesForToken({
+            token: token,
+            emailAddress: emailAddress || '',
+            classificationsByLanguage: readingLevelClassifications,
+        },
+        (resp: UpdateUserPreferencesForTokenResponse) => {
+            setIsLoading(false);
+            setDidUpdate(resp.didUpdate);
+        },
+        (e: Error) => {
+            setIsLoading(false);
+            setError(e);
+        });
     }
 
     useEffect(() => {
