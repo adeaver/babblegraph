@@ -38,6 +38,9 @@ const styleClasses = makeStyles({
         display: 'block',
         margin: 'auto',
     },
+    radioController: {
+        width: '100%',
+    },
 });
 
 const radioFormOptions = [
@@ -103,10 +106,16 @@ const DifficultyLevelSettingPage = (props: DifficultyLevelSettingPageProps) => {
                         <Paragraph size={Size.Medium} align={Alignment.Left}>
                             Select the difficulty you think is appropriate for your reading level. When you’re done, remember to enter your email on the bottom and click ‘Update’ to complete the process.
                         </Paragraph>
-                        <ReadingLevelRadioForm
-                            value={emailAddress}
-                            options={radioFormOptions}
-                            handleChange={setEmailAddress} />
+                        {
+                            isLoading ? (
+                                <LoadingScreen />
+                            ) : (
+                                <ReadingLevelRadioForm
+                                    value={emailAddress}
+                                    options={radioFormOptions}
+                                    handleChange={setEmailAddress} />
+                            )
+                        }
                     </Card>
                 </Grid>
             </Grid>
@@ -168,22 +177,23 @@ const ReadingLevelRadioForm = (props: ReadingLevelRadioFormProps) => {
         props.handleChange((event.target as HTMLInputElement).value);
     };
 
+    const classes = styleClasses();
     return (
-        <Grid container>
-            <FormControl component="fieldset">
-                <RadioGroup aria-label="diffculty-level" name="diffculty-level1" value={props.value} onChange={handleChange}>
-                    {
-                        props.options.map((option: ReadingLevelRadioFormOption, idx: number) => (
-                            <ReadingLevelClassificationRadioButton
-                                key={`reading-level-option-${idx}`}
-                                isSelected={props.value === option.value}
-                                value={option.value}
-                                displayText={option.displayText} />
-                        ))
-                    }
-                </RadioGroup>
-            </FormControl>
-        </Grid>
+        <FormControl className={classes.radioController} component="fieldset">
+            <RadioGroup aria-label="diffculty-level" name="diffculty-level1" value={props.value} onChange={handleChange}>
+                <Grid container>
+                {
+                    props.options.map((option: ReadingLevelRadioFormOption, idx: number) => (
+                        <ReadingLevelClassificationRadioButton
+                            key={`reading-level-option-${idx}`}
+                            isSelected={props.value === option.value}
+                            value={option.value}
+                            displayText={option.displayText} />
+                    ))
+                }
+                </Grid>
+            </RadioGroup>
+        </FormControl>
     );
 }
 
@@ -204,7 +214,6 @@ type ReadingLevelClassificationRadioButtonProps = {
 }
 
 const ReadingLevelClassificationRadioButton = (props: ReadingLevelClassificationRadioButtonProps) => {
-    const classes = styleClasses();
     return (
         <Grid item xs={6} md={3}>
             <FormControlLabel value={props.value} control={<PrimaryRadio />} label={props.displayText} />
