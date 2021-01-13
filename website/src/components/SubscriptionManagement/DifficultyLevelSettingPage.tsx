@@ -170,7 +170,7 @@ const DifficultyLevelSettingPage = (props: DifficultyLevelSettingPageProps) => {
                             isLoading ? (
                                 <LoadingScreen />
                             ) : (
-                                !error && <ReadingLevelRadioForm
+                                <ReadingLevelRadioForm
                                     value={getReadingLevel()}
                                     options={radioFormOptions}
                                     emailAddress={emailAddress}
