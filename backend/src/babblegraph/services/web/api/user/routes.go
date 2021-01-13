@@ -58,7 +58,7 @@ func parseSubscriptionManagementToken(token string, emailAddress *string) (*user
 	}
 	if emailAddress != nil {
 		if err := database.WithTx(func(tx *sqlx.Tx) error {
-			user, err := users.LookupUserForIDAndEmail(tx, *userID, req.EmailAddress)
+			user, err := users.LookupUserForIDAndEmail(tx, userID, *emailAddress)
 			if err != nil {
 				return err
 			}
@@ -219,6 +219,8 @@ type updateUserContentTopicsForTokenRequest struct {
 	ContentTopics []contenttopics.ContentTopic `json:"content_topics"`
 }
 
+type updateUserContentTopicsForTokenResponse struct{}
+
 func handleUpdateUserContentTopicsForToken(body []byte) (interface{}, error) {
 	var req updateUserContentTopicsForTokenRequest
 	if err := json.Unmarshal(body, &req); err != nil {
@@ -228,10 +230,10 @@ func handleUpdateUserContentTopicsForToken(body []byte) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-    if err := database.WithTx(func(tx *sqlx.Tx) error {
-        return usercontenttopics.UpdateContentTopicsForUser(tx, *userID, req.ContentTopics)
-    }); err != nil {
-        return nil, err
-    }
-	return struct{}, nil
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		return usercontenttopics.UpdateContentTopicsForUser(tx, *userID, req.ContentTopics)
+	}); err != nil {
+		return nil, err
+	}
+	return updateUserContentTopicsForTokenResponse{}, nil
 }
