@@ -10,10 +10,10 @@ import FormControl from '@material-ui/core/FormControl';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import FormLabel from '@material-ui/core/FormLabel';
 import Grid from '@material-ui/core/Grid';
-import MuiAlert from '@material-ui/lab/Alert';
 import RadioGroup from '@material-ui/core/RadioGroup';
 import Snackbar from '@material-ui/core/Snackbar';
 
+import Alert from 'common/components/Alert/Alert';
 import Color from 'common/styles/colors';
 import Page from 'common/components/Page/Page';
 import Paragraph, { Size } from 'common/typography/Paragraph';
@@ -307,8 +307,5 @@ const ReadingLevelClassificationRadioButton = (props: ReadingLevelClassification
     )
 }
 
-const Alert = (props) => {
-  return <MuiAlert elevation={6} variant="filled" {...props} />;
-}
 
 export default DifficultyLevelSettingPage;

@@ -9,18 +9,25 @@ import Divider from '@material-ui/core/Divider';
 import ArrowBackIcon from '@material-ui/icons/ArrowBack';
 import FormGroup from '@material-ui/core/FormGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Snackbar from '@material-ui/core/Snackbar';
 
+import Alert from 'common/components/Alert/Alert';
 import Color from 'common/styles/colors';
 import Page from 'common/components/Page/Page';
 import Paragraph, { Size } from 'common/typography/Paragraph';
-import { PrimaryCheckbox } from 'common/components/Checkbox/Checkbox';
 import { Alignment, TypographyColor } from 'common/typography/common';
+import { PrimaryButton } from 'common/components/Button/Button';
+import { PrimaryCheckbox } from 'common/components/Checkbox/Checkbox';
+import { PrimaryTextField } from 'common/components/TextField/TextField';
 
 import {
     contentTopicDisplayMappings,
     ContentTopicDisplayMapping,
     getUserContentTopicsForToken,
     GetUserContentTopicsForTokenResponse,
+
+    updateUserContentTopicsForToken,
+    UpdateUserContentTopicsForTokenResponse,
 } from 'api/user/contentTopics';
 
 const styleClasses = makeStyles({
@@ -36,6 +43,17 @@ const styleClasses = makeStyles({
         display: 'block',
         margin: 'auto',
     },
+    submitButtonContainer: {
+        alignSelf: 'center',
+        padding: '5px',
+    },
+    emailField: {
+        width: '100%',
+    },
+    confirmationForm: {
+        padding: '10px 0',
+        width: '100%',
+    },
 });
 
 type Params = {
@@ -49,6 +67,8 @@ const InterestSelectionPage = (props: InterestSelectionPageProps) => {
     const { token } = props.match.params;
 
     const [ isLoading, setIsLoading ] = useState<boolean>(true);
+    const [ emailAddress, setEmailAddress ] = useState<string>('');
+    const [ didUpdate, setDidUpdate ] = useState<boolean>(false);
     const [ error, setError ] = useState<Error>(null);
     const [ hasFetched, setHasFetched ] = useState<boolean>(false);
     const [ selectedContentTopics, setSelectedContentTopics ] = useState<Object>({});
@@ -79,6 +99,24 @@ const InterestSelectionPage = (props: InterestSelectionPageProps) => {
             [next]: !accumulator[next],
         }), selectedContentTopics));
     };
+    const handleSubmit = () => {
+        setIsLoading(true);
+        setDidUpdate(false);
+        setError(null);
+        updateUserContentTopicsForToken({
+            token: token,
+            emailAddress: emailAddress,
+            contentTopics: Object.keys(selectedContentTopics).filter((key: string) => !!selectedContentTopics[key]),
+        },
+        (resp: UpdateUserContentTopicsForTokenResponse) => {
+            setIsLoading(false);
+            setDidUpdate(true);
+        },
+        (e: Error) => {
+            setIsLoading(false);
+            setError(e);
+        });
+    }
 
     return (
         <Page>
@@ -105,9 +143,18 @@ const InterestSelectionPage = (props: InterestSelectionPageProps) => {
                                             ), false),
                                         })
                                     )}
-                                    handleSelectContentTopicMapping={handleSelectContentTopicMapping} />
+                                    emailAddress={emailAddress}
+                                    handleEmailAddressChange={setEmailAddress}
+                                    handleSelectContentTopicMapping={handleSelectContentTopicMapping}
+                                    handleSubmit={handleSubmit} />
                             )
                         }
+                        <Snackbar open={!!error} autoHideDuration={6000}>
+                            <Alert severity="error">Something went wrong processing your request.</Alert>
+                        </Snackbar>
+                        <Snackbar open={didUpdate} autoHideDuration={6000}>
+                            <Alert severity="success">Successfully updated your email topic interests.</Alert>
+                        </Snackbar>
                     </Card>
                 </Grid>
             </Grid>
@@ -159,12 +206,20 @@ type ContentTopicDisplayMappingWithChecked = {
 
 type ContentTopicSelectionFormProps = {
     contentTopicDisplayMappings: Array<ContentTopicDisplayMappingWithChecked>;
+    emailAddress: string;
     handleSelectContentTopicMapping: (v: string[]) => void;
+    handleEmailAddressChange: (v: string) => void;
+    handleSubmit: () => void;
 }
 
 const ContentTopicSelectionForm = (props: ContentTopicSelectionFormProps) => {
+    const handleEmailAddressChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        props.handleEmailAddressChange((event.target as HTMLInputElement).value);
+    };
+
+    const classes = styleClasses();
     return (
-        <FormGroup row>
+        <FormGroup>
             <Grid container>
                 {
                     props.contentTopicDisplayMappings.map((mapping: ContentTopicDisplayMappingWithChecked, idx: number) => (
@@ -181,6 +236,24 @@ const ContentTopicSelectionForm = (props: ContentTopicSelectionFormProps) => {
                     ))
                 }
             </Grid>
+            <Divider />
+            <form className={classes.confirmationForm} noValidate autoComplete="off">
+                <Grid container>
+                    <Grid item xs={9} md={10}>
+                        <PrimaryTextField
+                            id="email"
+                            className={classes.emailField}
+                            label="Email Address"
+                            variant="outlined"
+                            onChange={handleEmailAddressChange} />
+                    </Grid>
+                    <Grid item xs={3} md={2} className={classes.submitButtonContainer}>
+                        <PrimaryButton onClick={props.handleSubmit} disabled={!props.emailAddress}>
+                            Submit
+                        </PrimaryButton>
+                    </Grid>
+                </Grid>
+            </form>
         </FormGroup>
     );
 }

@@ -21,6 +21,27 @@ export function getUserContentTopicsForToken(
     );
 }
 
+export type UpdateUserContentTopicsForTokenRequest = {
+    token: string;
+    emailAddress: string;
+    contentTopics: string[];
+}
+
+export type UpdateUserContentTopicsForTokenResponse = {};
+
+export function updateUserContentTopicsForToken(
+    req: UpdateUserContentTopicsForTokenRequest,
+    onSuccess: (resp: UpdateUserContentTopicsForTokenResponse) => void,
+    onError: (e: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<UpdateUserContentTopicsForTokenRequest, UpdateUserContentTopicsForTokenResponse>(
+        '/api/user/update_user_content_topics_for_token_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}
+
 export type ContentTopicDisplayMapping = {
     displayText: string;
     apiValue: string[];

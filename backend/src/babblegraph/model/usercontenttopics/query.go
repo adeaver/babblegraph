@@ -33,7 +33,7 @@ func UpdateContentTopicsForUser(tx *sqlx.Tx, userID users.UserID, contentTopics 
 	if err != nil {
 		return err
 	}
-	queryBuilder.AddConflictResolution("DO UPDATE SET is_active = TRUE")
+	queryBuilder.AddConflictResolution("(user_id, content_topic) DO UPDATE SET is_active = TRUE")
 	for _, contentTopic := range contentTopics {
 		if err := queryBuilder.AddValues(userID, contentTopic, true); err != nil {
 			return err
