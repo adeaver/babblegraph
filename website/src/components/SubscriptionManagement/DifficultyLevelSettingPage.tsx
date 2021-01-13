@@ -10,13 +10,17 @@ import FormControl from '@material-ui/core/FormControl';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import FormLabel from '@material-ui/core/FormLabel';
 import Grid from '@material-ui/core/Grid';
-import Radio from '@material-ui/core/Radio';
+import MuiAlert from '@material-ui/lab/Alert';
 import RadioGroup from '@material-ui/core/RadioGroup';
+import Snackbar from '@material-ui/core/Snackbar';
 
 import Color from 'common/styles/colors';
 import Page from 'common/components/Page/Page';
 import Paragraph, { Size } from 'common/typography/Paragraph';
 import { Alignment, TypographyColor } from 'common/typography/common';
+import { PrimaryButton } from 'common/components/Button/Button';
+import { PrimaryTextField } from 'common/components/TextField/TextField';
+import { PrimaryRadio } from 'common/components/Radio/Radio';
 
 import {
     getUserPreferencesForToken,
@@ -75,6 +79,29 @@ const DifficultyLevelSettingPage = (props: DifficultyLevelSettingPageProps) => {
     const [ error, setError ] = useState<Error | null>(null);
     const [ didUpdate, setDidUpdate ] = useState<boolean | null>(null);
 
+    const handleSetReadingLevel = (newReadingLevel: string) => {
+        setReadingLevelClassifications(readingLevelClassifications.map((classification: ReadingLevelClassificationForLanguage) => {
+            if (classification.languageCode !== "es") {
+                return classification;
+            }
+            return {
+                ...classification,
+                readingLevelClassification: newReadingLevel,
+            }
+        }))
+    }
+    const getReadingLevel = () => {
+        return (readingLevelClassifications || []).reduce((accumulator: string | null, next: ReadingLevelClassificationForLanguage) => {
+            if (next.languageCode !== "es") {
+                return accumulator;
+            }
+            return next.readingLevelClassification;
+        }, null);
+    }
+    const handleSubmit = () => {
+        console.log(emailAddress);
+    }
+
     useEffect(() => {
         if (!hasFetched) {
             getUserPreferencesForToken({
@@ -110,13 +137,22 @@ const DifficultyLevelSettingPage = (props: DifficultyLevelSettingPageProps) => {
                             isLoading ? (
                                 <LoadingScreen />
                             ) : (
-                                <ReadingLevelRadioForm
-                                    value={emailAddress}
+                                !error && <ReadingLevelRadioForm
+                                    value={getReadingLevel()}
                                     options={radioFormOptions}
-                                    handleChange={setEmailAddress} />
+                                    emailAddress={emailAddress}
+                                    handleValueChange={handleSetReadingLevel}
+                                    handleEmailAddressChange={setEmailAddress}
+                                    handleSubmit={handleSubmit} />
                             )
                         }
                     </Card>
+                    <Snackbar open={!!error} autoHideDuration={6000}>
+                        <Alert severity="error">Something went wrong processing your request.</Alert>
+                    </Snackbar>
+                    <Snackbar open={didUpdate} autoHideDuration={6000}>
+                        <Alert severity="success">Successfully updated the difficulty level.</Alert>
+                    </Snackbar>
                 </Grid>
             </Grid>
         </Page>
@@ -162,9 +198,12 @@ const LoadingScreen = () => {
 }
 
 type ReadingLevelRadioFormProps = {
-    value: string;
+    value: string | null;
     options: ReadingLevelRadioFormOption[];
-    handleChange: (v: string) => void;
+    emailAddress: string;
+    handleValueChange: (v: string) => void;
+    handleEmailAddressChange: (v: string) => void;
+    handleSubmit: () => void;
 }
 
 type ReadingLevelRadioFormOption = {
@@ -173,39 +212,45 @@ type ReadingLevelRadioFormOption = {
 }
 
 const ReadingLevelRadioForm = (props: ReadingLevelRadioFormProps) => {
-    const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        props.handleChange((event.target as HTMLInputElement).value);
+    const handleRadioFormChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        props.handleValueChange((event.target as HTMLInputElement).value);
+    };
+    const handleEmailAddressChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        props.handleEmailAddressChange((event.target as HTMLInputElement).value);
     };
 
     const classes = styleClasses();
     return (
-        <FormControl className={classes.radioController} component="fieldset">
-            <RadioGroup aria-label="diffculty-level" name="diffculty-level1" value={props.value} onChange={handleChange}>
-                <Grid container>
-                {
-                    props.options.map((option: ReadingLevelRadioFormOption, idx: number) => (
-                        <ReadingLevelClassificationRadioButton
-                            key={`reading-level-option-${idx}`}
-                            isSelected={props.value === option.value}
-                            value={option.value}
-                            displayText={option.displayText} />
-                    ))
-                }
-                </Grid>
-            </RadioGroup>
-        </FormControl>
+        <div>
+            <FormControl className={classes.radioController} component="fieldset">
+                <RadioGroup aria-label="diffculty-level" name="diffculty-level1" value={props.value} onChange={handleRadioFormChange}>
+                    <Grid container>
+                    {
+                        props.options.map((option: ReadingLevelRadioFormOption, idx: number) => (
+                            <ReadingLevelClassificationRadioButton
+                                key={`reading-level-option-${idx}`}
+                                isSelected={props.value === option.value}
+                                value={option.value}
+                                displayText={option.displayText} />
+                        ))
+                    }
+                    </Grid>
+                </RadioGroup>
+            </FormControl>
+            <Divider />
+            <form noValidate autoComplete="off">
+                <PrimaryTextField id="email"
+                    label="Email Address"
+                    variant="outlined"
+                    onChange={handleEmailAddressChange} />
+                <PrimaryButton onClick={props.handleSubmit} disabled={!props.emailAddress || !props.value}>
+                    Submit
+                </PrimaryButton>
+            </form>
+        </div>
     );
 }
 
-const PrimaryRadio = withStyles({
-    root: {
-        color: Color.Primary,
-        '&$checked': {
-            color: Color.Primary,
-        },
-    },
-    checked: {},
-})((props) => <Radio color="default" {...props} />);
 
 type ReadingLevelClassificationRadioButtonProps = {
     value: string;
@@ -219,6 +264,10 @@ const ReadingLevelClassificationRadioButton = (props: ReadingLevelClassification
             <FormControlLabel value={props.value} control={<PrimaryRadio />} label={props.displayText} />
         </Grid>
     )
+}
+
+const Alert = (props) => {
+  return <MuiAlert elevation={6} variant="filled" {...props} />;
 }
 
 export default DifficultyLevelSettingPage;
