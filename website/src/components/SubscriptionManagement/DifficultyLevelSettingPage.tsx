@@ -45,6 +45,16 @@ const styleClasses = makeStyles({
     radioController: {
         width: '100%',
     },
+    submitButtonContainer: {
+        alignSelf: 'center',
+        padding: '5px',
+    },
+    emailField: {
+        width: '100%',
+    },
+    confirmationForm: {
+        padding: '10px 0',
+    },
 });
 
 const radioFormOptions = [
@@ -238,14 +248,22 @@ const ReadingLevelRadioForm = (props: ReadingLevelRadioFormProps) => {
                 </RadioGroup>
             </FormControl>
             <Divider />
-            <form noValidate autoComplete="off">
-                <PrimaryTextField id="email"
-                    label="Email Address"
-                    variant="outlined"
-                    onChange={handleEmailAddressChange} />
-                <PrimaryButton onClick={props.handleSubmit} disabled={!props.emailAddress || !props.value}>
-                    Submit
-                </PrimaryButton>
+            <form className={classes.confirmationForm} noValidate autoComplete="off">
+                <Grid container>
+                    <Grid item xs={9} md={10}>
+                        <PrimaryTextField
+                            id="email"
+                            className={classes.emailField}
+                            label="Email Address"
+                            variant="outlined"
+                            onChange={handleEmailAddressChange} />
+                    </Grid>
+                    <Grid item xs={3} md={2} className={classes.submitButtonContainer}>
+                        <PrimaryButton onClick={props.handleSubmit} disabled={!props.emailAddress || !props.value}>
+                            Submit
+                        </PrimaryButton>
+                    </Grid>
+                </Grid>
             </form>
         </div>
     );
