@@ -1,7 +1,9 @@
 package dailyemail
 
 import (
+	"babblegraph/model/contenttopics"
 	"babblegraph/model/documents"
+	"babblegraph/model/usercontenttopics"
 	"babblegraph/model/userdocuments"
 	"babblegraph/model/userreadability"
 	"babblegraph/model/users"
@@ -16,6 +18,7 @@ type userEmailInfo struct {
 	ReadingLevel  userReadingLevel
 	Languages     []wordsmith.LanguageCode
 	SentDocuments []documents.DocumentID
+	Topics        []contenttopics.ContentTopic
 }
 
 type userReadingLevel struct {
@@ -35,6 +38,10 @@ func getPreferencesForUser(tx *sqlx.Tx, user users.User) (*userEmailInfo, error)
 	if err != nil {
 		return nil, err
 	}
+	contentTopics, err := usercontenttopics.GetContentTopicsForUser(tx, user.ID)
+	if err != nil {
+		return nil, err
+	}
 	return &userEmailInfo{
 		UserID:       user.ID,
 		EmailAddress: user.EmailAddress,
@@ -44,5 +51,6 @@ func getPreferencesForUser(tx *sqlx.Tx, user users.User) (*userEmailInfo, error)
 		},
 		Languages:     []wordsmith.LanguageCode{wordsmith.LanguageCodeSpanish},
 		SentDocuments: sentDocumentIDs,
+		Topics:        contentTopics,
 	}, nil
 }
