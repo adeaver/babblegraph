@@ -1,4 +1,5 @@
 import React from 'react';
+import { useHistory } from 'react-router-dom';
 
 import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
@@ -27,6 +28,7 @@ type HeaderProps = {};
 
 const Header = (props: HeaderProps) => {
     const classes = styleClasses();
+    const history = useHistory();
     return (
         <div className={classes.headerRoot}>
             <Grid className={classes.headerContainer} container>

@@ -1,6 +1,7 @@
 package documents
 
 import (
+	"babblegraph/model/contenttopics"
 	"babblegraph/util/elastic/esquery"
 	"babblegraph/util/ptr"
 	"babblegraph/wordsmith"
@@ -19,6 +20,11 @@ type documentsQueryBuilder struct {
 	sentDocumentIDs   []string
 	readingLevelRange *IntRange
 	version           *IntRange
+
+	// Each query can only search for a single topic
+	// to make sure that the documents returned are most
+	// relevant for that topic - not the union of the two
+	topic *contenttopics.ContentTopic
 }
 
 func NewDocumentsQueryBuilderForLanguage(languageCode wordsmith.LanguageCode) *documentsQueryBuilder {
@@ -43,6 +49,9 @@ func (d *documentsQueryBuilder) ExecuteQuery() ([]Document, error) {
 			readingLevelRangeQueryBuilder.LessThanOrEqualToInt64(*maxReadingLevel)
 		}
 		queryBuilder.AddMust(readingLevelRangeQueryBuilder.BuildRangeQuery())
+	}
+	if d.topic != nil {
+		queryBuilder.AddMust(esquery.Match("content_topics.keyword", d.topic.Str()))
 	}
 	if d.version != nil {
 		versionRangeQueryBuilder := esquery.NewRangeQueryBuilderForFieldName("version")
@@ -73,6 +82,10 @@ func (d *documentsQueryBuilder) NotContainingDocuments(docIDs []DocumentID) {
 	for _, doc := range docIDs {
 		d.sentDocumentIDs = append(d.sentDocumentIDs, string(doc))
 	}
+}
+
+func (d *documentsQueryBuilder) ForTopic(topic *contenttopics.ContentTopic) {
+	d.topic = topic
 }
 
 func (d *documentsQueryBuilder) ForReadingLevelRange(lowerBound, upperBound *int64) {

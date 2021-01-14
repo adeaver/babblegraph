@@ -47,6 +47,14 @@ const (
 	ContentTopicWorldNews                 ContentTopic = "world-news"
 )
 
+func (t ContentTopic) Str() string {
+	return string(t)
+}
+
+func (t ContentTopic) Ptr() *ContentTopic {
+	return &t
+}
+
 type contentTopicMappingID string
 
 type dbContentTopicMapping struct {

@@ -1,22 +1,37 @@
-import './NotFoundPage.scss';
-
 import React from 'react';
 
-import Header from 'common/components/Header/Header';
-import { Heading1, Heading3 } from 'common/typography/Heading';
-import Paragraph from 'common/typography/Paragraph';
+import { makeStyles } from '@material-ui/core/styles';
+import Card from '@material-ui/core/Card';
+import Grid from '@material-ui/core/Grid';
 
-export default class NotFoundPage extends React.Component{
-    render() {
-        return (
-            <div className="NotFoundPage__root">
-                <Header />
-                <Heading1 className="NotFoundPage__heading">Babblegraph</Heading1>
-                <Heading3 className="NotFoundPage__subheading">
-                    We couldn't find that page...
-                </Heading3>
-                <Paragraph className="NotFoundPage__paragraph">Whatever you’re looking for isn't here...</Paragraph>
-            </div>
-        );
-    }
+import Page from 'common/components/Page/Page';
+import Paragraph, { Size } from 'common/typography/Paragraph';
+import { Alignment, TypographyColor } from 'common/typography/common';
+
+const styleClasses = makeStyles({
+    displayCard: {
+        padding: '10px',
+    },
+});
+
+const NotFoundPage = () => {
+    const classes = styleClasses();
+    return (
+        <Page>
+            <Grid container>
+                <Grid item xs={false} md={3}>
+                    &nbsp;
+                </Grid>
+                <Grid item xs={12} md={6}>
+                    <Card className={classes.displayCard} variant='outlined'>
+                        <Paragraph size={Size.Large} color={TypographyColor.Primary}>
+                            Whatever you’re looking for isn’t here.
+                        </Paragraph>
+                    </Card>
+                </Grid>
+            </Grid>
+        </Page>
+    );
 }
+
+export default NotFoundPage;
