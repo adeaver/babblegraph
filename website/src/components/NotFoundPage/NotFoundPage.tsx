@@ -10,12 +10,11 @@ export default class NotFoundPage extends React.Component{
     render() {
         return (
             <div className="NotFoundPage__root">
-                <Header className="NotFoundPage__header">
-                        <Heading1 className="NotFoundPage__heading">Babblegraph</Heading1>
-                        <Heading3 className="NotFoundPage__subheading">
-                            We couldn't find that page...
-                        </Heading3>
-                </Header>
+                <Header />
+                <Heading1 className="NotFoundPage__heading">Babblegraph</Heading1>
+                <Heading3 className="NotFoundPage__subheading">
+                    We couldn't find that page...
+                </Heading3>
                 <Paragraph className="NotFoundPage__paragraph">Whatever you’re looking for isn't here...</Paragraph>
             </div>
         );

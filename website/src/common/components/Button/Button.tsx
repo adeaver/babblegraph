@@ -1,60 +1,14 @@
-import './Button.scss';
+import { withStyles } from '@material-ui/core/styles';
+import Button from '@material-ui/core/Button';
 
-import React from 'react';
-import classNames from 'classnames';
+import Color from 'common/styles/colors';
 
-import Spinner, { RingColor } from 'common/ui/icons/Spinner/Spinner';
-
-export enum ButtonType {
-    Primary,
-    Secondary,
-    Warning,
-}
-
-type ButtonProps = {
-    className?: string,
-    type: ButtonType,
-    isLoading?: boolean,
-    onClick: () => void,
-    isDisabled?: boolean,
-};
-
-type ButtonState = {
-    spinnerRingColor: RingColor,
-}
-
-export default class Button extends React.Component<ButtonProps, ButtonState> {
-    constructor(props: ButtonProps) {
-        super(props);
-        this.state = {
-            spinnerRingColor: RingColor.PrimaryPurple,
-        }
-    }
-
-    onMouseOver = () => {
-        this.setState({spinnerRingColor: RingColor.White});
-    }
-
-    onMouseOut = () => {
-        this.setState({spinnerRingColor: RingColor.PrimaryPurple});
-    }
-
-    render() {
-        const className = classNames('Button__root', this.props.className, {
-            'Button__primary': this.props.type === ButtonType.Primary,
-            'Button__secondary': this.props.type === ButtonType.Secondary,
-            'Button__warning': this.props.type === ButtonType.Warning,
-        });
-        return (
-            <button
-                onMouseOver={this.onMouseOver}
-                onMouseOut={this.onMouseOut}
-                className={className}
-                onClick={this.props.onClick}
-                disabled={this.props.isDisabled || this.props.isLoading}>
-                { !!this.props.isLoading && <Spinner sizeInPx={24} innerRingColor={this.state.spinnerRingColor} outerRingColor={this.state.spinnerRingColor} /> }
-                {this.props.children}
-            </button>
-        );
-    }
-}
+export const PrimaryButton = withStyles({
+    root: {
+        color: Color.White,
+        backgroundColor: Color.Primary,
+        '&:hover': {
+            backgroundColor: Color.Primary,
+        },
+    },
+})(Button);

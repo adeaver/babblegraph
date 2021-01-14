@@ -1,22 +1,39 @@
-import './Paragraph.scss';
-import './common.scss';
-
 import React from 'react';
 import classNames from 'classnames';
 
-import { Alignment, TypographyProps } from './common.ts';
+import { makeStyles } from '@material-ui/core/styles';
 
-type ParagraphProps = TypographyProps;
+import { asTypography, TypographyProps } from './common';
 
-export default class Paragraph extends React.Component<ParagraphProps> {
-    render() {
-        const className = classNames('Paragraph__root', this.props.className, {
-            'Typography__centered': this.props.align == null || this.props.align === Alignment.Center,
-            'Typography__right-aligned': this.props.align === Alignment.Right,
-            'Typography__left-aligned': this.props.align === Alignment.Left,
-        });
-        return (
-            <p className={className}>{this.props.children}</p>
-        );
-    }
+const styleClasses = makeStyles({
+    paragraphStyle: (props: ParagraphProps) => ({
+        fontFamily: "'Roboto', sans-serif",
+        lineHeight: 1.5,
+        fontSize: props.size != null ? props.size : Size.Medium,
+    }),
+})
+
+export enum Size {
+    Small = '12px',
+    Medium = '16px',
+    Large = '20px',
+    ExtraLarge = '24px',
 }
+
+type ParagraphProps = {
+    size?: Size;
+} & TypographyProps;
+
+const Paragraph = asTypography((props: ParagraphProps) => {
+    const classes = styleClasses(props);
+    const className = classNames(
+        'Paragraph__root',
+        props.className,
+        `${classes.paragraphStyle}`
+    );
+    return (
+        <p className={className}>{props.children}</p>
+    );
+});
+
+export default Paragraph;
