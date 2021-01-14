@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { RouteComponentProps, useHistory } from 'react-router-dom';
 
-import { makeStyles, withStyles } from '@material-ui/core/styles';
+import { makeStyles } from '@material-ui/core/styles';
 import ArrowBackIcon from '@material-ui/icons/ArrowBack';
 import Card from '@material-ui/core/Card';
 import CircularProgress from '@material-ui/core/CircularProgress';
