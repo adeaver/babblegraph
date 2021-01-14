@@ -3,6 +3,7 @@ package email
 import (
 	"babblegraph/model/documents"
 	"babblegraph/model/email"
+	"babblegraph/model/routes"
 	"babblegraph/util/deref"
 	"babblegraph/util/ptr"
 	"babblegraph/util/ses"
@@ -19,7 +20,8 @@ const dailyEmailTemplateFilename = "daily_email_template.html"
 
 type dailyEmailTemplate struct {
 	email.BaseEmailTemplate
-	Links []dailyEmailLink
+	Links         []dailyEmailLink
+	SetTopicsLink *string
 }
 
 type dailyEmailLink struct {
@@ -29,9 +31,14 @@ type dailyEmailLink struct {
 	URL         string
 }
 
-func SendDailyEmailForDocuments(tx *sqlx.Tx, cl *ses.Client, recipient email.Recipient, docs []documents.Document) (*email.ID, error) {
+type DailyEmailInput struct {
+	Documents    []documents.Document
+	HasSetTopics bool
+}
+
+func SendDailyEmailForDocuments(tx *sqlx.Tx, cl *ses.Client, recipient email.Recipient, input DailyEmailInput) (*email.ID, error) {
 	emailRecordID := email.NewEmailRecordID()
-	template, err := createDailyEmailTemplate(emailRecordID, recipient, docs)
+	template, err := createDailyEmailTemplate(emailRecordID, recipient, input)
 	if err != nil {
 		return nil, err
 	}
@@ -54,15 +61,23 @@ func SendDailyEmailForDocuments(tx *sqlx.Tx, cl *ses.Client, recipient email.Rec
 	return &emailRecordID, nil
 }
 
-func createDailyEmailTemplate(emailRecordID email.ID, recipient email.Recipient, documents []documents.Document) (*dailyEmailTemplate, error) {
+func createDailyEmailTemplate(emailRecordID email.ID, recipient email.Recipient, input DailyEmailInput) (*dailyEmailTemplate, error) {
 	baseTemplate, err := createBaseTemplate(emailRecordID, recipient)
 	if err != nil {
 		return nil, err
 	}
-	links := createLinksFromDocuments(documents)
+	links := createLinksFromDocuments(input.Documents)
+	var setTopicsLink *string
+	if !input.HasSetTopics {
+		setTopicsLink, err = routes.MakeSetTopicsLink(recipient.UserID)
+		if err != nil {
+			return nil, err
+		}
+	}
 	return &dailyEmailTemplate{
 		BaseEmailTemplate: *baseTemplate,
 		Links:             links,
+		SetTopicsLink:     setTopicsLink,
 	}, nil
 }
 

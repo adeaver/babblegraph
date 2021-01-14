@@ -24,6 +24,14 @@ func MakeSubscriptionManagementRouteForUserID(userID users.UserID) (*string, err
 	return ptr.String(env.GetAbsoluteURLForEnvironment(fmt.Sprintf("manage/%s", *token))), nil
 }
 
+func MakeSetTopicsLink(userID users.UserID) (*string, error) {
+	managementLink, err := MakeSubscriptionManagementRouteForUserID(userID)
+	if err != nil {
+		return nil, err
+	}
+	return ptr.String(fmt.Sprintf("%s/interests", *managementLink)), nil
+}
+
 func MakeUnsubscribeRouteForUserID(userID users.UserID) (*string, error) {
 	token, err := encrypt.GetToken(encrypt.TokenPair{
 		Key:   UnsubscribeRouteEncryptionKey.Str(),
