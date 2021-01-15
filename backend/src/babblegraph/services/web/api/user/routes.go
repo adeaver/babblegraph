@@ -7,6 +7,7 @@ import (
 	"babblegraph/util/database"
 	"babblegraph/util/encrypt"
 	"fmt"
+	"strings"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -52,7 +53,8 @@ func parseSubscriptionManagementToken(token string, emailAddress *string) (*user
 	}
 	if emailAddress != nil {
 		if err := database.WithTx(func(tx *sqlx.Tx) error {
-			user, err := users.LookupUserForIDAndEmail(tx, userID, *emailAddress)
+			formattedEmailAddress := strings.ToLower(strings.Trim(*emailAddress, " "))
+			user, err := users.LookupUserForIDAndEmail(tx, userID, formattedEmailAddress)
 			if err != nil {
 				return err
 			}

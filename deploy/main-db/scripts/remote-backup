@@ -4,3 +4,4 @@ BACKUP_FILE="/root/babblegraph/deploy/main-db/backups/babblegraph_$(date +"%Y_%m
 docker exec babblegraph_main_db /home/postgres/scripts/backup > $BACKUP_FILE
 
 ls -dt /root/babblegraph/deploy/main-db/backups/* | tail -n +4 | xargs rm
+docker exec babblegraph_main_db /bin/bash -c "rm /home/postgres/backups/*"
