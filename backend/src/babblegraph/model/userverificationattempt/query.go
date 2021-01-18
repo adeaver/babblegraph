@@ -8,9 +8,9 @@ import (
 )
 
 const (
-	getAllFulfilledAttemptsForUserQuery   = "SELECT * FROM user_verification_attempt WHERE user_id = $1 AND fulfilled_at_timestamp IS NOT NULL"
-	insertVerificationAttemptForUserQuery = "INSERT INTO user_verification_attempt (user_id) VALUES ($1) ON CONFLICT DO NOTHING"
-	fulfillVerificationAttemptByIDQuery   = "UPDATE user_verification_attempt SET fulfilled_at_timestamp = (now() at time zone 'utc') WHERE _id = $1"
+	getAllFulfilledAttemptsForUserQuery   = "SELECT * FROM user_verification_attempts WHERE user_id = $1 AND fulfilled_at_timestamp IS NOT NULL"
+	insertVerificationAttemptForUserQuery = "INSERT INTO user_verification_attempts (user_id) VALUES ($1) ON CONFLICT DO NOTHING"
+	fulfillVerificationAttemptByIDQuery   = "UPDATE user_verification_attempts SET fulfilled_at_timestamp = (now() at time zone 'utc') WHERE _id = $1"
 )
 
 func GetNumberOfFulfilledVerificationAttemptsForUser(tx *sqlx.Tx, userID users.UserID) (*int, error) {

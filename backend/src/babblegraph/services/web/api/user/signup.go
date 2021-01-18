@@ -36,7 +36,7 @@ type signupUserResponse struct {
 	ErrorMessage *signupError `json:"error_message,omitempty"`
 }
 
-func handleSignupUserRequest(body []byte) (interface{}, error) {
+func handleSignupUser(body []byte) (interface{}, error) {
 	var req signupUserRequest
 	if err := json.Unmarshal(body, &req); err != nil {
 		return nil, err
@@ -51,25 +51,31 @@ func handleSignupUserRequest(body []byte) (interface{}, error) {
 	}
 	var sErr *signupError
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
-		userID, status, err := users.InsertNewUnverifiedUser(tx, formattedEmailAddress)
+		if err := users.InsertNewUnverifiedUser(tx, formattedEmailAddress); err != nil {
+			return err
+		}
+		// This is necessary because the above ignores duplicates if the user is already
+		// present in the database. We must now query the database for the user we just
+		// created or the already existing user.
+		user, err := users.LookupUserByEmailAddress(tx, formattedEmailAddress)
 		switch {
 		case err != nil:
 			return err
-		case userID == nil || status == nil:
-			return fmt.Errorf("No error, but no status or ID returned")
-		case *status != users.UserStatusUnverified:
+		case user == nil:
+			return fmt.Errorf("No error, but no user returned")
+		case user.Status != users.UserStatusUnverified:
 			sErr = signupErrorIncorrectStatus.Ptr()
 			return fmt.Errorf("Invalid account status")
 		}
-		numAttempts, err := userverificationattempt.GetNumberOfFulfilledVerificationAttemptsForUser(tx, *userID)
+		numAttempts, err := userverificationattempt.GetNumberOfFulfilledVerificationAttemptsForUser(tx, user.ID)
 		switch {
 		case err != nil:
 			return err
-		case numAttempts != nil && *numAttempts < maxVerificationAttemptsForUser:
+		case numAttempts != nil && *numAttempts >= maxVerificationAttemptsForUser:
 			sErr = signupErrorRateLimited.Ptr()
 			return fmt.Errorf("Rate limited")
 		}
-		return userverificationattempt.InsertVerificationAttemptForUser(tx, *userID)
+		return userverificationattempt.InsertVerificationAttemptForUser(tx, user.ID)
 	}); err != nil {
 		log.Println(fmt.Sprintf("Got error on email address %s: %s", formattedEmailAddress, err.Error()))
 		if sErr != nil {
