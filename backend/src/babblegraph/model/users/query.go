@@ -11,7 +11,7 @@ const (
 	updateUserStatusByQuery        = "UPDATE users SET status = $1 WHERE email_address = $2 and _id = $3"
 	updateUserStatusByEmailAddress = "UPDATE users SET status = $1 WHERE email_address = $2" // prefer update by query
 	lookupUserByEmailAddressAndID  = "SELECT * FROM users WHERE _id = $1 AND email_address = $2"
-	insertUnverifiedUserQuery      = "INSERT INTO users (email_address, status) VALUES ($1, $2) ON CONFLICT DO NOTHING RETURNING _id"
+	insertUnverifiedUserQuery      = "INSERT INTO users (email_address, status) VALUES ($1, $2) ON CONFLICT DO NOTHING RETURNING _id, status"
 )
 
 func GetAllActiveUsers(tx *sqlx.Tx) ([]User, error) {
@@ -75,18 +75,21 @@ func AddUserToBlocklistByEmailAddress(tx *sqlx.Tx, emailAddress string, newStatu
 	return didUpdate, nil
 }
 
-func InsertNewUnverifiedUser(tx *sqlx.Tx, emailAddress string) (*UserID, error) {
+func InsertNewUnverifiedUser(tx *sqlx.Tx, emailAddress string) (*UserID, *UserStatus, error) {
 	rows, err := tx.Query(insertUnverifiedUserQuery, emailAddress, UserStatusUnverified)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var id UserID
-		if err := rows.Scan(&id); err != nil {
-			return nil, err
+		var userOutput struct {
+			ID     UserID     `db:"_id"`
+			Status UserStatus `db:"status"`
 		}
-		return &id, nil
+		if err := rows.Scan(&userOutput); err != nil {
+			return nil, nil, err
+		}
+		return &userOutput.ID, &userOutput.Status, nil
 	}
-	return nil, nil
+	return nil, nil, nil
 }
