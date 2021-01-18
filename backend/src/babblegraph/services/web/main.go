@@ -2,6 +2,8 @@ package main
 
 import (
 	"babblegraph/actions/email"
+	"babblegraph/actions/verification"
+	"babblegraph/model/routes"
 	"babblegraph/services/web/api/ses"
 	"babblegraph/services/web/api/user"
 	"babblegraph/services/web/router"
@@ -28,6 +30,25 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
+	r.HandleFunc("/verify/{token}", func(w http.ResponseWriter, r *http.Request) {
+		routeVars := mux.Vars(r)
+		token, ok := routeVars["token"]
+		if !ok {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		userID, err := verification.VerifyUserByToken(token)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		subscriptionManagementLink, err := routes.MakeSubscriptionManagementRouteForUserID(*userID)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		http.Redirect(w, r, *subscriptionManagementLink, http.StatusMovedPermanently)
+	})
 	// Warning: this next function is like one big hack.
 	r.HandleFunc("/dist/{token}/logo.png", func(w http.ResponseWriter, r *http.Request) {
 		// In order to collect information about whether an email was opened, we pass
