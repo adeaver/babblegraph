@@ -23,6 +23,7 @@ func StartScheduler(linkProcessor *linkprocessing.LinkProcessor, errs chan error
 	case "prod":
 		c.AddFunc("30 2 * * *", makeRefetchSeedDomainJob(linkProcessor, errs))
 		c.AddFunc("30 5 * * *", makeEmailJob(errs))
+		c.AddFunc("*/3 * * * *", makeVerificationJob(errors))
 	case "local":
 		makeEmailJob(errs)()
 		makeRefetchSeedDomainJob(linkProcessor, errs)()
@@ -43,7 +44,7 @@ func makeRefetchSeedDomainJob(linkProcessor *linkprocessing.LinkProcessor, errs 
 				debug.PrintStack()
 			}
 		}()
-		if err := RefetchSeedDomainsForNewContent(); err != nil {
+		if err := refetchSeedDomainsForNewContent(); err != nil {
 			errs <- err
 		}
 		log.Println(fmt.Sprintf("Finished refetch. Reseeding link processor"))
@@ -72,4 +73,15 @@ func makeEmailJob(errs chan error) func() {
 			errs <- err
 		}
 	}
+}
+
+func makeVerificationJob(errs chan error) func() {
+	return func() {
+		x := recover()
+		if err, ok := x.(error); ok {
+			errs <- err
+			debug.PrintStack()
+		}
+	}
+    if err :=
 }

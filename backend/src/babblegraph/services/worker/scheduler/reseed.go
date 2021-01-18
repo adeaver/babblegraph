@@ -13,7 +13,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func RefetchSeedDomainsForNewContent() error {
+func refetchSeedDomainsForNewContent() error {
 	log.Println(fmt.Sprintf("Starting refetch of seed domains..."))
 	urlsByDomain := make(map[string][]domains.SeedURL)
 	for _, domain := range domains.GetDomains() {

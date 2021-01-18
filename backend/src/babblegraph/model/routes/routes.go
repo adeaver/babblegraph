@@ -53,3 +53,14 @@ func MakeLogoURLForEmailRecordID(emailRecordID email.ID) (*string, error) {
 	}
 	return ptr.String(env.GetAbsoluteURLForEnvironment(fmt.Sprintf("dist/%s/logo.png", *token))), nil
 }
+
+func MakeUserVerificationLink(userID users.UserID) (*string, error) {
+	token, err := encrypt.GetToken(encrypt.TokenPair{
+		Key:   UserVerificationKey.Str(),
+		Value: userID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return ptr.String(env.GetAbsoluteURLForEnvironment(fmt.Sprintf("verify/%s", *token))), nil
+}

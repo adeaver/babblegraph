@@ -5,10 +5,10 @@ import (
 	"time"
 )
 
-type ID string
+type id string
 
 type dbUserVerificationAttempt struct {
-	VerificationAttemptID ID           `db:"_id"`
+	VerificationAttemptID id           `db:"_id"`
 	FulfilledAtTimestamp  *time.Time   `db:"fulfilled_at_timestamp"`
 	UserID                users.UserID `db:"user_id"`
 }

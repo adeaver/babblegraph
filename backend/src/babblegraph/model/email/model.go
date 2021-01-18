@@ -19,7 +19,8 @@ type dbEmail struct {
 type EmailType string
 
 const (
-	EmailTypeDaily EmailType = "daily-email"
+	EmailTypeDaily            EmailType = "daily-email"
+	EmailTypeUserVerification EmailType = "user-verification"
 )
 
 type Recipient struct {
