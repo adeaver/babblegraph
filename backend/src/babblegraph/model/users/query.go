@@ -7,12 +7,17 @@ import (
 )
 
 const (
-	getAllUsersByStatusQuery       = "SELECT * FROM users WHERE status='%s'"
+	getAllUsersByStatusQuery = "SELECT * FROM users WHERE status='%s'"
+
 	updateUserStatusByQuery        = "UPDATE users SET status = $1 WHERE email_address = $2 and _id = $3"
+	updateUserStatusByID           = "UPDATE users SET status = $1 WHERE _id = $2"
 	updateUserStatusByEmailAddress = "UPDATE users SET status = $1 WHERE email_address = $2" // prefer update by query
-	lookupUserByEmailAddressAndID  = "SELECT * FROM users WHERE _id = $1 AND email_address = $2"
-	lookupUserByEmailAddressQuery  = "SELECT * FROM users WHERE email_address = $1"
-	insertUnverifiedUserQuery      = "INSERT INTO users (email_address, status) VALUES ($1, $2) ON CONFLICT DO NOTHING"
+
+	lookupUserByEmailAddressAndID = "SELECT * FROM users WHERE _id = $1 AND email_address = $2"
+	lookupUserByEmailAddressQuery = "SELECT * FROM users WHERE email_address = $1"
+	lookupUserQuery               = "SELECT * FROM users WHERE _id = $1"
+
+	insertUnverifiedUserQuery = "INSERT INTO users (email_address, status) VALUES ($1, $2) ON CONFLICT DO NOTHING"
 )
 
 func GetAllActiveUsers(tx *sqlx.Tx) ([]User, error) {
@@ -76,6 +81,18 @@ func AddUserToBlocklistByEmailAddress(tx *sqlx.Tx, emailAddress string, newStatu
 	return didUpdate, nil
 }
 
+func GetUser(tx *sqlx.Tx, id UserID) (*User, error) {
+	var matches []dbUser
+	if err := tx.Select(&matches, lookupUserQuery, id); err != nil {
+		return nil, err
+	}
+	if len(matches) != 1 {
+		return nil, fmt.Errorf("Expecting 1 user got %d", len(matches))
+	}
+	user := matches[0].ToNonDB()
+	return &user, nil
+}
+
 func LookupUserByEmailAddress(tx *sqlx.Tx, emailAddress string) (*User, error) {
 	var matches []dbUser
 	if err := tx.Select(&matches, lookupUserByEmailAddressQuery, emailAddress); err != nil {
@@ -90,5 +107,10 @@ func LookupUserByEmailAddress(tx *sqlx.Tx, emailAddress string) (*User, error) {
 
 func InsertNewUnverifiedUser(tx *sqlx.Tx, emailAddress string) error {
 	_, err := tx.Exec(insertUnverifiedUserQuery, emailAddress, UserStatusUnverified)
+	return err
+}
+
+func SetUserStatusToVerified(tx *sqlx.Tx, id UserID) error {
+	_, err := tx.Exec(updateUserStatusByID, UserStatusVerified, id)
 	return err
 }

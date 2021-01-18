@@ -23,7 +23,7 @@ func mustEnvironmentFromString(s string) Environment {
 		return EnvironmentStage
 	case "local":
 		return EnvironmentLocal
-	case "local-no-emails":
+	case "local-no-email":
 		return EnvironmentLocalNoEmail
 	default:
 		panic(fmt.Sprintf("Unrecognized environment: %s", s))

@@ -112,3 +112,7 @@ func UpdateReadingLevelClassificationForUser(tx *sqlx.Tx, userID users.UserID, l
 	}
 	return updateUserReadabilityForUser(tx, userID, languageCode, newLevel)
 }
+
+func InitializeReadingLevelClassification(tx *sqlx.Tx, userID users.UserID, languageCode wordsmith.LanguageCode) error {
+	return insertUserReadability(tx, userID, languageCode, 3)
+}

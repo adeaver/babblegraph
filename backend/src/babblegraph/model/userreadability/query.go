@@ -11,6 +11,7 @@ const (
 	lookupUserReadabilityForLanguageQuery  = "SELECT * FROM user_readability_level WHERE user_id = $1 AND language_code = $2"
 	lookupAllUserReadabilitiesForUserQuery = "SELECT * FROM user_readability_level WHERE user_id = $1 AND version = $2"
 	updateUserReadability                  = "UPDATE user_readability_level SET readability_level = $1 WHERE user_id = $2 AND language_code = $3 AND version = $4"
+	insertUserReadabilityQuery             = "INSERT INTO user_readability_level (user_id, language_code, version, readability_level) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING"
 )
 
 func lookupUserReadabilityForLanguage(tx *sqlx.Tx, userID users.UserID, languageCode wordsmith.LanguageCode) ([]userReadabilityLevel, error) {
@@ -40,4 +41,9 @@ func updateUserReadabilityForUser(tx *sqlx.Tx, userID users.UserID, languageCode
 	}
 	didUpdate := numRows > 0
 	return didUpdate, nil
+}
+
+func insertUserReadability(tx *sqlx.Tx, userID users.UserID, languageCode wordsmith.LanguageCode, level int) error {
+	_, err := tx.Exec(insertUserReadabilityQuery, userID, languageCode, version1, level)
+	return err
 }

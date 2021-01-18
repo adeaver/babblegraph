@@ -23,9 +23,11 @@ func StartScheduler(linkProcessor *linkprocessing.LinkProcessor, errs chan error
 	case "prod":
 		c.AddFunc("30 2 * * *", makeRefetchSeedDomainJob(linkProcessor, errs))
 		c.AddFunc("30 5 * * *", makeEmailJob(errs))
+		c.AddFunc("*/3 * * * *", makeVerificationJob(errs))
 	case "local":
-		makeEmailJob(errs)()
 		makeRefetchSeedDomainJob(linkProcessor, errs)()
+		makeEmailJob(errs)()
+		c.AddFunc("*/1 * * * *", makeVerificationJob(errs))
 	case "local-no-email":
 		// no-op
 		makeRefetchSeedDomainJob(linkProcessor, errs)()
@@ -43,7 +45,7 @@ func makeRefetchSeedDomainJob(linkProcessor *linkprocessing.LinkProcessor, errs 
 				debug.PrintStack()
 			}
 		}()
-		if err := RefetchSeedDomainsForNewContent(); err != nil {
+		if err := refetchSeedDomainsForNewContent(); err != nil {
 			errs <- err
 		}
 		log.Println(fmt.Sprintf("Finished refetch. Reseeding link processor"))
@@ -69,6 +71,27 @@ func makeEmailJob(errs chan error) func() {
 		log.Println("Starting email job...")
 		dailyEmailFn := dailyemail.GetDailyEmailJob(emailClient)
 		if err := dailyEmailFn(); err != nil {
+			errs <- err
+		}
+	}
+}
+
+func makeVerificationJob(errs chan error) func() {
+	return func() {
+		defer func() {
+			x := recover()
+			if err, ok := x.(error); ok {
+				errs <- err
+				debug.PrintStack()
+			}
+		}()
+		emailClient := ses.NewClient(ses.NewClientInput{
+			AWSAccessKey:       env.MustEnvironmentVariable("AWS_SES_ACCESS_KEY"),
+			AWSSecretAccessKey: env.MustEnvironmentVariable("AWS_SES_SECRET_KEY"),
+			AWSRegion:          "us-east-1",
+			FromAddress:        env.MustEnvironmentVariable("EMAIL_ADDRESS"),
+		})
+		if err := handlePendingVerifications(emailClient); err != nil {
 			errs <- err
 		}
 	}
