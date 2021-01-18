@@ -11,6 +11,7 @@ const (
 	updateUserStatusByQuery        = "UPDATE users SET status = $1 WHERE email_address = $2 and _id = $3"
 	updateUserStatusByEmailAddress = "UPDATE users SET status = $1 WHERE email_address = $2" // prefer update by query
 	lookupUserByEmailAddressAndID  = "SELECT * FROM users WHERE _id = $1 AND email_address = $2"
+	insertUnverifiedUserQuery      = "INSERT INTO users (email_address, status) VALUES ($1, $2) ON CONFLICT DO NOTHING RETURNING _id"
 )
 
 func GetAllActiveUsers(tx *sqlx.Tx) ([]User, error) {
@@ -72,4 +73,20 @@ func AddUserToBlocklistByEmailAddress(tx *sqlx.Tx, emailAddress string, newStatu
 	}
 	didUpdate := numRows > 0
 	return didUpdate, nil
+}
+
+func InsertNewUnverifiedUser(tx *sqlx.Tx, emailAddress string) (*UserID, error) {
+	rows, err := tx.Query(insertUnverifiedUserQuery, emailAddress, UserStatusUnverified)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var id UserID
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		return &id, nil
+	}
+	return nil, nil
 }
