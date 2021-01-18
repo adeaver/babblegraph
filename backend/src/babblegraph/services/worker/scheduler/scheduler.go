@@ -25,8 +25,9 @@ func StartScheduler(linkProcessor *linkprocessing.LinkProcessor, errs chan error
 		c.AddFunc("30 5 * * *", makeEmailJob(errs))
 		c.AddFunc("*/3 * * * *", makeVerificationJob(errors))
 	case "local":
-		makeEmailJob(errs)()
 		makeRefetchSeedDomainJob(linkProcessor, errs)()
+		makeEmailJob(errs)()
+		c.AddFunc("*/1 * * * *", makeVerificationJob(errors))
 	case "local-no-email":
 		// no-op
 		makeRefetchSeedDomainJob(linkProcessor, errs)()
@@ -77,11 +78,21 @@ func makeEmailJob(errs chan error) func() {
 
 func makeVerificationJob(errs chan error) func() {
 	return func() {
-		x := recover()
-		if err, ok := x.(error); ok {
+		defer func() {
+			x := recover()
+			if err, ok := x.(error); ok {
+				errs <- err
+				debug.PrintStack()
+			}
+		}()
+		emailClient := ses.NewClient(ses.NewClientInput{
+			AWSAccessKey:       env.MustEnvironmentVariable("AWS_SES_ACCESS_KEY"),
+			AWSSecretAccessKey: env.MustEnvironmentVariable("AWS_SES_SECRET_KEY"),
+			AWSRegion:          "us-east-1",
+			FromAddress:        env.MustEnvironmentVariable("EMAIL_ADDRESS"),
+		})
+		if err := handlePendingVerifications(emailClient); err != nil {
 			errs <- err
-			debug.PrintStack()
 		}
 	}
-    if err :=
 }

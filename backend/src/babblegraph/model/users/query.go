@@ -12,6 +12,7 @@ const (
 	updateUserStatusByEmailAddress = "UPDATE users SET status = $1 WHERE email_address = $2" // prefer update by query
 	lookupUserByEmailAddressAndID  = "SELECT * FROM users WHERE _id = $1 AND email_address = $2"
 	lookupUserByEmailAddressQuery  = "SELECT * FROM users WHERE email_address = $1"
+	lookupUserQuery                = "SELECT * FROM users WHERE _id = $1"
 	insertUnverifiedUserQuery      = "INSERT INTO users (email_address, status) VALUES ($1, $2) ON CONFLICT DO NOTHING"
 )
 
@@ -74,6 +75,18 @@ func AddUserToBlocklistByEmailAddress(tx *sqlx.Tx, emailAddress string, newStatu
 	}
 	didUpdate := numRows > 0
 	return didUpdate, nil
+}
+
+func GetUser(tx *sqlx.Tx, id UserID) (*User, error) {
+	var matches []dbUser
+	if err := tx.Select(&matches, lookupUserQuery, userID); err != nil {
+		return nil, err
+	}
+	if len(matches) != 1 {
+		return nil, fmt.Errorf("Expecting 1 user got %d", len(matches))
+	}
+	user := matches[0].ToNonDB()
+	return &user, nil
 }
 
 func LookupUserByEmailAddress(tx *sqlx.Tx, emailAddress string) (*User, error) {
