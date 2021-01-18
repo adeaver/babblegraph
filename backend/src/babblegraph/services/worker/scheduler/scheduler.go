@@ -23,11 +23,11 @@ func StartScheduler(linkProcessor *linkprocessing.LinkProcessor, errs chan error
 	case "prod":
 		c.AddFunc("30 2 * * *", makeRefetchSeedDomainJob(linkProcessor, errs))
 		c.AddFunc("30 5 * * *", makeEmailJob(errs))
-		c.AddFunc("*/3 * * * *", makeVerificationJob(errors))
+		c.AddFunc("*/3 * * * *", makeVerificationJob(errs))
 	case "local":
 		makeRefetchSeedDomainJob(linkProcessor, errs)()
 		makeEmailJob(errs)()
-		c.AddFunc("*/1 * * * *", makeVerificationJob(errors))
+		c.AddFunc("*/1 * * * *", makeVerificationJob(errs))
 	case "local-no-email":
 		// no-op
 		makeRefetchSeedDomainJob(linkProcessor, errs)()

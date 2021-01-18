@@ -79,7 +79,7 @@ func AddUserToBlocklistByEmailAddress(tx *sqlx.Tx, emailAddress string, newStatu
 
 func GetUser(tx *sqlx.Tx, id UserID) (*User, error) {
 	var matches []dbUser
-	if err := tx.Select(&matches, lookupUserQuery, userID); err != nil {
+	if err := tx.Select(&matches, lookupUserQuery, id); err != nil {
 		return nil, err
 	}
 	if len(matches) != 1 {
