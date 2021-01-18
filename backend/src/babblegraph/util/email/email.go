@@ -26,3 +26,7 @@ func ValidateEmailAddress(emailAddress string) error {
 	}
 	return nil
 }
+
+func FormatEmailAddress(emailAddress string) string {
+	return strings.ToLower(strings.Trim(emailAddress, " "))
+}
