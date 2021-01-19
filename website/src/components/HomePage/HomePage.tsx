@@ -96,11 +96,21 @@ const HomePage = () => {
                                 handleEmailAddressChange={setEmailAddress} />
                         )
                     }
-                    { !!errorMessage && (
-                        <Paragraph size={Size.Small} color={TypographyColor.Warning}>
-                            {errorMessage}
-                        </Paragraph>
-                      )
+                    {
+                        !!errorMessage && (
+                            <Paragraph size={Size.Small} color={TypographyColor.Warning}>
+                                {errorMessage}
+                            </Paragraph>
+                        )
+                    }
+                    {
+                        hadSuccess && (
+                            <Paragraph size={Size.Small} color={TypographyColor.Confirmation}>
+                                Success! Check your email inbox for a confirmation email.
+                                It should arrive in the next five minutes.
+                                If it doesn’t, you can request another one by re-entering your email here.
+                            </Paragraph>
+                        )
                     }
                     </Card>
                 </Grid>
@@ -142,6 +152,7 @@ const SignupForm = (props: SignupFormProps) => {
                             className={classes.emailField}
                             label="Email Address"
                             variant="outlined"
+                            defaultValue={props.emailAddress}
                             onChange={handleEmailAddressChange} />
                     </Grid>
                     <Grid item xs={3} md={2} className={classes.submitButtonContainer}>
