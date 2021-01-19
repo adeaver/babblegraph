@@ -14,6 +14,7 @@ export enum Alignment {
 export enum TypographyColor {
     Primary = Color.Primary,
     Secondary = Color.Secondary,
+    Warning = Color.Warning,
     Black = Color.Black,
     Gray = Color.TextGray,
     White = Color.White,
