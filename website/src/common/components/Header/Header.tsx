@@ -14,7 +14,6 @@ import {
 const styleClasses = makeStyles({
     headerRoot: {
         height: '80px',
-        marginBottom: '15px',
     },
     headerContainer: {
         padding: '0 10px',
