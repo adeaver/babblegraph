@@ -7,7 +7,7 @@ import Header from 'common/components/Header/Header';
 const pageStyles = makeStyles({
     pageContent: (props: PageProps) => ({
         padding: '20px',
-        height: 'calc(100vh - 80px)',
+        minHeight: 'calc(100vh - 80px)',
         boxSizing: 'border-box',
         backgroundImage: props.withBackground ? `url("${props.withBackground}")` : undefined,
         backgroundSize: props.withBackground ? 'cover' : undefined,

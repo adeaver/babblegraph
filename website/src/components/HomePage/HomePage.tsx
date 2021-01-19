@@ -2,9 +2,12 @@ import React, { useState } from 'react';
 
 import { makeStyles } from '@material-ui/core/styles';
 import Card from '@material-ui/core/Card';
-import Grid from '@material-ui/core/Grid';
+import CheckCircleOutlineIcon from '@material-ui/icons/CheckCircleOutline';
 import Divider from '@material-ui/core/Divider';
+import ErrorOutlineIcon from '@material-ui/icons/ErrorOutline';
+import Grid from '@material-ui/core/Grid';
 
+import Color from 'common/styles/colors';
 import Page from 'common/components/Page/Page';
 import Paragraph, { Size } from 'common/typography/Paragraph';
 import { Alignment, TypographyColor } from 'common/typography/common';
@@ -34,6 +37,29 @@ const styleClasses = makeStyles({
     confirmationForm: {
         padding: '10px 0',
         width: '100%',
+    },
+    iconContainer: {
+        alignSelf: 'center',
+    },
+    confirmationIcon: {
+        color: Color.Confirmation,
+    },
+    warningIcon: {
+        color: Color.Warning,
+    },
+    photoCreditText: {
+        backgroundColor: Color.BackgroundGray,
+    },
+    photoCreditLink: {
+        textDecoration: 'none',
+        fontWeight: '800',
+        color: Color.White,
+    },
+    photoCredit: {
+        position: 'absolute',
+        bottom: '0',
+        right: '0',
+        opacity: '0.75',
     },
 });
 
@@ -98,21 +124,45 @@ const HomePage = () => {
                     }
                     {
                         !!errorMessage && (
-                            <Paragraph size={Size.Small} color={TypographyColor.Warning}>
-                                {errorMessage}
-                            </Paragraph>
+                            <Grid container>
+                                <Grid className={classes.iconContainer} item xs={1}>
+                                    <ErrorOutlineIcon className={classes.warningIcon} />
+                                </Grid>
+                                <Grid item xs={11}>
+                                    <Paragraph size={Size.Small} color={TypographyColor.Warning}>
+                                        {errorMessage}
+                                    </Paragraph>
+                                </Grid>
+                            </Grid>
                         )
                     }
                     {
                         hadSuccess && (
-                            <Paragraph size={Size.Small} color={TypographyColor.Confirmation}>
-                                Success! Check your email inbox for a confirmation email.
-                                It should arrive in the next five minutes.
-                                If it doesn’t, you can request another one by re-entering your email here.
-                            </Paragraph>
+                            <Grid container>
+                                <Grid className={classes.iconContainer} item xs={1}>
+                                    <CheckCircleOutlineIcon className={classes.confirmationIcon} />
+                                </Grid>
+                                <Grid item xs={11}>
+                                    <Paragraph size={Size.Small} color={TypographyColor.Confirmation}>
+                                        Success! Check your email inbox for a confirmation email.
+                                        It should arrive in the next five minutes.
+                                        If it doesn’t, you can request another one by re-entering your email here.
+                                    </Paragraph>
+                                </Grid>
+                            </Grid>
                         )
                     }
                     </Card>
+                </Grid>
+            </Grid>
+            <Grid className={classes.photoCredit} container>
+                <Grid item xs={6} md={9}>
+                    &nbsp;
+                </Grid>
+                <Grid className={classes.photoCreditText} item xs={6} md={3}>
+                    <Paragraph size={Size.Small} color={TypographyColor.White}>
+                        Photo by <a className={classes.photoCreditLink} target="_blank" href="https://unsplash.com/@johanmouchet?utm_source=unsplash&amp;utm_medium=referral&amp;utm_content=creditCopyText">Johan Mouchet</a> on <a className={classes.photoCreditLink} target="_blank" href="https://unsplash.com/s/photos/spain?utm_source=unsplash&amp;utm_medium=referral&amp;utm_content=creditCopyText">Unsplash</a>
+                    </Paragraph>
                 </Grid>
             </Grid>
         </Page>
