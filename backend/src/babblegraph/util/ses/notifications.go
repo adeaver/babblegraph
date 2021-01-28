@@ -2,14 +2,14 @@ package ses
 
 // defined in https://docs.aws.amazon.com/ses/latest/DeveloperGuide/notification-contents.html
 type Notification struct {
-	MessageID        SESMessageID      `json:"MessageId,omitempty"`
-	Token            *string           `json:"Token,omitempty"`
-	TopicARN         string            `json:"TopicArn,omitempty"`
-	Message          *NotificationBody `json:"Message,omitempty"`
-	TimestampISO8601 string            `json:"Timestamp,omitempty"`
-	SignatureVersion string            `json:"SignatureVersion,omitempty"`
-	Signature        string            `json:"Signature,omitempty"`
-	SigningCertURL   string            `json:"SigningCertURL,omitempty"`
+	MessageID        SESMessageID `json:"MessageId,omitempty"`
+	Token            *string      `json:"Token,omitempty"`
+	TopicARN         string       `json:"TopicArn,omitempty"`
+	Message          *string      `json:"Message,omitempty"`
+	TimestampISO8601 string       `json:"Timestamp,omitempty"`
+	SignatureVersion string       `json:"SignatureVersion,omitempty"`
+	Signature        string       `json:"Signature,omitempty"`
+	SigningCertURL   string       `json:"SigningCertURL,omitempty"`
 
 	SubscribeURL   *string `json:"SubscribeURL,omitempty"`
 	UnsubscribeURL *string `json:"UnsubscribeURL,omitempty"`
