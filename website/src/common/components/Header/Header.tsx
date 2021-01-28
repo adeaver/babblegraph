@@ -14,12 +14,18 @@ import {
 const styleClasses = makeStyles({
     headerRoot: {
         height: '80px',
+        background: Color.White,
     },
     headerContainer: {
         padding: '0 10px',
     },
     headerDivider: {
         color: Color.Primary,
+    },
+    headerAnchor: {
+        textDecoration: 'none',
+        cursor: 'pointer',
+        color: 'inherit',
     },
 });
 
@@ -32,7 +38,11 @@ const Header = (props: HeaderProps) => {
         <div className={classes.headerRoot}>
             <Grid className={classes.headerContainer} container>
                 <Grid item xs={11} md={3}>
-                    <Heading2 color={TypographyColor.Primary} align={Alignment.Left}>babblegraph</Heading2>
+                    <Heading2 color={TypographyColor.Primary} align={Alignment.Left}>
+                        <a className={classes.headerAnchor} href="/">
+                            babblegraph
+                        </a>
+                    </Heading2>
                 </Grid>
             </Grid>
             <hr className={classes.headerDivider} />

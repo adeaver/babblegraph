@@ -9,6 +9,8 @@ enum Color {
     TextGray = "#565656",
     BackgroundGray = "#7D7E75",
 
+    LinkBlue = "#20A4F3",
+
     Black = "#000000",
     White = "#FFFFFF",
 }

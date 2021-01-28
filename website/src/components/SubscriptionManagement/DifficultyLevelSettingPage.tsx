@@ -60,16 +60,16 @@ const styleClasses = makeStyles({
 
 const radioFormOptions = [
     {
-        value: 'Beginner',
+        value: 'Easier',
         displayText: 'Beginner',
     }, {
         value: 'Intermediate',
         displayText: 'Intermediate',
     }, {
-        value: 'Advanced',
+        value: 'More Difficult',
         displayText: 'Advanced',
     }, {
-        value: 'Professional',
+        value: 'Most Difficult',
         displayText: 'Professional',
     }
 ]
