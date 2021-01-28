@@ -16,6 +16,7 @@ import { PrimaryButton } from 'common/components/Button/Button';
 import { PrimaryTextField } from 'common/components/TextField/TextField';
 import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
 import { PhotoKey } from 'common/data/photos/Photos';
+import Link from 'common/components/Link/Link.tsx';
 
 import {
     SignupUserResponse,
@@ -157,6 +158,7 @@ const SignupForm = (props: SignupFormProps) => {
     const handleEmailAddressChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         props.handleEmailAddressChange((event.target as HTMLInputElement).value);
     };
+    const preventDefault = (event: React.SyntheticEvent) => event.preventDefault();
 
     const classes = styleClasses();
     return (
@@ -171,6 +173,9 @@ const SignupForm = (props: SignupFormProps) => {
             <Paragraph>
                 It’s completely free and you can unsubscribe anytime you’d like.
             </Paragraph>
+            <Link href="/about">
+                Learn more
+            </Link>
             <form className={classes.confirmationForm} noValidate autoComplete="off">
                 <Grid container>
                     <Grid item xs={9} md={10}>

@@ -19,6 +19,7 @@ export enum TypographyColor {
     Black = Color.Black,
     Gray = Color.TextGray,
     White = Color.White,
+    LinkBlue = Color.LinkBlue,
 }
 
 const styleClasses = makeStyles({
