@@ -8,6 +8,7 @@ import {
 } from 'react-router-dom';
 
 import HomePage from 'components/HomePage/HomePage';
+import AboutPage from 'components/AboutPage/AboutPage';
 
 import SubscriptionManagementDashboardPage from 'components/SubscriptionManagement/SubscriptionManagementDashboardPage';
 import InterestSelectionPage from 'components/SubscriptionManagement/InterestSelectionPage';
@@ -27,7 +28,8 @@ class App extends React.Component{
                     <Route path="/manage/:token/interests" component={InterestSelectionPage} />
                     <Route exact path="/manage/:token" component={SubscriptionManagementDashboardPage} />
 
-                    { /* Home Page */ }
+                    { /* Home Page & About Page */ }
+                    <Route path="/about" component={AboutPage} />
                     <Route exact path="/" component={HomePage} />
 
                     { /* 404 Page */ }

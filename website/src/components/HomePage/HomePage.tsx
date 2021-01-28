@@ -15,6 +15,7 @@ import { Heading1 } from 'common/typography/Heading';
 import { PrimaryButton } from 'common/components/Button/Button';
 import { PrimaryTextField } from 'common/components/TextField/TextField';
 import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
+import { PhotoKey } from 'common/data/photos/Photos';
 
 import {
     SignupUserResponse,
@@ -46,20 +47,6 @@ const styleClasses = makeStyles({
     },
     warningIcon: {
         color: Color.Warning,
-    },
-    photoCreditText: {
-        backgroundColor: Color.BackgroundGray,
-    },
-    photoCreditLink: {
-        textDecoration: 'none',
-        fontWeight: '800',
-        color: Color.White,
-    },
-    photoCredit: {
-        position: 'absolute',
-        bottom: '0',
-        right: '0',
-        opacity: '0.75',
     },
 });
 
@@ -105,7 +92,7 @@ const HomePage = () => {
 
     const classes = styleClasses();
     return (
-        <Page withBackground='/dist/home-page.jpg'>
+        <Page withBackground={PhotoKey.Seville}>
             <Grid container>
                 <Grid item xs={false} md={1}>
                     &nbsp;
@@ -153,16 +140,6 @@ const HomePage = () => {
                         )
                     }
                     </Card>
-                </Grid>
-            </Grid>
-            <Grid className={classes.photoCredit} container>
-                <Grid item xs={6} md={9}>
-                    &nbsp;
-                </Grid>
-                <Grid className={classes.photoCreditText} item xs={6} md={3}>
-                    <Paragraph size={Size.Small} color={TypographyColor.White}>
-                        Photo by <a className={classes.photoCreditLink} target="_blank" href="https://unsplash.com/@johanmouchet?utm_source=unsplash&amp;utm_medium=referral&amp;utm_content=creditCopyText">Johan Mouchet</a> on <a className={classes.photoCreditLink} target="_blank" href="https://unsplash.com/s/photos/spain?utm_source=unsplash&amp;utm_medium=referral&amp;utm_content=creditCopyText">Unsplash</a>
-                    </Paragraph>
                 </Grid>
             </Grid>
         </Page>
