@@ -10,6 +10,7 @@ website/node_modules/**
 website/dist/*
 !website/dist/index.html
 !website/dist/logo.png
+!website/dist/home-page.jpg
 
 # Ops
 ops/wordsmith/setup/out/**

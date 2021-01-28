@@ -14,6 +14,7 @@ RUN mkdir ./dist
 
 COPY website/dist/index.html ./dist
 COPY website/dist/logo.png ./dist
+COPY website/dist/home-page.jpg ./dist
 COPY website/src ./src
 COPY website/webpack.common.js .
 COPY website/webpack.prod.js .
