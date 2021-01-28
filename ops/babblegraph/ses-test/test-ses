@@ -1,2 +1,2 @@
 #!/bin/bash
-curl -H 'Content-Type: application/json' -X POST --data "@sample-bounce.json" http://localhost:8080/api/ses/handle_bounce_notification_1
+curl -H 'Content-Type: application/json' -X POST --data "@sample-subscribe.json" http://localhost:8080/api/ses/handle_bounce_notification_1
