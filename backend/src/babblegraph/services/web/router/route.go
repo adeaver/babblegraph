@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/http/httputil"
 )
 
 type Route struct {
@@ -16,7 +17,7 @@ type RouteHandler func(reqBody []byte) (_resp interface{}, _err error)
 
 func makeMuxRouter(processRequest RouteHandler) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// TODO: add tracking and logging
+		LogRequest(r)
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			log.Println(fmt.Sprintf("ERROR: %s", err.Error()))
@@ -36,4 +37,13 @@ func makeMuxRouter(processRequest RouteHandler) func(http.ResponseWriter, *http.
 		w.WriteHeader(http.StatusOK)
 		writeJSONResponse(w, resp)
 	}
+}
+
+func LogRequest(req *http.Request) {
+	requestDump, err := httputil.DumpRequest(req, false)
+	if err != nil {
+		log.Println(fmt.Sprintf("Error dumping request: %s", err.Error()))
+		return
+	}
+	log.Println(string(requestDump))
 }
