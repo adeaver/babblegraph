@@ -39,12 +39,16 @@ func handleBounceNotification(body []byte) (interface{}, error) {
 	case req.SubscribeURL != nil:
 		log.Println(fmt.Sprintf("Got subscription confirmation with URL: %s", *req.SubscribeURL))
 		return nil, nil
-	case req.Bounce != nil:
+	case req.Message != nil:
+		var b ses.NotificationBody
+		if err := json.Unmarshal([]byte(*req.Message), &b); err != nil {
+			return nil, err
+		}
 		if err := database.WithTx(func(tx *sqlx.Tx) error {
 			if err := sesnotifications.InsertSESNotification(tx, req); err != nil {
 				log.Println(fmt.Sprintf("Error persisting SES notification: %s. Continuing...", err.Error()))
 			}
-			for _, recipient := range req.Bounce.BouncedRecipients {
+			for _, recipient := range b.Bounce.BouncedRecipients {
 				didUpdate, err := users.AddUserToBlocklistByEmailAddress(tx, recipient.EmailAddress, users.UserStatusBlocklistBounced)
 				if err != nil {
 					log.Println(fmt.Sprintf("Error on adding %s to bounce list: %s", recipient.EmailAddress, err.Error()))
@@ -75,12 +79,16 @@ func handleComplaintNotification(body []byte) (interface{}, error) {
 	case req.SubscribeURL != nil:
 		log.Println(fmt.Sprintf("Got subscription confirmation with URL: %s", *req.SubscribeURL))
 		return nil, nil
-	case req.Complaint != nil:
+	case req.Message != nil:
+		var b ses.NotificationBody
+		if err := json.Unmarshal([]byte(*req.Message), &b); err != nil {
+			return nil, err
+		}
 		if err := database.WithTx(func(tx *sqlx.Tx) error {
 			if err := sesnotifications.InsertSESNotification(tx, req); err != nil {
 				log.Println(fmt.Sprintf("Error persisting SES notification: %s. Continuing...", err.Error()))
 			}
-			for _, recipient := range req.Complaint.ComplainedRecipients {
+			for _, recipient := range b.Complaint.ComplainedRecipients {
 				didUpdate, err := users.AddUserToBlocklistByEmailAddress(tx, recipient.EmailAddress, users.UserStatusBlocklistComplaint)
 				if err != nil {
 					log.Println(fmt.Sprintf("Error on adding %s to complaint list: %s", recipient.EmailAddress, err.Error()))

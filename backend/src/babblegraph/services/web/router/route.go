@@ -40,7 +40,8 @@ func makeMuxRouter(processRequest RouteHandler) func(http.ResponseWriter, *http.
 }
 
 func LogRequest(req *http.Request) {
-	requestDump, err := httputil.DumpRequest(req, false)
+	// TODO: ability to turn this off
+	requestDump, err := httputil.DumpRequest(req, true)
 	if err != nil {
 		log.Println(fmt.Sprintf("Error dumping request: %s", err.Error()))
 		return
