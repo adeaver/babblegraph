@@ -29,6 +29,7 @@ func (s signupError) Ptr() *signupError {
 
 type signupUserRequest struct {
 	EmailAddress string `json:"email_address"`
+	CaptchaToken string `json:"captcha_token"`
 }
 
 type signupUserResponse struct {

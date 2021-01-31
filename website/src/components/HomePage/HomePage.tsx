@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { makeStyles } from '@material-ui/core/styles';
 import Card from '@material-ui/core/Card';
@@ -17,6 +17,7 @@ import { PrimaryTextField } from 'common/components/TextField/TextField';
 import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
 import { PhotoKey } from 'common/data/photos/Photos';
 import Link from 'common/components/Link/Link.tsx';
+import { withCaptchaToken } from 'common/util/grecaptcha/grecaptcha';
 
 import {
     SignupUserResponse,
@@ -68,26 +69,29 @@ const HomePage = () => {
 
     const handleSubmit = () => {
         setIsLoading(true);
-        signupUser({
-            emailAddress: emailAddress,
-        },
-        (resp: SignupUserResponse) => {
-            setIsLoading(false);
-            if (!!resp.errorMessage) {
-                setErrorMessage(errorMessages[resp.errorMessage] || errorMessages["default"]);
-                setHadSuccess(false);
-            } else if (resp.success) {
-                setErrorMessage(null);
-                setHadSuccess(true);
-            } else {
+        withCaptchaToken("signup", (token: string) => {
+            signupUser({
+                emailAddress: emailAddress,
+                captchaToken: token,
+            },
+            (resp: SignupUserResponse) => {
+                setIsLoading(false);
+                if (!!resp.errorMessage) {
+                    setErrorMessage(errorMessages[resp.errorMessage] || errorMessages["default"]);
+                    setHadSuccess(false);
+                } else if (resp.success) {
+                    setErrorMessage(null);
+                    setHadSuccess(true);
+                } else {
+                    setErrorMessage(errorMessages["default"]);
+                    setHadSuccess(false);
+                }
+            },
+            (e: Error) => {
+                setIsLoading(false);
                 setErrorMessage(errorMessages["default"]);
                 setHadSuccess(false);
-            }
-        },
-        (e: Error) => {
-            setIsLoading(false);
-            setErrorMessage(errorMessages["default"]);
-            setHadSuccess(false);
+            });
         });
     }
 

@@ -11,7 +11,6 @@ import (
 type Route struct {
 	Path          string
 	Handler       RouteHandler
-	UseCaptcha    bool
 	ShouldLogBody bool
 }
 
@@ -37,13 +36,6 @@ func makeMuxRouter(processRequest RouteHandler) func(http.ResponseWriter, *http.
 		}
 		w.WriteHeader(http.StatusOK)
 		writeJSONResponse(w, resp)
-	}
-}
-
-func withCaptcha(muxRouter func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		log.Println("Captcha")
-		muxRouter(w, r)
 	}
 }
 

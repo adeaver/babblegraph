@@ -2,6 +2,7 @@ import { makePostRequestWithStandardEncoding } from 'api/bgfetch/bgfetch';
 
 export type SignupUserRequest = {
     emailAddress: string;
+    captchaToken: string;
 }
 
 export type SignupUserResponse = {

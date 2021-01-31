@@ -44,11 +44,6 @@ func RegisterRouteGroup(rg RouteGroup) error {
 			return fmt.Errorf("Duplicate paths %s", path)
 		}
 		muxRoute := makeMuxRouter(r.Handler)
-		// Applies options, these will happen in
-		// reverse order
-		if r.UseCaptcha {
-			muxRoute = withCaptcha(muxRoute)
-		}
 		if r.ShouldLogBody {
 			muxRoute = withBodyLogger(muxRoute)
 		} else {
