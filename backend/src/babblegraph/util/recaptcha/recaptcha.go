@@ -2,20 +2,16 @@ package recaptcha
 
 import (
 	"babblegraph/util/env"
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
+	"strings"
 )
 
 const verificationURL = "https://www.google.com/recaptcha/api/siteverify"
-
-type verificationRequest struct {
-	Secret string `json:"secret"`
-	Token  string `json:"response"`
-}
 
 type verificationResponse struct {
 	Success                     bool     `json:"success"`
@@ -25,14 +21,10 @@ type verificationResponse struct {
 }
 
 func VerifyRecaptchaToken(token string) error {
-	reqBytes, err := json.Marshal(verificationRequest{
-		Secret: env.MustEnvironmentVariable("CAPTCHA_SECRET"),
-		Token:  token,
-	})
-	if err != nil {
-		return err
-	}
-	resp, err := http.Post(verificationURL, "application/json", bytes.NewBuffer(reqBytes))
+	data := url.Values{}
+	data.Set("secret", env.MustEnvironmentVariable("CAPTCHA_SECRET"))
+	data.Set("response", token)
+	resp, err := http.Post(verificationURL, "application/x-www-form-urlencoded", strings.NewReader(data.Encode()))
 	if err != nil {
 		return err
 	}
