@@ -17,7 +17,7 @@ import { PrimaryTextField } from 'common/components/TextField/TextField';
 import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
 import { PhotoKey } from 'common/data/photos/Photos';
 import Link from 'common/components/Link/Link.tsx';
-import { withCaptchaToken } from 'common/util/grecaptcha/grecaptcha';
+import { withCaptchaToken, loadCaptchaScript } from 'common/util/grecaptcha/grecaptcha';
 
 import {
     SignupUserResponse,
@@ -94,6 +94,9 @@ const HomePage = () => {
             });
         });
     }
+    useEffect(() => {
+        loadCaptchaScript();
+    });
 
     const classes = styleClasses();
     return (

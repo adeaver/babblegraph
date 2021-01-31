@@ -31,9 +31,6 @@ const BackgroundPhotoCredit = (props: BackgroundPhotoCreditProps) => {
     const classes = styleClasses();
     return (
         <Grid className={classes.photoCredit} container>
-            <Grid item xs={6} md={9}>
-                &nbsp;
-            </Grid>
             <Grid className={classes.photoCreditText} item xs={6} md={3}>
                 <Paragraph size={Size.Small} color={TypographyColor.White}>
                     Photo by <a className={classes.photoCreditLink} target="_blank" href={props.photographer.url}>{props.photographer.name}</a> on <a className={classes.photoCreditLink} target="_blank" href={props.source.url}>{props.source.name}</a>
