@@ -43,7 +43,7 @@ func handleSignupUser(body []byte) (interface{}, error) {
 	if err := json.Unmarshal(body, &req); err != nil {
 		return nil, err
 	}
-	if err := recaptcha.VerifyRecaptchaToken(req.CaptchaToken); err != nil {
+	if err := recaptcha.VerifyRecaptchaToken("signup", req.CaptchaToken); err != nil {
 		return nil, err
 	}
 	formattedEmailAddress := email.FormatEmailAddress(req.EmailAddress)
