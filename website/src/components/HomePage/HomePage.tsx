@@ -95,7 +95,7 @@ const HomePage = () => {
     return (
         <Page withBackground={PhotoKey.Seville}>
             <Grid container>
-                <Grid item xs={false} md={1}>
+                <Grid item xs={false} md={1} xl={4}>
                     &nbsp;
                 </Grid>
                 <Grid item xs={12} md={4}>
