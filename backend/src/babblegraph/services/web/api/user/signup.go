@@ -5,6 +5,7 @@ import (
 	"babblegraph/model/userverificationattempt"
 	"babblegraph/util/database"
 	"babblegraph/util/email"
+	"babblegraph/util/recaptcha"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -42,7 +43,9 @@ func handleSignupUser(body []byte) (interface{}, error) {
 	if err := json.Unmarshal(body, &req); err != nil {
 		return nil, err
 	}
-	// TODO: insert CAPTCHA verification
+	if err := recaptcha.VerifyRecaptchaToken(req.CaptchaToken); err != nil {
+		return nil, err
+	}
 	formattedEmailAddress := email.FormatEmailAddress(req.EmailAddress)
 	if err := email.ValidateEmailAddress(formattedEmailAddress); err != nil {
 		log.Println(fmt.Sprintf("Error validating email address %s: %s", formattedEmailAddress, err.Error()))
