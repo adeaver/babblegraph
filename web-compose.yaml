@@ -27,6 +27,7 @@ services:
       - AWS_SES_SECRET_KEY=$BABBLEGRAPH_SES_ACCESS_SECRET
       - STATIC_DIR=/usr/local/go/src/babblegraph/dist
       - AES_KEY=ryDMLNhwEqPBHMgu6YOsCZ0ihx4WgvqE
+      - CAPTCHA_SECRET=$BABBLEGRAPH_CAPTCHA_SECRET
       - ENV=local-no-email
     command: go run /usr/local/go/src/babblegraph/services/web/main.go
   frontend:

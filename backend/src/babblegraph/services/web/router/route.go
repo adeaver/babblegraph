@@ -9,15 +9,15 @@ import (
 )
 
 type Route struct {
-	Path    string
-	Handler RouteHandler
+	Path          string
+	Handler       RouteHandler
+	ShouldLogBody bool
 }
 
 type RouteHandler func(reqBody []byte) (_resp interface{}, _err error)
 
 func makeMuxRouter(processRequest RouteHandler) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		LogRequest(r)
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			log.Println(fmt.Sprintf("ERROR: %s", err.Error()))
@@ -39,9 +39,31 @@ func makeMuxRouter(processRequest RouteHandler) func(http.ResponseWriter, *http.
 	}
 }
 
-func LogRequest(req *http.Request) {
-	// TODO: ability to turn this off
+func withBodyLogger(muxRouter func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		LogRequestWithBody(r)
+		muxRouter(w, r)
+	}
+}
+
+func withoutBodyLogger(muxRouter func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		LogRequestWithoutBody(r)
+		muxRouter(w, r)
+	}
+}
+
+func LogRequestWithBody(req *http.Request) {
 	requestDump, err := httputil.DumpRequest(req, true)
+	if err != nil {
+		log.Println(fmt.Sprintf("Error dumping request: %s", err.Error()))
+		return
+	}
+	log.Println(string(requestDump))
+}
+
+func LogRequestWithoutBody(req *http.Request) {
+	requestDump, err := httputil.DumpRequest(req, false)
 	if err != nil {
 		log.Println(fmt.Sprintf("Error dumping request: %s", err.Error()))
 		return

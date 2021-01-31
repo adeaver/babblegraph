@@ -5,6 +5,7 @@ import (
 	"babblegraph/model/userverificationattempt"
 	"babblegraph/util/database"
 	"babblegraph/util/email"
+	"babblegraph/util/recaptcha"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -29,6 +30,7 @@ func (s signupError) Ptr() *signupError {
 
 type signupUserRequest struct {
 	EmailAddress string `json:"email_address"`
+	CaptchaToken string `json:"captcha_token"`
 }
 
 type signupUserResponse struct {
@@ -41,7 +43,9 @@ func handleSignupUser(body []byte) (interface{}, error) {
 	if err := json.Unmarshal(body, &req); err != nil {
 		return nil, err
 	}
-	// TODO: insert CAPTCHA verification
+	if err := recaptcha.VerifyRecaptchaToken("signup", req.CaptchaToken); err != nil {
+		return nil, err
+	}
 	formattedEmailAddress := email.FormatEmailAddress(req.EmailAddress)
 	if err := email.ValidateEmailAddress(formattedEmailAddress); err != nil {
 		log.Println(fmt.Sprintf("Error validating email address %s: %s", formattedEmailAddress, err.Error()))
