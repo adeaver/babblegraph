@@ -66,6 +66,7 @@ const HomePage = () => {
     const [ isLoading, setIsLoading ] = useState<boolean>(false);
     const [ errorMessage, setErrorMessage ] = useState<string | null>(null);
     const [ hadSuccess, setHadSuccess ] = useState<boolean>(false);
+    const [ hasLoadedCaptcha, setHasLoadedCaptcha ] = useState<boolean>(false);
 
     const handleSubmit = () => {
         setIsLoading(true);
@@ -96,7 +97,8 @@ const HomePage = () => {
     }
     useEffect(() => {
         loadCaptchaScript();
-    });
+        setHasLoadedCaptcha(true);
+    }, []);
 
     const classes = styleClasses();
     return (
@@ -113,6 +115,7 @@ const HomePage = () => {
                         ) : (
                             <SignupForm
                                 emailAddress={emailAddress}
+                                canSubmit={hasLoadedCaptcha}
                                 handleSubmit={handleSubmit}
                                 handleEmailAddressChange={setEmailAddress} />
                         )
@@ -156,6 +159,7 @@ const HomePage = () => {
 
 type SignupFormProps = {
     emailAddress: string;
+    canSubmit: boolean;
 
     handleSubmit: () => void;
     handleEmailAddressChange: (emailAddress: string) => void;
@@ -195,7 +199,7 @@ const SignupForm = (props: SignupFormProps) => {
                             onChange={handleEmailAddressChange} />
                     </Grid>
                     <Grid item xs={3} md={2} className={classes.submitButtonContainer}>
-                        <PrimaryButton onClick={props.handleSubmit} disabled={!props.emailAddress}>
+                        <PrimaryButton onClick={props.handleSubmit} disabled={!props.emailAddress && props.canSubmit}>
                             Try it!
                         </PrimaryButton>
                     </Grid>
