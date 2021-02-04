@@ -10,13 +10,13 @@ import Grid from '@material-ui/core/Grid';
 import Color from 'common/styles/colors';
 import Page from 'common/components/Page/Page';
 import Paragraph, { Size } from 'common/typography/Paragraph';
-import { Alignment, TypographyColor } from 'common/typography/common';
+import { TypographyColor } from 'common/typography/common';
 import { Heading1 } from 'common/typography/Heading';
 import { PrimaryButton } from 'common/components/Button/Button';
 import { PrimaryTextField } from 'common/components/TextField/TextField';
 import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
 import { PhotoKey } from 'common/data/photos/Photos';
-import Link from 'common/components/Link/Link.tsx';
+import Link from 'common/components/Link/Link';
 import { withCaptchaToken, loadCaptchaScript } from 'common/util/grecaptcha/grecaptcha';
 
 import {
@@ -205,6 +205,9 @@ const SignupForm = (props: SignupFormProps) => {
                     </Grid>
                 </Grid>
             </form>
+            <Link href="/privacy-policy">
+                View our Privacy Policy
+            </Link>
         </div>
     )
 }

@@ -18,6 +18,7 @@ const styleClasses = makeStyles({
 
 export enum LinkTarget {
     Blank = "_blank",
+    Self = "_self",
 }
 
 type LinkProps = {
