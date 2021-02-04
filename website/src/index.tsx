@@ -9,6 +9,7 @@ import {
 
 import HomePage from 'components/HomePage/HomePage';
 import AboutPage from 'components/AboutPage/AboutPage';
+import PrivacyPolicyPage from 'components/PrivacyPolicyPage/PrivacyPolicyPage';
 
 import SubscriptionManagementDashboardPage from 'components/SubscriptionManagement/SubscriptionManagementDashboardPage';
 import InterestSelectionPage from 'components/SubscriptionManagement/InterestSelectionPage';
@@ -30,6 +31,7 @@ class App extends React.Component{
 
                     { /* Home Page & About Page */ }
                     <Route path="/about" component={AboutPage} />
+                    <Route path="/privacy-policy" component={PrivacyPolicyPage} />
                     <Route exact path="/" component={HomePage} />
 
                     { /* 404 Page */ }

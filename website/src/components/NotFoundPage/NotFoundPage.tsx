@@ -6,7 +6,7 @@ import Grid from '@material-ui/core/Grid';
 
 import Page from 'common/components/Page/Page';
 import Paragraph, { Size } from 'common/typography/Paragraph';
-import { Alignment, TypographyColor } from 'common/typography/common';
+import { TypographyColor } from 'common/typography/common';
 
 const styleClasses = makeStyles({
     displayCard: {
