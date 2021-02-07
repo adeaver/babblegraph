@@ -30,10 +30,18 @@ func TestRandomStringCreation(t *testing.T) {
 		s, err := MakeRandomString(tc.inputLength)
 		if err := testutils.CompareErrors(tc.expectedErr, err); err != nil {
 			t.Errorf("Error on test case %d: %s", idx+1, err.Error())
-			continue
 		}
-		if len(*s) != tc.inputLength {
-			t.Errorf("Error on test case %d: expected string of length %d, but got string of length %d", idx+1, tc.inputLength, len(*s))
+		switch {
+		case s == nil && tc.expectedErr != nil:
+			// no-op
+		case s == nil && tc.expectedErr == nil:
+			t.Errorf("Error on test case %d: expected result, but didn't get one", idx+1)
+		case s != nil && tc.expectedErr != nil:
+			t.Errorf("Error on test case %d: expected no result, but got %s", idx+1, *s)
+		case s != nil && tc.expectedErr == nil:
+			if len(*s) != tc.inputLength {
+				t.Errorf("Error on test case %d: expected string of length %d, but got string of length %d", idx+1, tc.inputLength, len(*s))
+			}
 		}
 	}
 }
