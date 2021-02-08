@@ -89,7 +89,7 @@ func main() {
 					if err := database.WithTx(func(tx *sqlx.Tx) error {
 						return utm.RegisterUTMPageHit(tx, *trackingID, *utmParameters)
 					}); err != nil {
-						log.Println("Error registering UTM page hit: %s", err.Error())
+						log.Println(fmt.Sprintf("Error registering UTM page hit: %s", err.Error()))
 					}
 				}()
 				http.SetCookie(w, &http.Cookie{
