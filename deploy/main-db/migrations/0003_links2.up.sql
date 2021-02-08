@@ -9,4 +9,4 @@ CREATE TABLE IF NOT EXISTS links2(
     PRIMARY KEY (url_identifier)
 );
 
-CREATE INDEX IF NOT EXISTS links2_domain ON links2(domain) WHERE last_fetch_version = NULL;
+--  CREATE INDEX IF NOT EXISTS links2_domain ON links2(domain) WHERE last_fetch_version = NULL;

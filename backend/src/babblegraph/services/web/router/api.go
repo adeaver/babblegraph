@@ -49,6 +49,9 @@ func RegisterRouteGroup(rg RouteGroup) error {
 		} else {
 			muxRoute = withoutBodyLogger(muxRoute)
 		}
+		if r.TrackEventWithID != nil {
+			muxRoute = withTrackingIDCapture(*r.TrackEventWithID, muxRoute)
+		}
 		a.r.HandleFunc(path, muxRoute).Methods("POST")
 		a.routeNames[path] = true
 	}
