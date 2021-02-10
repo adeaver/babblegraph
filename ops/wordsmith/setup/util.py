@@ -5,9 +5,9 @@ def make_lemma_id(lemma, part_of_speech_id):
     return "{}-eslm1{}".format(part_of_speech_id, processed_lemma_text)
 
 
-def make_word_id(word_text, lemma_id):
+def make_word_id(word_text, lemma_id, part_of_speech_id):
     processed_word_text = _process_word_text(word_text)
-    return "{}-{}".format(lemma_id, processed_word_text)
+    return "{}-{}-{}".format(lemma_id, part_of_speech_id, processed_word_text)
 
 
 def make_part_of_speech_id(part_of_speech):
