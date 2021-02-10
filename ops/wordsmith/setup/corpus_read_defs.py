@@ -20,12 +20,13 @@ observed_lemmas = {
 observed_words = {
     START_TOKEN.get_word_key(): START_TOKEN.get_word_key_value()
 }
+bigram_counts = {}
+current_bigram = [START_TOKEN.get_word_key(), START_TOKEN.get_word_key()]
 lemma_counts = dict()
-word_text_counts = dict()
 
 def get_data_from_read():
-    filtered_lemmas, filtered_words, filtered_word_text_counts  = _filter_data(lemma_counts, observed_lemmas, observed_words, word_text_counts)
-    return filtered_lemmas, filtered_words, observed_parts_of_speech, filtered_word_text_counts
+    filtered_lemmas, filtered_words  = _filter_data(lemma_counts, observed_lemmas, observed_words)
+    return filtered_lemmas, filtered_words, observed_parts_of_speech, bigram_counts
 
 def process_text_line(word, lemma, pos):
     if not _is_text_line_valid(word, lemma, pos):
@@ -83,7 +84,10 @@ def _handle_word(word, part_of_speech, lemma):
     word_key = "{},{}".format(word, part_of_speech.processed_part_of_speech)
     if word_key not in observed_words:
         observed_words[word_key] = "{},{}".format(make_word_id(word, lemma.id, part_of_speech.id), lemma.key)
-    word_text_counts[word] = word_text_counts.get(word, 0) + 1
+    current_bigram = current_bigram[1:]
+    current_bigram.append(word_key)
+    bigram_key = ",".join(current_bigram)
+    bigram_counts[bigram_key] = bigram_counts.get(bigram_key, 0) + 1
 
 
 class HandledPartOfSpeech(NamedTuple):
@@ -161,11 +165,10 @@ def _should_filter_word(word_key, filtered_lemma_keys):
     lemma_key = ",".join(word_key_parts[1:])
     return lemma_key not in filtered_lemma_keys
 
-def _filter_data(lemma_counts, observed_lemmas, observed_words, word_text_counts):
+def _filter_data(lemma_counts, observed_lemmas, observed_words):
     filtered_lemmas = { lemma_key: lemma_id for lemma_key, lemma_id in observed_lemmas.items() if lemma_counts.get(lemma_key, 0) >= MINIMUM_WORD_COUNT }
     filtered_words = { word_key: value for word_key, value in observed_words.items() if not _should_filter_word(value, filtered_lemmas) }
-    filtered_word_text_counts = { word_text: count for word_text, count in word_text_counts.items() if count >= MINIMUM_WORD_COUNT * 2 }
-    return filtered_lemmas, filtered_words, filtered_word_text_counts
+    return filtered_lemmas, filtered_words
 
 corpus_reader = Reader(
     text_fn=process_text_line,
