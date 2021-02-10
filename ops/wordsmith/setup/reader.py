@@ -48,7 +48,7 @@ class Reader:
             self.empty_line_fn()
         elif line_type == _TEXT_LINE:
             word, lemma, pos, _ = line.split(" ")
-            self.text_fn(word, lemma, pos)
+            self.text_fn(word.lower(), lemma.lower(), pos)
 
     def _classify_line(self, line):
         if line.startswith("ENDOFARTICLE"):
