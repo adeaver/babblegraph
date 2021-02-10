@@ -9,3 +9,5 @@ CREATE TABLE IF NOT EXISTS lemmas(
 
     PRIMARY KEY (_id)
 );
+
+CREATE INDEX IF NOT EXISTS lemma_id_idx ON lemmas(_id);

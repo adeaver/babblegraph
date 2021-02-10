@@ -10,6 +10,7 @@ from util import (
 
 START_TOKEN = StartToken()
 MINIMUM_WORD_COUNT = 10
+MINIMUM_BIGRAM_COUNT = 10
 
 observed_parts_of_speech = {
     START_TOKEN.get_token(): START_TOKEN.get_part_of_speech_id()
@@ -22,11 +23,13 @@ observed_words = {
 }
 bigram_counts = {}
 current_bigram = [START_TOKEN.get_word_key(), START_TOKEN.get_word_key()]
-lemma_counts = dict()
+lemma_counts = {
+    START_TOKEN.get_lemma_key(): MINIMUM_WORD_COUNT + 1,
+}
 
 def get_data_from_read():
-    filtered_lemmas, filtered_words  = _filter_data(lemma_counts, observed_lemmas, observed_words)
-    return filtered_lemmas, filtered_words, observed_parts_of_speech, bigram_counts
+    filtered_lemmas, filtered_words, filtered_bigrams  = _filter_data(lemma_counts, observed_lemmas, observed_words, bigram_counts)
+    return filtered_lemmas, filtered_words, observed_parts_of_speech, filtered_bigrams
 
 def process_text_line(word, lemma, pos):
     if not _is_text_line_valid(word, lemma, pos):
@@ -165,10 +168,18 @@ def _should_filter_word(word_key, filtered_lemma_keys):
     lemma_key = ",".join(word_key_parts[1:])
     return lemma_key not in filtered_lemma_keys
 
-def _filter_data(lemma_counts, observed_lemmas, observed_words):
+def _should_filter_bigram(bigram_key, filtered_word_keys):
+    bigram_key_parts = bigram_key.split(",")
+    bigram_partition_idx = len(bigram_key_parts) // 2
+    first_word_key = ",".join(bigram_key_parts[:bigram_partition_idx])
+    second_word_key = ",".join(bigram_key_parts[bigram_partition_idx:])
+    return first_word_key not in filtered_word_keys or second_word_key not in filtered_word_keys
+
+def _filter_data(lemma_counts, observed_lemmas, observed_words, observed_bigrams):
     filtered_lemmas = { lemma_key: lemma_id for lemma_key, lemma_id in observed_lemmas.items() if lemma_counts.get(lemma_key, 0) >= MINIMUM_WORD_COUNT }
     filtered_words = { word_key: value for word_key, value in observed_words.items() if not _should_filter_word(value, filtered_lemmas) }
-    return filtered_lemmas, filtered_words
+    filtered_bigrams = { bigram_key: value for bigram_key, value in observed_bigrams.items() if value >= MINIMUM_BIGRAM_COUNT and not _should_filter_bigram(bigram_key, filtered_words) }
+    return filtered_lemmas, filtered_words, filtered_bigrams
 
 corpus_reader = Reader(
     text_fn=process_text_line,

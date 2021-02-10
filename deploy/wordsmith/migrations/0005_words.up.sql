@@ -9,3 +9,5 @@ CREATE TABLE IF NOT EXISTS words(
 
     PRIMARY KEY (_id)
 );
+
+CREATE INDEX IF NOT EXISTS word_text_idx ON words(word_text);
