@@ -1,7 +1,7 @@
 import io, uuid
 from corpus_read_defs import corpus_reader
 from templates import SQLTemplate
-from heapq import heapify
+from heapq import heapify, heappop
 from util import make_word_ranking_id
 
 LANGUAGE = "es"

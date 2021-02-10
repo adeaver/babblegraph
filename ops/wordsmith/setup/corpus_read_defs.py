@@ -24,8 +24,8 @@ lemma_counts = dict()
 word_text_counts = dict()
 
 def get_data_from_read():
-    filtered_lemmas, filtered_words = _filter_data(lemma_counts, observed_lemmas, observed_words)
-    return filtered_lemmas, filtered_words, observed_parts_of_speech, word_text_counts
+    filtered_lemmas, filtered_words, filtered_word_text_counts  = _filter_data(lemma_counts, observed_lemmas, observed_words, word_text_counts)
+    return filtered_lemmas, filtered_words, observed_parts_of_speech, filtered_word_text_counts
 
 def process_text_line(word, lemma, pos):
     if not _is_text_line_valid(word, lemma, pos):
@@ -161,10 +161,11 @@ def _should_filter_word(word_key, filtered_lemma_keys):
     lemma_key = ",".join(word_key_parts[1:])
     return lemma_key not in filtered_lemma_keys
 
-def _filter_data(lemma_counts, observed_lemmas, observed_words):
+def _filter_data(lemma_counts, observed_lemmas, observed_words, word_text_counts):
     filtered_lemmas = { lemma_key: lemma_id for lemma_key, lemma_id in observed_lemmas.items() if lemma_counts.get(lemma_key, 0) >= MINIMUM_WORD_COUNT }
     filtered_words = { word_key: value for word_key, value in observed_words.items() if not _should_filter_word(value, filtered_lemmas) }
-    return filtered_lemmas, filtered_words
+    filtered_word_text_counts = { word_text: count for word_text, count in word_text_counts.items() if count >= MINIMUM_WORD_COUNT * 2 }
+    return filtered_lemmas, filtered_words, filtered_word_text_counts
 
 corpus_reader = Reader(
     text_fn=process_text_line,
