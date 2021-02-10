@@ -7,6 +7,7 @@ import (
 	"babblegraph/model/utm"
 	"babblegraph/services/web/api/ses"
 	"babblegraph/services/web/api/user"
+	utm_routes "babblegraph/services/web/api/utm"
 	"babblegraph/services/web/router"
 	"babblegraph/util/database"
 	"babblegraph/util/env"
@@ -119,6 +120,9 @@ func registerAPI(r *mux.Router) error {
 		return err
 	}
 	if err := ses.RegisterRouteGroups(); err != nil {
+		return err
+	}
+	if err := utm_routes.RegisterRouteGroups(); err != nil {
 		return err
 	}
 	return nil

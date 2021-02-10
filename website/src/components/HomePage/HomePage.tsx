@@ -24,6 +24,10 @@ import {
     SignupErrorMessage,
     signupUser,
 } from 'api/user/signup';
+import {
+    SetPageLoadEventResponse,
+    setPageLoadEvent,
+} from 'api/utm/utm';
 
 const styleClasses = makeStyles({
     displayCard: {
@@ -97,6 +101,9 @@ const HomePage = () => {
     }
     useEffect(() => {
         loadCaptchaScript();
+        setPageLoadEvent({},
+            (resp: SetPageLoadEventResponse) => {},
+            (e: Error) => {});
         setHasLoadedCaptcha(true);
     }, []);
 
