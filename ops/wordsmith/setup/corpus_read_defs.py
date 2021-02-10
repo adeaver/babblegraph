@@ -38,10 +38,10 @@ def process_text_line(word, lemma, pos):
 
 
 def process_empty_line():
-    _reset_part_of_speech_trigrams()
+    _reset_current_bigram()
 
 def process_start_doc(_):
-    _reset_part_of_speech_trigrams()
+    _reset_current_bigram()
 
 # Dates, numbers, and punctuation should be processed out
 invalid_part_of_speech_categories = ["F", "Z", "W"]
@@ -84,7 +84,7 @@ def _handle_word(word, part_of_speech, lemma):
     word_key = "{},{}".format(word, part_of_speech.processed_part_of_speech)
     if word_key not in observed_words:
         observed_words[word_key] = "{},{}".format(make_word_id(word, lemma.id, part_of_speech.id), lemma.key)
-    current_bigram = current_bigram[1:]
+    current_bigram.pop(0)
     current_bigram.append(word_key)
     bigram_key = ",".join(current_bigram)
     bigram_counts[bigram_key] = bigram_counts.get(bigram_key, 0) + 1
@@ -111,8 +111,8 @@ def _handle_part_of_speech(processed_part_of_speech):
         category_id=part_of_speech_category_id
     )
 
-def _reset_part_of_speech_trigrams():
-    part_of_speech_trigrams = [START_TOKEN, START_TOKEN, START_TOKEN]
+def _reset_current_bigram():
+    current_bigram = [START_TOKEN.get_word_key(), START_TOKEN.get_word_key()]
 
 def _process_part_of_speech(pos):
     """Processes parts of speech to get a smaller list of tags

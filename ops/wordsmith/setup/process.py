@@ -46,9 +46,9 @@ def _make_bigram_generator():
         first_word_key = ",".join(bigram_key_parts[:word_key_partition_idx])
         second_word_key = ",".join(bigram_key_parts[word_key_partition_idx:])
         first_word_text, _, first_word_id, first_word_lemma_key = _word_data_for_word_key(first_word_key)
-        first_word_lemma_id =  = observed_lemmas.get(first_word_lemma_key, None)
+        first_word_lemma_id = observed_lemmas.get(first_word_lemma_key, None)
         second_word_text, _, second_word_id, second_word_lemma_key = _word_data_for_word_key(second_word_key)
-        second_word_lemma_id =  = observed_lemmas.get(second_word_lemma_key, None)
+        second_word_lemma_id = observed_lemmas.get(second_word_lemma_key, None)
         if first_word_lemma_id is None or second_word_lemma_id is None:
             continue
         bigram_id = "{}-{}".format(first_word_id, second_word_id)
