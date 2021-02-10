@@ -5,7 +5,7 @@ COPY public.\"{}\"({})
 FROM '{}'
 DELIMITER ','
 CSV HEADER
-ENCODING 'latin1';\n\n
+ENCODING 'utf-8';\n\n
 """
 
 def _write_lines_to_file(file_name_prefix, lines_per_file, line_generator, title_line=None, file_type="csv"):
@@ -28,7 +28,7 @@ def _write_lines_to_file(file_name_prefix, lines_per_file, line_generator, title
     return file_names_written
 
 def _write_file(file_name, lines, title_line):
-    with io.open(file_name, "w", encoding="latin1") as f:
+    with io.open(file_name, "w", encoding="utf-8") as f:
         if title_line is not None:
             f.write("{}\n".format(title_line))
         for line in lines:

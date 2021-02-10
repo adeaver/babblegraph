@@ -1,11 +1,15 @@
-import uuid
+from util import (
+    make_lemma_id,
+    make_word_id,
+    make_part_of_speech_id
+)
 
 class StartToken:
     def __init__(self):
         self._token_text = "<<START>>"
-        self._lemma_id = uuid.uuid4()
-        self._word_id = uuid.uuid4()
-        self._part_of_speech_id = uuid.uuid4()
+        self._part_of_speech_id = make_part_of_speech_id("<<START>>")
+        self._lemma_id = make_lemma_id("<<START>>", self._part_of_speech_id)
+        self._word_id = make_word_id("<<START>>", self._lemma_id)
 
     def get_token(self):
         return self._token_text

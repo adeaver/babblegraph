@@ -13,5 +13,6 @@ COPY reader.py .
 COPY templates.py .
 COPY corpus_read_defs.py .
 COPY special_tokens.py .
+COPY util.py .
 
 CMD [ "python", "-u", "process.py" ]

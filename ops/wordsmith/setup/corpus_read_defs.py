@@ -1,16 +1,16 @@
-import uuid
+from typing import NamedTuple
+
 from reader import Reader
 from special_tokens import StartToken
+from util import (
+    make_lemma_id,
+    make_word_id,
+    make_part_of_speech_id
+)
 
 START_TOKEN = StartToken()
 MINIMUM_WORD_COUNT = 10
 
-part_of_speech_trigrams = [
-    START_TOKEN.get_token(),
-    START_TOKEN.get_token(),
-    START_TOKEN.get_token(),
-]
-part_of_speech_trigram_counts = dict()
 observed_parts_of_speech = {
     START_TOKEN.get_token(): START_TOKEN.get_part_of_speech_id()
 }
@@ -20,20 +20,20 @@ observed_lemmas = {
 observed_words = {
     START_TOKEN.get_word_key(): START_TOKEN.get_word_key_value()
 }
-word_part_of_speech_counts = dict()
 lemma_counts = dict()
+word_text_counts = dict()
 
 def get_data_from_read():
-    filtered_lemmas, filtered_words, filtered_part_of_speech_counts = _filter_data(lemma_counts, observed_lemmas, observed_words, word_part_of_speech_counts)
-    return filtered_lemmas, filtered_words, observed_parts_of_speech, part_of_speech_trigram_counts, filtered_part_of_speech_counts
+    filtered_lemmas, filtered_words = _filter_data(lemma_counts, observed_lemmas, observed_words)
+    return filtered_lemmas, filtered_words, observed_parts_of_speech, word_text_counts
 
 def process_text_line(word, lemma, pos):
     if not _is_text_line_valid(word, lemma, pos):
         return
     processed_part_of_speech = _process_part_of_speech(pos)
-    _handle_part_of_speech(processed_part_of_speech)
-    lemma_key = _handle_lemma(lemma, processed_part_of_speech)
-    _handle_word(word, processed_part_of_speech, lemma_key)
+    part_of_speech = _handle_part_of_speech(processed_part_of_speech)
+    processed_lemma = _handle_lemma(lemma, processed_part_of_speech, part_of_speech.category_id)
+    _handle_word(word, part_of_speech, processed_lemma)
 
 
 def process_empty_line():
@@ -60,29 +60,52 @@ def _contains_invalid_character(word):
             return True
     return False
 
-def _handle_lemma(lemma, part_of_speech):
+
+class ProcessedLemma(NamedTuple):
+    id: str
+    text: str
+    key: str
+
+def _handle_lemma(lemma, part_of_speech, part_of_speech_category_id):
     part_of_speech_category = part_of_speech[0]
     lemma_key = "{},{}".format(lemma, part_of_speech_category)
+    lemma_id = make_lemma_id(lemma, part_of_speech_category_id)
     if lemma_key not in observed_lemmas:
-        observed_lemmas[lemma_key] = uuid.uuid4()
+        observed_lemmas[lemma_key] = lemma_id
     lemma_counts[lemma_key] = lemma_counts.get(lemma_key, 0) + 1
-    return lemma_key
+    return ProcessedLemma(
+        text=lemma,
+        id=lemma_id,
+        key=lemma_key,
+    )
 
-def _handle_word(word, part_of_speech, lemma_key):
-    word_key = "{},{}".format(word, part_of_speech)
+def _handle_word(word, part_of_speech, lemma):
+    word_key = "{},{}".format(word, part_of_speech.processed_part_of_speech)
     if word_key not in observed_words:
-        observed_words[word_key] = "{},{}".format(uuid.uuid4(), lemma_key)
-    word_part_of_speech_counts[word_key] = word_part_of_speech_counts.get(word_key, 0) + 1
+        observed_words[word_key] = "{},{}".format(make_word_id(word, lemma.id), lemma.key)
+    word_text_counts[word] = word_text_counts.get(word, 0) + 1
+
+
+class HandledPartOfSpeech(NamedTuple):
+    id: str
+    processed_part_of_speech: str
+    category: str
+    category_id: str
+
 
 def _handle_part_of_speech(processed_part_of_speech):
+    processed_id = make_part_of_speech_id(processed_part_of_speech)
     if processed_part_of_speech not in observed_parts_of_speech:
-        observed_parts_of_speech[processed_part_of_speech] = uuid.uuid4()
+        observed_parts_of_speech[processed_part_of_speech] = processed_id
+    part_of_speech_category_id = make_part_of_speech_id(processed_part_of_speech[0])
     if processed_part_of_speech[0] not in observed_parts_of_speech:
-        observed_parts_of_speech[processed_part_of_speech[0]] = uuid.uuid4()
-    part_of_speech_trigrams.pop(0)
-    part_of_speech_trigrams.append(processed_part_of_speech)
-    trigram_key = "{},{},{}".format(part_of_speech_trigrams[0], part_of_speech_trigrams[1], part_of_speech_trigrams[2])
-    part_of_speech_trigram_counts[trigram_key] = part_of_speech_trigram_counts.get(trigram_key, 0) + 1
+        observed_parts_of_speech[processed_part_of_speech[0]] = part_of_speech_category_id
+    return HandledPartOfSpeech(
+        id=processed_id,
+        processed_part_of_speech=processed_part_of_speech,
+        category=processed_part_of_speech[0],
+        category_id=part_of_speech_category_id
+    )
 
 def _reset_part_of_speech_trigrams():
     part_of_speech_trigrams = [START_TOKEN, START_TOKEN, START_TOKEN]
@@ -138,11 +161,10 @@ def _should_filter_word(word_key, filtered_lemma_keys):
     lemma_key = ",".join(word_key_parts[1:])
     return lemma_key not in filtered_lemma_keys
 
-def _filter_data(lemma_counts, observed_lemmas, observed_words, word_part_of_speech_counts):
+def _filter_data(lemma_counts, observed_lemmas, observed_words):
     filtered_lemmas = { lemma_key: lemma_id for lemma_key, lemma_id in observed_lemmas.items() if lemma_counts.get(lemma_key, 0) >= MINIMUM_WORD_COUNT }
     filtered_words = { word_key: value for word_key, value in observed_words.items() if not _should_filter_word(value, filtered_lemmas) }
-    filtered_part_of_speech_counts = { word_key: count for word_key, count in word_part_of_speech_counts.items() if word_key in filtered_words }
-    return filtered_lemmas, filtered_words, filtered_part_of_speech_counts
+    return filtered_lemmas, filtered_words
 
 corpus_reader = Reader(
     text_fn=process_text_line,
