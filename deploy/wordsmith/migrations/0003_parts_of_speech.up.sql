@@ -1,4 +1,4 @@
-CREATE TABLE parts_of_speech(
+CREATE TABLE IF NOT EXISTS parts_of_speech(
     _id TEXT NOT NULL,
     language TEXT NOT NULL REFERENCES languages(code),
     corpus_id TEXT NOT NULL REFERENCES corpora(_id),
