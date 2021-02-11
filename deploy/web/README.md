@@ -5,7 +5,7 @@
 Install UFW (uncomplicated firewall)
 `sudo apt install ufw` <br />
 
-Setup allowable traffic
+Setup allowable traffic<br />
 `sudo ufw allow ssh`<br />
 `sudo ufw allow proto tcp from any to any port 80,443`<br />
 
