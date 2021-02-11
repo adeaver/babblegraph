@@ -1,16 +1,20 @@
 import io, uuid
 from corpus_read_defs import corpus_reader
 from templates import SQLTemplate
+from heapq import heapify, heappop
+from util import make_word_ranking_id
 
 LANGUAGE = "es"
-CORPUS = ("upc-wiki-corpus", uuid.uuid4())
+CORPUS = ("upc-wiki-corpus", "escrp1upc-wiki-corpus")
 
 print("reading data")
-observed_lemmas, observed_words, observed_parts_of_speech,  part_of_speech_trigram_counts, word_part_of_speech_counts = corpus_reader.read_data()
+observed_lemmas, observed_words, observed_parts_of_speech, observed_word_bigram_counts = corpus_reader.read_data()
 
 # HELPER FUNCTIONS
 def _word_data_for_word_key(word_key):
-    external_key = observed_words[word_key]
+    external_key = observed_words.get(word_key, None)
+    if external_key is None:
+        return None, None, None, None
     word_text, part_of_speech = word_key.split(",")
     external_key_parts = external_key.split(",")
     lemma_key = ",".join(external_key_parts[1:])
@@ -37,18 +41,23 @@ def _make_word_generator():
         part_of_speech_id = observed_parts_of_speech[part_of_speech]
         yield "{},{},{},{},{},{}".format(_id, LANGUAGE, CORPUS[1], part_of_speech_id, lemma_id, word_text)
 
-def _make_trigram_count_generator():
-    for trigram_key in part_of_speech_trigram_counts:
-        count = part_of_speech_trigram_counts[trigram_key]
-        parts_of_speech = trigram_key.split(",")
-        part_of_speech_ids = [observed_parts_of_speech[part_of_speech] for part_of_speech in parts_of_speech]
-        yield "{},{},{},{},{},{},{}".format(uuid.uuid4(), LANGUAGE, CORPUS[1], part_of_speech_ids[0], part_of_speech_ids[1], part_of_speech_ids[2], count)
-
-def _make_word_part_of_speech_count_generator():
-    for word_key in word_part_of_speech_counts:
-        count = word_part_of_speech_counts[word_key]
-        _, _, word_id, _ = _word_data_for_word_key(word_key)
-        yield "{},{},{},{},{}".format(uuid.uuid4(), LANGUAGE, CORPUS[1], word_id, count)
+def _make_bigram_generator():
+    for bigram_key in observed_word_bigram_counts:
+        bigram_key_parts = bigram_key.split(",")
+        word_key_partition_idx = len(bigram_key_parts) // 2
+        first_word_key = ",".join(bigram_key_parts[:word_key_partition_idx])
+        second_word_key = ",".join(bigram_key_parts[word_key_partition_idx:])
+        first_word_text, _, first_word_id, first_word_lemma_key = _word_data_for_word_key(first_word_key)
+        second_word_text, _, second_word_id, second_word_lemma_key = _word_data_for_word_key(second_word_key)
+        if first_word_text is None or second_word_text is None:
+            continue
+        first_word_lemma_id = observed_lemmas.get(first_word_lemma_key, None)
+        second_word_lemma_id = observed_lemmas.get(second_word_lemma_key, None)
+        if first_word_lemma_id is None or second_word_lemma_id is None:
+            continue
+        bigram_id = "{}-{}".format(first_word_id, second_word_id)
+        count = observed_word_bigram_counts[bigram_key]
+        yield "{},{},{},{},{},{},{},{}".format(bigram_id, LANGUAGE, CORPUS[1], first_word_text, first_word_lemma_id, second_word_text, second_word_lemma_id, count)
 
 part_of_speech_template = SQLTemplate(
     "parts_of_speech",
@@ -77,23 +86,12 @@ word_template.write_files_for_template(
     300000
 )
 
-part_of_speech_trigram_template =  SQLTemplate(
-    "part_of_speech_trigram_counts",
-    "_id,language,corpus_id,first_token_id,second_token_id,third_token_id,occurrences"
+word_bigram_counts_template = SQLTemplate(
+    "word_bigram_counts",
+    "_id,language,corpus_id,first_word_text,first_word_lemma_id,second_word_text,second_word_lemma_id,count"
 )
-print("writing part of speech trigram files")
-part_of_speech_trigram_template.write_files_for_template(
-    _make_trigram_count_generator,
-    300000
-)
-
-word_part_of_speech_template = SQLTemplate(
-    "word_part_of_speech_counts",
-    "_id,language,corpus_id,word_id,occurrences"
-)
-print("writing word counts files")
-word_part_of_speech_template.write_files_for_template(
-    _make_word_part_of_speech_count_generator,
+word_bigram_counts_template.write_files_for_template(
+    _make_bigram_generator,
     300000
 )
 
@@ -107,9 +105,7 @@ with io.open("/out/populate_db.sql", "w", encoding="latin1") as f:
         f.write(template)
     for template in word_template.yield_sql_template():
         f.write(template)
-    for template in part_of_speech_trigram_template.yield_sql_template():
-        f.write(template)
-    for template in word_part_of_speech_template.yield_sql_template():
+    for template in word_bigram_counts_template.yield_sql_template():
         f.write(template)
 
 print("done!")
