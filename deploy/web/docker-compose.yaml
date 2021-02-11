@@ -31,9 +31,12 @@ services:
       - certbot-etc:/etc/letsencrypt
       - certbot-var:/var/lib/letsencrypt
       - web-root:/var/www/html
+      - /etc/resolv.conf:/etc/resolv.conf
     depends_on:
       - proxy
     command: certonly --webroot --webroot-path=/var/www/html --email deaver.andrew@gmail.com --agree-tos --no-eff-email --force-renewal -d babblegraph.com -d www.babblegraph.com
+    networks:
+      - babblegraph_web_default
 
 volumes:
   certbot-etc:
