@@ -1,6 +1,10 @@
 package wordsmith
 
-import "github.com/jmoiron/sqlx"
+import (
+	"fmt"
+
+	"github.com/jmoiron/sqlx"
+)
 
 type WordID string
 
@@ -33,10 +37,10 @@ func (d dbWord) ToNonDB() Word {
 	}
 }
 
-const wordsForTextQuery = "SELECT * FROM words WHERE word_text IN (?) AND corpus = $1"
+const wordsForTextQuery = "SELECT * FROM words WHERE corpus_id = '%s' AND word_text IN (?)"
 
 func GetWordsByText(tx *sqlx.Tx, corpus CorpusID, words []string) ([]Word, error) {
-	query, args, err := sqlx.In(wordsForTextQuery, words, corpus)
+	query, args, err := sqlx.In(fmt.Sprintf(wordsForTextQuery, corpus), words)
 	if err != nil {
 		return nil, nil
 	}
