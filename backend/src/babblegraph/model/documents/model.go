@@ -18,7 +18,7 @@ const (
 	// Version 4 adds lemmatized description
 	Version4 Version = 4
 
-	CurrentDocumentVersion Version = Version3
+	CurrentDocumentVersion Version = Version4
 )
 
 func (v Version) Ptr() *Version {
