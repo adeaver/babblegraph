@@ -51,7 +51,7 @@ func getWordsmithPostgresConfigForEnvironment() postgres.PostgresConfig {
 	}
 }
 
-func withTx(f func(tx *sqlx.Tx) error) error {
+func WithWordsmithTx(f func(tx *sqlx.Tx) error) error {
 	tx := db.MustBegin()
 	if err := f(tx); err != nil {
 		if rbErr := tx.Rollback(); rbErr != nil {

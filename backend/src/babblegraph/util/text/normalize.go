@@ -1,8 +1,8 @@
-package textprocessing
+package text
 
 import "strings"
 
-func normalizeText(text string) string {
+func Normalize(text string) string {
 	var out []string
 	var currentLine []rune
 	for _, b := range text {

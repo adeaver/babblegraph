@@ -22,11 +22,12 @@ type IndexDocumentInput struct {
 
 func IndexDocument(input IndexDocumentInput) error {
 	docID, err := documents.AssignIDAndIndexDocument(documents.IndexDocumentInput{
-		URL:              input.URL,
-		ReadabilityScore: input.TextMetadata.ReadabilityScore.ToInt64Rounded(),
-		LanguageCode:     input.LanguageCode,
-		Metadata:         input.ParsedHTMLPage.Metadata,
-		Topics:           input.TopicsForURL,
+		URL:                   input.URL,
+		ReadabilityScore:      input.TextMetadata.ReadabilityScore.ToInt64Rounded(),
+		LanguageCode:          input.LanguageCode,
+		Metadata:              input.ParsedHTMLPage.Metadata,
+		Topics:                input.TopicsForURL,
+		LemmatizedDescription: input.TextMetadata.LemmatizedDescription,
 
 		// These will get changed later
 		Version: input.DocumentVersion,
