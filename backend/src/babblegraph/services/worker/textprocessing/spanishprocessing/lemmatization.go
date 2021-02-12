@@ -6,6 +6,7 @@ import (
 	"babblegraph/util/text"
 	"babblegraph/wordsmith"
 
+	"github.com/jmoiron/sqlx"
 )
 
 func LemmatizeText(t string) ([]*wordsmith.LemmaID, error) {
@@ -76,17 +77,17 @@ func convertTokenToLemmas(tokens []string, wordsByText map[string][]wordsmith.Wo
 			}); err != nil {
 				return nil, err
 			}
-            bestWordChoice := pickBestWordUsingBigrams(pickBestWordUsingBigramInput{
-                wordChoices: wordsForToken,
-                bigramCountsEndingInToken: bigramCountsEndingInToken,
-                bigramCountsStartingInToken: bigramCountsStartingInToken,
-            }
-            out = append(out, &bestWordChoice)
+			bestWordChoice := pickBestWordUsingBigrams(pickBestWordUsingBigramInput{
+				wordChoices:                 wordsForToken,
+				bigramCountsEndingInToken:   bigramCountsEndingInToken,
+				bigramCountsStartingInToken: bigramCountsStartingInToken,
+			})
+			out = append(out, &bestWordChoice)
 		default:
 			panic("unreachable")
 		}
 	}
-    return out, nil
+	return out, nil
 }
 
 type pickBestWordUsingBigramInput struct {
@@ -102,47 +103,46 @@ func pickBestWordUsingBigrams(input pickBestWordUsingBigramInput) wordsmith.Word
 	}
 	var currentBestChoice *wordChoice
 	for _, word := range input.wordChoices {
-        probabilityOfEndingInToken := calculateProbabilityOfEndingInToken(word, input.bigramCountsEndingInToken)
-        probabilityOfStartingWithToken := calculateProbabilityOfStartingWithToken(word, input.bigramCountsStartingInToken)
-        probabilityOfWord := probabilityOfEndingInToken.Multiply(probabilityOfStartingWithToken)
-        if currentBestChoice == nil || currentBestChoice.probability.LessThan(probabilityOfWord)  {
-            currentBestChoice = &wordChoice{
-                word: word,
-                probability: probabilityOfWord
-            }
-        }
+		probabilityOfEndingInToken := calculateProbabilityOfEndingInToken(word, input.bigramCountsEndingInToken)
+		probabilityOfStartingWithToken := calculateProbabilityOfStartingWithToken(word, input.bigramCountsStartingInToken)
+		probabilityOfWord := probabilityOfEndingInToken.Multiply(probabilityOfStartingWithToken)
+		if currentBestChoice == nil || currentBestChoice.probability.LessThan(probabilityOfWord) {
+			currentBestChoice = &wordChoice{
+				word:        word,
+				probability: probabilityOfWord,
+			}
+		}
 	}
-    if currentBestChoice == nil {
-        panic("there should be at least one word")
-    }
-    return currentBestChoice.word
+	if currentBestChoice == nil {
+		panic("there should be at least one word")
+	}
+	return currentBestChoice.word
 }
 
 func calculateProbabilityOfEndingInToken(word wordsmith.Word, bigramCountsEndingInToken []wordsmith.WordBigramCount) decimal.Number {
-    return calculateBigramProbability(calculateBigramProbabilityInput{
-        word: word,
-        bigramCounts: bigramCountsEndingInToken,
-        isCurrentWord: func(word wordsmith.Word, bigramCount wordsmith.WordBigramCount) bool {
-            return bigramCount.SecondWord.LemmaID == word.LemmaID
-        }
-    })
+	return calculateBigramProbability(calculateBigramProbabilityInput{
+		word:         word,
+		bigramCounts: bigramCountsEndingInToken,
+		isCurrentWord: func(word wordsmith.Word, bigramCount wordsmith.WordBigramCount) bool {
+			return bigramCount.SecondWord.LemmaID == word.LemmaID
+		},
+	})
 }
 
-func calculateProbabilityOfStartingWithToken(word wordsmith.Word, bigramCountsEndingInToken []wordsmith.WordBigramCount) decimal.Number {
-    return calculateBigramProbability(calculateBigramProbabilityInput{
-        word: word,
-        bigramCounts: bigramCountsEndingInToken,
-        isCurrentWord: func(word wordsmith.Word, bigramCount wordsmith.WordBigramCount) bool {
-            return bigramCount.FirstWord.LemmaID == word.LemmaID
-        }
-    })
+func calculateProbabilityOfStartingWithToken(word wordsmith.Word, bigramCountsStartingWithToken []wordsmith.WordBigramCount) decimal.Number {
+	return calculateBigramProbability(calculateBigramProbabilityInput{
+		word:         word,
+		bigramCounts: bigramCountsStartingWithToken,
+		isCurrentWord: func(word wordsmith.Word, bigramCount wordsmith.WordBigramCount) bool {
+			return bigramCount.FirstWord.LemmaID == word.LemmaID
+		},
+	})
 }
-
 
 type calculateBigramProbabilityInput struct {
-    word wordsmith.Word
-    bigramCounts []wordsmith.WordBigramCount
-    isCurrentWord func(wordsmith.Word, bigram wordsmith.WordBigramCount) bool
+	word          wordsmith.Word
+	bigramCounts  []wordsmith.WordBigramCount
+	isCurrentWord func(wordsmith.Word, wordsmith.WordBigramCount) bool
 }
 
 func calculateBigramProbability(input calculateBigramProbabilityInput) decimal.Number {

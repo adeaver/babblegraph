@@ -10,7 +10,12 @@ import (
 
 type TextMetadata struct {
 	ReadabilityScore      decimal.Number
-	LemmatizedDescription *string
+	LemmatizedDescription *LemmatizedDescription
+}
+
+type LemmatizedDescription struct {
+	LemmatizedText string
+	IndexMappings  []int
 }
 
 type ProcessTextInput struct {
@@ -31,10 +36,7 @@ func ProcessText(input ProcessTextInput) (*TextMetadata, error) {
 		if err != nil {
 			return nil, err
 		}
-		var lemmatizedDescription *string
-		if normalizedDescription != nil {
-			lemmatizedDescription = ptr.String(spanishprocessing.LemmatizeText(*normalizedDescription))
-		}
+		var lemmatizedDescription *LemmatizedDescription
 		return &TextMetadata{
 			ReadabilityScore:      *readabilityScore,
 			LemmatizedDescription: lemmatizedDescription,

@@ -50,16 +50,17 @@ type Metadata struct {
 type DocumentID string
 
 type Document struct {
-	ID                    DocumentID                   `json:"id"`
-	Version               Version                      `json:"version"`
-	URL                   string                       `json:"url"`
-	ReadabilityScore      int64                        `json:"readability_score"`
-	LanguageCode          wordsmith.LanguageCode       `json:"language_code"`
-	DocumentType          Type                         `json:"document_type"`
-	Metadata              Metadata                     `json:"metadata"`
-	Domain                string                       `json:"domain"`
-	Topics                []contenttopics.ContentTopic `json:"content_topics"`
-	LemmatizedDescription *string                      `json:"lemmatized_description,omitempty"`
+	ID                                 DocumentID                   `json:"id"`
+	Version                            Version                      `json:"version"`
+	URL                                string                       `json:"url"`
+	ReadabilityScore                   int64                        `json:"readability_score"`
+	LanguageCode                       wordsmith.LanguageCode       `json:"language_code"`
+	DocumentType                       Type                         `json:"document_type"`
+	Metadata                           Metadata                     `json:"metadata"`
+	Domain                             string                       `json:"domain"`
+	Topics                             []contenttopics.ContentTopic `json:"content_topics"`
+	LemmatizedDescription              *string                      `json:"lemmatized_description,omitempty"`
+	LemmatizedDescriptionIndexMappings []int                        `json:"lemmatized_description_index_mappings,omitempty"`
 
 	LemmatizedBodyDEPRECATED *string `json:"lemmatized_body,omitempty"`
 }

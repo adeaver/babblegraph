@@ -1,5 +1,7 @@
 package wordsmith
 
+import "github.com/jmoiron/sqlx"
+
 type WordBigramCountID string
 
 type WordBigramCount struct {
@@ -28,32 +30,32 @@ type dbWordBigramCount struct {
 }
 
 func (d dbWordBigramCount) ToNonDB() WordBigramCount {
-    return WordBigramCount{
-        ID: d.ID,
-        Language: d.Language,
-        CorpusID: d.CorpusID,
-        FirstWord: BigramWord{
-            Text: d.FirstWordText,
-            LemmaID: d.FirstWordLemmaID
-        },
-        SecondWord: BigramWord{
-            Text: d.SecondWordText,
-            LemmaID: d.SecondWordLemmaID
-        },
-        Count: d.Count,
-    }
+	return WordBigramCount{
+		ID:       d.ID,
+		Language: d.Language,
+		CorpusID: d.CorpusID,
+		FirstWord: BigramWord{
+			Text:    d.FirstWordText,
+			LemmaID: d.FirstWordLemmaID,
+		},
+		SecondWord: BigramWord{
+			Text:    d.SecondWordText,
+			LemmaID: d.SecondWordLemmaID,
+		},
+		Count: d.Count,
+	}
 }
 
 const wordBigramCountForWordQuery = "SELECT * FROM word_bigram_counts WHERE corpus_id = $1 AND (first_word_text = $2 OR second_word_text = $3)"
 
 func GetWordBigramCountsByWordText(tx *sqlx.Tx, corpusID CorpusID, firstWord string, secondWord string) ([]WordBigramCount, error) {
-    var matches []dbWordBigramCount
-    if err := tx.Select(&matches, wordBigramCountForWordQuery, corpusID, firstWord, secondWord); err != nil {
-        return nil, err
-    }
-    var out []WordBigramCount
-    for _, match := range matches {
-        out = append(out, match.ToNonDB())
-    }
-    return out, nil
+	var matches []dbWordBigramCount
+	if err := tx.Select(&matches, wordBigramCountForWordQuery, corpusID, firstWord, secondWord); err != nil {
+		return nil, err
+	}
+	var out []WordBigramCount
+	for _, match := range matches {
+		out = append(out, match.ToNonDB())
+	}
+	return out, nil
 }
