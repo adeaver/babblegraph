@@ -6,6 +6,7 @@ import (
 	"babblegraph/util/ptr"
 	"babblegraph/util/text"
 	"babblegraph/wordsmith"
+	"strings"
 )
 
 type TextMetadata struct {
@@ -37,6 +38,24 @@ func ProcessText(input ProcessTextInput) (*TextMetadata, error) {
 			return nil, err
 		}
 		var lemmatizedDescription *LemmatizedDescription
+		if normalizedDescription != nil {
+			lemmatizedTokens, err := spanishprocessing.LemmatizeText(*normalizedDescription)
+			if err != nil {
+				return nil, err
+			}
+			var indexMappings []int
+			var lemmatizedTextTokens []string
+			for idx, lemmaToken := range lemmatizedTokens {
+				if lemmaToken != nil {
+					indexMappings = append(indexMappings, idx)
+					lemmatizedTextTokens = append(lemmatizedTextTokens, lemmaToken.Str())
+				}
+			}
+			lemmatizedDescription = &LemmatizedDescription{
+				LemmatizedText: strings.Join(lemmatizedTextTokens, " "),
+				IndexMappings:  indexMappings,
+			}
+		}
 		return &TextMetadata{
 			ReadabilityScore:      *readabilityScore,
 			LemmatizedDescription: lemmatizedDescription,

@@ -2,6 +2,10 @@ package wordsmith
 
 type LemmaID string
 
+func (l *LemmaID) Str() string {
+	return string(*l)
+}
+
 type Lemma struct {
 	ID             LemmaID
 	Language       LanguageCode

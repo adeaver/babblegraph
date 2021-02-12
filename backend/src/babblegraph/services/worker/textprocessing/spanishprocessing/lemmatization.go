@@ -11,6 +11,11 @@ import (
 
 func LemmatizeText(t string) ([]*wordsmith.LemmaID, error) {
 	tokens := text.Tokenize(t)
+	wordsByText, err := getWordsByText(tokens)
+	if err != nil {
+		return nil, err
+	}
+	return convertTokensToLemmas(tokens, wordsByText)
 }
 
 func getWordsByText(tokens []string) (map[string][]wordsmith.Word, error) {
@@ -82,7 +87,7 @@ func convertTokenToLemmas(tokens []string, wordsByText map[string][]wordsmith.Wo
 				bigramCountsEndingInToken:   bigramCountsEndingInToken,
 				bigramCountsStartingInToken: bigramCountsStartingInToken,
 			})
-			out = append(out, &bestWordChoice)
+			out = append(out, &bestWordChoice.LemmaID)
 		default:
 			panic("unreachable")
 		}
