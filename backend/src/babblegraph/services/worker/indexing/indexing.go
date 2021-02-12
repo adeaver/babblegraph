@@ -5,6 +5,7 @@ import (
 	"babblegraph/model/documents"
 	"babblegraph/services/worker/ingesthtml"
 	"babblegraph/services/worker/textprocessing"
+	"babblegraph/util/ptr"
 	"babblegraph/util/urlparser"
 	"babblegraph/wordsmith"
 	"fmt"
@@ -21,14 +22,20 @@ type IndexDocumentInput struct {
 }
 
 func IndexDocument(input IndexDocumentInput) error {
+	var lemmatizedDescriptionText *string
+	var lemmatizedDescriptionIndexMappings []int
+	if input.TextMetadata.LemmatizedDescription != nil {
+		lemmatizedDescriptionText = ptr.String(input.TextMetadata.LemmatizedDescription.LemmatizedText)
+		lemmatizedDescriptionIndexMappings = input.TextMetadata.LemmatizedDescription.IndexMappings
+	}
 	docID, err := documents.AssignIDAndIndexDocument(documents.IndexDocumentInput{
 		URL:                                input.URL,
 		ReadabilityScore:                   input.TextMetadata.ReadabilityScore.ToInt64Rounded(),
 		LanguageCode:                       input.LanguageCode,
 		Metadata:                           input.ParsedHTMLPage.Metadata,
 		Topics:                             input.TopicsForURL,
-		LemmatizedDescription:              input.TextMetadata.LemmatizedDescription.LemmatizedText,
-		LemmatizedDescriptionIndexMappings: input.TextMetadata.LemmatizedDescription.IndexMappings,
+		LemmatizedDescription:              lemmatizedDescriptionText,
+		LemmatizedDescriptionIndexMappings: lemmatizedDescriptionIndexMappings,
 
 		// These will get changed later
 		Version: input.DocumentVersion,

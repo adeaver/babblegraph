@@ -6,6 +6,10 @@ func (l *LemmaID) Str() string {
 	return string(*l)
 }
 
+func (l LemmaID) Ptr() *LemmaID {
+	return &l
+}
+
 type Lemma struct {
 	ID             LemmaID
 	Language       LanguageCode

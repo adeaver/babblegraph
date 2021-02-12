@@ -37,7 +37,7 @@ func getWordsByText(tokens []string) (map[string][]wordsmith.Word, error) {
 
 // This function will return a parallel list of tokens -> lemma ID
 // a nil entry means that we don't know what the lemma is
-func convertTokenToLemmas(tokens []string, wordsByText map[string][]wordsmith.Word) ([]*wordsmith.LemmaID, error) {
+func convertTokensToLemmas(tokens []string, wordsByText map[string][]wordsmith.Word) ([]*wordsmith.LemmaID, error) {
 	var out []*wordsmith.LemmaID
 	for idx, token := range tokens {
 		// Grab all the words that map to this particular token
@@ -49,7 +49,7 @@ func convertTokenToLemmas(tokens []string, wordsByText map[string][]wordsmith.Wo
 			out = append(out, nil)
 		case len(wordsForToken) == 1:
 			// One to one mapping
-			out = append(out, wordsForToken[0].LemmaID)
+			out = append(out, wordsForToken[0].LemmaID.Ptr())
 		case len(wordsForToken) >= 2:
 			var priorWord, nextWord *string
 			switch {
@@ -87,7 +87,7 @@ func convertTokenToLemmas(tokens []string, wordsByText map[string][]wordsmith.Wo
 				bigramCountsEndingInToken:   bigramCountsEndingInToken,
 				bigramCountsStartingInToken: bigramCountsStartingInToken,
 			})
-			out = append(out, &bestWordChoice.LemmaID)
+			out = append(out, bestWordChoice.LemmaID.Ptr())
 		default:
 			panic("unreachable")
 		}
@@ -157,7 +157,7 @@ func calculateBigramProbability(input calculateBigramProbabilityInput) decimal.N
 		if input.isCurrentWord(input.word, bigramCount) {
 			totalCountForCurrentWord.Add(decimal.FromInt64(bigramCount.Count))
 		}
-		totalCountOfBigrams := totalCountOfBigrams.Add(decimal.FromInt64(bigramCount.Count))
+		totalCountOfBigrams = totalCountOfBigrams.Add(decimal.FromInt64(bigramCount.Count))
 	}
 	if totalCountOfBigrams.EqualTo(decimal.FromInt64(0)) {
 		return decimal.FromInt64(1)

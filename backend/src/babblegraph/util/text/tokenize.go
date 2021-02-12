@@ -12,7 +12,7 @@ func TokenizeUnique(text string) []string {
 	for _, token := range Tokenize(text) {
 		if _, ok := tokenHash[token]; !ok {
 			tokenHash[token] = true
-			tokenSet = append(token)
+			tokenSet = append(tokenSet, token)
 		}
 	}
 	return tokenSet
