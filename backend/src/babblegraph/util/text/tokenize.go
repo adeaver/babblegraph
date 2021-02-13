@@ -3,7 +3,11 @@ package text
 import "strings"
 
 func Tokenize(text string) []string {
-	return strings.Split(text, " ")
+	var out []string
+	for _, line := range strings.Split(text, "\n") {
+		out = append(out, strings.Split(line, " ")...)
+	}
+	return out
 }
 
 func TokenizeUnique(text string) []string {

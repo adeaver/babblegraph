@@ -18,6 +18,12 @@ func TestTokenize(t *testing.T) {
 			input:    "a                    great thing",
 			expected: []string{"a", "great", "thing"},
 		}, {
+			input:    "a                    great thing
+
+            a great                   thing
+            ",
+			expected: []string{"a", "great", "thing", "a", "great", "thing"},
+		}, {
 			input:    "",
 			expected: []string{},
 		}, {
