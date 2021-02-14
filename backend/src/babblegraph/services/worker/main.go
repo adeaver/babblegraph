@@ -12,6 +12,8 @@ import (
 	"babblegraph/util/database"
 	"babblegraph/util/deref"
 	"babblegraph/util/elastic"
+	"babblegraph/util/opengraph"
+	"babblegraph/util/ptr"
 	"babblegraph/util/urlparser"
 	"babblegraph/wordsmith"
 	"fmt"
@@ -122,7 +124,15 @@ func startWorkerThread(linkProcessor *linkprocessing.LinkProcessor, errs chan er
 				continue
 			}
 			log.Println(fmt.Sprintf("Processing text for url %s", u))
-			textMetadata, err := textprocessing.ProcessText(parsedHTMLPage.BodyText, languageCode)
+			var description *string
+			if d, ok := parsedHTMLPage.Metadata[opengraph.DescriptionTag.Str()]; ok {
+				description = ptr.String(d)
+			}
+			textMetadata, err := textprocessing.ProcessText(textprocessing.ProcessTextInput{
+				BodyText:     parsedHTMLPage.BodyText,
+				Description:  description,
+				LanguageCode: languageCode,
+			})
 			if err != nil {
 				log.Println(fmt.Sprintf("Got error processing text for url %s: %s. Continuing...", u, err.Error()))
 				continue

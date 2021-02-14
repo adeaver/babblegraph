@@ -1,8 +1,8 @@
-package textprocessing
+package text
 
 import "testing"
 
-func TestNormalizeText(t *testing.T) {
+func TestNormalize(t *testing.T) {
 	testCases := []struct {
 		input    string
 		expected string
@@ -13,7 +13,7 @@ func TestNormalizeText(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
-		out := normalizeText(tc.input)
+		out := Normalize(tc.input)
 		if out != tc.expected {
 			t.Errorf("Expected %s, got %s", tc.expected, out)
 		}

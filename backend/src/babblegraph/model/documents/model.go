@@ -15,7 +15,10 @@ const (
 	// Version 3 adds content topics
 	Version3 Version = 3
 
-	CurrentDocumentVersion Version = Version3
+	// Version 4 adds lemmatized description
+	Version4 Version = 4
+
+	CurrentDocumentVersion Version = Version4
 )
 
 func (v Version) Ptr() *Version {
@@ -47,15 +50,17 @@ type Metadata struct {
 type DocumentID string
 
 type Document struct {
-	ID               DocumentID                   `json:"id"`
-	Version          Version                      `json:"version"`
-	URL              string                       `json:"url"`
-	ReadabilityScore int64                        `json:"readability_score"`
-	LanguageCode     wordsmith.LanguageCode       `json:"language_code"`
-	DocumentType     Type                         `json:"document_type"`
-	Metadata         Metadata                     `json:"metadata"`
-	Domain           string                       `json:"domain"`
-	Topics           []contenttopics.ContentTopic `json:"content_topics"`
+	ID                                 DocumentID                   `json:"id"`
+	Version                            Version                      `json:"version"`
+	URL                                string                       `json:"url"`
+	ReadabilityScore                   int64                        `json:"readability_score"`
+	LanguageCode                       wordsmith.LanguageCode       `json:"language_code"`
+	DocumentType                       Type                         `json:"document_type"`
+	Metadata                           Metadata                     `json:"metadata"`
+	Domain                             string                       `json:"domain"`
+	Topics                             []contenttopics.ContentTopic `json:"content_topics"`
+	LemmatizedDescription              *string                      `json:"lemmatized_description,omitempty"`
+	LemmatizedDescriptionIndexMappings []int                        `json:"lemmatized_description_index_mappings,omitempty"`
 
 	LemmatizedBodyDEPRECATED *string `json:"lemmatized_body,omitempty"`
 }

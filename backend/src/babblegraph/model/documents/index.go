@@ -36,27 +36,31 @@ func (d documentIndex) GenerateIDForDocument(document interface{}) (*string, err
 }
 
 type IndexDocumentInput struct {
-	URL              urlparser.ParsedURL
-	Metadata         map[string]string
-	Type             Type
-	Version          Version
-	LanguageCode     wordsmith.LanguageCode
-	ReadabilityScore int64
-	Topics           []contenttopics.ContentTopic
+	URL                                urlparser.ParsedURL
+	Metadata                           map[string]string
+	Type                               Type
+	Version                            Version
+	LanguageCode                       wordsmith.LanguageCode
+	ReadabilityScore                   int64
+	Topics                             []contenttopics.ContentTopic
+	LemmatizedDescription              *string
+	LemmatizedDescriptionIndexMappings []int
 }
 
 func AssignIDAndIndexDocument(input IndexDocumentInput) (*DocumentID, error) {
 	documentID := makeDocumentIndexForURL(input.URL)
 	ogMetadata := opengraph.GetBasicMetadata(input.Metadata)
 	if err := elastic.IndexDocument(documentIndex{}, Document{
-		ID:               documentID,
-		Version:          input.Version,
-		URL:              input.URL.URL,
-		ReadabilityScore: input.ReadabilityScore,
-		LanguageCode:     input.LanguageCode,
-		DocumentType:     input.Type,
-		Domain:           input.URL.Domain,
-		Topics:           input.Topics,
+		ID:                                 documentID,
+		Version:                            input.Version,
+		URL:                                input.URL.URL,
+		ReadabilityScore:                   input.ReadabilityScore,
+		LanguageCode:                       input.LanguageCode,
+		DocumentType:                       input.Type,
+		Domain:                             input.URL.Domain,
+		Topics:                             input.Topics,
+		LemmatizedDescription:              input.LemmatizedDescription,
+		LemmatizedDescriptionIndexMappings: input.LemmatizedDescriptionIndexMappings,
 		Metadata: Metadata{
 			Title:              ogMetadata.Title,
 			Image:              ogMetadata.ImageURL,
