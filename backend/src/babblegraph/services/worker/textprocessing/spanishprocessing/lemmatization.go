@@ -155,7 +155,7 @@ func calculateBigramProbability(input calculateBigramProbabilityInput) decimal.N
 	totalCountForCurrentWord := decimal.FromInt64(1)
 	for _, bigramCount := range input.bigramCounts {
 		if input.isCurrentWord(input.word, bigramCount) {
-			totalCountForCurrentWord.Add(decimal.FromInt64(bigramCount.Count))
+			totalCountForCurrentWord = totalCountForCurrentWord.Add(decimal.FromInt64(bigramCount.Count))
 		}
 		totalCountOfBigrams = totalCountOfBigrams.Add(decimal.FromInt64(bigramCount.Count))
 	}

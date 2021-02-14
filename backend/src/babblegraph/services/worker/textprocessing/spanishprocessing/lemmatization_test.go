@@ -18,7 +18,7 @@ func makeSampleWordsmithWord(text string, id int) wordsmith.Word {
 	}
 }
 
-func makeSampleWordsmithWordBigramCount(word1, word2 wordsmith.Word, count int64) {
+func makeSampleWordsmithWordBigramCount(word1, word2 wordsmith.Word, count int64) wordsmith.WordBigramCount {
 	return wordsmith.WordBigramCount{
 		ID:       wordsmith.WordBigramCountID(fmt.Sprintf("%s-%s", word1.ID, word2.ID)),
 		Language: wordsmith.LanguageCodeSpanish,
@@ -42,7 +42,7 @@ func TestPickBestWordUsingBigrams(t *testing.T) {
 	}
 	testCases := []testCase{
 		{
-			input: {
+			input: pickBestWordUsingBigramInput{
 				wordChoices: []wordsmith.Word{
 					makeSampleWordsmithWord("hola", 1),
 					makeSampleWordsmithWord("hola", 2),
@@ -59,7 +59,7 @@ func TestPickBestWordUsingBigrams(t *testing.T) {
 			},
 			expected: wordsmith.WordID("hola-1"),
 		}, {
-			input: {
+			input: pickBestWordUsingBigramInput{
 				wordChoices: []wordsmith.Word{
 					makeSampleWordsmithWord("hola", 1),
 					makeSampleWordsmithWord("hola", 2),
@@ -72,7 +72,7 @@ func TestPickBestWordUsingBigrams(t *testing.T) {
 			},
 			expected: wordsmith.WordID("hola-1"),
 		}, {
-			input: {
+			input: pickBestWordUsingBigramInput{
 				wordChoices: []wordsmith.Word{
 					makeSampleWordsmithWord("hola", 1),
 					makeSampleWordsmithWord("hola", 2),
@@ -84,7 +84,7 @@ func TestPickBestWordUsingBigrams(t *testing.T) {
 			},
 			expected: wordsmith.WordID("hola-2"),
 		}, {
-			input: {
+			input: pickBestWordUsingBigramInput{
 				wordChoices: []wordsmith.Word{
 					makeSampleWordsmithWord("hola", 1),
 					makeSampleWordsmithWord("hola", 2),
@@ -94,7 +94,7 @@ func TestPickBestWordUsingBigrams(t *testing.T) {
 			},
 			expected: wordsmith.WordID("hola-1"),
 		}, {
-			input: {
+			input: pickBestWordUsingBigramInput{
 				wordChoices: []wordsmith.Word{
 					makeSampleWordsmithWord("hola", 1),
 				},
@@ -107,7 +107,7 @@ func TestPickBestWordUsingBigrams(t *testing.T) {
 	for idx, tc := range testCases {
 		result := pickBestWordUsingBigrams(tc.input)
 		if result.ID != tc.expected {
-			t.Errorf("Error on test case %d: expected %s, but got %s", tc.expected, result.ID)
+			t.Errorf("Error on test case %d: expected %s, but got %s", idx+1, tc.expected, result.ID)
 		}
 	}
 }
@@ -126,14 +126,14 @@ func TestCalculateProbabilityOfEndingInToken(t *testing.T) {
 				makeSampleWordsmithWordBigramCount(makeSampleWordsmithWord("adios", 2), makeSampleWordsmithWord("hola", 1), 25),
 				makeSampleWordsmithWordBigramCount(makeSampleWordsmithWord("adios", 1), makeSampleWordsmithWord("hola", 2), 50),
 			},
-			expected: decimal.FromFloat64(50.0 / 100.0),
+			expected: decimal.FromFloat64(51.0 / 100.0),
 		}, {
 			word: makeSampleWordsmithWord("hola", 2),
 			wordBigramCounts: []wordsmith.WordBigramCount{
 				makeSampleWordsmithWordBigramCount(makeSampleWordsmithWord("adios", 1), makeSampleWordsmithWord("hola", 1), 25),
 				makeSampleWordsmithWordBigramCount(makeSampleWordsmithWord("adios", 2), makeSampleWordsmithWord("hola", 1), 25),
 			},
-			expected: decimal.FromFloat64(0),
+			expected: decimal.FromFloat64(1.0 / 50.0),
 		}, {
 			word:             makeSampleWordsmithWord("hola", 2),
 			wordBigramCounts: []wordsmith.WordBigramCount{},
@@ -143,7 +143,7 @@ func TestCalculateProbabilityOfEndingInToken(t *testing.T) {
 	for idx, tc := range testCases {
 		result := calculateProbabilityOfEndingInToken(tc.word, tc.wordBigramCounts)
 		if !tc.expected.EqualTo(result) {
-			t.Errorf("Error on test case %d: expected probability of %f, but got %f", tc.expected.ToFloat64(), result.ToFloat64())
+			t.Errorf("Error on test case %d: expected probability of %f, but got %f", idx+1, tc.expected.ToFloat64(), result.ToFloat64())
 		}
 	}
 }
@@ -162,14 +162,14 @@ func TestCalculateProbabilityOfStartingInToken(t *testing.T) {
 				makeSampleWordsmithWordBigramCount(makeSampleWordsmithWord("hola", 1), makeSampleWordsmithWord("adios", 2), 25),
 				makeSampleWordsmithWordBigramCount(makeSampleWordsmithWord("hola", 2), makeSampleWordsmithWord("adios", 1), 50),
 			},
-			expected: decimal.FromFloat64(50.0 / 100.0),
+			expected: decimal.FromFloat64(51.0 / 100.0),
 		}, {
 			word: makeSampleWordsmithWord("hola", 2),
 			wordBigramCounts: []wordsmith.WordBigramCount{
 				makeSampleWordsmithWordBigramCount(makeSampleWordsmithWord("hola", 1), makeSampleWordsmithWord("adios", 1), 25),
 				makeSampleWordsmithWordBigramCount(makeSampleWordsmithWord("hola", 1), makeSampleWordsmithWord("adios", 2), 25),
 			},
-			expected: decimal.FromFloat64(0),
+			expected: decimal.FromFloat64(1.0 / 50.0),
 		}, {
 			word:             makeSampleWordsmithWord("hola", 2),
 			wordBigramCounts: []wordsmith.WordBigramCount{},
@@ -179,7 +179,7 @@ func TestCalculateProbabilityOfStartingInToken(t *testing.T) {
 	for idx, tc := range testCases {
 		result := calculateProbabilityOfStartingWithToken(tc.word, tc.wordBigramCounts)
 		if !tc.expected.EqualTo(result) {
-			t.Errorf("Error on test case %d: expected probability of %f, but got %f", tc.expected.ToFloat64(), result.ToFloat64())
+			t.Errorf("Error on test case %d: expected probability of %f, but got %f", idx+1, tc.expected.ToFloat64(), result.ToFloat64())
 		}
 	}
 }

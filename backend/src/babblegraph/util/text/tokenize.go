@@ -5,7 +5,14 @@ import "strings"
 func Tokenize(text string) []string {
 	var out []string
 	for _, line := range strings.Split(text, "\n") {
-		out = append(out, strings.Split(line, " ")...)
+		if len(line) != 0 {
+			tokens := strings.Split(line, " ")
+			for _, t := range tokens {
+				if len(t) != 0 {
+					out = append(out, t)
+				}
+			}
+		}
 	}
 	return out
 }
