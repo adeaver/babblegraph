@@ -6,6 +6,8 @@ from definitions_part_of_speech import get_wordsmith_part_of_speech_id
 from util import make_lemma_id
 
 
+corpus = ("escrp1mananoreboton-definitions", "mananoreboton-definitions", "es")
+
 class InsertableDefinition(NamedTuple):
     part_of_speech_id: str
     lemma_id: str
@@ -51,7 +53,7 @@ def _make_insertable_wordsmith_definition(w: WordDefinition) -> List[InsertableD
             english_definition=w.definition,
             extra_part_of_speech_info=extra_part_of_speech_info,
             language="es",
-            corpus="escrp1mananoreboton-definitions"
+            corpus=corpus[0]
         ))
     return out
 
@@ -88,9 +90,15 @@ def _make_definitions_postgres_file(idx: int, rows: List[InsertableDefinition]):
     for r in rows:
         psql.append(f"(\'{r.language}\', \'{r.corpus}\', $${r.lemma_id}$$, $${r.english_definition}$$, \'{r.part_of_speech_id}\', $${r.extra_part_of_speech_info}$$)")
     with open(f"out/definitions-{idx}.sql", "w") as f:
-        sql_string = ",\n".join(psql)
-        final_sql = f"INSERT INTO lemma_definitions (language, corpus_id, lemma_id, english_definition, part_of_speech_id, extra_info) VALUES {sql_string} ON CONFLICT DO NOTHING;"
-        f.write(final_sql)
+        if idx == 1:
+            corpus_string = f"INSERT INTO \"public\".corpora (_id, name, language) VALUES ('{corpus[0]}', '{corpus[1]}', '{corpus[2]}') ON CONFLICT DO NOTHING;\n\n"
+            f.write(corpus_string)
+        value_string = ", ".join(psql)
+        insert_sql = f"""INSERT INTO definition_mappings (language, corpus_id, lemma_id, english_definition, part_of_speech_id, extra_info)
+        SELECT def_rows.*
+        FROM (VALUES {value_string}) AS def_rows(language, corpus_id, lemma_id, english_definition, part_of_speech_id, extra_info)
+        JOIN lemmas ON def_rows.lemma_id = lemmas._id"""
+        f.write(insert_sql)
 
 CHUNK_SIZE = 250000
 CURRENT_CHUNK = 1
