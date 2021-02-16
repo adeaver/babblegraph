@@ -1,0 +1,14 @@
+FROM python:3.8.5
+
+WORKDIR /script
+
+# Get the appropriate files
+RUN mkdir data/
+RUN wget --directory-prefix=/script/data https://raw.githubusercontent.com/mananoreboton/en-es-en-Dic/master/src/main/resources/dic/es-en.xml
+
+RUN mkdir out/
+COPY util.py .
+COPY definitions_process.py .
+COPY defintions_part_of_speech.py .
+
+CMD [ "python", "-u", "definitions_process.py" ]
