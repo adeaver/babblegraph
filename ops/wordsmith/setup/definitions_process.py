@@ -89,7 +89,7 @@ def _make_definitions_postgres_file(idx: int, rows: List[InsertableDefinition]):
     psql = []
     for r in rows:
         psql.append(f"(\'{r.language}\', \'{r.corpus}\', $${r.lemma_id}$$, $${r.english_definition}$$, \'{r.part_of_speech_id}\', $${r.extra_part_of_speech_info}$$)")
-    with open(f"out/definitions-{idx}.sql", "w") as f:
+    with open(f"/out/definitions-{idx}.sql", "w") as f:
         if idx == 1:
             corpus_string = f"INSERT INTO \"public\".corpora (_id, name, language) VALUES ('{corpus[0]}', '{corpus[1]}', '{corpus[2]}') ON CONFLICT DO NOTHING;\n\n"
             f.write(corpus_string)
@@ -103,7 +103,7 @@ def _make_definitions_postgres_file(idx: int, rows: List[InsertableDefinition]):
 CHUNK_SIZE = 250000
 CURRENT_CHUNK = 1
 insertable = []
-for w in _get_words_from_xml("./es-en.xml"):
+for w in _get_words_from_xml("./data/es-en.xml"):
     insertable_definitions = _make_insertable_wordsmith_definition(w)
     for d in insertable_definitions:
         insertable.append(d)

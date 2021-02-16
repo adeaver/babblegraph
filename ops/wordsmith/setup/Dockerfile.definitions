@@ -9,6 +9,6 @@ RUN wget --directory-prefix=/script/data https://raw.githubusercontent.com/manan
 RUN mkdir out/
 COPY util.py .
 COPY definitions_process.py .
-COPY defintions_part_of_speech.py .
+COPY definitions_part_of_speech.py .
 
 CMD [ "python", "-u", "definitions_process.py" ]
