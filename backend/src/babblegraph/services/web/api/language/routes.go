@@ -4,8 +4,6 @@ import (
 	"babblegraph/services/web/router"
 	"babblegraph/wordsmith"
 	"encoding/json"
-
-	"github.com/jmoiron/sqlx"
 )
 
 func RegisterRouteGroups() error {
@@ -36,7 +34,7 @@ type lemma struct {
 	Text         string            `json:"text"`
 	ID           wordsmith.LemmaID `json:"id"`
 	PartOfSpeech partOfSpeech      `json:"part_of_speech"`
-	Defintions   []definition      `json:"definitions"`
+	Definitions  []definition      `json:"definitions"`
 }
 
 type partOfSpeech struct {
@@ -54,10 +52,17 @@ func handleGetLemmasMatchingText(body []byte) (interface{}, error) {
 	if err := json.Unmarshal(body, &req); err != nil {
 		return nil, err
 	}
-	if err := wordsmith.WithWordsmithTx(func(tx *sqlx.Tx) error {
-		return nil
-	}); err != nil {
+	wrappedLemmas, err := getWrappedLemmas(req.Text)
+	if err != nil {
 		return nil, err
 	}
-	return nil, nil
+	var lemmas []lemma
+	for _, lemma := range wrappedLemmas {
+		lemmas = append(lemmas, lemma.ToAPI())
+	}
+	return getLemmasMatchingTextResponse{
+		LanguageCode: req.LanguageCode,
+		Text:         req.Text,
+		Lemmas:       lemmas,
+	}, nil
 }

@@ -7,3 +7,5 @@ CREATE TABLE IF NOT EXISTS parts_of_speech(
 
     PRIMARY KEY (_id)
 );
+
+CREATE INDEX IF NOT EXISTS parts_of_speech_idx ON parts_of_speech(_id);

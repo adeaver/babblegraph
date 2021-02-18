@@ -38,7 +38,7 @@ func (d dbLemma) ToNonDB() Lemma {
 	}
 }
 
-const lemmasByWordTextQuery = "SELECT * FROM lemmas WHERE _id IN (SELECT lemma_id FROM words WHERE word_text = $1 AND corpus_id = $2"
+const lemmasByWordTextQuery = "SELECT * FROM lemmas WHERE _id IN (SELECT lemma_id FROM words WHERE word_text = $1 AND corpus_id = $2)"
 
 func GetLemmasByWordText(tx *sqlx.Tx, corpus CorpusID, wordText string) ([]Lemma, error) {
 	var matches []dbLemma
