@@ -5,12 +5,14 @@ import (
 	"babblegraph/actions/verification"
 	"babblegraph/model/routes"
 	"babblegraph/model/utm"
+	"babblegraph/services/web/api/language"
 	"babblegraph/services/web/api/ses"
 	"babblegraph/services/web/api/user"
 	utm_routes "babblegraph/services/web/api/utm"
 	"babblegraph/services/web/router"
 	"babblegraph/util/database"
 	"babblegraph/util/env"
+	"babblegraph/wordsmith"
 	"fmt"
 	"log"
 	"net/http"
@@ -111,6 +113,9 @@ func setupDatabases() error {
 	if err := database.GetDatabaseForEnvironmentRetrying(); err != nil {
 		return fmt.Errorf("Error setting up main-db: %s", err.Error())
 	}
+	if err := wordsmith.MustSetupWordsmithForEnvironment(); err != nil {
+		return fmt.Errorf("Error setting up wordsmith: %s", err.Error())
+	}
 	return nil
 }
 
@@ -123,6 +128,9 @@ func registerAPI(r *mux.Router) error {
 		return err
 	}
 	if err := utm_routes.RegisterRouteGroups(); err != nil {
+		return err
+	}
+	if err := language.RegisterRouteGroups(); err != nil {
 		return err
 	}
 	return nil
