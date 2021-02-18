@@ -1,9 +1,12 @@
 package language
 
 import (
+	"babblegraph/model/routes"
 	"babblegraph/services/web/router"
+	"babblegraph/util/encrypt"
 	"babblegraph/wordsmith"
 	"encoding/json"
+	"fmt"
 )
 
 func RegisterRouteGroups() error {
@@ -50,6 +53,14 @@ type definition struct {
 func handleGetLemmasMatchingText(body []byte) (interface{}, error) {
 	var req getLemmasMatchingTextRequest
 	if err := json.Unmarshal(body, &req); err != nil {
+		return nil, err
+	}
+	if err := encrypt.WithDecodedToken(req.Token, func(t encrypt.TokenPair) error {
+		if t.Key != routes.WordReinforcementKey.Str() {
+			return fmt.Errorf("incorrect key")
+		}
+		return nil
+	}); err != nil {
 		return nil, err
 	}
 	wrappedLemmas, err := getWrappedLemmas(req.Text)
