@@ -66,6 +66,9 @@ func getWrappedLemmas(wordText string) ([]wrappedLemma, error) {
 	}
 	var out []wrappedLemma
 	for _, wrappedLemma := range wrappedLemmas {
+		if len(wrappedLemma.DefinitionMappings) == 0 {
+			continue
+		}
 		out = append(out, wrappedLemma)
 	}
 	return out, nil
