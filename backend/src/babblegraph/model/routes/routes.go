@@ -64,3 +64,14 @@ func MakeUserVerificationLink(userID users.UserID) (*string, error) {
 	}
 	return ptr.String(env.GetAbsoluteURLForEnvironment(fmt.Sprintf("verify/%s", *token))), nil
 }
+
+func MakeWordReinforcementToken(userID users.UserID) (*string, error) {
+	token, err := encrypt.GetToken(encrypt.TokenPair{
+		Key:   WordReinforcementKey.Str(),
+		Value: userID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return token, nil
+}
