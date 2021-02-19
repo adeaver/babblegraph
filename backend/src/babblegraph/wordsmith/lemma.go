@@ -1,6 +1,10 @@
 package wordsmith
 
-import "github.com/jmoiron/sqlx"
+import (
+	"fmt"
+
+	"github.com/jmoiron/sqlx"
+)
 
 type LemmaID string
 
@@ -50,4 +54,19 @@ func GetLemmasByWordText(tx *sqlx.Tx, corpus CorpusID, wordText string) ([]Lemma
 		out = append(out, m.ToNonDB())
 	}
 	return out, nil
+}
+
+const getLemmaByIDQuery = "SELECT * FROM lemmas WHERE _id = $1"
+
+// This function doesn't need a corpus id since lemmas are unique across corpora
+func GetLemmaByID(tx *sqlx.Tx, id LemmaID) (*Lemma, error) {
+	var matches []dbLemma
+	if err := tx.Select(&matches, getLemmaByIDQuery, id); err != nil {
+		return nil, err
+	}
+	if len(matches) != 1 {
+		return nil, fmt.Errorf("expecting exactly one match, but got %d", len(matches))
+	}
+	l := matches[0].ToNonDB()
+	return &l, nil
 }
