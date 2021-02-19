@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { RouteComponentProps, useHistory } from 'react-router-dom';
 
 import { makeStyles } from '@material-ui/core/styles';
@@ -7,9 +7,11 @@ import Card from '@material-ui/core/Card';
 import Divider from '@material-ui/core/Divider';
 import ArrowForwardIcon from '@material-ui/icons/ArrowForward';
 
+import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
 import Page from 'common/components/Page/Page';
 import Paragraph, { Size } from 'common/typography/Paragraph';
 import { Alignment, TypographyColor } from 'common/typography/common';
+import { getReinforcementToken, GetReinforcementTokenResponse } from 'api/token/reinforcementToken';
 
 type Params = {
     token: string
@@ -64,19 +66,47 @@ type SubscriptionManagementDashboardPageProps = RouteComponentProps<Params>
 const SubscriptionManagementDashboardPage = (props: SubscriptionManagementDashboardPageProps) => {
     const classes = styleClasses();
     const { token } = props.match.params;
+
+    const [ isLoading, setIsLoading ] = useState<boolean>(true);
+    const [ error, setError ] = useState<Error>(null);
+    const [ reinforcementToken, setReinforcementToken ] = useState<string | null>(null);
+
+    useEffect(() => {
+        getReinforcementToken({
+            token: token,
+        },
+        (resp: GetReinforcementTokenResponse) => {
+            setIsLoading(false);
+            setReinforcementToken(resp.token);
+        },
+        (e: Error) => {
+            setIsLoading(false);
+            setError(e);
+        });
+    }, []);
+
     return (
         <Page>
-            <Grid container spacing={2}>
-                <ActionCard redirectURL={`/manage/${token}/interests`} title='Manage Your Interests'>
-                    Select some topics you’re interested in reading more about or deselect some topics you’d like to read about less. This is a great way to make sure that the content you get is fun and engaging.
-                </ActionCard>
-                <ActionCard redirectURL={`/manage/${token}/level`} title='Set your difficulty level'>
-                    If your daily email is too hard or too easy, you can change the difficulty level here.
-                </ActionCard>
-                <ActionCard redirectURL={`/manage/${token}/unsubscribe`} title='Unsubscribe'>
-                    If you’re no longer interested in receiving daily emails, you can unsubscribe here. By unsubscribing, we won’t send you any more emails about anything.
-                </ActionCard>
-            </Grid>
+            {
+                isLoading ? (
+                    <LoadingSpinner />
+                ) : (
+                    <Grid container spacing={2}>
+                        <ActionCard redirectURL={`/manage/${token}/interests`} title='Manage Your Interests'>
+                            Select some topics you’re interested in reading more about or deselect some topics you’d like to read about less. This is a great way to make sure that the content you get is fun and engaging.
+                        </ActionCard>
+                        <ActionCard redirectURL={`/manage/${reinforcementToken}/vocabulary`} title='Track words to reinforce'>
+                            Learn a new word recently and want to make sure it sticks? You can track it, which will send you articles containing these words. Seeing a word frequently is a great way to make sure you remember it.
+                        </ActionCard>
+                        <ActionCard redirectURL={`/manage/${token}/level`} title='Set your difficulty level'>
+                            If your daily email is too hard or too easy, you can change the difficulty level here.
+                        </ActionCard>
+                        <ActionCard redirectURL={`/manage/${token}/unsubscribe`} title='Unsubscribe'>
+                            If you’re no longer interested in receiving daily emails, you can unsubscribe here. By unsubscribing, we won’t send you any more emails about anything.
+                        </ActionCard>
+                    </Grid>
+                )
+            }
         </Page>
     );
 }
