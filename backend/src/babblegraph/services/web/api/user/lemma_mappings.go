@@ -77,7 +77,7 @@ func handleAddUserLemmasForToken(body []byte) (interface{}, error) {
 		return nil, err
 	}
 	var languageCode wordsmith.LanguageCode
-	if err := wordsmith.WithTx(func(tx *sqlx.Tx) error {
+	if err := wordsmith.WithWordsmithTx(func(tx *sqlx.Tx) error {
 		lemma, err := wordsmith.GetLemmaByID(tx, req.LemmaID)
 		if err != nil {
 			return err
@@ -100,6 +100,35 @@ func handleAddUserLemmasForToken(body []byte) (interface{}, error) {
 	}, nil
 }
 
+type setUserLemmasInactiveForTokenRequest struct {
+	Token     string              `json:"token"`
+	MappingID userlemma.MappingID `json:"mapping_id"`
+}
+
+type setUserLemmasInactiveForTokenResponse struct {
+	MappingID userlemma.MappingID `json:"mapping_id"`
+	DidUpdate bool                `json:"did_update"`
+}
+
 func handleSetUserLemmasInactiveForToken(body []byte) (interface{}, error) {
-	return nil, nil
+	var req setUserLemmasInactiveForTokenRequest
+	if err := json.Unmarshal(body, &req); err != nil {
+		return nil, err
+	}
+	userID, err := routetoken.ValidateTokenAndGetUserID(req.Token, routes.WordReinforcementKey)
+	if err != nil {
+		return nil, err
+	}
+	var didUpdate bool
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		var err error
+		didUpdate, err = userlemma.SetMappingAsNotVisible(tx, *userID, req.MappingID)
+		return err
+	}); err != nil {
+		return nil, err
+	}
+	return setUserLemmasInactiveForTokenResponse{
+		MappingID: req.MappingID,
+		DidUpdate: didUpdate,
+	}, nil
 }
