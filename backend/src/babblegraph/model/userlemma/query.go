@@ -8,15 +8,15 @@ import (
 )
 
 const (
-	getActiveMappingsForUserQuery = "SELECT * FROM user_lemma_mappings WHERE user_id = $1 AND language_code = $2 AND is_active = TRUE"
+	getActiveMappingsForUserQuery = "SELECT * FROM user_lemma_mappings WHERE user_id = $1 AND is_active = TRUE"
 	addMappingsForUserQuery       = "INSERT INTO user_lemma_mappings (user_id, lemma_id, language_code) VALUES ($1, $2, $3) ON CONFLICT DO UPDATE SET is_visible = TRUE, is_active = TRUE"
 	setMappingAsInactiveQuery     = "UPDATE user_lemma_mappings SET is_active = FALSE WHERE user_id = $1 AND _id = $2"
 	setMappingAsNotVisibleQuery   = "UPDATE user_lemma_mappings SET is_visible = FALSE WHERE user_id = $1 AND _id = $2"
 )
 
-func GetActiveMappingsForUser(tx *sqlx.Tx, userID users.UserID, languageCode wordsmith.LanguageCode) ([]Mapping, error) {
+func GetActiveMappingsForUser(tx *sqlx.Tx, userID users.UserID) ([]Mapping, error) {
 	var matches []dbMapping
-	if err := tx.Select(&matches, getActiveMappingsForUserQuery, userID, languageCode); err != nil {
+	if err := tx.Select(&matches, getActiveMappingsForUserQuery, userID); err != nil {
 		return nil, err
 	}
 	var out []Mapping
