@@ -8,15 +8,15 @@ import (
 )
 
 const (
-	getActiveMappingsForUserQuery = "SELECT * FROM user_lemma_mappings WHERE user_id = $1 AND is_active = TRUE"
-	addMappingsForUserQuery       = "INSERT INTO user_lemma_mappings (user_id, lemma_id, language_code) VALUES ($1, $2, $3) ON CONFLICT (user_id, lemma_id) DO UPDATE SET is_visible = TRUE, is_active = TRUE"
-	setMappingAsInactiveQuery     = "UPDATE user_lemma_mappings SET is_active = FALSE WHERE user_id = $1 AND _id = $2"
-	setMappingAsNotVisibleQuery   = "UPDATE user_lemma_mappings SET is_visible = FALSE WHERE user_id = $1 AND _id = $2"
+	getVisibleMappingsForUser   = "SELECT * FROM user_lemma_mappings WHERE user_id = $1 AND is_visible = TRUE"
+	addMappingsForUserQuery     = "INSERT INTO user_lemma_mappings (user_id, lemma_id, language_code) VALUES ($1, $2, $3) ON CONFLICT (user_id, lemma_id) DO UPDATE SET is_visible = TRUE, is_active = TRUE"
+	setMappingAsInactiveQuery   = "UPDATE user_lemma_mappings SET is_active = FALSE WHERE user_id = $1 AND _id = $2"
+	setMappingAsNotVisibleQuery = "UPDATE user_lemma_mappings SET is_visible = FALSE WHERE user_id = $1 AND _id = $2"
 )
 
-func GetActiveMappingsForUser(tx *sqlx.Tx, userID users.UserID) ([]Mapping, error) {
+func GetVisibleMappingsForUser(tx *sqlx.Tx, userID users.UserID) ([]Mapping, error) {
 	var matches []dbMapping
-	if err := tx.Select(&matches, getActiveMappingsForUserQuery, userID); err != nil {
+	if err := tx.Select(&matches, getVisibleMappingsForUser, userID); err != nil {
 		return nil, err
 	}
 	var out []Mapping

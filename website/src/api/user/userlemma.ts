@@ -1,4 +1,5 @@
 import { makePostRequestWithStandardEncoding } from 'api/bgfetch/bgfetch';
+import { Lemma } from 'api/model/language';
 
 export type AddUserLemmasForTokenRequest = {
     token: string;
@@ -27,21 +28,12 @@ export type GetUserLemmasForTokenRequest = {
 }
 
 export type GetUserLemmasForTokenResponse = {
-    lemmaMappingsByLanguageCode: Array<LemmaMappingsWithLanguageCode>;
-}
-
-export type LemmaMappingsWithLanguageCode = {
-    languageCode: string;
     lemmaMappings: Array<LemmaMapping>;
 }
 
 export type LemmaMapping = {
-    ID: string;
-    LanguageCode: string;
-    UserID: string;
-    LemmaID: string;
-    IsVisible: string;
-    IsActive: string;
+    isActive: boolean;
+    lemma: Lemma;
 }
 
 export function getUserLemmasForToken(

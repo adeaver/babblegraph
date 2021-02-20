@@ -16,21 +16,23 @@ import { PrimaryTextField } from 'common/components/TextField/TextField';
 import { RouteComponentProps } from 'react-router-dom';
 import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
 import { toTitleCase } from 'util/string/StringConvert';
+
 import {
     GetLemmasMatchingTextResponse,
-    Lemma,
-    PartOfSpeech,
-    Definition,
     getLemmasMatchingText
 } from 'api/language/search';
 import {
     AddUserLemmasForTokenResponse,
     addUserLemmasForToken,
     GetUserLemmasForTokenResponse,
-    LemmaMappingsWithLanguageCode,
     LemmaMapping,
     getUserLemmasForToken
 } from 'api/user/userlemma';
+import {
+    Lemma,
+    PartOfSpeech,
+    Definition,
+} from 'api/model/language';
 
 const styleClasses = makeStyles({
     searchCard: {
@@ -126,13 +128,11 @@ const WordReinforcementPage = (props: WordReinforcementPageProps) => {
         },
         (resp: GetUserLemmasForTokenResponse) => {
             setIsLoadingInitialLemmas(false);
-            setUserLemmas(resp.lemmaMappingsByLanguageCode.reduce((acc: UserLemmasMap, item: LemmaMappingsWithLanguageCode) => {
-                return item.lemmaMappings.reduce((acc: UserLemmasMap, subItem: LemmaMapping) => {
-                    return {
-                        ...acc,
-                        [subItem.LemmaID]: subItem,
-                    };
-                }, acc);
+            setUserLemmas(resp.lemmaMappings.reduce((acc: UserLemmasMap, item: LemmaMapping) => {
+                return {
+                    ...acc,
+                    [item.lemma.id]: item,
+                };
             }, userLemmas));
         },
         (err: Error) => {
