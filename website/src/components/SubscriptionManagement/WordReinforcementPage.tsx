@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 
 import { makeStyles } from '@material-ui/core/styles';
-import Grid from '@material-ui/core/Grid';
 import Card from '@material-ui/core/Card';
+import CircularProgress from '@material-ui/core/CircularProgress';
 import Divider from '@material-ui/core/Divider';
+import Grid from '@material-ui/core/Grid';
 
 import Page from 'common/components/Page/Page';
 import Color from 'common/styles/colors';
@@ -50,6 +51,11 @@ const styleClasses = makeStyles({
         borderRadius: '5px',
         borderColor: Color.BorderGray,
         margin: '10px 0',
+    },
+    loadingSpinner: {
+        color: Color.Primary,
+        display: 'block',
+        margin: 'auto',
     },
 });
 
@@ -114,6 +120,7 @@ const WordReinforcementPage = (props: WordReinforcementPageProps) => {
                     lemmas={lemmas}
                     isLoadingLemmas={isLoadingLemmas}
                     lemmaSearchError={lemmaSearchError}
+                    loadingAddLemmaID={currentLoadingLemmaID}
                     handleSearchTermChange={setSearchTerm}
                     handleSelectLemma={handleSelectLemma}
                     handleSubmit={handleSubmit} />
@@ -127,6 +134,7 @@ type SearchBoxProps = {
     lemmas: Lemma[] | null;
     isLoadingLemmas: boolean;
     lemmaSearchError: Error;
+    loadingAddLemmaID: string | null;
 
     handleSearchTermChange: (searchTerm: string) => void;
     handleSubmit: () => void;
@@ -157,7 +165,7 @@ const SearchBox = (props: SearchBoxProps) => {
                                 onChange={handleSearchTermChange} />
                         </Grid>
                         <Grid className={classes.buttonContainer} item xs={3} md={2}>
-                            <PrimaryButton className={classes.button} onClick={props.handleSubmit} disabled={!props.searchTerm}>
+                            <PrimaryButton className={classes.button} onClick={props.handleSubmit} disabled={!props.searchTerm && !props.loadingAddLemmaID}>
                                 Search
                             </PrimaryButton>
                         </Grid>
@@ -167,7 +175,8 @@ const SearchBox = (props: SearchBoxProps) => {
                     lemmas={props.lemmas}
                     isLoading={props.isLoadingLemmas}
                     lemmaSearchError={props.lemmaSearchError}
-                    handleSelectLemma={props.handleSelectLemma} />
+                    handleSelectLemma={props.handleSelectLemma}
+                    loadingAddLemmaID={props.loadingAddLemmaID} />
             </Card>
         </Grid>
     );
@@ -177,6 +186,7 @@ type LemmaSearchResultsDisplayProps = {
     lemmas: Lemma[] | null;
     isLoading: boolean;
     lemmaSearchError: Error;
+    loadingAddLemmaID: string | null;
 
     handleSelectLemma: (id: string) => void;
 }
@@ -201,7 +211,7 @@ const LemmaSearchResultsDisplay = (props: LemmaSearchResultsDisplayProps) => {
         <div>
         {
             props.lemmas.map((lemma: Lemma) => (
-                <LemmaDisplay key={lemma.id} lemma={lemma} handleSelectLemma={props.handleSelectLemma} />
+                <LemmaDisplay key={lemma.id} lemma={lemma} handleSelectLemma={props.handleSelectLemma} loadingAddLemmaID={props.loadingAddLemmaID} />
             ))
         }
         </div>
@@ -210,6 +220,7 @@ const LemmaSearchResultsDisplay = (props: LemmaSearchResultsDisplayProps) => {
 
 type LemmaDisplayProps = {
     lemma: Lemma;
+    loadingAddLemmaID: string | null;
 
     handleSelectLemma: (id: string) => void;
 }
@@ -221,6 +232,7 @@ const LemmaDisplay = (props: LemmaDisplayProps) => {
     const handleSelect = () => {
         props.handleSelectLemma(props.lemma.id);
     }
+    const isLoadingCurrentLemma = !!props.loadingAddLemmaID && props.loadingAddLemmaID === props.lemma.id;
     const classes = styleClasses();
     return (
         <Grid className={classes.lemmaDisplayRoot} container>
@@ -233,9 +245,15 @@ const LemmaDisplay = (props: LemmaDisplayProps) => {
                 </Paragraph>
             </Grid>
             <Grid className={classes.buttonContainer} item xs={2}>
-                <PrimaryButton className={classes.button} onClick={handleSelect}>
-                    Track this word
-                </PrimaryButton>
+                {
+                    isLoadingCurrentLemma ? (
+                        <CircularProgress className={classes.loadingSpinner} />
+                    ) : (
+                        <PrimaryButton className={classes.button} onClick={handleSelect} disabled={!!props.loadingAddLemmaID}>
+                            Track this word
+                        </PrimaryButton>
+                    )
+                }
             </Grid>
         </Grid>
     )
