@@ -42,7 +42,8 @@ const styleClasses = makeStyles({
         alignSelf: 'center',
     },
     button: {
-        marginLeft: '15px',
+        display: 'block',
+        margin: 'auto',
     },
     lemmaDisplayRoot: {
         padding: '15px',
@@ -236,7 +237,7 @@ const LemmaDisplay = (props: LemmaDisplayProps) => {
     const classes = styleClasses();
     return (
         <Grid className={classes.lemmaDisplayRoot} container>
-            <Grid item xs={10}>
+            <Grid item xs={12} md={10}>
                 <Heading3 align={Alignment.Left} color={TypographyColor.Primary}>
                     { toTitleCase(props.lemma.text) } ({props.lemma.partOfSpeech.name.toLowerCase()})
                 </Heading3>
@@ -244,7 +245,7 @@ const LemmaDisplay = (props: LemmaDisplayProps) => {
                     { !!definitionText ? definitionText : 'No definition available' }
                 </Paragraph>
             </Grid>
-            <Grid className={classes.buttonContainer} item xs={2}>
+            <Grid className={classes.buttonContainer} item xs={12} md={2}>
                 {
                     isLoadingCurrentLemma ? (
                         <CircularProgress className={classes.loadingSpinner} />
