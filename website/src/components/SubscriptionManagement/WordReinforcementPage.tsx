@@ -25,7 +25,11 @@ import {
 } from 'api/language/search';
 import {
     AddUserLemmasForTokenResponse,
-    addUserLemmasForToken
+    addUserLemmasForToken,
+    GetUserLemmasForTokenResponse,
+    LemmaMappingsWithLanguageCode,
+    LemmaMapping,
+    getUserLemmasForToken
 } from 'api/user/userlemma';
 
 const styleClasses = makeStyles({
@@ -64,10 +68,16 @@ type Params = {
     token: string
 }
 
+type UserLemmasMap = { [id: string]: LemmaMapping }
+
 type WordReinforcementPageProps = RouteComponentProps<Params>;
 
 const WordReinforcementPage = (props: WordReinforcementPageProps) => {
     const { token } = props.match.params;
+
+    const [ isLoadingInitialLemmas, setIsLoadingInitialLemmas ] = useState<boolean>(true);
+    const [ userLemmas, setUserLemmas ] = useState<UserLemmasMap>({});
+    const [ fetchUserLemmasError, setFetchUserLemmasError ] = useState<Error>(null);
 
     const [ searchTerm, setSearchTerm ] = useState<string>('');
     const [ lemmas, setLemmas ] = useState<Lemma[] | null>(null);
@@ -110,10 +120,36 @@ const WordReinforcementPage = (props: WordReinforcementPageProps) => {
         });
     }
 
-    return (
-        <Page>
+    useEffect(() => {
+        getUserLemmasForToken({
+            token: token,
+        },
+        (resp: GetUserLemmasForTokenResponse) => {
+            setIsLoadingInitialLemmas(false);
+            setUserLemmas(resp.lemmaMappingsByLanguageCode.reduce((acc: UserLemmasMap, item: LemmaMappingsWithLanguageCode) => {
+                return item.lemmaMappings.reduce((acc: UserLemmasMap, subItem: LemmaMapping) => {
+                    return {
+                        ...acc,
+                        [subItem.LemmaID]: subItem,
+                    };
+                }, acc);
+            }, userLemmas));
+        },
+        (err: Error) => {
+            setIsLoadingInitialLemmas(false);
+            setFetchUserLemmasError(err);
+        });
+    }, []);
+
+    let body;
+    if (isLoadingInitialLemmas) {
+        body = (<LoadingSpinner />);
+    } else if (!!fetchUserLemmasError) {
+        body = (<Paragraph>Something went wrong, please try again!</Paragraph>);
+    } else {
+        body = (
             <Grid container>
-                <Grid item xs={0} md={3}>
+                <Grid item xs={false} md={3}>
                     &nbsp;
                 </Grid>
                 <SearchBox
@@ -122,10 +158,16 @@ const WordReinforcementPage = (props: WordReinforcementPageProps) => {
                     isLoadingLemmas={isLoadingLemmas}
                     lemmaSearchError={lemmaSearchError}
                     loadingAddLemmaID={currentLoadingLemmaID}
+                    userLemmas={userLemmas}
                     handleSearchTermChange={setSearchTerm}
                     handleSelectLemma={handleSelectLemma}
                     handleSubmit={handleSubmit} />
             </Grid>
+        );
+    }
+    return (
+        <Page>
+            {body}
         </Page>
     );
 }
@@ -136,6 +178,7 @@ type SearchBoxProps = {
     isLoadingLemmas: boolean;
     lemmaSearchError: Error;
     loadingAddLemmaID: string | null;
+    userLemmas: UserLemmasMap;
 
     handleSearchTermChange: (searchTerm: string) => void;
     handleSubmit: () => void;
@@ -175,6 +218,7 @@ const SearchBox = (props: SearchBoxProps) => {
                 <LemmaSearchResultsDisplay
                     lemmas={props.lemmas}
                     isLoading={props.isLoadingLemmas}
+                    userLemmas={props.userLemmas}
                     lemmaSearchError={props.lemmaSearchError}
                     handleSelectLemma={props.handleSelectLemma}
                     loadingAddLemmaID={props.loadingAddLemmaID} />
@@ -187,6 +231,7 @@ type LemmaSearchResultsDisplayProps = {
     lemmas: Lemma[] | null;
     isLoading: boolean;
     lemmaSearchError: Error;
+    userLemmas: UserLemmasMap;
     loadingAddLemmaID: string | null;
 
     handleSelectLemma: (id: string) => void;
@@ -212,7 +257,12 @@ const LemmaSearchResultsDisplay = (props: LemmaSearchResultsDisplayProps) => {
         <div>
         {
             props.lemmas.map((lemma: Lemma) => (
-                <LemmaDisplay key={lemma.id} lemma={lemma} handleSelectLemma={props.handleSelectLemma} loadingAddLemmaID={props.loadingAddLemmaID} />
+                <LemmaDisplay
+                    key={lemma.id}
+                    lemma={lemma}
+                    loadingAddLemmaID={props.loadingAddLemmaID}
+                    isAlreadyAdded={!!props.userLemmas[lemma.id]}
+                    handleSelectLemma={props.handleSelectLemma} />
             ))
         }
         </div>
@@ -222,6 +272,7 @@ const LemmaSearchResultsDisplay = (props: LemmaSearchResultsDisplayProps) => {
 type LemmaDisplayProps = {
     lemma: Lemma;
     loadingAddLemmaID: string | null;
+    isAlreadyAdded: boolean;
 
     handleSelectLemma: (id: string) => void;
 }
@@ -250,8 +301,8 @@ const LemmaDisplay = (props: LemmaDisplayProps) => {
                     isLoadingCurrentLemma ? (
                         <CircularProgress className={classes.loadingSpinner} />
                     ) : (
-                        <PrimaryButton className={classes.button} onClick={handleSelect} disabled={!!props.loadingAddLemmaID}>
-                            Track this word
+                        <PrimaryButton className={classes.button} onClick={handleSelect} disabled={!!props.loadingAddLemmaID || props.isAlreadyAdded}>
+                            { props.isAlreadyAdded ? 'Already on your list' : 'Track this word' }
                         </PrimaryButton>
                     )
                 }
