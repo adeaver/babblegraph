@@ -14,6 +14,7 @@ import { PrimaryButton } from 'common/components/Button/Button';
 import { PrimaryTextField } from 'common/components/TextField/TextField';
 import { RouteComponentProps } from 'react-router-dom';
 import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
+import { toTitleCase } from 'util/string/StringConvert';
 import {
     GetLemmasMatchingTextResponse,
     Lemma,
@@ -21,6 +22,10 @@ import {
     Definition,
     getLemmasMatchingText
 } from 'api/language/search';
+import {
+    AddUserLemmasForTokenResponse,
+    addUserLemmasForToken
+} from 'api/user/userlemma';
 
 const styleClasses = makeStyles({
     searchCard: {
@@ -62,6 +67,10 @@ const WordReinforcementPage = (props: WordReinforcementPageProps) => {
     const [ isLoadingLemmas, setIsLoadingLemmas ] = useState<boolean>(false);
     const [ lemmaSearchError, setLemmaSearchError ] = useState<Error>(null);
 
+    const [ currentLoadingLemmaID, setCurrentLoadingLemmaID ] = useState<string | null>(null);
+    const [ didAddLemma, setDidAddLemma ] = useState<boolean>(false);
+    const [ addUserLemmaError, setAddUserLemmaError ] = useState<Error>(null);
+
     const handleSubmit = () => {
         setIsLoadingLemmas(true);
         getLemmasMatchingText({
@@ -79,7 +88,19 @@ const WordReinforcementPage = (props: WordReinforcementPageProps) => {
         });
     }
     const handleSelectLemma = (id: string) => {
-        console.log(id);
+        setCurrentLoadingLemmaID(id);
+        addUserLemmasForToken({
+            token: token,
+            lemmaId: id,
+        },
+        (resp: AddUserLemmasForTokenResponse) => {
+            setCurrentLoadingLemmaID(null);
+            setDidAddLemma(resp.didUpdate);
+        },
+        (err: Error) => {
+            setCurrentLoadingLemmaID(null);
+            setAddUserLemmaError(err);
+        });
     }
 
     return (
@@ -205,7 +226,7 @@ const LemmaDisplay = (props: LemmaDisplayProps) => {
         <Grid className={classes.lemmaDisplayRoot} container>
             <Grid item xs={10}>
                 <Heading3 align={Alignment.Left} color={TypographyColor.Primary}>
-                    {props.lemma.text} ({props.lemma.partOfSpeech.name})
+                    { toTitleCase(props.lemma.text) } ({props.lemma.partOfSpeech.name.toLowerCase()})
                 </Heading3>
                 <Paragraph align={Alignment.Left}>
                     { !!definitionText ? definitionText : 'No definition available' }
