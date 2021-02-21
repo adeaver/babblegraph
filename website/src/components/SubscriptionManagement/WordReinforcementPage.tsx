@@ -13,6 +13,7 @@ import Paragraph from 'common/typography/Paragraph';
 import { Alignment, TypographyColor } from 'common/typography/common';
 import { PrimaryButton } from 'common/components/Button/Button';
 import { PrimaryTextField } from 'common/components/TextField/TextField';
+import { PrimarySwitch } from 'common/components/Switch/Switch';
 import { RouteComponentProps } from 'react-router-dom';
 import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
 import { toTitleCase } from 'util/string/StringConvert';
@@ -35,10 +36,10 @@ import {
 } from 'api/model/language';
 
 const styleClasses = makeStyles({
-    searchCard: {
+    contentCard: {
         padding: '25px',
     },
-    searchHeaderDivider: {
+    headerDivider: {
         marginBottom: '10px',
     },
     searchTextInput: {
@@ -63,6 +64,9 @@ const styleClasses = makeStyles({
         color: Color.Primary,
         display: 'block',
         margin: 'auto',
+    },
+    userLemmaDisplayRoot: {
+        marginTop: '25px',
     },
 });
 
@@ -148,21 +152,30 @@ const WordReinforcementPage = (props: WordReinforcementPageProps) => {
         body = (<Paragraph>Something went wrong, please try again!</Paragraph>);
     } else {
         body = (
-            <Grid container>
-                <Grid item xs={false} md={3}>
-                    &nbsp;
+            <div>
+                <Grid container>
+                    <Grid item xs={false} md={3}>
+                        &nbsp;
+                    </Grid>
+                    <SearchBox
+                        searchTerm={searchTerm}
+                        lemmas={lemmas}
+                        isLoadingLemmas={isLoadingLemmas}
+                        lemmaSearchError={lemmaSearchError}
+                        loadingAddLemmaID={currentLoadingLemmaID}
+                        userLemmas={userLemmas}
+                        handleSearchTermChange={setSearchTerm}
+                        handleSelectLemma={handleSelectLemma}
+                        handleSubmit={handleSubmit} />
                 </Grid>
-                <SearchBox
-                    searchTerm={searchTerm}
-                    lemmas={lemmas}
-                    isLoadingLemmas={isLoadingLemmas}
-                    lemmaSearchError={lemmaSearchError}
-                    loadingAddLemmaID={currentLoadingLemmaID}
-                    userLemmas={userLemmas}
-                    handleSearchTermChange={setSearchTerm}
-                    handleSelectLemma={handleSelectLemma}
-                    handleSubmit={handleSubmit} />
-            </Grid>
+                <Grid container>
+                    <Grid item xs={false} md={3}>
+                        &nbsp;
+                    </Grid>
+                    <UserLemmaDisplay
+                        userLemmas={userLemmas} />
+                </Grid>
+            </div>
         );
     }
     return (
@@ -192,11 +205,11 @@ const SearchBox = (props: SearchBoxProps) => {
     const classes = styleClasses();
     return (
         <Grid item xs={12} md={6}>
-            <Card className={classes.searchCard}>
+            <Card className={classes.contentCard}>
                 <Heading1 align={Alignment.Left} color={TypographyColor.Primary}>
                     Search for a word to track
                 </Heading1>
-                <Divider className={classes.searchHeaderDivider} />
+                <Divider className={classes.headerDivider} />
                 <form>
                     <Grid container>
                         <Grid item xs={9} md={10}>
@@ -309,6 +322,65 @@ const LemmaDisplay = (props: LemmaDisplayProps) => {
             </Grid>
         </Grid>
     )
+}
+
+type UserLemmaDisplayProps = {
+    userLemmas: UserLemmasMap;
+
+}
+
+const UserLemmaDisplay = (props: UserLemmaDisplayProps) => {
+    const lemmaDisplayBody = Object.values(props.userLemmas).map((lemmaMapping: LemmaMapping) => (
+        <UserLemmaDisplayItem key={lemmaMapping.lemma.id} lemma={lemmaMapping.lemma} isActive={lemmaMapping.isActive} />
+    ));
+
+    const classes = styleClasses();
+    return (
+        <Grid className={classes.userLemmaDisplayRoot} item xs={12} md={6}>
+            <Card className={classes.contentCard}>
+                <Heading1 align={Alignment.Left} color={TypographyColor.Primary}>
+                    Your words list
+                </Heading1>
+                <Divider className={classes.headerDivider} />
+                { lemmaDisplayBody }
+            </Card>
+        </Grid>
+    )
+}
+
+type UserLemmaDisplayItemProps = {
+    lemma: Lemma;
+    isActive: boolean;
+}
+
+const UserLemmaDisplayItem = (props: UserLemmaDisplayItemProps) => {
+    const definitionText = (props.lemma.definitions || []).map((d: Definition) => (
+        !!d.extraInfo ? `${d.text} ${d.extraInfo}` : d.text
+    )).join('; ');
+    const isLoadingCurrentLemma = false;
+
+    const classes = styleClasses();
+    return (
+        <Grid className={classes.lemmaDisplayRoot} container>
+            <Grid item xs={12} md={10}>
+                <Heading3 align={Alignment.Left} color={TypographyColor.Primary}>
+                    { toTitleCase(props.lemma.text) } ({props.lemma.partOfSpeech.name.toLowerCase()})
+                </Heading3>
+                <Paragraph align={Alignment.Left}>
+                    { !!definitionText ? definitionText : 'No definition available' }
+                </Paragraph>
+            </Grid>
+            <Grid className={classes.buttonContainer} item xs={12} md={2}>
+                {
+                    isLoadingCurrentLemma ? (
+                        <CircularProgress className={classes.loadingSpinner} />
+                    ) : (
+                        <PrimarySwitch className={classes.button} checked={props.isActive} onClick={() => {console.log('nothing')}} disabled={false} />
+                    )
+                }
+            </Grid>
+        </Grid>
+    );
 }
 
 export default WordReinforcementPage;
