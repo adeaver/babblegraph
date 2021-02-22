@@ -70,6 +70,9 @@ const styleClasses = makeStyles({
     userLemmaDisplayRoot: {
         marginTop: '25px',
     },
+    definitionParagraph: {
+        margin: '0',
+    },
 });
 
 type Params = {
@@ -171,7 +174,6 @@ const WordReinforcementPage = (props: WordReinforcementPageProps) => {
                 ...activeStateLoadingLemmas,
                 [id]: toggleNumber - 1,
             });
-            // TODO: handle error
         });
     }
 
@@ -342,17 +344,19 @@ type LemmaDisplayProps = {
 }
 
 const LemmaDisplay = (props: LemmaDisplayProps) => {
-    const definitionText = (props.lemma.definitions || []).map((d: Definition) => (
-        !!d.extraInfo ? `${d.text} ${d.extraInfo}` : d.text
-    )).join('; ');
+    const classes = styleClasses();
     const handleSelect = () => {
         props.handleSelectLemma(props.lemma.id);
     }
     const isLoadingCurrentLemma = !!props.loadingAddLemmaID && props.loadingAddLemmaID === props.lemma.id;
-    const classes = styleClasses();
+    const definitionText = (props.lemma.definitions || []).map((d: Definition) => (
+        <Paragraph className={classes.definitionParagraph} align={Alignment.Left}>
+            {!!d.extraInfo ? `${d.text} ${d.extraInfo}` : d.text}
+        </Paragraph>
+    ));
     return (
         <Grid className={classes.lemmaDisplayRoot} container>
-            <Grid item xs={12} md={10}>
+            <Grid item xs={12} md={8}>
                 <Heading3 align={Alignment.Left} color={TypographyColor.Primary}>
                     { toTitleCase(props.lemma.text) } ({props.lemma.partOfSpeech.name.toLowerCase()})
                 </Heading3>
@@ -360,7 +364,7 @@ const LemmaDisplay = (props: LemmaDisplayProps) => {
                     { !!definitionText ? definitionText : 'No definition available' }
                 </Paragraph>
             </Grid>
-            <Grid className={classes.buttonContainer} item xs={12} md={2}>
+            <Grid className={classes.buttonContainer} item xs={12} md={4}>
                 {
                     isLoadingCurrentLemma ? (
                         <CircularProgress className={classes.loadingSpinner} />
@@ -415,18 +419,19 @@ type UserLemmaDisplayItemProps = {
 }
 
 const UserLemmaDisplayItem = (props: UserLemmaDisplayItemProps) => {
-    const definitionText = (props.lemma.definitions || []).map((d: Definition) => (
-        !!d.extraInfo ? `${d.text} ${d.extraInfo}` : d.text
-    )).join('; ');
+    const classes = styleClasses();
 
     const handleToggleLemma = () => {
         props.handleToggleLemma(props.lemma.id, props.isActive);
     }
-
-    const classes = styleClasses();
+    const definitionText = (props.lemma.definitions || []).map((d: Definition) => (
+        <Paragraph className={classes.definitionParagraph} align={Alignment.Left}>
+            {!!d.extraInfo ? `${d.text} ${d.extraInfo}` : d.text}
+        </Paragraph>
+    ));
     return (
         <Grid className={classes.lemmaDisplayRoot} container>
-            <Grid item xs={12} md={10}>
+            <Grid item xs={10}>
                 <Heading3 align={Alignment.Left} color={TypographyColor.Primary}>
                     { toTitleCase(props.lemma.text) } ({props.lemma.partOfSpeech.name.toLowerCase()})
                 </Heading3>
@@ -434,7 +439,7 @@ const UserLemmaDisplayItem = (props: UserLemmaDisplayItemProps) => {
                     { !!definitionText ? definitionText : 'No definition available' }
                 </Paragraph>
             </Grid>
-            <Grid className={classes.buttonContainer} item xs={12} md={2}>
+            <Grid className={classes.buttonContainer} item xs={2}>
                 {
                     props.isLoading ? (
                         <CircularProgress className={classes.loadingSpinner} />
