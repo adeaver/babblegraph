@@ -2,6 +2,7 @@ package language
 
 import (
 	"babblegraph/model/routes"
+	language_model "babblegraph/services/web/model/language"
 	"babblegraph/services/web/router"
 	"babblegraph/util/encrypt"
 	"babblegraph/wordsmith"
@@ -30,24 +31,7 @@ type getLemmasMatchingTextRequest struct {
 type getLemmasMatchingTextResponse struct {
 	LanguageCode wordsmith.LanguageCode `json:"language_code"`
 	Text         string                 `json:"text"`
-	Lemmas       []lemma                `json:"lemmas"`
-}
-
-type lemma struct {
-	Text         string            `json:"text"`
-	ID           wordsmith.LemmaID `json:"id"`
-	PartOfSpeech partOfSpeech      `json:"part_of_speech"`
-	Definitions  []definition      `json:"definitions"`
-}
-
-type partOfSpeech struct {
-	ID   wordsmith.PartOfSpeechID `json:"id"`
-	Name string                   `json:"name"`
-}
-
-type definition struct {
-	Text      string  `json:"text"`
-	ExtraInfo *string `json:"extra_info,omitempty"`
+	Lemmas       []language_model.Lemma `json:"lemmas"`
 }
 
 func handleGetLemmasMatchingText(body []byte) (interface{}, error) {
@@ -63,13 +47,9 @@ func handleGetLemmasMatchingText(body []byte) (interface{}, error) {
 	}); err != nil {
 		return nil, err
 	}
-	wrappedLemmas, err := getWrappedLemmas(req.Text)
+	lemmas, err := language_model.GetLemmasForWordText(req.Text)
 	if err != nil {
 		return nil, err
-	}
-	var lemmas []lemma
-	for _, lemma := range wrappedLemmas {
-		lemmas = append(lemmas, lemma.ToAPI())
 	}
 	return getLemmasMatchingTextResponse{
 		LanguageCode: req.LanguageCode,

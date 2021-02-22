@@ -8,12 +8,9 @@ import (
 type MappingID string
 
 type Mapping struct {
-	ID           MappingID
-	LanguageCode wordsmith.LanguageCode
-	UserID       users.UserID
-	LemmaID      wordsmith.LemmaID
-	IsVisible    bool
-	IsActive     bool
+	LanguageCode wordsmith.LanguageCode `json:"language_code"`
+	LemmaID      wordsmith.LemmaID      `json:"lemma_id"`
+	IsActive     bool                   `json:"is_active"`
 }
 
 type dbMapping struct {
@@ -27,11 +24,8 @@ type dbMapping struct {
 
 func (d dbMapping) ToNonDB() Mapping {
 	return Mapping{
-		ID:           d.ID,
 		LanguageCode: d.LanguageCode,
-		UserID:       d.UserID,
 		LemmaID:      d.LemmaID,
-		IsVisible:    d.IsVisible,
 		IsActive:     d.IsActive,
 	}
 }

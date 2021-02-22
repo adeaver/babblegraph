@@ -70,3 +70,22 @@ func GetLemmaByID(tx *sqlx.Tx, id LemmaID) (*Lemma, error) {
 	l := matches[0].ToNonDB()
 	return &l, nil
 }
+
+const getLemmasByIDs = "SELECT * FROM lemmas WHERE _id IN (?)"
+
+func GetLemmasByIDs(tx *sqlx.Tx, ids []LemmaID) ([]Lemma, error) {
+	query, args, err := sqlx.In(getLemmasByIDs, ids)
+	if err != nil {
+		return nil, nil
+	}
+	sql := tx.Rebind(query)
+	var matches []dbLemma
+	if err := tx.Select(&matches, sql, args...); err != nil {
+		return nil, nil
+	}
+	var out []Lemma
+	for _, match := range matches {
+		out = append(out, match.ToNonDB())
+	}
+	return out, nil
+}

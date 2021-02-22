@@ -3,6 +3,7 @@ package user
 import (
 	"babblegraph/model/routes"
 	"babblegraph/model/userlemma"
+	language_model "babblegraph/services/web/model/language"
 	"babblegraph/services/web/util/routetoken"
 	"babblegraph/util/database"
 	"babblegraph/wordsmith"
@@ -16,12 +17,12 @@ type getUserLemmasForTokenRequest struct {
 }
 
 type getUserLemmasForTokenResponse struct {
-	LemmaMappingsByLanguageCode []lemmaMappingsWithLanguageCode `json:"lemma_mappings_by_language_code"`
+	LemmaMappings []lemmaMapping `json:"lemma_mappings"`
 }
 
-type lemmaMappingsWithLanguageCode struct {
-	LanguageCode  wordsmith.LanguageCode `json:"language_code"`
-	LemmaMappings []userlemma.Mapping    `json:"lemma_mappings"`
+type lemmaMapping struct {
+	Lemma    language_model.Lemma `json:"lemma"`
+	IsActive bool                 `json:"is_active"`
 }
 
 func handleGetUserLemmasForToken(body []byte) (interface{}, error) {
@@ -36,25 +37,30 @@ func handleGetUserLemmasForToken(body []byte) (interface{}, error) {
 	var lemmaMappings []userlemma.Mapping
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		var err error
-		lemmaMappings, err = userlemma.GetActiveMappingsForUser(tx, *userID)
+		lemmaMappings, err = userlemma.GetVisibleMappingsForUser(tx, *userID)
 		return err
 	}); err != nil {
 		return nil, err
 	}
-	lemmaMappingsByLanguageCode := make(map[wordsmith.LanguageCode][]userlemma.Mapping)
-	for _, mapping := range lemmaMappings {
-		mappings, _ := lemmaMappingsByLanguageCode[mapping.LanguageCode]
-		lemmaMappingsByLanguageCode[mapping.LanguageCode] = append(mappings, mapping)
+	var lemmaIDs []wordsmith.LemmaID
+	activeStatusByLemmaID := make(map[wordsmith.LemmaID]bool)
+	for _, l := range lemmaMappings {
+		lemmaIDs = append(lemmaIDs, l.LemmaID)
+		activeStatusByLemmaID[l.LemmaID] = l.IsActive
 	}
-	var out []lemmaMappingsWithLanguageCode
-	for languageCode, mappings := range lemmaMappingsByLanguageCode {
-		out = append(out, lemmaMappingsWithLanguageCode{
-			LanguageCode:  languageCode,
-			LemmaMappings: mappings,
+	lemmas, err := language_model.GetLemmasForLemmaIDs(lemmaIDs)
+	if err != nil {
+		return nil, err
+	}
+	var out []lemmaMapping
+	for _, l := range lemmas {
+		out = append(out, lemmaMapping{
+			IsActive: activeStatusByLemmaID[l.ID],
+			Lemma:    l,
 		})
 	}
 	return getUserLemmasForTokenResponse{
-		LemmaMappingsByLanguageCode: out,
+		LemmaMappings: out,
 	}, nil
 }
 
@@ -100,18 +106,19 @@ func handleAddUserLemmasForToken(body []byte) (interface{}, error) {
 	}, nil
 }
 
-type setUserLemmasInactiveForTokenRequest struct {
-	Token     string              `json:"token"`
-	MappingID userlemma.MappingID `json:"mapping_id"`
+type updateUserLemmaActiveStateForTokenRequest struct {
+	Token        string            `json:"token"`
+	LemmaID      wordsmith.LemmaID `json:"lemma_id"`
+	CurrentState bool              `json:"current_state"`
 }
 
-type setUserLemmasInactiveForTokenResponse struct {
-	MappingID userlemma.MappingID `json:"mapping_id"`
-	DidUpdate bool                `json:"did_update"`
+type updateUserLemmaActiveStateForTokenResponse struct {
+	LemmaID   wordsmith.LemmaID `json:"lemma_id"`
+	DidUpdate bool              `json:"did_update"`
 }
 
-func handleSetUserLemmasInactiveForToken(body []byte) (interface{}, error) {
-	var req setUserLemmasInactiveForTokenRequest
+func handleUpdateUserLemmaActiveStateForToken(body []byte) (interface{}, error) {
+	var req updateUserLemmaActiveStateForTokenRequest
 	if err := json.Unmarshal(body, &req); err != nil {
 		return nil, err
 	}
@@ -122,13 +129,13 @@ func handleSetUserLemmasInactiveForToken(body []byte) (interface{}, error) {
 	var didUpdate bool
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		var err error
-		didUpdate, err = userlemma.SetMappingAsNotVisible(tx, *userID, req.MappingID)
+		didUpdate, err = userlemma.ToggleMappingActiveState(tx, *userID, req.LemmaID, req.CurrentState)
 		return err
 	}); err != nil {
 		return nil, err
 	}
-	return setUserLemmasInactiveForTokenResponse{
-		MappingID: req.MappingID,
+	return updateUserLemmaActiveStateForTokenResponse{
+		LemmaID:   req.LemmaID,
 		DidUpdate: didUpdate,
 	}, nil
 }
