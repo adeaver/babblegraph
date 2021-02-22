@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { RouteComponentProps, useHistory } from 'react-router-dom';
 
 import { makeStyles } from '@material-ui/core/styles';
+import ArrowBackIcon from '@material-ui/icons/ArrowBack';
 import Card from '@material-ui/core/Card';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Divider from '@material-ui/core/Divider';
@@ -14,7 +16,6 @@ import { Alignment, TypographyColor } from 'common/typography/common';
 import { PrimaryButton } from 'common/components/Button/Button';
 import { PrimaryTextField } from 'common/components/TextField/TextField';
 import { PrimarySwitch } from 'common/components/Switch/Switch';
-import { RouteComponentProps } from 'react-router-dom';
 import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
 import { toTitleCase } from 'util/string/StringConvert';
 
@@ -36,10 +37,18 @@ import {
     PartOfSpeech,
     Definition,
 } from 'api/model/language';
+import {
+    getManageTokenForReinforcementToken,
+    GetManageTokenForReinforcementTokenResponse,
+} from 'api/token/subscriptionManagementToken';
 
 const styleClasses = makeStyles({
     contentCard: {
         padding: '25px',
+    },
+    contentHeaderBackArrow: {
+        alignSelf: 'center',
+        cursor: 'pointer',
     },
     headerDivider: {
         marginBottom: '10px',
@@ -86,6 +95,10 @@ type WordReinforcementPageProps = RouteComponentProps<Params>;
 
 const WordReinforcementPage = (props: WordReinforcementPageProps) => {
     const { token } = props.match.params;
+
+    const [ isLoadingSubscriptionManagementToken, setIsLoadingSubscriptionManagementToken ] = useState<boolean>(true);
+    const [ subscriptionManagementToken, setSubscriptionManagementToken ] = useState<string | null>(null);
+    const [ fetchSubscriptionManagementTokenError, setFetchSubscriptionManagementTokenError ] = useState<Error>(null);
 
     const [ isLoadingInitialLemmas, setIsLoadingInitialLemmas ] = useState<boolean>(true);
     const [ userLemmas, setUserLemmas ] = useState<UserLemmasMap>({});
@@ -194,12 +207,23 @@ const WordReinforcementPage = (props: WordReinforcementPageProps) => {
             setIsLoadingInitialLemmas(false);
             setFetchUserLemmasError(err);
         });
+        getManageTokenForReinforcementToken({
+            token: token,
+        },
+        (resp: GetManageTokenForReinforcementTokenResponse) => {
+            setIsLoadingSubscriptionManagementToken(false);
+            setSubscriptionManagementToken(resp.token);
+        },
+        (err: Error) => {
+            setIsLoadingSubscriptionManagementToken(false);
+            setFetchSubscriptionManagementTokenError(err);
+        });
     }, []);
 
     let body;
-    if (isLoadingInitialLemmas) {
+    if (isLoadingInitialLemmas || isLoadingSubscriptionManagementToken) {
         body = (<LoadingSpinner />);
-    } else if (!!fetchUserLemmasError) {
+    } else if (!!fetchUserLemmasError || !!fetchSubscriptionManagementTokenError) {
         body = (<Paragraph>Something went wrong, please try again!</Paragraph>);
     } else {
         body = (
@@ -209,6 +233,7 @@ const WordReinforcementPage = (props: WordReinforcementPageProps) => {
                         &nbsp;
                     </Grid>
                     <SearchBox
+                        subscriptionManagementToken={subscriptionManagementToken}
                         searchTerm={searchTerm}
                         lemmas={lemmas}
                         isLoadingLemmas={isLoadingLemmas}
@@ -239,6 +264,7 @@ const WordReinforcementPage = (props: WordReinforcementPageProps) => {
 }
 
 type SearchBoxProps = {
+    subscriptionManagementToken: string;
     searchTerm: string;
     lemmas: Lemma[] | null;
     isLoadingLemmas: boolean;
@@ -256,12 +282,20 @@ const SearchBox = (props: SearchBoxProps) => {
         props.handleSearchTermChange((event.target as HTMLInputElement).value);
     };
     const classes = styleClasses();
+    const history = useHistory();
     return (
         <Grid item xs={12} md={6}>
             <Card className={classes.contentCard}>
-                <Heading1 align={Alignment.Left} color={TypographyColor.Primary}>
-                    Search for a word to track
-                </Heading1>
+                <Grid container>
+                    <Grid className={classes.contentHeaderBackArrow} onClick={() => history.push(`/manage/${props.subscriptionManagementToken}`)} item xs={1}>
+                        <ArrowBackIcon color='action' />
+                    </Grid>
+                    <Grid item xs={11}>
+                        <Heading1 align={Alignment.Left} color={TypographyColor.Primary}>
+                            Search for a word to track
+                        </Heading1>
+                    </Grid>
+                </Grid>
                 <Divider className={classes.headerDivider} />
                 <form>
                     <Grid container>

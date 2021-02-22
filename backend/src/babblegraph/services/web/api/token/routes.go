@@ -14,6 +14,9 @@ func RegisterRouteGroups() error {
 			{
 				Path:    "get_reinforcement_token_1",
 				Handler: handleGetReinforcementToken,
+			}, {
+				Path:    "get_manage_token_for_reinforcement_token_1",
+				Handler: handleGetManageTokenForReinforcementToken,
 			},
 		},
 	})
@@ -41,6 +44,32 @@ func handleGetReinforcementToken(body []byte) (interface{}, error) {
 		return nil, err
 	}
 	return getReinforcementTokenResponse{
+		Token: *newToken,
+	}, nil
+}
+
+type getManageTokenForReinforcementTokenRequest struct {
+	Token string `json:"token"`
+}
+
+type getManageTokenForReinforcementTokenResponse struct {
+	Token string `json:"token"`
+}
+
+func handleGetManageTokenForReinforcementToken(body []byte) (interface{}, error) {
+	var req getManageTokenForReinforcementTokenRequest
+	if err := json.Unmarshal(body, &req); err != nil {
+		return nil, err
+	}
+	userID, err := routetoken.ValidateTokenAndGetUserID(req.Token, routes.WordReinforcementKey)
+	if err != nil {
+		return nil, err
+	}
+	newToken, err := routes.MakeSubscriptionManagementToken(*userID)
+	if err != nil {
+		return nil, err
+	}
+	return getManageTokenForReinforcementTokenResponse{
 		Token: *newToken,
 	}, nil
 }
