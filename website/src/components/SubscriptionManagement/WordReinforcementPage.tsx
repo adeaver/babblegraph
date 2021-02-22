@@ -27,7 +27,9 @@ import {
     addUserLemmasForToken,
     GetUserLemmasForTokenResponse,
     LemmaMapping,
-    getUserLemmasForToken
+    getUserLemmasForToken,
+    updateUserLemmaActiveStateForToken,
+    UpdateUserLemmaActiveStateForTokenResponse,
 } from 'api/user/userlemma';
 import {
     Lemma,
@@ -74,7 +76,8 @@ type Params = {
     token: string
 }
 
-type UserLemmasMap = { [id: string]: LemmaMapping }
+type UserLemmasMap = { [id: string]: LemmaMapping };
+type ActiveStateUpdateLoadingLemmasMap = { [id: string]: number };
 
 type WordReinforcementPageProps = RouteComponentProps<Params>;
 
@@ -91,8 +94,9 @@ const WordReinforcementPage = (props: WordReinforcementPageProps) => {
     const [ lemmaSearchError, setLemmaSearchError ] = useState<Error>(null);
 
     const [ currentLoadingLemmaID, setCurrentLoadingLemmaID ] = useState<string | null>(null);
-    const [ didAddLemma, setDidAddLemma ] = useState<boolean>(false);
     const [ addUserLemmaError, setAddUserLemmaError ] = useState<Error>(null);
+
+    const [ activeStateLoadingLemmas, setActiveStateLoadingLemmas ] = useState<ActiveStateUpdateLoadingLemmasMap>({});
 
     const handleSubmit = () => {
         setIsLoadingLemmas(true);
@@ -112,17 +116,62 @@ const WordReinforcementPage = (props: WordReinforcementPageProps) => {
     }
     const handleSelectLemma = (id: string) => {
         setCurrentLoadingLemmaID(id);
+        const lemmaForID = lemmas.filter((lemma: Lemma) => lemma.id === id);
         addUserLemmasForToken({
             token: token,
             lemmaId: id,
         },
         (resp: AddUserLemmasForTokenResponse) => {
             setCurrentLoadingLemmaID(null);
-            setDidAddLemma(resp.didUpdate);
+            if (resp.didUpdate && lemmaForID.length) {
+                setUserLemmas({
+                    ...userLemmas,
+                    [lemmaForID[0].id]: {
+                        lemma: lemmaForID[0],
+                        isActive: true,
+                    },
+                });
+            }
         },
         (err: Error) => {
             setCurrentLoadingLemmaID(null);
             setAddUserLemmaError(err);
+        });
+    }
+    const toggleLemma = (id: string, currentActiveState: boolean) => {
+        const toggleNumber = activeStateLoadingLemmas[id] != null ? activeStateLoadingLemmas[id] : 0;
+        setActiveStateLoadingLemmas({
+            ...activeStateLoadingLemmas,
+            [id]: toggleNumber + 1,
+        });
+        updateUserLemmaActiveStateForToken({
+            token: token,
+            lemmaId: id,
+            currentState: currentActiveState,
+        },
+        (resp: UpdateUserLemmaActiveStateForTokenResponse) => {
+            const toggleNumber = !!activeStateLoadingLemmas[resp.lemmaId] ? activeStateLoadingLemmas[resp.lemmaId] : 1;
+            setActiveStateLoadingLemmas({
+                ...activeStateLoadingLemmas,
+                [resp.lemmaId]: toggleNumber - 1,
+            });
+            if (resp.didUpdate) {
+                setUserLemmas({
+                    ...userLemmas,
+                    [id]: {
+                        ...userLemmas[id],
+                        isActive: !currentActiveState,
+                    },
+                });
+            }
+        },
+        (err: Error) => {
+            const toggleNumber = activeStateLoadingLemmas[id] != null ? activeStateLoadingLemmas[id] : 1;
+            setActiveStateLoadingLemmas({
+                ...activeStateLoadingLemmas,
+                [id]: toggleNumber - 1,
+            });
+            // TODO: handle error
         });
     }
 
@@ -173,7 +222,9 @@ const WordReinforcementPage = (props: WordReinforcementPageProps) => {
                         &nbsp;
                     </Grid>
                     <UserLemmaDisplay
-                        userLemmas={userLemmas} />
+                        userLemmas={userLemmas}
+                        loadingActiveStateUpdateLemmas={activeStateLoadingLemmas}
+                        handleToggleLemma={toggleLemma} />
                 </Grid>
             </div>
         );
@@ -326,12 +377,19 @@ const LemmaDisplay = (props: LemmaDisplayProps) => {
 
 type UserLemmaDisplayProps = {
     userLemmas: UserLemmasMap;
+    loadingActiveStateUpdateLemmas: ActiveStateUpdateLoadingLemmasMap;
 
+    handleToggleLemma: (id: string, currentActiveState: boolean) => void;
 }
 
 const UserLemmaDisplay = (props: UserLemmaDisplayProps) => {
     const lemmaDisplayBody = Object.values(props.userLemmas).map((lemmaMapping: LemmaMapping) => (
-        <UserLemmaDisplayItem key={lemmaMapping.lemma.id} lemma={lemmaMapping.lemma} isActive={lemmaMapping.isActive} />
+        <UserLemmaDisplayItem
+            key={lemmaMapping.lemma.id}
+            lemma={lemmaMapping.lemma}
+            isActive={lemmaMapping.isActive}
+            isLoading={!!props.loadingActiveStateUpdateLemmas[lemmaMapping.lemma.id]}
+            handleToggleLemma={props.handleToggleLemma} />
     ));
 
     const classes = styleClasses();
@@ -351,13 +409,19 @@ const UserLemmaDisplay = (props: UserLemmaDisplayProps) => {
 type UserLemmaDisplayItemProps = {
     lemma: Lemma;
     isActive: boolean;
+    isLoading: boolean;
+
+    handleToggleLemma: (id: string, currentActiveState: boolean) => void;
 }
 
 const UserLemmaDisplayItem = (props: UserLemmaDisplayItemProps) => {
     const definitionText = (props.lemma.definitions || []).map((d: Definition) => (
         !!d.extraInfo ? `${d.text} ${d.extraInfo}` : d.text
     )).join('; ');
-    const isLoadingCurrentLemma = false;
+
+    const handleToggleLemma = () => {
+        props.handleToggleLemma(props.lemma.id, props.isActive);
+    }
 
     const classes = styleClasses();
     return (
@@ -372,10 +436,10 @@ const UserLemmaDisplayItem = (props: UserLemmaDisplayItemProps) => {
             </Grid>
             <Grid className={classes.buttonContainer} item xs={12} md={2}>
                 {
-                    isLoadingCurrentLemma ? (
+                    props.isLoading ? (
                         <CircularProgress className={classes.loadingSpinner} />
                     ) : (
-                        <PrimarySwitch className={classes.button} checked={props.isActive} onClick={() => {console.log('nothing')}} disabled={false} />
+                        <PrimarySwitch className={classes.button} checked={props.isActive} onClick={handleToggleLemma} />
                     )
                 }
             </Grid>

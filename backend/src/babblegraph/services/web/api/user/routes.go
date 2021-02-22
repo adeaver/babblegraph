@@ -43,8 +43,8 @@ func RegisterRouteGroups() error {
 				Path:    "add_user_lemma_for_token_1",
 				Handler: handleAddUserLemmasForToken,
 			}, {
-				Path:    "set_user_lemma_inactive_for_token_1",
-				Handler: handleSetUserLemmasInactiveForToken,
+				Path:    "update_user_lemma_active_state_for_token_1",
+				Handler: handleUpdateUserLemmaActiveStateForToken,
 			},
 		},
 	})

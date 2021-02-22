@@ -48,3 +48,27 @@ export function getUserLemmasForToken(
         onError,
     );
 }
+
+export type UpdateUserLemmaActiveStateForTokenRequest = {
+    token: string;
+    lemmaId: string;
+    currentState: boolean;
+}
+
+export type UpdateUserLemmaActiveStateForTokenResponse = {
+    lemmaId: string;
+    didUpdate: boolean;
+}
+
+export function updateUserLemmaActiveStateForToken(
+    req: UpdateUserLemmaActiveStateForTokenRequest,
+    onSuccess: (resp: UpdateUserLemmaActiveStateForTokenResponse) => void,
+    onError: (err: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<UpdateUserLemmaActiveStateForTokenRequest, UpdateUserLemmaActiveStateForTokenResponse>(
+        '/api/user/update_user_lemma_active_state_for_token_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}

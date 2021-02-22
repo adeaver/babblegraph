@@ -106,18 +106,19 @@ func handleAddUserLemmasForToken(body []byte) (interface{}, error) {
 	}, nil
 }
 
-type setUserLemmasInactiveForTokenRequest struct {
-	Token     string              `json:"token"`
-	MappingID userlemma.MappingID `json:"mapping_id"`
+type updateUserLemmaActiveStateForTokenRequest struct {
+	Token        string            `json:"token"`
+	LemmaID      wordsmith.LemmaID `json:"lemma_id"`
+	CurrentState bool              `json:"current_state"`
 }
 
-type setUserLemmasInactiveForTokenResponse struct {
-	MappingID userlemma.MappingID `json:"mapping_id"`
-	DidUpdate bool                `json:"did_update"`
+type updateUserLemmaActiveStateForTokenResponse struct {
+	LemmaID   wordsmith.LemmaID `json:"lemma_id"`
+	DidUpdate bool              `json:"did_update"`
 }
 
-func handleSetUserLemmasInactiveForToken(body []byte) (interface{}, error) {
-	var req setUserLemmasInactiveForTokenRequest
+func handleUpdateUserLemmaActiveStateForToken(body []byte) (interface{}, error) {
+	var req updateUserLemmaActiveStateForTokenRequest
 	if err := json.Unmarshal(body, &req); err != nil {
 		return nil, err
 	}
@@ -128,13 +129,13 @@ func handleSetUserLemmasInactiveForToken(body []byte) (interface{}, error) {
 	var didUpdate bool
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		var err error
-		didUpdate, err = userlemma.SetMappingAsNotVisible(tx, *userID, req.MappingID)
+		didUpdate, err = userlemma.ToggleMappingActiveState(tx, *userID, req.LemmaID, req.CurrentState)
 		return err
 	}); err != nil {
 		return nil, err
 	}
-	return setUserLemmasInactiveForTokenResponse{
-		MappingID: req.MappingID,
+	return updateUserLemmaActiveStateForTokenResponse{
+		LemmaID:   req.LemmaID,
 		DidUpdate: didUpdate,
 	}, nil
 }
