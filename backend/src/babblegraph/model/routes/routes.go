@@ -14,10 +14,7 @@ func MustGetHomePageURL() string {
 }
 
 func MakeSubscriptionManagementRouteForUserID(userID users.UserID) (*string, error) {
-	token, err := encrypt.GetToken(encrypt.TokenPair{
-		Key:   SubscriptionManagementRouteEncryptionKey.Str(),
-		Value: userID,
-	})
+	token, err := MakeSubscriptionManagementToken(userID)
 	if err != nil {
 		return nil, err
 	}
@@ -63,15 +60,4 @@ func MakeUserVerificationLink(userID users.UserID) (*string, error) {
 		return nil, err
 	}
 	return ptr.String(env.GetAbsoluteURLForEnvironment(fmt.Sprintf("verify/%s", *token))), nil
-}
-
-func MakeWordReinforcementToken(userID users.UserID) (*string, error) {
-	token, err := encrypt.GetToken(encrypt.TokenPair{
-		Key:   WordReinforcementKey.Str(),
-		Value: userID,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return token, nil
 }
