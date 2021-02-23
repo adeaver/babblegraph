@@ -7,11 +7,15 @@ import Divider from '@material-ui/core/Divider';
 import ErrorOutlineIcon from '@material-ui/icons/ErrorOutline';
 import Grid from '@material-ui/core/Grid';
 
+import MailOutlineIcon from '@material-ui/icons/MailOutline';
+import LibraryAddCheckIcon from '@material-ui/icons/LibraryAddCheck';
+import AutorenewIcon from '@material-ui/icons/Autorenew';
+
 import Color from 'common/styles/colors';
 import Page from 'common/components/Page/Page';
 import Paragraph, { Size } from 'common/typography/Paragraph';
 import { TypographyColor } from 'common/typography/common';
-import { Heading1 } from 'common/typography/Heading';
+import { Heading1, Heading3 } from 'common/typography/Heading';
 import { PrimaryButton } from 'common/components/Button/Button';
 import { PrimaryTextField } from 'common/components/TextField/TextField';
 import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
@@ -53,6 +57,18 @@ const styleClasses = makeStyles({
     },
     warningIcon: {
         color: Color.Warning,
+    },
+    infoIcon: {
+        color: Color.Primary,
+        display: 'block',
+        margin: '0 auto',
+        fontSize: '48px',
+    },
+    infoIconContainer: {
+        alignSelf: 'center',
+    },
+    mainPageLinkContainer: {
+        cursor: 'pointer',
     },
 });
 
@@ -108,55 +124,35 @@ const HomePage = () => {
     }, []);
 
     const classes = styleClasses();
+    let body;
+    if (isLoading) {
+        body = (<LoadingSpinner />);
+    } else if (hadSuccess) {
+        body = (
+            <SuccessConfirmation
+                emailAddress={emailAddress}
+                handleResendVerificationEmail={handleSubmit}
+                handleReturnHome={() => { setHadSuccess(false)}} />
+        );
+    } else {
+        body = (
+            <SignupForm
+                emailAddress={emailAddress}
+                errorMessage={errorMessage}
+                canSubmit={hasLoadedCaptcha}
+                handleSubmit={handleSubmit}
+                handleEmailAddressChange={setEmailAddress} />
+        );
+    }
     return (
         <Page withBackground={PhotoKey.Seville}>
             <Grid container>
-                <Grid item xs={false} md={1} xl={4}>
+                <Grid item xs={false} md={3}>
                     &nbsp;
                 </Grid>
-                <Grid item xs={12} md={4}>
+                <Grid item xs={12} md={6}>
                     <Card className={classes.displayCard} variant='outlined'>
-                    {
-                        isLoading ? (
-                            <LoadingSpinner />
-                        ) : (
-                            <SignupForm
-                                emailAddress={emailAddress}
-                                canSubmit={hasLoadedCaptcha}
-                                handleSubmit={handleSubmit}
-                                handleEmailAddressChange={setEmailAddress} />
-                        )
-                    }
-                    {
-                        !!errorMessage && (
-                            <Grid container>
-                                <Grid className={classes.iconContainer} item xs={1}>
-                                    <ErrorOutlineIcon className={classes.warningIcon} />
-                                </Grid>
-                                <Grid item xs={11}>
-                                    <Paragraph size={Size.Small} color={TypographyColor.Warning}>
-                                        {errorMessage}
-                                    </Paragraph>
-                                </Grid>
-                            </Grid>
-                        )
-                    }
-                    {
-                        hadSuccess && (
-                            <Grid container>
-                                <Grid className={classes.iconContainer} item xs={1}>
-                                    <CheckCircleOutlineIcon className={classes.confirmationIcon} />
-                                </Grid>
-                                <Grid item xs={11}>
-                                    <Paragraph size={Size.Small} color={TypographyColor.Confirmation}>
-                                        Success! Check your email inbox for a confirmation email.
-                                        It should arrive in the next five minutes.
-                                        If it doesn’t, you can request another one by re-entering your email here.
-                                    </Paragraph>
-                                </Grid>
-                            </Grid>
-                        )
-                    }
+                        {body}
                     </Card>
                 </Grid>
             </Grid>
@@ -167,6 +163,7 @@ const HomePage = () => {
 type SignupFormProps = {
     emailAddress: string;
     canSubmit: boolean;
+    errorMessage: string | null;
 
     handleSubmit: () => void;
     handleEmailAddressChange: (emailAddress: string) => void;
@@ -191,9 +188,6 @@ const SignupForm = (props: SignupFormProps) => {
             <Paragraph>
                 It’s completely free and you can unsubscribe anytime you’d like.
             </Paragraph>
-            <Link href="/about">
-                Learn more
-            </Link>
             <form className={classes.confirmationForm} noValidate autoComplete="off">
                 <Grid container>
                     <Grid item xs={9} md={10}>
@@ -212,9 +206,102 @@ const SignupForm = (props: SignupFormProps) => {
                     </Grid>
                 </Grid>
             </form>
+            {
+                !!props.errorMessage && (
+                    <Grid container>
+                        <Grid className={classes.iconContainer} item xs={1}>
+                            <ErrorOutlineIcon className={classes.warningIcon} />
+                        </Grid>
+                        <Grid item xs={11}>
+                            <Paragraph size={Size.Small} color={TypographyColor.Warning}>
+                                {props.errorMessage}
+                            </Paragraph>
+                        </Grid>
+                    </Grid>
+                )
+            }
             <Link href="/privacy-policy">
                 View our Privacy Policy
             </Link>
+            <Divider />
+            <Heading3 color={TypographyColor.Primary}>
+                How it works
+            </Heading3>
+            <Grid container>
+                <Grid className={classes.infoIconContainer} item xs={3} md={2}>
+                    <MailOutlineIcon className={classes.infoIcon} />
+                </Grid>
+                <Grid item xs={9} md={10}>
+                    <Paragraph>
+                        Sign up to receive an email every day from a trusted Spanish-language news source
+                    </Paragraph>
+                </Grid>
+            </Grid>
+            <Grid container>
+                <Grid className={classes.infoIconContainer} item xs={3} md={2}>
+                    <LibraryAddCheckIcon className={classes.infoIcon} />
+                </Grid>
+                <Grid item xs={9} md={10}>
+                    <Paragraph>
+                        Select topics that you’re interested in to keep your articles fun and engaging.
+                    </Paragraph>
+                </Grid>
+            </Grid>
+            <Grid container>
+                <Grid className={classes.infoIconContainer} item xs={3} md={2}>
+                    <AutorenewIcon className={classes.infoIcon} />
+                </Grid>
+                <Grid item xs={9} md={10}>
+                    <Paragraph>
+                        Track words that you’re learning to receive more interesting articles that use those words in order to reinforce them.
+                    </Paragraph>
+                </Grid>
+            </Grid>
+        </div>
+    )
+}
+
+type SuccessConfirmationProps = {
+    emailAddress: string;
+
+    handleResendVerificationEmail: () => void;
+    handleReturnHome: () => void;
+};
+
+const SuccessConfirmation = (props: SuccessConfirmationProps) => {
+    const classes = styleClasses();
+    return (
+        <div>
+            <Heading1 color={TypographyColor.Primary}>Almost done! Just one last step.</Heading1>
+            <Paragraph>
+                Check your email for a verification email from babblegraph@gmail.com. We sent it to {props.emailAddress}.
+            </Paragraph>
+            <Paragraph>
+                You’ll need to click the button in the verification email that was just sent to you in order to start receiving emails from Babblegraph.
+            </Paragraph>
+            <Paragraph>
+                It can take up to 5 minutes for the email to make its way to your inbox.
+            </Paragraph>
+            <Grid container>
+                <Grid item xs={3} md={4}>
+                    &nbsp;
+                </Grid>
+                <Grid item xs={6} md={4}>
+                    <PrimaryButton onClick={props.handleResendVerificationEmail}>
+                        Resend the verification email
+                    </PrimaryButton>
+                </Grid>
+            </Grid>
+            <Grid container>
+                <Grid item xs={3} md={4}>
+                    &nbsp;
+                </Grid>
+                <Grid className={classes.mainPageLinkContainer} item xs={6} md={4} onClick={props.handleReturnHome}>
+                    <Paragraph color={TypographyColor.LinkBlue}>
+                        Return to main page
+                    </Paragraph>
+                </Grid>
+            </Grid>
         </div>
     )
 }
