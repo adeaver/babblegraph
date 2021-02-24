@@ -4,6 +4,7 @@ import (
 	"babblegraph/model/contenttopics"
 	"babblegraph/model/documents"
 	"babblegraph/util/ptr"
+	"babblegraph/wordsmith"
 	"math/rand"
 	"time"
 
@@ -29,13 +30,20 @@ func getDocumentsForUser(tx *sqlx.Tx, userInfo userEmailInfo) ([]documents.Docum
 }
 
 func queryDocsForUser(userInfo userEmailInfo) ([]documents.Document, error) {
+	var trackingLemmas []wordsmith.LemmaID
+	for _, lemmaMapping := range userInfo.TrackingLemmas {
+		if lemmaMapping.IsActive {
+			trackingLemmas = append(trackingLemmas, lemmaMapping.LemmaID)
+		}
+	}
 	docQueryBuilder := documents.NewDocumentsQueryBuilderForLanguage(userInfo.Languages[0])
 	readingLevelLowerBound := ptr.Int64(userInfo.ReadingLevel.LowerBound)
 	readingLevelUpperBound := ptr.Int64(userInfo.ReadingLevel.UpperBound)
 
 	docQueryBuilder.NotContainingDocuments(userInfo.SentDocuments)
-	docQueryBuilder.ForVersionRange(documents.Version2.Ptr(), documents.Version3.Ptr())
+	docQueryBuilder.ForVersionRange(documents.Version2.Ptr(), documents.Version4.Ptr())
 	docQueryBuilder.ForReadingLevelRange(readingLevelLowerBound, readingLevelUpperBound)
+	docQueryBuilder.ContainingLemmas(trackingLemmas)
 
 	genericDocuments, err := docQueryBuilder.ExecuteQuery()
 	if err != nil {

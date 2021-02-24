@@ -5,6 +5,7 @@ import (
 	"babblegraph/model/documents"
 	"babblegraph/model/usercontenttopics"
 	"babblegraph/model/userdocuments"
+	"babblegraph/model/userlemma"
 	"babblegraph/model/userreadability"
 	"babblegraph/model/users"
 	"babblegraph/wordsmith"
@@ -13,12 +14,13 @@ import (
 )
 
 type userEmailInfo struct {
-	UserID        users.UserID
-	EmailAddress  string
-	ReadingLevel  userReadingLevel
-	Languages     []wordsmith.LanguageCode
-	SentDocuments []documents.DocumentID
-	Topics        []contenttopics.ContentTopic
+	UserID         users.UserID
+	EmailAddress   string
+	ReadingLevel   userReadingLevel
+	Languages      []wordsmith.LanguageCode
+	SentDocuments  []documents.DocumentID
+	Topics         []contenttopics.ContentTopic
+	TrackingLemmas []userlemma.Mapping
 }
 
 type userReadingLevel struct {
@@ -42,6 +44,10 @@ func getPreferencesForUser(tx *sqlx.Tx, user users.User) (*userEmailInfo, error)
 	if err != nil {
 		return nil, err
 	}
+	lemmaMappings, err := userlemma.GetVisibleMappingsForUser(tx, user.ID)
+	if err != nil {
+		return nil, err
+	}
 	return &userEmailInfo{
 		UserID:       user.ID,
 		EmailAddress: user.EmailAddress,
@@ -49,8 +55,9 @@ func getPreferencesForUser(tx *sqlx.Tx, user users.User) (*userEmailInfo, error)
 			LowerBound: readingLevel.MinScore.ToInt64Rounded(),
 			UpperBound: readingLevel.MaxScore.ToInt64Rounded(),
 		},
-		Languages:     []wordsmith.LanguageCode{wordsmith.LanguageCodeSpanish},
-		SentDocuments: sentDocumentIDs,
-		Topics:        contentTopics,
+		Languages:      []wordsmith.LanguageCode{wordsmith.LanguageCodeSpanish},
+		SentDocuments:  sentDocumentIDs,
+		Topics:         contentTopics,
+		TrackingLemmas: lemmaMappings,
 	}, nil
 }

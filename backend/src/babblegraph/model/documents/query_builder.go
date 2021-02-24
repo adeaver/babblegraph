@@ -24,7 +24,8 @@ type documentsQueryBuilder struct {
 	// Each query can only search for a single topic
 	// to make sure that the documents returned are most
 	// relevant for that topic - not the union of the two
-	topic *contenttopics.ContentTopic
+	topic  *contenttopics.ContentTopic
+	lemmas []string
 }
 
 func NewDocumentsQueryBuilderForLanguage(languageCode wordsmith.LanguageCode) *documentsQueryBuilder {
@@ -62,6 +63,9 @@ func (d *documentsQueryBuilder) ExecuteQuery() ([]Document, error) {
 			versionRangeQueryBuilder.LessThanOrEqualToInt64(*maxVersion)
 		}
 		queryBuilder.AddMust(versionRangeQueryBuilder.BuildRangeQuery())
+	}
+	if len(d.lemmas) > 0 {
+		queryBuilder.AddShould(esquery.Terms("lemmatized_description", d.lemmas))
 	}
 	var docs []Document
 	if err := esquery.ExecuteSearch(documentIndex{}, queryBuilder.BuildBoolQuery(), func(source []byte) error {
@@ -106,5 +110,11 @@ func (d *documentsQueryBuilder) ForVersionRange(lowerBound, upperBound *Version)
 	d.version = &IntRange{
 		LowerBound: minVersion,
 		UpperBound: maxVersion,
+	}
+}
+
+func (d *documentsQueryBuilder) ContainingLemmas(lemmaIDs []wordsmith.LemmaID) {
+	for _, l := range lemmaIDs {
+		d.lemmas = append(d.lemmas, l.Str())
 	}
 }
