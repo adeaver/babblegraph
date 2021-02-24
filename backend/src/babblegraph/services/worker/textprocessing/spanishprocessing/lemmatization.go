@@ -53,7 +53,7 @@ func convertTokensToLemmas(tokens []string, wordsByText map[string][]wordsmith.W
 		case len(wordsForToken) >= 2:
 			var priorWord, nextWord *string
 			switch {
-			case idx == 0:
+			case idx == 0 && idx < len(tokens)-1:
 				nextWord = ptr.String(tokens[idx+1])
 			case idx == len(tokens)-1:
 				priorWord = ptr.String(tokens[idx-1])

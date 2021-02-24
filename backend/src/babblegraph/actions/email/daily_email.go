@@ -20,8 +20,9 @@ const dailyEmailTemplateFilename = "daily_email_template.html"
 
 type dailyEmailTemplate struct {
 	email.BaseEmailTemplate
-	Links         []dailyEmailLink
-	SetTopicsLink *string
+	Links             []dailyEmailLink
+	SetTopicsLink     *string
+	ReinforcementLink string
 }
 
 type dailyEmailLink struct {
@@ -74,10 +75,15 @@ func createDailyEmailTemplate(emailRecordID email.ID, recipient email.Recipient,
 			return nil, err
 		}
 	}
+	reinforcementLink, err := routes.MakeWordReinforcementLink(recipient.UserID)
+	if err != nil {
+		return nil, err
+	}
 	return &dailyEmailTemplate{
 		BaseEmailTemplate: *baseTemplate,
 		Links:             links,
 		SetTopicsLink:     setTopicsLink,
+		ReinforcementLink: *reinforcementLink,
 	}, nil
 }
 

@@ -61,3 +61,11 @@ func MakeUserVerificationLink(userID users.UserID) (*string, error) {
 	}
 	return ptr.String(env.GetAbsoluteURLForEnvironment(fmt.Sprintf("verify/%s", *token))), nil
 }
+
+func MakeWordReinforcementLink(userID users.UserID) (*string, error) {
+	token, err := MakeWordReinforcementToken(userID)
+	if err != nil {
+		return nil, err
+	}
+	return ptr.String(env.GetAbsoluteURLForEnvironment(fmt.Sprintf("manage/%s/vocabulary", *token))), nil
+}
