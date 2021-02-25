@@ -3,12 +3,19 @@ package documents
 import (
 	"babblegraph/model/contenttopics"
 	"babblegraph/util/elastic/esquery"
+	"babblegraph/util/math/decimal"
 	"babblegraph/util/ptr"
 	"babblegraph/wordsmith"
 	"encoding/json"
 	"fmt"
 	"log"
+	"strings"
 )
+
+type DocumentWithScore struct {
+	Document Document
+	Score    decimal.Number
+}
 
 type IntRange struct {
 	LowerBound *int64
@@ -24,14 +31,15 @@ type documentsQueryBuilder struct {
 	// Each query can only search for a single topic
 	// to make sure that the documents returned are most
 	// relevant for that topic - not the union of the two
-	topic *contenttopics.ContentTopic
+	topic  *contenttopics.ContentTopic
+	lemmas []string
 }
 
 func NewDocumentsQueryBuilderForLanguage(languageCode wordsmith.LanguageCode) *documentsQueryBuilder {
 	return &documentsQueryBuilder{languageCode: languageCode}
 }
 
-func (d *documentsQueryBuilder) ExecuteQuery() ([]Document, error) {
+func (d *documentsQueryBuilder) ExecuteQuery() ([]DocumentWithScore, error) {
 	queryBuilder := esquery.NewBoolQueryBuilder()
 	queryBuilder.AddMust(esquery.Match("language_code", d.languageCode.Str()))
 	if filteredWords, ok := filteredWordsForLanguageCode[d.languageCode]; ok {
@@ -63,14 +71,20 @@ func (d *documentsQueryBuilder) ExecuteQuery() ([]Document, error) {
 		}
 		queryBuilder.AddMust(versionRangeQueryBuilder.BuildRangeQuery())
 	}
-	var docs []Document
-	if err := esquery.ExecuteSearch(documentIndex{}, queryBuilder.BuildBoolQuery(), func(source []byte) error {
+	if len(d.lemmas) > 0 {
+		queryBuilder.AddShould(esquery.Match("lemmatized_description", strings.Join(d.lemmas, " ")))
+	}
+	var docs []DocumentWithScore
+	if err := esquery.ExecuteSearch(documentIndex{}, queryBuilder.BuildBoolQuery(), func(source []byte, score decimal.Number) error {
 		log.Println(fmt.Sprintf("Document search got body %s", string(source)))
 		var doc Document
 		if err := json.Unmarshal(source, &doc); err != nil {
 			return err
 		}
-		docs = append(docs, doc)
+		docs = append(docs, DocumentWithScore{
+			Document: doc,
+			Score:    score,
+		})
 		return nil
 	}); err != nil {
 		return nil, err
@@ -106,5 +120,11 @@ func (d *documentsQueryBuilder) ForVersionRange(lowerBound, upperBound *Version)
 	d.version = &IntRange{
 		LowerBound: minVersion,
 		UpperBound: maxVersion,
+	}
+}
+
+func (d *documentsQueryBuilder) ContainingLemmas(lemmaIDs []wordsmith.LemmaID) {
+	for _, l := range lemmaIDs {
+		d.lemmas = append(d.lemmas, l.Str())
 	}
 }

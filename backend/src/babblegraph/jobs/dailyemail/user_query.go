@@ -4,7 +4,9 @@ import (
 	"babblegraph/model/contenttopics"
 	"babblegraph/model/documents"
 	"babblegraph/util/ptr"
+	"babblegraph/wordsmith"
 	"math/rand"
+	"sort"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -28,14 +30,21 @@ func getDocumentsForUser(tx *sqlx.Tx, userInfo userEmailInfo) ([]documents.Docum
 	return topDocs, nil
 }
 
-func queryDocsForUser(userInfo userEmailInfo) ([]documents.Document, error) {
+func queryDocsForUser(userInfo userEmailInfo) ([]documents.DocumentWithScore, error) {
+	var trackingLemmas []wordsmith.LemmaID
+	for _, lemmaMapping := range userInfo.TrackingLemmas {
+		if lemmaMapping.IsActive {
+			trackingLemmas = append(trackingLemmas, lemmaMapping.LemmaID)
+		}
+	}
 	docQueryBuilder := documents.NewDocumentsQueryBuilderForLanguage(userInfo.Languages[0])
 	readingLevelLowerBound := ptr.Int64(userInfo.ReadingLevel.LowerBound)
 	readingLevelUpperBound := ptr.Int64(userInfo.ReadingLevel.UpperBound)
 
 	docQueryBuilder.NotContainingDocuments(userInfo.SentDocuments)
-	docQueryBuilder.ForVersionRange(documents.Version2.Ptr(), documents.Version3.Ptr())
+	docQueryBuilder.ForVersionRange(documents.Version2.Ptr(), documents.Version4.Ptr())
 	docQueryBuilder.ForReadingLevelRange(readingLevelLowerBound, readingLevelUpperBound)
+	docQueryBuilder.ContainingLemmas(trackingLemmas)
 
 	genericDocuments, err := docQueryBuilder.ExecuteQuery()
 	if err != nil {
@@ -44,7 +53,7 @@ func queryDocsForUser(userInfo userEmailInfo) ([]documents.Document, error) {
 	if len(userInfo.Topics) == 0 {
 		return genericDocuments, nil
 	}
-	userDocuments := make(map[documents.DocumentID]documents.Document)
+	var outDocuments []documents.DocumentWithScore
 	topics := pickTopics(userInfo.Topics)
 	for _, topic := range topics {
 		// This is a bit of a hack.
@@ -55,31 +64,26 @@ func queryDocsForUser(userInfo userEmailInfo) ([]documents.Document, error) {
 		if err != nil {
 			return nil, err
 		}
-		for _, doc := range documents {
-			userDocuments[doc.ID] = doc
-		}
+		outDocuments = append(outDocuments, documents...)
 	}
-	if len(userDocuments) == 0 {
+	if len(outDocuments) == 0 {
 		return genericDocuments, nil
 	}
-	var out []documents.Document
-	for _, doc := range userDocuments {
-		out = append(out, doc)
-	}
-	return out, nil
+	return outDocuments, nil
 }
 
-func pickTopDocuments(docs []documents.Document) []documents.Document {
-	stopIdx := maxDocumentsPerEmail
-	if len(docs) < stopIdx {
-		stopIdx = len(docs)
-	}
-	generator := rand.New(rand.NewSource(time.Now().UnixNano()))
+func pickTopDocuments(docs []documents.DocumentWithScore) []documents.Document {
+	sort.Slice(docs, func(i, j int) bool {
+		return docs[i].Score.GreaterThan(docs[j].Score)
+	})
 	var out []documents.Document
-	for i := 0; i < stopIdx; i++ {
-		idx := generator.Intn(int(len(docs)))
-		out = append(out, docs[idx])
-		docs = append(docs[:idx], docs[idx+1:]...)
+	docIDHash := make(map[documents.DocumentID]bool)
+	for i := 0; i < len(docs) && len(out) < maxDocumentsPerEmail; i++ {
+		docID := docs[i].Document.ID
+		if ok, _ := docIDHash[docID]; !ok {
+			out = append(out, docs[i].Document)
+			docIDHash[docID] = true
+		}
 	}
 	return out
 }

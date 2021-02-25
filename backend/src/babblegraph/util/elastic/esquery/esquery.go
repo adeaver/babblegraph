@@ -2,6 +2,7 @@ package esquery
 
 import (
 	"babblegraph/util/elastic"
+	"babblegraph/util/math/decimal"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -36,7 +37,7 @@ type searchBody struct {
 	Query query `json:"query"`
 }
 
-func ExecuteSearch(index elastic.Index, query query, fn func(source []byte) error) error {
+func ExecuteSearch(index elastic.Index, query query, fn func(source []byte, relevance decimal.Number) error) error {
 	bodyBytes, err := json.Marshal(searchBody{
 		Query: query,
 	})
