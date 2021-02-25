@@ -3,12 +3,19 @@ package documents
 import (
 	"babblegraph/model/contenttopics"
 	"babblegraph/util/elastic/esquery"
+	"babblegraph/util/math/decimal"
 	"babblegraph/util/ptr"
 	"babblegraph/wordsmith"
 	"encoding/json"
 	"fmt"
 	"log"
+	"strings"
 )
+
+type DocumentWithScore struct {
+	Document Document
+	Score    decimal.Number
+}
 
 type IntRange struct {
 	LowerBound *int64
@@ -32,7 +39,7 @@ func NewDocumentsQueryBuilderForLanguage(languageCode wordsmith.LanguageCode) *d
 	return &documentsQueryBuilder{languageCode: languageCode}
 }
 
-func (d *documentsQueryBuilder) ExecuteQuery() ([]Document, error) {
+func (d *documentsQueryBuilder) ExecuteQuery() ([]DocumentWithScore, error) {
 	queryBuilder := esquery.NewBoolQueryBuilder()
 	queryBuilder.AddMust(esquery.Match("language_code", d.languageCode.Str()))
 	if filteredWords, ok := filteredWordsForLanguageCode[d.languageCode]; ok {
@@ -65,16 +72,19 @@ func (d *documentsQueryBuilder) ExecuteQuery() ([]Document, error) {
 		queryBuilder.AddMust(versionRangeQueryBuilder.BuildRangeQuery())
 	}
 	if len(d.lemmas) > 0 {
-		queryBuilder.AddShould(esquery.Terms("lemmatized_description", d.lemmas))
+		queryBuilder.AddShould(esquery.Match("lemmatized_description", strings.Join(d.lemmas, " ")))
 	}
-	var docs []Document
-	if err := esquery.ExecuteSearch(documentIndex{}, queryBuilder.BuildBoolQuery(), func(source []byte) error {
+	var docs []DocumentWithScore
+	if err := esquery.ExecuteSearch(documentIndex{}, queryBuilder.BuildBoolQuery(), func(source []byte, score decimal.Number) error {
 		log.Println(fmt.Sprintf("Document search got body %s", string(source)))
 		var doc Document
 		if err := json.Unmarshal(source, &doc); err != nil {
 			return err
 		}
-		docs = append(docs, doc)
+		docs = append(docs, DocumentWithScore{
+			Document: doc,
+			Score:    score,
+		})
 		return nil
 	}); err != nil {
 		return nil, err

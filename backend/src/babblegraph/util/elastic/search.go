@@ -1,6 +1,7 @@
 package elastic
 
 import (
+	"babblegraph/util/math/decimal"
 	"context"
 	"encoding/json"
 
@@ -42,7 +43,7 @@ type hitsTotal struct {
 	Relation string `json:"relation"`
 }
 
-func RunSearchRequest(req esapi.SearchRequest, fn func(sourceBytes []byte) error) error {
+func RunSearchRequest(req esapi.SearchRequest, fn func(sourceBytes []byte, relevance decimal.Number) error) error {
 	res, err := req.Do(context.Background(), esClient)
 	if err != nil {
 		return err
@@ -58,7 +59,7 @@ func RunSearchRequest(req esapi.SearchRequest, fn func(sourceBytes []byte) error
 		if err != nil {
 			return err
 		}
-		if err := fn(sourceBytes); err != nil {
+		if err := fn(sourceBytes, decimal.FromFloat64(h.Score)); err != nil {
 			return err
 		}
 	}
