@@ -233,7 +233,7 @@ const SignupForm = (props: SignupFormProps) => {
                 </Grid>
                 <Grid item xs={9} md={10}>
                     <Paragraph>
-                        Sign up to receive an email every day from a trusted Spanish-language news source
+                        Sign up to receive an email every day containing articles from trusted Spanish-language news sources
                     </Paragraph>
                 </Grid>
             </Grid>
@@ -243,7 +243,7 @@ const SignupForm = (props: SignupFormProps) => {
                 </Grid>
                 <Grid item xs={9} md={10}>
                     <Paragraph>
-                        Select topics that you’re interested in to keep your articles fun and engaging.
+                        Select topics that you’re interested in to keep the articles you receive fun and engaging
                     </Paragraph>
                 </Grid>
             </Grid>
@@ -253,7 +253,7 @@ const SignupForm = (props: SignupFormProps) => {
                 </Grid>
                 <Grid item xs={9} md={10}>
                     <Paragraph>
-                        Track words that you’re learning to receive more interesting articles that use those words in order to reinforce them.
+                        Track words that you’re learning to receive more interesting articles that use those words so that you can reinforce them
                     </Paragraph>
                 </Grid>
             </Grid>
