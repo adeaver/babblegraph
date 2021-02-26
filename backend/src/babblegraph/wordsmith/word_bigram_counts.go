@@ -46,7 +46,7 @@ func (d dbWordBigramCount) ToNonDB() WordBigramCount {
 	}
 }
 
-const wordBigramCountForWordQuery = "SELECT * FROM word_bigram_counts WHERE corpus_id = $1 AND (first_word_text = $2 OR second_word_text = $3)"
+const wordBigramCountForWordQuery = "SELECT * FROM word_bigram_counts WHERE corpus_id = $1 AND (first_word_text = $2 AND second_word_text = $3)"
 
 func GetWordBigramCountsByWordText(tx *sqlx.Tx, corpusID CorpusID, firstWord string, secondWord string) ([]WordBigramCount, error) {
 	var matches []dbWordBigramCount
