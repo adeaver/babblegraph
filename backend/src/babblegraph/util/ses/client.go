@@ -26,10 +26,11 @@ type NewClientInput struct {
 
 func NewClient(input NewClientInput) *Client {
 	return &Client{
-		awsAccessKey:       input.AWSAccessKey,
-		awsSecretAccessKey: input.AWSSecretAccessKey,
-		awsRegion:          input.AWSRegion,
-		fromAddress:        input.FromAddress,
+		awsAccessKey:        input.AWSAccessKey,
+		awsSecretAccessKey:  input.AWSSecretAccessKey,
+		awsRegion:           input.AWSRegion,
+		fromAddress:         input.FromAddress,
+		captureInboxAddress: input.CaptureInboxAddress,
 	}
 }
 
@@ -50,10 +51,10 @@ func (cl *Client) SendEmail(input SendEmailInput) (*string, error) {
 	svc := ses.New(sess)
 	sesInput := &ses.SendEmailInput{
 		Destination: &ses.Destination{
-			CcAddresses: []*string{},
 			ToAddresses: []*string{
 				aws.String(input.Recipient),
 			},
+			CcAddresses: []*string{},
 		},
 		Message: &ses.Message{
 			Body: &ses.Body{
