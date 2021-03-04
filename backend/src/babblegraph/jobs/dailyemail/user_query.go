@@ -97,9 +97,13 @@ func pickTopDocuments(docsWithTopic []documentsWithTopic) []email_actions.Catego
 		if maxIdx > len(docs.documents) {
 			maxIdx = len(docs.documents)
 		}
+		var documents []documents.Document
+		for _, doc := range docs.documents {
+			documents = append(documents, doc.Document)
+		}
 		categorizedDocuments = append(categorizedDocuments, email_actions.CategorizedDocuments{
 			Topic:     docs.topic,
-			Documents: docs.documents[:maxIdx],
+			Documents: documents,
 		})
 	}
 	return categorizedDocuments

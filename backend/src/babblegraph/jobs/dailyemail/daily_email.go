@@ -35,7 +35,7 @@ func GetDailyEmailJob(emailClient *ses.Client) func() error {
 }
 
 func sendDailyEmailToUser(emailClient *ses.Client, user users.User) error {
-	var docs []CategorizedDocuments
+	var docs []email_actions.CategorizedDocuments
 	return database.WithTx(func(tx *sqlx.Tx) error {
 		userPreferences, err := getPreferencesForUser(tx, user)
 		if err != nil {
@@ -58,8 +58,8 @@ func sendDailyEmailToUser(emailClient *ses.Client, user users.User) error {
 			return err
 		}
 		emailRecordID, err := email_actions.SendDailyEmailForDocuments(tx, emailClient, recipient, email_actions.DailyEmailInput{
-			Documents:    docs,
-			HasSetTopics: len(contentTopics) != 0,
+			CategorizedDocuments: docs,
+			HasSetTopics:         len(contentTopics) != 0,
 		})
 		if err != nil {
 			return err
