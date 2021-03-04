@@ -1,14 +1,18 @@
 package email
 
 import (
+	"babblegraph/model/contenttopics"
 	"babblegraph/model/documents"
 	"babblegraph/model/email"
 	"babblegraph/model/routes"
 	"babblegraph/util/deref"
 	"babblegraph/util/ptr"
 	"babblegraph/util/ses"
+	"babblegraph/util/text"
 	"babblegraph/util/urlparser"
+	"babblegraph/wordsmith"
 	"fmt"
+	"log"
 	"strings"
 	"text/template"
 	"time"
@@ -20,9 +24,14 @@ const dailyEmailTemplateFilename = "daily_email_template.html"
 
 type dailyEmailTemplate struct {
 	email.BaseEmailTemplate
-	Links             []dailyEmailLink
+	Categories        []dailyEmailCategory
 	SetTopicsLink     *string
 	ReinforcementLink string
+}
+
+type dailyEmailCategory struct {
+	CategoryName *string
+	Links        []dailyEmailLink
 }
 
 type dailyEmailLink struct {
@@ -32,9 +41,14 @@ type dailyEmailLink struct {
 	URL         string
 }
 
+type CategorizedDocuments struct {
+	Topic     *contenttopics.ContentTopic
+	Documents []documents.Document
+}
+
 type DailyEmailInput struct {
-	Documents    []documents.Document
-	HasSetTopics bool
+	CategorizedDocuments []CategorizedDocuments
+	HasSetTopics         bool
 }
 
 func SendDailyEmailForDocuments(tx *sqlx.Tx, cl *ses.Client, recipient email.Recipient, input DailyEmailInput) (*email.ID, error) {
@@ -67,7 +81,7 @@ func createDailyEmailTemplate(emailRecordID email.ID, recipient email.Recipient,
 	if err != nil {
 		return nil, err
 	}
-	links := createLinksFromDocuments(input.Documents)
+	categories := createEmailCategories(input.CategorizedDocuments)
 	var setTopicsLink *string
 	if !input.HasSetTopics {
 		setTopicsLink, err = routes.MakeSetTopicsLink(recipient.UserID)
@@ -81,13 +95,34 @@ func createDailyEmailTemplate(emailRecordID email.ID, recipient email.Recipient,
 	}
 	return &dailyEmailTemplate{
 		BaseEmailTemplate: *baseTemplate,
-		Links:             links,
+		Categories:        categories,
 		SetTopicsLink:     setTopicsLink,
 		ReinforcementLink: *reinforcementLink,
 	}, nil
 }
 
-func createLinksFromDocuments(documents []documents.Document) []dailyEmailLink {
+func createEmailCategories(categorizedDocuments []CategorizedDocuments) []dailyEmailCategory {
+	var out []dailyEmailCategory
+	for _, categorized := range categorizedDocuments {
+		var contentTopicCategory *string
+		if categorized.Topic != nil {
+			displayName, err := contenttopics.ContentTopicNameToDisplayName(*categorized.Topic)
+			if err != nil {
+				log.Println(fmt.Sprintf("Got error converting content topic %s: %s", categorized.Topic.Str(), err.Error()))
+			} else {
+				// TODO: don't hardcode this
+				contentTopicCategory = ptr.String(text.ToTitleCaseForLanguage(displayName.Str(), wordsmith.LanguageCodeSpanish))
+			}
+		}
+		out = append(out, dailyEmailCategory{
+			CategoryName: contentTopicCategory,
+			Links:        createLinksForDocuments(categorized.Documents),
+		})
+	}
+	return out
+}
+
+func createLinksForDocuments(documents []documents.Document) []dailyEmailLink {
 	var links []dailyEmailLink
 	for _, doc := range documents {
 		var title, imageURL, description *string

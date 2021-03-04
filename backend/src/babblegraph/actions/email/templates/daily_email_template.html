@@ -147,28 +147,35 @@
                         {{ end }}
                         <table border="0" cellpadding="0" cellspacing="0" style="border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt; width: 100%; box-sizing: border-box;">
                           <tbody>
-                            {{range $page := .Links}}
-                            <tr>
-                              <td align="center" style="font-family: sans-serif; font-size: 14px; vertical-align: top; padding-bottom: 15px;">
-                                <table border="0" cellpadding="0" cellspacing="0" style="border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt; width: auto;">
-                                  <tbody>
+                            {{range $category := .Categories}}
+                                {{if $category.CategoryName}}
+                                <h3 style="font-family: sans-serif; font-weight: normal; margin: 0; Margin-bottom: 15px;">
+                                    {{$category.CategoryName}}
+                                </h3>
+                                {{end}}
+                                {{range $page := $category.Links}}
                                     <tr>
-                                      <td style="font-family: sans-serif; font-size: 14px; vertical-align: top; text-align: center;">
-                                        {{if $page.ImageURL}}
-                                            <a href="{{$page.URL}}" target="_blank" style="display: inline-block; cursor: pointer; text-decoration: none; margin: 0;">
-                                                <img src="{{$page.ImageURL}}" alt="" width="100%" height="auto" />
-                                            </a>
-                                            {{end}}
-                                        <a href="{{$page.URL}}" target="_blank" style="display: inline-block; color: #A663CC; cursor: pointer; text-decoration: none; font-size: 14px; font-weight: bold; margin: 0; padding: 12px 25px; text-transform: capitalize;">{{if $page.Title}}{{$page.Title}}{{else}}{{$page.URL}}{{end}}</a>
-                                        {{if $page.Description}}<p style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; Margin-bottom: 15px;">{{$page.Description}}</p>{{end}}
+                                      <td align="center" style="font-family: sans-serif; font-size: 14px; vertical-align: top; padding-bottom: 15px;">
+                                        <table border="0" cellpadding="0" cellspacing="0" style="border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt; width: auto;">
+                                          <tbody>
+                                            <tr>
+                                              <td style="font-family: sans-serif; font-size: 14px; vertical-align: top; text-align: center;">
+                                                {{if $page.ImageURL}}
+                                                    <a href="{{$page.URL}}" target="_blank" style="display: inline-block; cursor: pointer; text-decoration: none; margin: 0;">
+                                                        <img src="{{$page.ImageURL}}" alt="" width="100%" height="auto" />
+                                                    </a>
+                                                    {{end}}
+                                                <a href="{{$page.URL}}" target="_blank" style="display: inline-block; color: #A663CC; cursor: pointer; text-decoration: none; font-size: 14px; font-weight: bold; margin: 0; padding: 12px 25px; text-transform: capitalize;">{{if $page.Title}}{{$page.Title}}{{else}}{{$page.URL}}{{end}}</a>
+                                                {{if $page.Description}}<p style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; Margin-bottom: 15px;">{{$page.Description}}</p>{{end}}
+                                              </td>
+                                            </tr>
+                                          </tbody>
+                                        </table>
+                                        <hr style="border: 1px solid #D3D3D3;" />
                                       </td>
                                     </tr>
-                                  </tbody>
-                                </table>
-                                <hr style="border: 1px solid #D3D3D3;" />
-                              </td>
-                            </tr>
-                            {{end}}
+                                    {{end}}
+                                {{end}}
                           </tbody>
                         </table>
                         {{ if .SetTopicsLink }}

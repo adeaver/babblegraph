@@ -1,6 +1,7 @@
 package dailyemail
 
 import (
+	email_actions "babblegraph/actions/email"
 	"babblegraph/model/contenttopics"
 	"babblegraph/model/documents"
 	"babblegraph/util/ptr"
@@ -13,24 +14,24 @@ import (
 )
 
 const (
-	maxDocumentsPerEmail = 8
+	maxDocumentsPerEmail = 12
 	maxTopicsPerEmail    = 4
 )
 
-func getDocumentsForUser(tx *sqlx.Tx, userInfo userEmailInfo) ([]documents.Document, error) {
+func getDocumentsForUser(tx *sqlx.Tx, userInfo userEmailInfo) ([]email_actions.CategorizedDocuments, error) {
 	docs, err := queryDocsForUser(userInfo)
 	if err != nil {
 		return nil, err
 	}
-	topDocs := pickTopDocuments(docs)
-	var docIDs []documents.DocumentID
-	for _, doc := range topDocs {
-		docIDs = append(docIDs, doc.ID)
-	}
-	return topDocs, nil
+	return pickTopDocuments(docs), nil
 }
 
-func queryDocsForUser(userInfo userEmailInfo) ([]documents.DocumentWithScore, error) {
+type documentsWithTopic struct {
+	topic     *contenttopics.ContentTopic
+	documents []documents.DocumentWithScore
+}
+
+func queryDocsForUser(userInfo userEmailInfo) ([]documentsWithTopic, error) {
 	var trackingLemmas []wordsmith.LemmaID
 	for _, lemmaMapping := range userInfo.TrackingLemmas {
 		if lemmaMapping.IsActive {
@@ -51,9 +52,13 @@ func queryDocsForUser(userInfo userEmailInfo) ([]documents.DocumentWithScore, er
 		return nil, err
 	}
 	if len(userInfo.Topics) == 0 {
-		return genericDocuments, nil
+		return []documentsWithTopic{
+			{
+				documents: genericDocuments,
+			},
+		}, nil
 	}
-	var outDocuments []documents.DocumentWithScore
+	var outDocuments []documentsWithTopic
 	topics := pickTopics(userInfo.Topics)
 	for _, topic := range topics {
 		// This is a bit of a hack.
@@ -64,28 +69,40 @@ func queryDocsForUser(userInfo userEmailInfo) ([]documents.DocumentWithScore, er
 		if err != nil {
 			return nil, err
 		}
-		outDocuments = append(outDocuments, documents...)
+		if len(documents) > 0 {
+			outDocuments = append(outDocuments, documentsWithTopic{
+				topic:     topic.Ptr(),
+				documents: documents,
+			})
+		}
 	}
 	if len(outDocuments) == 0 {
-		return genericDocuments, nil
+		return []documentsWithTopic{
+			{
+				documents: genericDocuments,
+			},
+		}, nil
 	}
 	return outDocuments, nil
 }
 
-func pickTopDocuments(docs []documents.DocumentWithScore) []documents.Document {
-	sort.Slice(docs, func(i, j int) bool {
-		return docs[i].Score.GreaterThan(docs[j].Score)
+func pickTopDocuments(docsWithTopic []documentsWithTopic) []email_actions.CategorizedDocuments {
+	sort.Slice(docsWithTopic, func(i, j int) bool {
+		return docsWithTopic[i].documents[0].Score.GreaterThan(docsWithTopic[i].documents[0].Score)
 	})
-	var out []documents.Document
-	docIDHash := make(map[documents.DocumentID]bool)
-	for i := 0; i < len(docs) && len(out) < maxDocumentsPerEmail; i++ {
-		docID := docs[i].Document.ID
-		if ok, _ := docIDHash[docID]; !ok {
-			out = append(out, docs[i].Document)
-			docIDHash[docID] = true
+	documentsPerTopic := maxDocumentsPerEmail / len(docsWithTopic)
+	var categorizedDocuments []email_actions.CategorizedDocuments
+	for _, docs := range docsWithTopic {
+		maxIdx := documentsPerTopic
+		if maxIdx > len(docs.documents) {
+			maxIdx = len(docs.documents)
 		}
+		categorizedDocuments = append(categorizedDocuments, email_actions.CategorizedDocuments{
+			Topic:     docs.topic,
+			Documents: docs.documents[:maxIdx],
+		})
 	}
-	return out
+	return categorizedDocuments
 }
 
 func pickTopics(topics []contenttopics.ContentTopic) []contenttopics.ContentTopic {

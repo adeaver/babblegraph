@@ -35,7 +35,7 @@ func GetDailyEmailJob(emailClient *ses.Client) func() error {
 }
 
 func sendDailyEmailToUser(emailClient *ses.Client, user users.User) error {
-	var docs []documents.Document
+	var docs []CategorizedDocuments
 	return database.WithTx(func(tx *sqlx.Tx) error {
 		userPreferences, err := getPreferencesForUser(tx, user)
 		if err != nil {
@@ -65,8 +65,10 @@ func sendDailyEmailToUser(emailClient *ses.Client, user users.User) error {
 			return err
 		}
 		var docIDs []documents.DocumentID
-		for _, doc := range docs {
-			docIDs = append(docIDs, doc.ID)
+		for _, categorizedDocs := range docs {
+			for _, doc := range categorizedDocs.Documents {
+				docIDs = append(docIDs, doc.ID)
+			}
 		}
 		return userdocuments.InsertDocumentIDsForUser(tx, user.ID, *emailRecordID, docIDs)
 	})
