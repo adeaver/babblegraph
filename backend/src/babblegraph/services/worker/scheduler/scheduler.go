@@ -25,9 +25,9 @@ func StartScheduler(linkProcessor *linkprocessing.LinkProcessor, errs chan error
 		c.AddFunc("30 5 * * *", makeEmailJob(errs))
 		c.AddFunc("*/3 * * * *", makeVerificationJob(errs))
 	case "local":
-		makeEmailJob(errs)()
-		makeRefetchSeedDomainJob(linkProcessor, errs)()
 		c.AddFunc("*/1 * * * *", makeVerificationJob(errs))
+		c.AddFunc("*/30 * * * *", makeRefetchSeedDomainJob(linkProcessor, errs))
+		makeEmailJob(errs)()
 	case "local-no-email":
 		makeRefetchSeedDomainJob(linkProcessor, errs)()
 	}
@@ -57,10 +57,12 @@ func makeEmailJob(errs chan error) func() {
 		defer func() {
 			x := recover()
 			if err, ok := x.(error); ok {
+				log.Println(fmt.Sprintf("Got error on email job: %s", err.Error()))
 				errs <- err
 				debug.PrintStack()
 			}
 		}()
+		log.Println("Initializing email client...")
 		emailClient := ses.NewClient(ses.NewClientInput{
 			AWSAccessKey:       env.MustEnvironmentVariable("AWS_SES_ACCESS_KEY"),
 			AWSSecretAccessKey: env.MustEnvironmentVariable("AWS_SES_SECRET_KEY"),
@@ -84,12 +86,14 @@ func makeVerificationJob(errs chan error) func() {
 				debug.PrintStack()
 			}
 		}()
+		log.Println("Initializing verification job...")
 		emailClient := ses.NewClient(ses.NewClientInput{
 			AWSAccessKey:       env.MustEnvironmentVariable("AWS_SES_ACCESS_KEY"),
 			AWSSecretAccessKey: env.MustEnvironmentVariable("AWS_SES_SECRET_KEY"),
 			AWSRegion:          "us-east-1",
 			FromAddress:        env.MustEnvironmentVariable("EMAIL_ADDRESS"),
 		})
+		log.Println("Starting verification job...")
 		if err := handlePendingVerifications(emailClient); err != nil {
 			errs <- err
 		}
