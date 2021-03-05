@@ -274,7 +274,7 @@ const SuccessConfirmation = (props: SuccessConfirmationProps) => {
         <div>
             <Heading1 color={TypographyColor.Primary}>Almost done! Just one last step.</Heading1>
             <Paragraph>
-                Check your email for a verification email from babblegraph@gmail.com. We sent it to {props.emailAddress}.
+                Check your email for a verification email from hello@babblegraph.com. We sent it to {props.emailAddress}.
             </Paragraph>
             <Paragraph>
                 You’ll need to click the button in the verification email that was just sent to you in order to start receiving emails from Babblegraph.
