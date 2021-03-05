@@ -26,11 +26,10 @@ type NewClientInput struct {
 
 func NewClient(input NewClientInput) *Client {
 	return &Client{
-		awsAccessKey:        input.AWSAccessKey,
-		awsSecretAccessKey:  input.AWSSecretAccessKey,
-		awsRegion:           input.AWSRegion,
-		fromAddress:         input.FromAddress,
-		captureInboxAddress: input.CaptureInboxAddress,
+		awsAccessKey:       input.AWSAccessKey,
+		awsSecretAccessKey: input.AWSSecretAccessKey,
+		awsRegion:          input.AWSRegion,
+		fromAddress:        input.FromAddress,
 	}
 }
 
