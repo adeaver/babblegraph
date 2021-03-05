@@ -67,7 +67,7 @@ func (cl *Client) SendEmail(input SendEmailInput) (*string, error) {
 				Data:    aws.String(input.Subject),
 			},
 		},
-		Source: aws.String(cl.fromAddress),
+		Source: aws.String(fmt.Sprintf("\"Babblegraph\" <%s>", cl.fromAddress)),
 	}
 	output, err := svc.SendEmail(sesInput)
 	if err != nil {
