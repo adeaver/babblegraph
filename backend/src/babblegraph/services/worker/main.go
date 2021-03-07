@@ -12,6 +12,7 @@ import (
 	"babblegraph/util/database"
 	"babblegraph/util/deref"
 	"babblegraph/util/elastic"
+	"babblegraph/util/env"
 	"babblegraph/util/opengraph"
 	"babblegraph/util/ptr"
 	"babblegraph/util/urlparser"
@@ -22,6 +23,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -29,6 +31,14 @@ func main() {
 	if err := setupDatabases(); err != nil {
 		log.Fatal(err.Error())
 	}
+	if err := sentry.Init(sentry.ClientOptions{
+		Dsn:         env.MustEnvironmentVariable("SENTRY_DSN"),
+		Environment: env.MustEnvironmentName().Str(),
+	}); err != nil {
+		log.Fatal(err.Error())
+	}
+	defer sentry.Flush(2 * time.Second)
+
 	linkProcessor, err := linkprocessing.CreateLinkProcessor()
 	if err != nil {
 		log.Fatal(err.Error())
@@ -76,10 +86,9 @@ func startWorkerThread(linkProcessor *linkprocessing.LinkProcessor, errs chan er
 	return func() {
 		defer func() {
 			x := recover()
-			if err, ok := x.(error); ok {
-				errs <- err
-				debug.PrintStack()
-			}
+			debug.PrintStack()
+			err := fmt.Errorf("Encountered worker panic: %v\n", x)
+			errs <- err
 		}()
 		for {
 			var u, domain string
