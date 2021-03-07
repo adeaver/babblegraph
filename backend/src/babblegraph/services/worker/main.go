@@ -126,7 +126,6 @@ func startWorkerThread(workerNumber int, linkProcessor *linkprocessing.LinkProce
 			parsedHTMLPage, err := ingesthtml.ProcessURL(u, domain)
 			if err != nil {
 				log.Println(fmt.Sprintf("Got error ingesting html for url %s: %s. Continuing...", u, err.Error()))
-				localHub.CaptureException(err)
 				continue
 			}
 			domainMetadata, err := domains.GetDomainMetadata(domain)
