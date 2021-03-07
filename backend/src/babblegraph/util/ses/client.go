@@ -50,10 +50,10 @@ func (cl *Client) SendEmail(input SendEmailInput) (*string, error) {
 	svc := ses.New(sess)
 	sesInput := &ses.SendEmailInput{
 		Destination: &ses.Destination{
-			CcAddresses: []*string{},
 			ToAddresses: []*string{
 				aws.String(input.Recipient),
 			},
+			CcAddresses: []*string{},
 		},
 		Message: &ses.Message{
 			Body: &ses.Body{
@@ -67,7 +67,7 @@ func (cl *Client) SendEmail(input SendEmailInput) (*string, error) {
 				Data:    aws.String(input.Subject),
 			},
 		},
-		Source: aws.String(cl.fromAddress),
+		Source: aws.String(fmt.Sprintf("\"Babblegraph\" <%s>", cl.fromAddress)),
 	}
 	output, err := svc.SendEmail(sesInput)
 	if err != nil {
