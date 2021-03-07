@@ -19,6 +19,7 @@ import (
 	"babblegraph/wordsmith"
 	"fmt"
 	"log"
+	"runtime"
 	"runtime/debug"
 	"strings"
 	"time"
@@ -48,10 +49,12 @@ func main() {
 			log.Fatal(err.Error())
 		}
 	}
+	workerNum := 0
 	errs := make(chan error, 1)
 	for i := 0; i < 3; i++ {
-		workerThread := startWorkerThread(linkProcessor, errs)
+		workerThread := startWorkerThread(workerNum, linkProcessor, errs)
 		go workerThread()
+		workerNum++
 	}
 	schedulerErrs := make(chan error, 1)
 	if err := scheduler.StartScheduler(linkProcessor, schedulerErrs); err != nil {
@@ -61,8 +64,9 @@ func main() {
 		select {
 		case err := <-errs:
 			log.Println(fmt.Sprintf("Saw panic: %s. Starting new worker thread.", err.Error()))
-			workerThread := startWorkerThread(linkProcessor, errs)
+			workerThread := startWorkerThread(workerNum, linkProcessor, errs)
 			go workerThread()
+			workerNum++
 		case err := <-schedulerErrs:
 			log.Println(fmt.Sprintf("Saw panic: %s in scheduler.", err.Error()))
 		}
@@ -82,12 +86,18 @@ func setupDatabases() error {
 	return nil
 }
 
-func startWorkerThread(linkProcessor *linkprocessing.LinkProcessor, errs chan error) func() {
+func startWorkerThread(workerNumber int, linkProcessor *linkprocessing.LinkProcessor, errs chan error) func() {
 	return func() {
+		localHub := sentry.CurrentHub().Clone()
+		localHub.ConfigureScope(func(scope *sentry.Scope) {
+			scope.SetTag("worker-thread", fmt.Sprintf("init#%d", workerNumber))
+		})
 		defer func() {
 			x := recover()
 			debug.PrintStack()
-			err := fmt.Errorf("Encountered worker panic: %v\n", x)
+			_, fn, line, _ := runtime.Caller(1)
+			err := fmt.Errorf("Worker Panic: %s: %d: %v\n", fn, line, x)
+			localHub.CaptureException(err)
 			errs <- err
 		}()
 		for {
@@ -116,6 +126,7 @@ func startWorkerThread(linkProcessor *linkprocessing.LinkProcessor, errs chan er
 			parsedHTMLPage, err := ingesthtml.ProcessURL(u, domain)
 			if err != nil {
 				log.Println(fmt.Sprintf("Got error ingesting html for url %s: %s. Continuing...", u, err.Error()))
+				localHub.CaptureException(err)
 				continue
 			}
 			domainMetadata, err := domains.GetDomainMetadata(domain)
@@ -166,6 +177,7 @@ func startWorkerThread(linkProcessor *linkprocessing.LinkProcessor, errs chan er
 			})
 			if err != nil {
 				log.Println(fmt.Sprintf("Got error indexing document for url %s: %s. Continuing...", u, err.Error()))
+				localHub.CaptureException(err)
 				continue
 			}
 		}

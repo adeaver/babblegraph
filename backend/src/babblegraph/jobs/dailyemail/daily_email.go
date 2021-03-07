@@ -12,10 +12,11 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/jmoiron/sqlx"
 )
 
-func GetDailyEmailJob(emailClient *ses.Client) func() error {
+func GetDailyEmailJob(localSentryHub *sentry.Hub, emailClient *ses.Client) func() error {
 	return func() error {
 		var activeUsers []users.User
 		if err := database.WithTx(func(tx *sqlx.Tx) error {
@@ -27,7 +28,9 @@ func GetDailyEmailJob(emailClient *ses.Client) func() error {
 		}
 		for _, u := range activeUsers {
 			if err := sendDailyEmailToUser(emailClient, u); err != nil {
-				log.Println(fmt.Sprintf("Error sending daily email to %s: %s", u.EmailAddress, err.Error()))
+				nErr := fmt.Errorf("Error sending daily email to %s: %s", u.EmailAddress, err.Error())
+				log.Println(nErr.Error())
+				localSentryHub.CaptureException(nErr)
 			}
 		}
 		return nil

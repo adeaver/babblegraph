@@ -10,10 +10,11 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/jmoiron/sqlx"
 )
 
-func handlePendingVerifications(emailClient *ses.Client) error {
+func handlePendingVerifications(localSentryHub *sentry.Hub, emailClient *ses.Client) error {
 	var userIDs []users.UserID
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		var err error
@@ -42,6 +43,7 @@ func handlePendingVerifications(emailClient *ses.Client) error {
 			return err
 		}); err != nil {
 			log.Println(fmt.Sprintf("Error fulfilling verification attempt for user %s: %s. Continuing...", userID, err.Error()))
+			localSentryHub.CaptureException(err)
 		}
 	}
 	return nil

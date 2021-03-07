@@ -4,9 +4,13 @@ import (
 	"babblegraph/services/taskrunner/tasks"
 	"babblegraph/util/database"
 	"babblegraph/util/elastic"
+	"babblegraph/util/env"
 	"flag"
 	"fmt"
 	"log"
+	"time"
+
+	"github.com/getsentry/sentry-go"
 )
 
 func main() {
@@ -18,6 +22,13 @@ func main() {
 	if taskName == nil {
 		log.Fatal("No task specified")
 	}
+	if err := sentry.Init(sentry.ClientOptions{
+		Dsn:         env.MustEnvironmentVariable("SENTRY_DSN"),
+		Environment: env.MustEnvironmentName().Str(),
+	}); err != nil {
+		log.Fatal(err.Error())
+	}
+	defer sentry.Flush(2 * time.Second)
 	switch *taskName {
 	case "daily-email":
 		if err := tasks.SendDailyEmail(); err != nil {
