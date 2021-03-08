@@ -99,8 +99,8 @@ func startWorkerThread(workerNumber int, linkProcessor *linkprocessing.LinkProce
 				_, fn, line, _ := runtime.Caller(1)
 				err := fmt.Errorf("Worker Panic: %s: %d: %v\n", fn, line, x)
 				localHub.CaptureException(err)
-				errs <- err
 				debug.PrintStack()
+				errs <- err
 			}
 		}()
 		for {

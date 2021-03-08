@@ -102,10 +102,10 @@ func makeVerificationJob(errs chan error) func() {
 		})
 		defer func() {
 			if x := recover(); x != nil {
-				debug.PrintStack()
 				_, fn, line, _ := runtime.Caller(1)
 				err := fmt.Errorf("Verification Panic: %s: %d: %v\n", fn, line, x)
 				localHub.CaptureException(err)
+				debug.PrintStack()
 				errs <- err
 			}
 		}()
