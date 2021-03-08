@@ -10,6 +10,7 @@ import (
 	"babblegraph/services/web/api/token"
 	"babblegraph/services/web/api/user"
 	utm_routes "babblegraph/services/web/api/utm"
+	"babblegraph/services/web/index"
 	"babblegraph/services/web/router"
 	"babblegraph/util/database"
 	"babblegraph/util/env"
@@ -91,6 +92,7 @@ func main() {
 	r.PathPrefix("/dist").Handler(http.StripPrefix("/dist", http.FileServer(http.Dir(staticFileDirName))))
 	r.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		router.LogRequestWithoutBody(r)
+<<<<<<< HEAD
 		utmParameters := utm.GetParametersForRequest(r)
 		if utmParameters != nil {
 			trackingID, err := utm.GetTrackingIDForRequest(r)
@@ -114,6 +116,9 @@ func main() {
 			}
 		}
 		http.ServeFile(w, r, fmt.Sprintf("%s/index.html", staticFileDirName))
+=======
+		index.ServeIndexPage(fmt.Sprintf("%s/index.html", staticFileDirName))(w, r)
+>>>>>>> 92ce1c7... Index page
 	})
 
 	http.ListenAndServe(":8080", r)
