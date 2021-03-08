@@ -17,7 +17,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
 )
@@ -30,6 +32,13 @@ func main() {
 	if err := setupDatabases(); err != nil {
 		log.Fatal(err.Error())
 	}
+	if err := sentry.Init(sentry.ClientOptions{
+		Dsn:         env.MustEnvironmentVariable("SENTRY_DSN"),
+		Environment: env.MustEnvironmentName().Str(),
+	}); err != nil {
+		log.Fatal(err.Error())
+	}
+	defer sentry.Flush(2 * time.Second)
 
 	if err := registerAPI(r); err != nil {
 		log.Fatal(err.Error())

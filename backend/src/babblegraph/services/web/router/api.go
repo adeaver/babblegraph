@@ -3,15 +3,17 @@ package router
 import (
 	"fmt"
 
+	sentryhttp "github.com/getsentry/sentry-go/http"
 	"github.com/gorilla/mux"
 )
 
 const apiPrefix string = "api"
 
 type apiRouter struct {
-	r          *mux.Router
-	prefixes   map[string]bool
-	routeNames map[string]bool
+	r             *mux.Router
+	prefixes      map[string]bool
+	routeNames    map[string]bool
+	sentryHandler *sentryhttp.Handler
 }
 
 var a *apiRouter = nil
@@ -21,6 +23,9 @@ func CreateNewAPIRouter(mainRouter *mux.Router) {
 		r:          mainRouter,
 		prefixes:   make(map[string]bool),
 		routeNames: make(map[string]bool),
+		sentryHandler: sentryhttp.New(sentryhttp.Options{
+			Repanic: true,
+		}),
 	}
 }
 
@@ -52,7 +57,7 @@ func RegisterRouteGroup(rg RouteGroup) error {
 		if r.TrackEventWithID != nil {
 			muxRoute = withTrackingIDCapture(*r.TrackEventWithID, muxRoute)
 		}
-		a.r.HandleFunc(path, muxRoute).Methods("POST")
+		a.r.HandleFunc(path, a.sentryHandler.HandleFunc(muxRoute)).Methods("POST")
 		a.routeNames[path] = true
 	}
 	return nil
