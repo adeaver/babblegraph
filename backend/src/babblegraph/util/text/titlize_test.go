@@ -15,11 +15,11 @@ func TestToTitleCase(t *testing.T) {
 		{
 			inputText:     "noticias de ciencia",
 			inputLanguage: wordsmith.LanguageCodeSpanish,
-			expected:      "Noticias de Cienca",
+			expected:      "Noticias de Ciencia",
 		}, {
 			inputText:     "de ciencia",
 			inputLanguage: wordsmith.LanguageCodeSpanish,
-			expected:      "De Cienca",
+			expected:      "De Ciencia",
 		}, {
 			inputText:     "noticias del futuro",
 			inputLanguage: wordsmith.LanguageCodeSpanish,
