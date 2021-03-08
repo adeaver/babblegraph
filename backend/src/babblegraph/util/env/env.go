@@ -18,3 +18,7 @@ func GetEnvironmentVariableOrDefault(key, defaultValue string) string {
 	}
 	return defaultValue
 }
+
+func MustEnvironmentName() Environment {
+	return mustEnvironmentFromString(MustEnvironmentVariable("ENV"))
+}

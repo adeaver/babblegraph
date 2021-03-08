@@ -4,7 +4,11 @@ import (
 	"babblegraph/jobs/dailyemail"
 	"babblegraph/util/env"
 	"babblegraph/util/ses"
+	"fmt"
 	"log"
+	"time"
+
+	"github.com/getsentry/sentry-go"
 )
 
 func SendDailyEmail() error {
@@ -15,7 +19,12 @@ func SendDailyEmail() error {
 		FromAddress:        env.MustEnvironmentVariable("EMAIL_ADDRESS"),
 	})
 	log.Println("Sending emails")
-	dailyEmailFn := dailyemail.GetDailyEmailJob(emailClient)
+	today := time.Now()
+	localHub := sentry.CurrentHub().Clone()
+	localHub.ConfigureScope(func(scope *sentry.Scope) {
+		scope.SetTag("email-job", fmt.Sprintf("email-job-%s-%d-%d", today.Month().String(), today.Day(), today.Year()))
+	})
+	dailyEmailFn := dailyemail.GetDailyEmailJob(localHub, emailClient)
 	if err := dailyEmailFn(); err != nil {
 		return err
 	}
