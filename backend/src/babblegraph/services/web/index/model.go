@@ -1,6 +1,7 @@
 package index
 
 import (
+	"babblegraph/services/web/initialdata"
 	"babblegraph/services/web/middleware"
 	"babblegraph/util/env"
 	"fmt"
@@ -20,7 +21,7 @@ func RegisterIndexRoutes(r *mux.Router, indexPages []IndexPage) error {
 		r.HandleFunc(page.RouteName, func(w http.ResponseWriter, r *http.Request) {
 			if page.HandleAuthorization == nil {
 				// TODO: replace this with the title
-				HandleServeIndexPage(staticFileDirName)(w, r)
+				HandleServeIndexPage(staticFileDirName, initialdata.InitialFrontendDataOptions{})(w, r)
 				return
 			}
 			middleware.WithAuthorizationCheck(w, r, *page.HandleAuthorization)
@@ -30,10 +31,11 @@ func RegisterIndexRoutes(r *mux.Router, indexPages []IndexPage) error {
 	r.HandleFunc("/login", HandleLoginPage(staticFileDirName))
 	r.HandleFunc("/article/{token}", HandleArticleLink)
 	r.HandleFunc("/paywall-report/{token}", HandlePaywallReport)
+	r.HandleFunc("/checkout/{token}", HandleCheckoutPage(staticFileDirName))
 	r.HandleFunc("/verify/{token}", HandleVerificationForToken)
 	r.HandleFunc("/dist/{token}/logo.png", HandleServeLogo(staticFileDirName))
 	r.PathPrefix("/dist").Handler(http.StripPrefix("/dist", http.FileServer(http.Dir(staticFileDirName))))
-	r.PathPrefix("/").HandlerFunc(HandleServeIndexPage(staticFileDirName))
+	r.PathPrefix("/").HandlerFunc(HandleServeIndexPage(staticFileDirName, initialdata.InitialFrontendDataOptions{}))
 	return nil
 }
 
