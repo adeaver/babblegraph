@@ -9,7 +9,7 @@ func TestToTitleCase(t *testing.T) {
 	type testCase struct {
 		inputText     string
 		inputLanguage wordsmith.LanguageCode
-		expectedText  string
+		expected      string
 	}
 	testCases := []testCase{
 		{
@@ -41,7 +41,7 @@ func TestToTitleCase(t *testing.T) {
 	for idx, tc := range testCases {
 		result := ToTitleCaseForLanguage(tc.inputText, tc.inputLanguage)
 		if result != tc.expected {
-			t.Errorf("Error on test case %d: expected %s but got %s", idx+1, tc.expected, result)
+			t.Errorf("Error on test case %d: expected %s, but got %s", idx+1, tc.expected, result)
 		}
 	}
 }
