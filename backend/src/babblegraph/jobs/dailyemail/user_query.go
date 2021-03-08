@@ -92,7 +92,7 @@ func pickTopDocuments(docsWithTopic []documentsWithTopic) []email_actions.Catego
 	})
 	documentsPerTopic := maxDocumentsPerEmail / len(docsWithTopic)
 	var categorizedDocuments []email_actions.CategorizedDocuments
-	var documentsInEmail map[documents.DocumentID]bool
+	documentsInEmail := make(map[documents.DocumentID]bool)
 	for _, docs := range docsWithTopic {
 		documentCounter := 0
 		var documents []documents.Document
