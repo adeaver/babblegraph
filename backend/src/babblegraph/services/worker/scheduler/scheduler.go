@@ -45,12 +45,13 @@ func makeRefetchSeedDomainJob(linkProcessor *linkprocessing.LinkProcessor, errs 
 			scope.SetTag("reseed-job", fmt.Sprintf("reseed-job-%s-%d-%d", today.Month().String(), today.Day(), today.Year()))
 		})
 		defer func() {
-			x := recover()
-			_, fn, line, _ := runtime.Caller(1)
-			err := fmt.Errorf("Refetch Panic: %s: %d: %v\n", fn, line, x)
-			localHub.CaptureException(err)
-			debug.PrintStack()
-			errs <- err
+			if x := recover(); x != nil {
+				_, fn, line, _ := runtime.Caller(1)
+				err := fmt.Errorf("Refetch Panic: %s: %d: %v\n", fn, line, x)
+				localHub.CaptureException(err)
+				debug.PrintStack()
+				errs <- err
+			}
 		}()
 		if err := refetchSeedDomainsForNewContent(); err != nil {
 			errs <- err
@@ -68,12 +69,13 @@ func makeEmailJob(errs chan error) func() {
 			scope.SetTag("email-job", fmt.Sprintf("email-job-%s-%d-%d", today.Month().String(), today.Day(), today.Year()))
 		})
 		defer func() {
-			x := recover()
-			_, fn, line, _ := runtime.Caller(1)
-			err := fmt.Errorf("Email Panic: %s: %d: %v\n", fn, line, x)
-			localHub.CaptureException(err)
-			debug.PrintStack()
-			errs <- err
+			if x := recover(); x != nil {
+				_, fn, line, _ := runtime.Caller(1)
+				err := fmt.Errorf("Email Panic: %s: %d: %v\n", fn, line, x)
+				localHub.CaptureException(err)
+				debug.PrintStack()
+				errs <- err
+			}
 		}()
 		log.Println("Initializing email client...")
 		emailClient := ses.NewClient(ses.NewClientInput{
@@ -99,12 +101,13 @@ func makeVerificationJob(errs chan error) func() {
 			scope.SetTag("verification-job", fmt.Sprintf("verification-job-%s-%d-%d-%d-%d", today.Month().String(), today.Day(), today.Year(), today.Hour(), today.Minute()))
 		})
 		defer func() {
-			x := recover()
-			debug.PrintStack()
-			_, fn, line, _ := runtime.Caller(1)
-			err := fmt.Errorf("Verification Panic: %s: %d: %v\n", fn, line, x)
-			localHub.CaptureException(err)
-			errs <- err
+			if x := recover(); x != nil {
+				debug.PrintStack()
+				_, fn, line, _ := runtime.Caller(1)
+				err := fmt.Errorf("Verification Panic: %s: %d: %v\n", fn, line, x)
+				localHub.CaptureException(err)
+				errs <- err
+			}
 		}()
 		log.Println("Initializing verification job...")
 		emailClient := ses.NewClient(ses.NewClientInput{

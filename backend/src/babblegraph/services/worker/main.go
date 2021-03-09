@@ -93,12 +93,13 @@ func startWorkerThread(workerNumber int, linkProcessor *linkprocessing.LinkProce
 			scope.SetTag("worker-thread", fmt.Sprintf("init#%d", workerNumber))
 		})
 		defer func() {
-			x := recover()
-			debug.PrintStack()
-			_, fn, line, _ := runtime.Caller(1)
-			err := fmt.Errorf("Worker Panic: %s: %d: %v\n", fn, line, x)
-			localHub.CaptureException(err)
-			errs <- err
+			if x := recover(); x != nil {
+				debug.PrintStack()
+				_, fn, line, _ := runtime.Caller(1)
+				err := fmt.Errorf("Worker Panic: %s: %d: %v\n", fn, line, x)
+				localHub.CaptureException(err)
+				errs <- err
+			}
 		}()
 		for {
 			var u, domain string
