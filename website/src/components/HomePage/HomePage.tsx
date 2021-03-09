@@ -257,6 +257,9 @@ const SignupForm = (props: SignupFormProps) => {
                     </Paragraph>
                 </Grid>
             </Grid>
+            <Link href="/about">
+                Learn more about Babblegraph
+            </Link>
         </div>
     )
 }
