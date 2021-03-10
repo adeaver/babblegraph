@@ -2,6 +2,7 @@ package documents
 
 import (
 	"babblegraph/model/contenttopics"
+	"babblegraph/model/domains"
 	"babblegraph/util/elastic/esquery"
 	"babblegraph/util/math/decimal"
 	"babblegraph/util/ptr"
@@ -42,6 +43,7 @@ func NewDocumentsQueryBuilderForLanguage(languageCode wordsmith.LanguageCode) *d
 func (d *documentsQueryBuilder) ExecuteQuery() ([]DocumentWithScore, error) {
 	queryBuilder := esquery.NewBoolQueryBuilder()
 	queryBuilder.AddMust(esquery.Match("language_code", d.languageCode.Str()))
+	queryBuilder.AddMust(esquery.Terms("domain.keyword", domains.GetDomains()))
 	if filteredWords, ok := filteredWordsForLanguageCode[d.languageCode]; ok {
 		queryBuilder.AddMustNot(esquery.Terms("metadata.title", filteredWords))
 	}

@@ -31,10 +31,6 @@ var allowableDomains = []AllowableDomain{
 		Country:      geo.CountryCodeChile,
 		LanguageCode: wordsmith.LanguageCodeSpanish,
 	}, {
-		Domain:       "elcolombiano.com",
-		Country:      geo.CountryCodeColombia,
-		LanguageCode: wordsmith.LanguageCodeSpanish,
-	}, {
 		Domain:       "elbogotano.com.co",
 		Country:      geo.CountryCodeColombia,
 		LanguageCode: wordsmith.LanguageCodeSpanish,
@@ -65,10 +61,6 @@ var allowableDomains = []AllowableDomain{
 	}, {
 		Domain:       "laprensa.hn",
 		Country:      geo.CountryCodeHonduras,
-		LanguageCode: wordsmith.LanguageCodeSpanish,
-	}, {
-		Domain:       "jornada.com.mx",
-		Country:      geo.CountryCodeMexico,
 		LanguageCode: wordsmith.LanguageCodeSpanish,
 	}, {
 		Domain:       "heraldodemexico.com.mx",
