@@ -53,6 +53,14 @@ func TestMakeDocumentIndexForURL(t *testing.T) {
 			urlA:      "https://google.com",
 			urlB:      "https://google.com/?q=value#fragment",
 			hasSameID: true,
+		}, {
+			urlA:      "https://google.com",
+			urlB:      "https://google.com/#fragment",
+			hasSameID: true,
+		}, {
+			urlA:      "https://google.com",
+			urlB:      "google.com/#fragment",
+			hasSameID: true,
 		},
 	}
 	for idx, tc := range testCases {
