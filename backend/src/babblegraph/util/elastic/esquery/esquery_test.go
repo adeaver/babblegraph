@@ -73,7 +73,7 @@ func TestMatchAll(t *testing.T) {
 
 func TestScript(t *testing.T) {
 	testQuery := Script("doc['content_topics.keyword'].size() == 2")
-	expected := `{"script": {"script": "doc['content_topics.keyword'].size() == 2"}}`
+	expected := `{"script":{"script":"doc['content_topics.keyword'].size() == 2"}}`
 	out, err := json.Marshal(testQuery)
 	if err != nil {
 		t.Errorf(err.Error())
