@@ -22,7 +22,7 @@ func TestBool(t *testing.T) {
 	builder.AddMust(Match("text", "abc 123"))
 	builder.AddFilter(Match("text", "abc 123"))
 	testQuery := builder.BuildBoolQuery()
-	expected := `{"bool":{"must":[{"match":{"text":"abc 123"}}],"filters":[{"match":{"text":"abc 123"}}]}}`
+	expected := `{"bool":{"must":[{"match":{"text":"abc 123"}}],"filter":[{"match":{"text":"abc 123"}}]}}`
 	out, err := json.Marshal(testQuery)
 	if err != nil {
 		t.Errorf(err.Error())
