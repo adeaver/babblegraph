@@ -4,7 +4,7 @@ type boolQueryBuilder struct {
 	Must    []query `json:"must,omitempty"`
 	MustNot []query `json:"must_not,omitempty"`
 	Should  []query `json:"should,omitempty"`
-	Filters []query `json:"filters,omitempty"`
+	Filter  []query `json:"filter,omitempty"`
 }
 
 func NewBoolQueryBuilder() *boolQueryBuilder {
@@ -24,7 +24,7 @@ func (b *boolQueryBuilder) AddShould(q query) {
 }
 
 func (b *boolQueryBuilder) AddFilter(q query) {
-	b.Filters = append(b.Filters, q)
+	b.Filter = append(b.Filter, q)
 }
 
 func (b *boolQueryBuilder) BuildBoolQuery() query {
