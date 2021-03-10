@@ -62,7 +62,7 @@ func TestMakeDocumentIndexForURL(t *testing.T) {
 			urlB:      "google.com/#fragment",
 			hasSameID: true,
 		}, {
-			urlA:      "https://google.com",
+			urlA:      "https://google.com/page-name/page-part",
 			urlB:      "google.com/page-name/page-part/#fragment",
 			hasSameID: true,
 		},
