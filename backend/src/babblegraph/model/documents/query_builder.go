@@ -71,7 +71,7 @@ func (d *documentsQueryBuilder) ExecuteQuery() ([]DocumentWithScore, error) {
 		queryBuilder.AddMust(readingLevelRangeQueryBuilder.BuildRangeQuery())
 	}
 	if d.topic != nil {
-		queryBuilder.AddMust(esquery.Match("content_topics", d.topic.Str()))
+		queryBuilder.AddMust(esquery.Match("content_topics.keyword", d.topic.Str()))
 	}
 	if d.version != nil {
 		versionRangeQueryBuilder := esquery.NewRangeQueryBuilderForFieldName("version")

@@ -26,7 +26,11 @@ const (
 	// Fix bug with urlparser
 	FetchVersion3 FetchVersion = 3
 
-	CurrentFetchVersion FetchVersion = FetchVersion3
+	// Version 4 Updates:
+	// Fix bug with encoding of html pages
+	FetchVersion4 FetchVersion = 4
+
+	CurrentFetchVersion FetchVersion = FetchVersion4
 )
 
 type dbLink struct {

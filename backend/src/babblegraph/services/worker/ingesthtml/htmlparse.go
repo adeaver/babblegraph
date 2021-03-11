@@ -3,10 +3,12 @@ package ingesthtml
 import (
 	"babblegraph/util/ptr"
 	"fmt"
+	"io"
 	"log"
 	"strings"
 
 	"golang.org/x/net/html"
+	"golang.org/x/text/encoding/htmlindex"
 )
 
 type ParsedHTMLPage struct {
@@ -17,8 +19,18 @@ type ParsedHTMLPage struct {
 	Metadata map[string]string
 }
 
-func parseHTML(domain string, htmlStr string) (*ParsedHTMLPage, error) {
-	htmlDoc, err := html.Parse(strings.NewReader(htmlStr))
+func parseHTML(domain, htmlStr, cset string) (*ParsedHTMLPage, error) {
+	var body io.Reader = strings.NewReader(htmlStr)
+	e, err := htmlindex.Get(cset)
+	if err != nil {
+		return nil, err
+	}
+	// Ignoring the error here since HTML pages
+	// could potentially have garbage charsets
+	if name, _ := htmlindex.Name(e); name != "utf-8" {
+		body = e.NewDecoder().Reader(body)
+	}
+	htmlDoc, err := html.Parse(body)
 	if err != nil {
 		return nil, err
 	}
@@ -66,14 +78,14 @@ func parseHTML(domain string, htmlStr string) (*ParsedHTMLPage, error) {
 		}
 	}
 	f(htmlDoc)
-	body := strings.Join(bodyText, "\n")
+	bodyTextStr := strings.Join(bodyText, "\n")
 	var pageType *string
 	if ogType, ok := metadata["og:type"]; ok {
 		pageType = ptr.String(ogType)
 	}
 	return &ParsedHTMLPage{
 		Links:    links,
-		BodyText: body,
+		BodyText: bodyTextStr,
 		Language: language,
 		PageType: pageType,
 		Metadata: metadata,
