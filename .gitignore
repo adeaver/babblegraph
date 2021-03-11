@@ -4,6 +4,7 @@ backend/worker/**
 backend/pkg/**
 backend/bin/**
 backend/src/github.com/**
+backend/src/golang.org/**
 
 # Frontend
 website/node_modules/**
