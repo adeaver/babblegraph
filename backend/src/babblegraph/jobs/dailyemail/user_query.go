@@ -5,6 +5,7 @@ import (
 	"babblegraph/model/contenttopics"
 	"babblegraph/model/documents"
 	"babblegraph/util/ptr"
+	"babblegraph/util/urlparser"
 	"babblegraph/wordsmith"
 	"math/rand"
 	"sort"
@@ -80,7 +81,7 @@ func pickTopDocuments(docsWithTopic []documentsWithTopic, genericDocuments []doc
 		return docsWithTopic[i].documents[0].Score.GreaterThan(docsWithTopic[i].documents[0].Score)
 	})
 	var categorizedDocuments []email_actions.CategorizedDocuments
-	documentsInEmail := make(map[documents.DocumentID]bool)
+	documentsInEmailByURLIdentifier := make(map[string]bool)
 	if len(docsWithTopic) > 0 {
 		documentsPerTopic := maxDocumentsPerEmail / len(docsWithTopic)
 		for _, docs := range docsWithTopic {
@@ -88,10 +89,11 @@ func pickTopDocuments(docsWithTopic []documentsWithTopic, genericDocuments []doc
 			var documents []documents.Document
 			for i := 0; i < len(docs.documents) && documentCounter < documentsPerTopic; i++ {
 				doc := docs.documents[i].Document
-				if _, ok := documentsInEmail[doc.ID]; !ok {
+				u := urlparser.MustParseURL(doc.URL)
+				if _, ok := documentsInEmailByURLIdentifier[u.URLIdentifier]; !ok {
 					documents = append(documents, doc)
 					documentCounter++
-					documentsInEmail[doc.ID] = true
+					documentsInEmailByURLIdentifier[u.URLIdentifier] = true
 				}
 			}
 			categorizedDocuments = append(categorizedDocuments, email_actions.CategorizedDocuments{
@@ -100,16 +102,17 @@ func pickTopDocuments(docsWithTopic []documentsWithTopic, genericDocuments []doc
 			})
 		}
 	}
-	if len(documentsInEmail) < maxDocumentsPerEmail {
+	if len(documentsInEmailByURLIdentifier) < maxDocumentsPerEmail {
 		var selectedGenericDocuments []documents.Document
-		maxGenericDocuments := maxDocumentsPerEmail - len(documentsInEmail)
+		maxGenericDocuments := maxDocumentsPerEmail - len(documentsInEmailByURLIdentifier)
 		documentCounter := 0
 		for i := 0; i < len(genericDocuments) && documentCounter < maxGenericDocuments; i++ {
 			doc := genericDocuments[i].Document
-			if _, ok := documentsInEmail[doc.ID]; !ok {
+			u := urlparser.MustParseURL(doc.URL)
+			if _, ok := documentsInEmailByURLIdentifier[u.URLIdentifier]; !ok {
 				selectedGenericDocuments = append(selectedGenericDocuments, doc)
 				documentCounter++
-				documentsInEmail[doc.ID] = true
+				documentsInEmailByURLIdentifier[u.URLIdentifier] = true
 			}
 		}
 		categorizedDocuments = append(categorizedDocuments, email_actions.CategorizedDocuments{
