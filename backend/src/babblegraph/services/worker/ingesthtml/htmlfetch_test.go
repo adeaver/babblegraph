@@ -6,7 +6,7 @@ import (
 )
 
 func TestGetCharacterSet(t *testing.T) {
-	var testCase struct {
+	type testCase struct {
 		contentTypeHeaders   map[string][]string
 		expectedCharacterSet string
 	}
