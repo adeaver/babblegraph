@@ -1,6 +1,9 @@
 package contenttopics
 
-import "fmt"
+import (
+	"babblegraph/wordsmith"
+	"fmt"
+)
 
 type DisplayName string
 
@@ -145,5 +148,14 @@ func ContentTopicNameToDisplayName(topic ContentTopic) (*DisplayName, error) {
 		return DisplayNameWorldNews.Ptr(), nil
 	default:
 		return nil, fmt.Errorf("unsupported topic: %s", topic.Str())
+	}
+}
+
+func GenericCategoryNameForLanguage(languageCode wordsmith.LanguageCode) *DisplayName {
+	switch languageCode {
+	case wordsmith.LanguageCodeSpanish:
+		return DisplayName("otras noticias").Ptr()
+	default:
+		panic(fmt.Sprintf("unsupported language code: %s", languageCode))
 	}
 }

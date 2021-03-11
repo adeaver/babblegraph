@@ -104,7 +104,7 @@ func findURLParts(rawURL string) *urlParts {
 	}
 	return &urlParts{
 		Website: *website,
-		Page:    deref.String(page, strings.Join(pageParts, "/")),
+		Page:    strings.TrimSuffix(deref.String(page, strings.Join(pageParts, "/")), "/"),
 		Params:  strings.Join(paramParts, "&"),
 	}
 }

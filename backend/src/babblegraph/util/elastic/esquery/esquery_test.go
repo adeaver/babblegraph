@@ -22,7 +22,7 @@ func TestBool(t *testing.T) {
 	builder.AddMust(Match("text", "abc 123"))
 	builder.AddFilter(Match("text", "abc 123"))
 	testQuery := builder.BuildBoolQuery()
-	expected := `{"bool":{"must":[{"match":{"text":"abc 123"}}],"filters":[{"match":{"text":"abc 123"}}]}}`
+	expected := `{"bool":{"must":[{"match":{"text":"abc 123"}}],"filter":[{"match":{"text":"abc 123"}}]}}`
 	out, err := json.Marshal(testQuery)
 	if err != nil {
 		t.Errorf(err.Error())
@@ -62,6 +62,18 @@ func TestTerms(t *testing.T) {
 func TestMatchAll(t *testing.T) {
 	testQuery := MatchAll()
 	expected := `{"match_all":{}}`
+	out, err := json.Marshal(testQuery)
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+	if string(out) != expected {
+		t.Errorf("Expected %s, got %s", expected, string(out))
+	}
+}
+
+func TestScript(t *testing.T) {
+	testQuery := Script("doc['content_topics.keyword'].size() == 2")
+	expected := `{"script":{"script":"doc['content_topics.keyword'].size() == 2"}}`
 	out, err := json.Marshal(testQuery)
 	if err != nil {
 		t.Errorf(err.Error())

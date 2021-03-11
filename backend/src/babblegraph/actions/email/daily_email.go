@@ -103,16 +103,24 @@ func createDailyEmailTemplate(emailRecordID email.ID, recipient email.Recipient,
 
 func createEmailCategories(categorizedDocuments []CategorizedDocuments) []dailyEmailCategory {
 	var out []dailyEmailCategory
+	// TODO(other-languages): don't hardcode this
+	languageCode := wordsmith.LanguageCodeSpanish
 	for _, categorized := range categorizedDocuments {
 		var contentTopicCategory *string
-		if categorized.Topic != nil {
+		switch {
+		case categorized.Topic != nil:
 			displayName, err := contenttopics.ContentTopicNameToDisplayName(*categorized.Topic)
 			if err != nil {
 				log.Println(fmt.Sprintf("Got error converting content topic %s: %s", categorized.Topic.Str(), err.Error()))
 			} else {
 				// TODO: don't hardcode this
-				contentTopicCategory = ptr.String(text.ToTitleCaseForLanguage(displayName.Str(), wordsmith.LanguageCodeSpanish))
+				contentTopicCategory = ptr.String(text.ToTitleCaseForLanguage(displayName.Str(), languageCode))
 			}
+		case categorized.Topic == nil && len(categorizedDocuments) > 1:
+			displayName := contenttopics.GenericCategoryNameForLanguage(languageCode)
+			contentTopicCategory = ptr.String(text.ToTitleCaseForLanguage(displayName.Str(), wordsmith.LanguageCodeSpanish))
+		default:
+			// no-op
 		}
 		out = append(out, dailyEmailCategory{
 			CategoryName: contentTopicCategory,

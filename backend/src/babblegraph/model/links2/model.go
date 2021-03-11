@@ -22,7 +22,11 @@ const (
 	// Removes lemmatized body
 	FetchVersion2 FetchVersion = 2
 
-	CurrentFetchVersion FetchVersion = FetchVersion2
+	// Version 3 Updates:
+	// Fix bug with urlparser
+	FetchVersion3 FetchVersion = 3
+
+	CurrentFetchVersion FetchVersion = FetchVersion3
 )
 
 type dbLink struct {

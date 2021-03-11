@@ -44,6 +44,16 @@ func (d *documentsQueryBuilder) ExecuteQuery() ([]DocumentWithScore, error) {
 	queryBuilder := esquery.NewBoolQueryBuilder()
 	queryBuilder.AddMust(esquery.Match("language_code", d.languageCode.Str()))
 	queryBuilder.AddMust(esquery.Terms("domain.keyword", domains.GetDomains()))
+	/*
+	   We want to filter out articles that are assigned to all keywords
+	   because they are irrelevant. This is necessary since those articles
+	   may have many keywords from a user's tracking list.
+
+	   Less than 5 was chosen by viewing the number of articles that have
+	   multiple content topics attached to them. There is a huge spike at 7,
+	   which is obviously not useful. By inspection, 4 seems reasonable.
+	*/
+	queryBuilder.AddFilter(esquery.Script("doc['content_topics.keyword'].size() < 5"))
 	if filteredWords, ok := filteredWordsForLanguageCode[d.languageCode]; ok {
 		queryBuilder.AddMustNot(esquery.Terms("metadata.title", filteredWords))
 	}

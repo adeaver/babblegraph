@@ -18,7 +18,10 @@ const (
 	// Version 4 adds lemmatized description
 	Version4 Version = 4
 
-	CurrentDocumentVersion Version = Version4
+	// Version 5 fixes an issue with URL parser
+	Version5 Version = 5
+
+	CurrentDocumentVersion Version = Version5
 )
 
 func (v Version) Ptr() *Version {

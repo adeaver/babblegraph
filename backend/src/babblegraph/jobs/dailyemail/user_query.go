@@ -5,6 +5,7 @@ import (
 	"babblegraph/model/contenttopics"
 	"babblegraph/model/documents"
 	"babblegraph/util/ptr"
+	"babblegraph/util/urlparser"
 	"babblegraph/wordsmith"
 	"math/rand"
 	"sort"
@@ -19,11 +20,11 @@ const (
 )
 
 func getDocumentsForUser(tx *sqlx.Tx, userInfo userEmailInfo) ([]email_actions.CategorizedDocuments, error) {
-	docs, err := queryDocsForUser(userInfo)
+	docs, genericDocs, err := queryDocsForUser(userInfo)
 	if err != nil {
 		return nil, err
 	}
-	return pickTopDocuments(docs), nil
+	return pickTopDocuments(docs, genericDocs), nil
 }
 
 type documentsWithTopic struct {
@@ -31,7 +32,7 @@ type documentsWithTopic struct {
 	documents []documents.DocumentWithScore
 }
 
-func queryDocsForUser(userInfo userEmailInfo) ([]documentsWithTopic, error) {
+func queryDocsForUser(userInfo userEmailInfo) (_categorizedDocument []documentsWithTopic, _genericDocuments []documents.DocumentWithScore, _err error) {
 	var trackingLemmas []wordsmith.LemmaID
 	for _, lemmaMapping := range userInfo.TrackingLemmas {
 		if lemmaMapping.IsActive {
@@ -43,20 +44,16 @@ func queryDocsForUser(userInfo userEmailInfo) ([]documentsWithTopic, error) {
 	readingLevelUpperBound := ptr.Int64(userInfo.ReadingLevel.UpperBound)
 
 	docQueryBuilder.NotContainingDocuments(userInfo.SentDocuments)
-	docQueryBuilder.ForVersionRange(documents.Version2.Ptr(), documents.Version4.Ptr())
+	docQueryBuilder.ForVersionRange(documents.Version3.Ptr(), documents.Version5.Ptr())
 	docQueryBuilder.ForReadingLevelRange(readingLevelLowerBound, readingLevelUpperBound)
 	docQueryBuilder.ContainingLemmas(trackingLemmas)
 
 	genericDocuments, err := docQueryBuilder.ExecuteQuery()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	if len(userInfo.Topics) == 0 {
-		return []documentsWithTopic{
-			{
-				documents: genericDocuments,
-			},
-		}, nil
+		return nil, genericDocuments, nil
 	}
 	var outDocuments []documentsWithTopic
 	topics := pickTopics(userInfo.Topics)
@@ -67,7 +64,7 @@ func queryDocsForUser(userInfo userEmailInfo) ([]documentsWithTopic, error) {
 		docQueryBuilder.ForTopic(topic.Ptr())
 		documents, err := docQueryBuilder.ExecuteQuery()
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		if len(documents) > 0 {
 			outDocuments = append(outDocuments, documentsWithTopic{
@@ -76,37 +73,53 @@ func queryDocsForUser(userInfo userEmailInfo) ([]documentsWithTopic, error) {
 			})
 		}
 	}
-	if len(outDocuments) == 0 {
-		return []documentsWithTopic{
-			{
-				documents: genericDocuments,
-			},
-		}, nil
-	}
-	return outDocuments, nil
+	return outDocuments, genericDocuments, nil
 }
 
-func pickTopDocuments(docsWithTopic []documentsWithTopic) []email_actions.CategorizedDocuments {
+func pickTopDocuments(docsWithTopic []documentsWithTopic, genericDocuments []documents.DocumentWithScore) []email_actions.CategorizedDocuments {
 	sort.Slice(docsWithTopic, func(i, j int) bool {
 		return docsWithTopic[i].documents[0].Score.GreaterThan(docsWithTopic[i].documents[0].Score)
 	})
-	documentsPerTopic := maxDocumentsPerEmail / len(docsWithTopic)
 	var categorizedDocuments []email_actions.CategorizedDocuments
-	documentsInEmail := make(map[documents.DocumentID]bool)
-	for _, docs := range docsWithTopic {
+	// HACK: Using URL Identifier here instead of document ID
+	// because of an issue with urlparser means that any document < Version5
+	// may appear multiple times in the same email
+	documentsInEmailByURLIdentifier := make(map[string]bool)
+	if len(docsWithTopic) > 0 {
+		documentsPerTopic := maxDocumentsPerEmail / len(docsWithTopic)
+		for _, docs := range docsWithTopic {
+			documentCounter := 0
+			var documents []documents.Document
+			for i := 0; i < len(docs.documents) && documentCounter < documentsPerTopic; i++ {
+				doc := docs.documents[i].Document
+				u := urlparser.MustParseURL(doc.URL)
+				if _, ok := documentsInEmailByURLIdentifier[u.URLIdentifier]; !ok {
+					documents = append(documents, doc)
+					documentCounter++
+					documentsInEmailByURLIdentifier[u.URLIdentifier] = true
+				}
+			}
+			categorizedDocuments = append(categorizedDocuments, email_actions.CategorizedDocuments{
+				Topic:     docs.topic,
+				Documents: documents,
+			})
+		}
+	}
+	if len(documentsInEmailByURLIdentifier) < maxDocumentsPerEmail {
+		var selectedGenericDocuments []documents.Document
+		maxGenericDocuments := maxDocumentsPerEmail - len(documentsInEmailByURLIdentifier)
 		documentCounter := 0
-		var documents []documents.Document
-		for i := 0; i < len(docs.documents) && documentCounter < documentsPerTopic; i++ {
-			doc := docs.documents[i].Document
-			if _, ok := documentsInEmail[doc.ID]; !ok {
-				documents = append(documents, doc)
+		for i := 0; i < len(genericDocuments) && documentCounter < maxGenericDocuments; i++ {
+			doc := genericDocuments[i].Document
+			u := urlparser.MustParseURL(doc.URL)
+			if _, ok := documentsInEmailByURLIdentifier[u.URLIdentifier]; !ok {
+				selectedGenericDocuments = append(selectedGenericDocuments, doc)
 				documentCounter++
-				documentsInEmail[doc.ID] = true
+				documentsInEmailByURLIdentifier[u.URLIdentifier] = true
 			}
 		}
 		categorizedDocuments = append(categorizedDocuments, email_actions.CategorizedDocuments{
-			Topic:     docs.topic,
-			Documents: documents,
+			Documents: selectedGenericDocuments,
 		})
 	}
 	return categorizedDocuments
