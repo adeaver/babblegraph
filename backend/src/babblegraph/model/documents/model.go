@@ -19,7 +19,7 @@ const (
 	Version4 Version = 4
 
 	// Version 5 fixes an issue with URL parser
-	Verision5 Version = 5
+	Version5 Version = 5
 
 	CurrentDocumentVersion Version = Version5
 )
