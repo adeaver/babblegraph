@@ -71,7 +71,15 @@ func (d *documentsQueryBuilder) ExecuteQuery() ([]DocumentWithScore, error) {
 		queryBuilder.AddMust(readingLevelRangeQueryBuilder.BuildRangeQuery())
 	}
 	if d.topic != nil {
-		queryBuilder.AddMust(esquery.Match("content_topics.keyword", d.topic.Str()))
+		queryBuilder.AddMust(esquery.Match("content_topics", d.topic.Str()))
+        // HACK HACK HACK
+        // So there's an issue with lemma mappings
+        // that can cause similar hyphenated strings
+        // to interfere. I don't want to bother
+        // with recreating the index, so I'm doing this instead.
+        // The idea here is that we filter out documents that contain
+        // similar keywords
+	    queryBuilder.AddFilter(esquery.Term("content_topics.keyword", d.topic.Str())
 	}
 	if d.version != nil {
 		versionRangeQueryBuilder := esquery.NewRangeQueryBuilderForFieldName("version")
