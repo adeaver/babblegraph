@@ -13,13 +13,17 @@ func TestGetCharacterSet(t *testing.T) {
 	testCases := []testCase{
 		{
 			contentTypeHeaders: map[string][]string{
-				"text/html; charset=latin1",
+				"Content-Type": []string{
+					"text/html; charset=latin1",
+				},
 			},
 			expectedCharacterSet: "latin1",
 		}, {
 			contentTypeHeaders: map[string][]string{
-				"something",
-				"text/html; charset=latin1",
+				"Content-Type": []string{
+					"something",
+					"text/html; charset=latin1",
+				},
 			},
 			expectedCharacterSet: "latin1",
 		}, {
