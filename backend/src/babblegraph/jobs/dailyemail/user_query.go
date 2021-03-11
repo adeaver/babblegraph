@@ -81,6 +81,9 @@ func pickTopDocuments(docsWithTopic []documentsWithTopic, genericDocuments []doc
 		return docsWithTopic[i].documents[0].Score.GreaterThan(docsWithTopic[i].documents[0].Score)
 	})
 	var categorizedDocuments []email_actions.CategorizedDocuments
+	// HACK: Using URL Identifier here instead of document ID
+	// because of an issue with urlparser means that any document < Version5
+	// may appear multiple times in the same email
 	documentsInEmailByURLIdentifier := make(map[string]bool)
 	if len(docsWithTopic) > 0 {
 		documentsPerTopic := maxDocumentsPerEmail / len(docsWithTopic)
