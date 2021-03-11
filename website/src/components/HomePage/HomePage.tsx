@@ -81,6 +81,8 @@ const errorMessages = {
 
 }
 
+declare const window: any;
+
 const HomePage = () => {
     const [ emailAddress, setEmailAddress ] = useState<string>('');
     const [ isLoading, setIsLoading ] = useState<boolean>(false);
