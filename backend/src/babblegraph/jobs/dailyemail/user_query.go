@@ -43,7 +43,7 @@ func queryDocsForUser(userInfo userEmailInfo) (_categorizedDocument []documentsW
 	readingLevelUpperBound := ptr.Int64(userInfo.ReadingLevel.UpperBound)
 
 	docQueryBuilder.NotContainingDocuments(userInfo.SentDocuments)
-	docQueryBuilder.ForVersionRange(documents.Version3.Ptr(), documents.Version4.Ptr())
+	docQueryBuilder.ForVersionRange(documents.Version3.Ptr(), documents.Version5.Ptr())
 	docQueryBuilder.ForReadingLevelRange(readingLevelLowerBound, readingLevelUpperBound)
 	docQueryBuilder.ContainingLemmas(trackingLemmas)
 
