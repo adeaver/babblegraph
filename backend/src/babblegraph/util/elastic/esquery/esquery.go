@@ -18,6 +18,7 @@ const (
 	queryNameBool   queryName = "bool"
 	queryNameRange  queryName = "range"
 	queryNameTerms  queryName = "terms"
+	queryNameTerm   queryName = "term"
 	queryNameIDs    queryName = "ids"
 	queryNameScript queryName = "script"
 )

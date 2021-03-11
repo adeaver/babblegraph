@@ -17,6 +17,18 @@ func TestMatch(t *testing.T) {
 	}
 }
 
+func TestTerm(t *testing.T) {
+	testQuery := Term("text", "abc 123")
+	expected := `{"term":{"text":"abc 123"}}`
+	out, err := json.Marshal(testQuery)
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+	if string(out) != expected {
+		t.Errorf("Expected %s, got %s", expected, string(out))
+	}
+}
+
 func TestBool(t *testing.T) {
 	builder := NewBoolQueryBuilder()
 	builder.AddMust(Match("text", "abc 123"))

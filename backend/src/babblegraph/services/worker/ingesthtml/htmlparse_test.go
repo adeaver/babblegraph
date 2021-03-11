@@ -41,7 +41,7 @@ var (
 )
 
 func TestParseHTML(t *testing.T) {
-	parsed, err := parseHTML("babblegraph.com", normalHTMLPage)
+	parsed, err := parseHTML("babblegraph.com", normalHTMLPage, "utf-8")
 	if err != nil {
 		t.Errorf("Not expecting error, but got one: %s", err.Error())
 		return
