@@ -101,6 +101,7 @@ const HomePage = () => {
                     setErrorMessage(errorMessages[resp.errorMessage] || errorMessages["default"]);
                     setHadSuccess(false);
                 } else if (resp.success) {
+                    window.gtag_report_conversion(undefined);
                     setErrorMessage(null);
                     setHadSuccess(true);
                 } else {
