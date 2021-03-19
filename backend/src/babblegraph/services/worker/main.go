@@ -28,6 +28,8 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+const numWorkerThreads = 5
+
 func main() {
 	if err := setupDatabases(); err != nil {
 		log.Fatal(err.Error())
@@ -51,7 +53,7 @@ func main() {
 	}
 	workerNum := 0
 	errs := make(chan error, 1)
-	for i := 0; i < 3; i++ {
+	for i := 0; i < numWorkerThreads; i++ {
 		workerThread := startWorkerThread(workerNum, linkProcessor, errs)
 		go workerThread()
 		workerNum++
