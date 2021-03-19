@@ -15,7 +15,10 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-const defaultChunkSize = 2000
+const (
+	defaultChunkSize     = 2000
+	defaultTimeUntilFree = 5 * time.Second
+)
 
 type Domain struct {
 	Domain string
@@ -99,7 +102,7 @@ func (l *LinkProcessor) GetLink() (*links2.Link, *time.Duration, error) {
 	shouldKeepDomain = true
 	l.OrderedDomains = append(l.OrderedDomains, Domain{
 		Domain: firstDomain.Domain,
-		FreeAt: time.Now().Add(15 * time.Second),
+		FreeAt: time.Now().Add(defaultTimeUntilFree),
 	})
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		return links2.SetURLAsFetched(tx, link.URLIdentifier)
@@ -127,7 +130,7 @@ func (l *LinkProcessor) AddURLs(urls []string, topics []contenttopics.ContentTop
 			l.DomainSet[domain] = true
 			l.OrderedDomains = append(l.OrderedDomains, Domain{
 				Domain: domain,
-				FreeAt: time.Now().Add(15 * time.Second),
+				FreeAt: time.Now().Add(defaultTimeUntilFree),
 			})
 		}
 	}
