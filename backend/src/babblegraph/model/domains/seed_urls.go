@@ -273,76 +273,6 @@ var seedURLs = []SeedURL{
 			contenttopics.ContentTopicEntertainment,
 		},
 	}, {
-		URL: "https://www.elcolombiano.com/colombia",
-		Topics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicCurrentEventsColombia,
-		},
-	}, {
-		URL: "https://www.elcolombiano.com/internacional",
-		Topics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicWorldNews,
-		},
-	}, {
-		URL: "https://www.elcolombiano.com/negocios",
-		Topics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicBusiness,
-		},
-	}, {
-		URL: "https://www.elcolombiano.com/negocios/economia",
-		Topics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicEconomy,
-		},
-	}, {
-		URL: "https://www.elcolombiano.com/negocios/finanzas",
-		Topics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicFinance,
-		},
-	}, {
-		URL: "https://www.elcolombiano.com/deportes",
-		Topics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicSports,
-		},
-	}, {
-		URL: "https://www.elcolombiano.com/opinion",
-		Topics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicOpinion,
-		},
-	}, {
-		URL: "https://www.elcolombiano.com/cultura/cine",
-		Topics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicFilm,
-		},
-	}, {
-		URL: "https://www.elcolombiano.com/cultura/literatura",
-		Topics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicLiterature,
-		},
-	}, {
-		URL: "https://www.elcolombiano.com/cultura/musica",
-		Topics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicMusic,
-		},
-	}, {
-		URL: "https://www.elcolombiano.com/tecnologia",
-		Topics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicTechnology,
-		},
-	}, {
-		URL: "https://www.elcolombiano.com/tecnologia",
-		Topics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicTechnology,
-		},
-	}, {
-		URL: "https://www.elcolombiano.com/tecnologia/videojuegos",
-		Topics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicVideoGames,
-		},
-	}, {
-		URL: "https://www.elcolombiano.com/entretenimiento",
-		Topics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicEntertainment,
-		},
-	}, {
 		URL: "https://www.elbogotano.com.co/category/poder",
 		Topics: []contenttopics.ContentTopic{
 			contenttopics.ContentTopicPolitics,
@@ -676,47 +606,6 @@ var seedURLs = []SeedURL{
 		URL: "http://www.laprensa.hn/opinion",
 		Topics: []contenttopics.ContentTopic{
 			contenttopics.ContentTopicOpinion,
-		},
-	}, {
-		URL: "https://jornada.com.mx/category/politica.html",
-		Topics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicPolitics,
-		},
-	}, {
-		URL: "https://jornada.com.mx/category/economia.html",
-		Topics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicEconomy,
-		},
-	}, {
-		URL: "https://jornada.com.mx/category/mundo.html",
-		Topics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicWorldNews,
-		},
-	}, {
-		URL: "https://jornada.com.mx/category/estados.html",
-		Topics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicCurrentEventsMexico,
-		},
-	}, {
-		URL: "https://jornada.com.mx/category/deportes.html",
-		Topics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicSports,
-		},
-	}, {
-		URL: "https://jornada.com.mx/category/cultura.html",
-		Topics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicEntertainment,
-		},
-	}, {
-		URL: "https://jornada.com.mx/category/ciencia-y-tecnologia.html",
-		Topics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicScience,
-			contenttopics.ContentTopicTechnology,
-		},
-	}, {
-		URL: "https://jornada.com.mx/category/autos.html",
-		Topics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicAutomotive,
 		},
 	}, {
 		URL: "https://heraldodemexico.com.mx/nacional",
@@ -1724,6 +1613,151 @@ var seedURLs = []SeedURL{
 		URL: "https://ladiaria.com.uy/salud/",
 		Topics: []contenttopics.ContentTopic{
 			contenttopics.ContentTopicHealth,
+		},
+	}, {
+		URL: "https://www.debate.com.mx/seccion/estado-de-mexico",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCurrentEventsMexico,
+		},
+	}, {
+		URL: "https://www.debate.com.mx/usa",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCurrentEventsUnitedStates,
+		},
+	}, {
+		URL: "https://www.debate.com.mx/seccion/mundo",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicWorldNews,
+		},
+	}, {
+		URL: "https://www.debate.com.mx/seccion/politica/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicPolitics,
+		},
+	}, {
+		URL: "https://www.debate.com.mx/seccion/economia/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEconomy,
+		},
+	}, {
+		URL: "https://www.debate.com.mx/seccion/opinion/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicOpinion,
+		},
+	}, {
+		URL: "https://www.debate.com.mx/seccion/show/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEntertainment,
+		},
+	}, {
+		URL: "https://www.debate.com.mx/seccion/cultura/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCulture,
+		},
+	}, {
+		URL: "https://www.debate.com.mx/seccion/tecnologia/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicTechnology,
+		},
+	}, {
+		URL: "https://www.debate.com.mx/seccion/recetas/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCooking,
+		},
+	}, {
+		URL: "https://www.debate.com.mx/seccion/salud/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicHealth,
+		},
+	}, {
+		URL: "https://www.debate.com.mx/seccion/estiloyvida/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicLifestyle,
+		},
+	}, {
+		URL: "https://www.debate.com.mx/seccion/deporte/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicSports,
+		},
+	}, {
+		URL: "https://www.debate.com.mx/seccion/viajes/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicTravel,
+		},
+	}, {
+		URL: "https://www.yucatan.com.mx/seccion/mexico",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCurrentEventsMexico,
+		},
+	}, {
+		URL: "https://www.yucatan.com.mx/seccion/internacional",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicWorldNews,
+		},
+	}, {
+		URL: "https://www.yucatan.com.mx/seccion/deportes",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicSports,
+		},
+	}, {
+		URL: "https://www.yucatan.com.mx/seccion/espectaculos",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEntertainment,
+		},
+	}, {
+		URL: "https://www.yucatan.com.mx/seccion/merida",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCurrentEventsMexico,
+		},
+	}, {
+		URL: "https://www.yucatan.com.mx/seccion/yucatan",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCurrentEventsMexico,
+		},
+	}, {
+		URL: "https://www.informador.mx/seccion/jalisco/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCurrentEventsMexico,
+		},
+	}, {
+		URL: "https://www.informador.mx/seccion/mexico/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCurrentEventsMexico,
+		},
+	}, {
+		URL: "https://www.informador.mx/seccion/internacional/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicWorldNews,
+		},
+	}, {
+		URL: "https://www.informador.mx/seccion/deportes/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicSports,
+		},
+	}, {
+		URL: "https://www.informador.mx/seccion/entretenimiento/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEntertainment,
+		},
+	}, {
+		URL: "https://www.informador.mx/autos-t2294",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicAutomotive,
+		},
+	}, {
+		URL: "https://www.informador.mx/seccion/economia/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEconomy,
+		},
+	}, {
+		URL: "https://www.informador.mx/seccion/tecnologia/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicTechnology,
+		},
+	}, {
+		URL: "https://www.informador.mx/seccion/cultura/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCulture,
 		},
 	},
 }
