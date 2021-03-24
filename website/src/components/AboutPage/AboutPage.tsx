@@ -10,11 +10,29 @@ import Page from 'common/components/Page/Page';
 import { Heading1, Heading2, Heading3 } from 'common/typography/Heading';
 import { Alignment, TypographyColor } from 'common/typography/common';
 import Paragraph from 'common/typography/Paragraph';
+import Link, { LinkTarget } from 'common/components/Link/Link';
 
 const styleClasses = makeStyles({
     contentCard: {
         padding: '20px',
+        margin: '10px 0',
     },
+    topicsExampleImage: {
+        minWidth: '100%',
+        minHeight: '350px',
+        backgroundImage: 'url("/dist/topics-example.png")',
+        backgroundSize: 'contain',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+    },
+    reinforcementExampleImage: {
+        width: '100%',
+        minHeight: '350px',
+        backgroundImage: 'url("/dist/reinforcement-example.png")',
+        backgroundSize: 'contain',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+    }
 });
 
 const AboutPage = () => {
@@ -28,42 +46,69 @@ const AboutPage = () => {
                 <Grid item xs={12} md={8}>
                     <Card className={classes.contentCard}>
                         <Heading1 color={TypographyColor.Primary}>
-                            Babblegraph is a free daily practice app.<br />
-                            Designed for intermediate and advanced learners.
+                            Free daily Spanish practice for intermediate and advanced learners.
                         </Heading1>
                         <Paragraph>
-                            Incorporate Spanish practice into your daily routine effortlessly. Babblegraph sends you articles from trusted, Spanish-language news sources from Spain and Latin America.
+                            Incorporate Spanish practice into your daily routine effortlessly.  Babblegraph sends you news articles from trusted, Spanish-language news sources from Spain and Latin America.
                         </Paragraph>
-                        <Divider />
+                    </Card>
+                    <Card className={classes.contentCard}>
+                        <Grid container>
+                            <Grid item xs={12} md={6}>
+                                <Heading2 color={TypographyColor.Primary}>
+                                    Keeping up with your practice routine is easier when it's fun and engaging
+                                </Heading2>
+                                <Paragraph>
+                                    Babblegraph helps with this by allowing you to select categories for interesting topics. Read anything from articles about film to current events from individual Spanish-speaking countries.
+                                </Paragraph>
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                                <div className={classes.topicsExampleImage} />
+                            </Grid>
+                        </Grid>
+                    </Card>
+                    <Card className={classes.contentCard}>
+                        <Grid container>
+                            <Grid item xs={12} md={6}>
+                                <Heading2 color={TypographyColor.Primary}>
+                                    Reinforcing new vocabulary depends on seeing words you’re learning multiple times.
+                                </Heading2>
+                                <Paragraph>
+                                    Babblegraph helps with this by sending you articles that contain words on your tracking list. Use Babblegraph’s tracking tool to lookup new words, get their definitions, and add them to your tracking list.
+                                </Paragraph>
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                                <div className={classes.reinforcementExampleImage} />
+                            </Grid>
+                        </Grid>
+                    </Card>
+                    <Card className={classes.contentCard}>
                         <Heading2 color={TypographyColor.Primary}>
-                            How it works
+                            Frequently Asked Questions
                         </Heading2>
-                        <Paragraph align={Alignment.Left}>
-                            Every day, you’ll receive an email from Babblegraph with a handful of articles from Spanish-language news sources, such as elmundo.es (Spain), elsiglo.com (Panama), elespectador.com (Colombia).
-                        </Paragraph>
-                        <Paragraph align={Alignment.Left}>
-                            You can customize the content that you receive by selecting topics that you’re interested in. If you want to read more about science, sports, or even current events from a specific Latin American country or Spain, you can set that up.
-                        </Paragraph>
-                        <Paragraph align={Alignment.Left}>
-                            If you learn a new word, use the word reinforcement feature to make sure you see that word more often. Using a word helps you remember what it means!
-                        </Paragraph>
-                        <Divider />
-                        <Heading2 color={TypographyColor.Primary}>
-                            FAQ
-                        </Heading2>
+                        <FAQItem
+                            questionText="I’m learning Spanish from a specific country. Can I only receive articles from that country?"
+                            answerText="Currently, no. However, you can choose to select current events from a specific country. All current events articles are from news sources originating in that country. So you’ll only get Mexican news sources if you’re interested in Mexican news." />
+                        <FAQItem
+                            questionText="I’m skeptical of technology products. What kind of information are you tracking about me?"
+                            answerText="Beyond the information that you share with Babblegraph (topics you’re interested in, your email address, and words that you’re learning), Babblegraph only tracks whether or not you’ve opened an email. Babblegraph doesn’t use any technology to try to guess the articles that you’re most likely to open." />
+                        <FAQItem
+                            questionText="Do you sell my data?"
+                            answerText="Nope, I don’t sell anything as of now. Babblegraph will never sell your data." />
                         <FAQItem
                             questionText="Who built this?"
-                            answerText="Hello! I’m Andrew. I’m the one-person team who created Babblegraph as a side project. I’m a software engineer from beautiful Boston, Massachusetts. I found that there aren’t a lot of apps that help intermediate or advanced learners expand their vocabulary or keep up with Spanish. Most of the advice seems to be watch movies or read books or listen to podcasts (which is great advice), but I’m lazy. So I decided to build something to make it easier." />
-                        <FAQItem
-                            questionText="I’m skeptical of technology companies, what information do you track or store about me?"
-                            answerText="Babblegraph tracks whether or not an email has been opened (but only a yes or no - if you open it 100 times, I have no way of knowing that) and what topics you’re interested in. I don’t sell that information and Babblegraph doesn’t use any AI to try figure out exactly who you are. Babblegraph also does not track what links you click or what you do once you’re on a news company’s website." />
-                        <Divider />
+                            answerText="Hello! My name is Andrew. I’m the sole creator behind Babblegraph and the only person working on it. I built Babblegraph because I found that it’s hard to use new words that you learn as an intermediate or advanced speaker. I read a lot of content in Spanish, but there’s never any guarantee that I’ll see a new word again." />
+                    </Card>
+                    <Card className={classes.contentCard}>
                         <Heading2 color={TypographyColor.Primary}>
-                            Contact
+                            Contact Information
                         </Heading2>
-                        <Paragraph align={Alignment.Left}>
-                            If you have a question, comment, or feedback on Babblegraph; or if you’re affiliated with a blog or news source and you’d like to talk about your content (either adding it to Babblegraph or taking it down). Contact me at hello@babblegraph.com.
+                        <Paragraph>
+                            Feel free to reach out to me by email at hello@babblegraph.com. I love receiving feedback or complements. I can also help remove or add your content to Babblegraph.
                         </Paragraph>
+                        <Link href="/" target={LinkTarget.Self}>
+                            Return to Main Page
+                        </Link>
                     </Card>
                 </Grid>
             </Grid>
