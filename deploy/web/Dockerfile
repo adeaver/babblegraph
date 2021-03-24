@@ -56,6 +56,8 @@ COPY --chown=$SERVICE_USER:$SERVICE_USER --from=frontend-builder /usr/app/dist/b
 COPY --chown=$SERVICE_USER:$SERVICE_USER --from=frontend-builder /usr/app/dist/index.html ./static
 COPY --chown=$SERVICE_USER:$SERVICE_USER --from=frontend-builder /usr/app/dist/logo.png ./static
 COPY --chown=$SERVICE_USER:$SERVICE_USER --from=frontend-builder /usr/app/dist/home-page.jpg ./static
+COPY --chown=$SERVICE_USER:$SERVICE_USER --from=frontend-builder /usr/app/dist/reinforcement-example.png ./static
+COPY --chown=$SERVICE_USER:$SERVICE_USER --from=frontend-builder /usr/app/dist/topics-example.png ./static
 
 COPY --chown=$SERVICE_USER:$SERVICE_USER --from=backend-builder /usr/local/go/bin/web .
 COPY --from=backend-builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
