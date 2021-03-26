@@ -71,10 +71,6 @@ var allowableDomains = []AllowableDomain{
 		Country:      geo.CountryCodeMexico,
 		LanguageCode: wordsmith.LanguageCodeSpanish,
 	}, {
-		Domain:       "debate.com.mx",
-		Country:      geo.CountryCodeMexico,
-		LanguageCode: wordsmith.LanguageCodeSpanish,
-	}, {
 		Domain:       "yucatan.com.mx",
 		Country:      geo.CountryCodeMexico,
 		LanguageCode: wordsmith.LanguageCodeSpanish,
