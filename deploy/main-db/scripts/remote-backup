@@ -1,7 +1,16 @@
 #!/bin/bash
-BACKUP_FILE="/root/babblegraph/deploy/main-db/backups/babblegraph_$(date +"%Y_%m_%d_%I_%M_%p").bak"
+
+FILE_NAME="babblegraph_$(date +"%Y_%m_%d_%I_%M_%p")"
+
+BACKUP_FILE="/root/babblegraph/deploy/main-db/backups/$FILE_NAME.bak"
+COMPRESSED_BACKUP_FILE="/root/babblegraph/deploy/main-db/backups/$FILE_NAME.tar.gz"
 
 docker exec babblegraph_main_db /home/postgres/scripts/backup > $BACKUP_FILE
+
+tar -czvf $COMPRESSED_BACKUP_FILE $BACKUP_FILE
+s3cmd put $COMPRESSED_BACKUP_FILE s3://prod-spaces-1/main-db-backups/
+
+rm $BACKUP_FILE
 
 ls -dt /root/babblegraph/deploy/main-db/backups/* | tail -n +4 | xargs rm
 docker exec babblegraph_main_db /bin/bash -c "rm /home/postgres/backups/*"
