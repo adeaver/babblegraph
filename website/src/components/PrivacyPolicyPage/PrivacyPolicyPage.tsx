@@ -8,7 +8,6 @@ import Page from 'common/components/Page/Page';
 import { Heading1, Heading3 } from 'common/typography/Heading';
 import { Alignment, TypographyColor } from 'common/typography/common';
 import Paragraph from 'common/typography/Paragraph';
-import { PhotoKey } from 'common/data/photos/Photos';
 import Link, { LinkTarget } from 'common/components/Link/Link';
 
 const styleClasses = makeStyles({
@@ -20,7 +19,7 @@ const styleClasses = makeStyles({
 const PrivacyPolicyPage = () => {
     const classes = styleClasses();
     return (
-        <Page withBackground={PhotoKey.Seville}>
+        <Page>
             <Grid container>
                 <Grid item xs={0} md={3}>
                     &nbsp;

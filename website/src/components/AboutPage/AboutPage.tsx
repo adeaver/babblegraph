@@ -20,7 +20,7 @@ const styleClasses = makeStyles({
     topicsExampleImage: {
         minWidth: '100%',
         minHeight: '350px',
-        backgroundImage: 'url("/dist/topics-example.png")',
+        backgroundImage: 'url("https://static.babblegraph.com/assets/topics-example.png")',
         backgroundSize: 'contain',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
@@ -28,7 +28,7 @@ const styleClasses = makeStyles({
     reinforcementExampleImage: {
         width: '100%',
         minHeight: '350px',
-        backgroundImage: 'url("/dist/reinforcement-example.png")',
+        backgroundImage: 'url("https://static.babblegraph.com/assets/reinforcement-example.png")',
         backgroundSize: 'contain',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',

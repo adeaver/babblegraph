@@ -20,7 +20,7 @@ export enum PhotoKey {
 
 const AvailablePhotos: { [key: string]: Photo } = {
     [PhotoKey.Seville]: {
-        url: '/dist/home-page.jpg',
+        url: 'https://static.babblegraph.com/assets/home-page.jpg',
         photographer: {
             name: 'Johan Mouchet',
             url: 'https://unsplash.com/@johanmouchet?utm_source=unsplash&amp;utm_medium=referral&amp;utm_content=creditCopyText'
