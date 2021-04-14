@@ -34,6 +34,7 @@ const styleClasses = makeStyles({
     },
     freeTextField: {
         width: '100%',
+        margin: '20px 0',
     },
     radioButton: {
         alignContent: 'center',
@@ -148,10 +149,10 @@ const FreeFormTextQuestion = (props: SurveyQuestion) => {
     const classes = styleClasses();
     return (
         <Grid container>
-            <Grid item xs={false} md={3}>
+            <Grid item xs={false} md={2}>
                 &nbsp;
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12} md={8}>
                 <PrimaryTextField
                     className={classes.freeTextField}
                     label={props.questionText}
