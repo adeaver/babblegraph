@@ -28,7 +28,7 @@ type FeedbackSurveyPageProps = RouteComponentProps<Params>
 const FeedbackSurveyPage = (props: FeedbackSurveyPageProps) => {
     const { token } = props.match.params;
 
-    const survey = getSurveyForKey(SurveyKey.HighOpen1);
+    const survey = getSurveyForKey(SurveyKey.Unsubscribe1);
     const classes = styleClasses();
     return (
         <Page>
