@@ -6,47 +6,55 @@ const LowOpenSurvey: Survey = {
     sections: [
         {
             header: "Rate the following aspects of Babblegraph.",
-            description: "A score of 5 means you agree, and a score of 1 means you disagree.",
+            description: "",
             questions: [
                 {
                     id: "lowopen1-interest-slider1",
                     questionText: "The content in every email is interesting.",
                     questionType: QuestionType.RadioQuestion,
                     questionBody: {
-                        scaleMinimum: 1,
-                        scaleMaximum: 5,
+                        scaleMinimumLabel: "Strongly Disagree",
+                        scaleMaximumLabel: "Strongly Agree",
                     },
                 }, {
                     id: "lowopen1-learning-slider1",
                     questionText: "I am learning new words and grammar.",
                     questionType: QuestionType.RadioQuestion,
                     questionBody: {
-                        scaleMinimum: 1,
-                        scaleMaximum: 5,
+                        scaleMinimumLabel: "Strongly Disagree",
+                        scaleMaximumLabel: "Strongly Agree",
                     },
                 }, {
                     id: "lowopen1-content-slider1",
                     questionText: "The content that is shown to me matches the interests I selected.",
                     questionType: QuestionType.RadioQuestion,
                     questionBody: {
-                        scaleMinimum: 1,
-                        scaleMaximum: 5,
+                        scaleMinimumLabel: "Strongly Disagree",
+                        scaleMaximumLabel: "Strongly Agree",
                     },
                 }, {
                     id: "lowopen1-difficulty-slider1",
                     questionText: "The content I receive is too difficult.",
                     questionType: QuestionType.RadioQuestion,
                     questionBody: {
-                        scaleMinimum: 1,
-                        scaleMaximum: 5,
+                        scaleMinimumLabel: "Strongly Disagree",
+                        scaleMaximumLabel: "Strongly Agree",
                     },
                 }, {
-                    id: "lowopen1-difficulty-slider1",
+                    id: "lowopen1-amount-content-slider1",
                     questionText: "There is too much content in every email.",
                     questionType: QuestionType.RadioQuestion,
                     questionBody: {
-                        scaleMinimum: 1,
-                        scaleMaximum: 5,
+                        scaleMinimumLabel: "Strongly Disagree",
+                        scaleMaximumLabel: "Strongly Agree",
+                    },
+                }, {
+                    id: "lowopen1-format-slider1",
+                    questionText: "I enjoy the format of an email.",
+                    questionType: QuestionType.RadioQuestion,
+                    questionBody: {
+                        scaleMinimumLabel: "Strongly Disagree",
+                        scaleMaximumLabel: "Strongly Agree",
                     },
                 },
             ],

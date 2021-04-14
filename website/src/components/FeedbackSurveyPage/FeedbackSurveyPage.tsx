@@ -26,6 +26,8 @@ type Params = {
 type FeedbackSurveyPageProps = RouteComponentProps<Params>
 
 const FeedbackSurveyPage = (props: FeedbackSurveyPageProps) => {
+    const { token } = props.match.params;
+
     const survey = getSurveyForKey(SurveyKey.LowOpen1);
     const classes = styleClasses();
     return (
@@ -36,7 +38,7 @@ const FeedbackSurveyPage = (props: FeedbackSurveyPageProps) => {
                 </Grid>
                 <Grid item xs={12} md={6}>
                     <Card className={classes.displayCard}>
-                        <SurveyDisplay {...survey} />
+                        <SurveyDisplay {...survey} surveyToken={token} />
                     </Card>
                 </Grid>
             </Grid>

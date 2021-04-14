@@ -24,6 +24,6 @@ export type SurveyQuestion = {
 export type QuestionBody = RadioQuestionBody
 
 export type RadioQuestionBody = {
-    scaleMinimum: number;
-    scaleMaximum: number;
+    scaleMinimumLabel: string;
+    scaleMaximumLabel: string;
 }
