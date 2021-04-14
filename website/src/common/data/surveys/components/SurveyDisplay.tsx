@@ -11,6 +11,7 @@ import { TypographyColor } from 'common/typography/common';
 import Paragraph, { Size } from 'common/typography/Paragraph';
 import { PrimaryRadio } from 'common/components/Radio/Radio';
 import { PrimaryTextField } from 'common/components/TextField/TextField';
+import { PrimaryButton } from 'common/components/Button/Button';
 
 import {
     Survey,
@@ -18,14 +19,31 @@ import {
     SurveyQuestion,
     QuestionType,
     RadioQuestionBody,
+    YesOrNoBody,
 } from 'common/data/surveys/typedefs';
 
 const styleClasses = makeStyles({
+    submitButton: {
+        display: 'block',
+        margin: '10px auto',
+    },
     radioGroupContainer: {
         width: '100%',
+        padding: '0 20px',
+        boxSizing: 'border-box',
     },
     freeTextField: {
         width: '100%',
+    },
+    radioButton: {
+        alignContent: 'center',
+        width: '20%',
+        maxWidth: '20%',
+        margin: '0',
+    },
+    yesNoRadioButton: {
+        width: '100%',
+        justifyContent: 'center',
     },
 });
 
@@ -34,6 +52,7 @@ type SurveyProps = Survey & {
 }
 
 const Survey = (props: SurveyProps) => {
+    const classes = styleClasses();
     return (
         <div>
             <Heading1 color={TypographyColor.Primary}>
@@ -49,6 +68,7 @@ const Survey = (props: SurveyProps) => {
                     })
                 }
             </div>
+            <PrimaryButton className={classes.submitButton}>Submit</PrimaryButton>
         </div>
     );
 }
@@ -76,8 +96,10 @@ const Question = (props: SurveyQuestion) => {
         return <RadioQuestion {...props} />;
     } else if (props.questionType === QuestionType.FreeFormText) {
         return <FreeFormTextQuestion {...props} />;
+    } else if (props.questionType === QuestionType.YesOrNo) {
+        return <YesOrNoQuestion {...props} />;
     } else {
-        throw new Error('unimplemented question body');
+        throw new Error(`unimplemented question type ${props.questionType}`);
     }
 }
 
@@ -93,19 +115,11 @@ const RadioQuestion = (props: SurveyQuestion) => {
 
     return (
         <div>
-            <Grid container>
-                <Grid item xs={12}>
-                    <Paragraph>
-                        {props.questionText}
-                    </Paragraph>
-                </Grid>
-            </Grid>
+            <Paragraph>
+                {props.questionText}
+            </Paragraph>
             <FormControl className={classes.radioGroupContainer} component="fieldset">
-                <RadioGroup aria-label={`${props.id}-radiogroup`} name={`${props.id}-radiogroup`} value={currentVal} onChange={handleRadioFormChange}>
-                    <Grid container>
-                        <Grid item xs={1}>
-                            &nbsp;
-                        </Grid>
+                <RadioGroup aria-label={`${props.id}-radiogroup`} name={`${props.id}-radiogroup`} value={currentVal} onChange={handleRadioFormChange} row>
                         {
                             [0, 1, 2, 3, 4].map((val: number) => {
                                 let label: string | undefined = undefined;
@@ -115,16 +129,15 @@ const RadioQuestion = (props: SurveyQuestion) => {
                                     label = body.scaleMaximumLabel;
                                 }
                                 return (
-                                    <Grid key={`${props.id}-${val}`} item xs={2}>
-                                        <FormControlLabel value={`${val+1}`} control={<PrimaryRadio />} label={label} labelPlacement="bottom" />
-                                    </Grid>
+                                    <FormControlLabel
+                                        className={classes.radioButton}
+                                        value={`${val+1}`}
+                                        control={<PrimaryRadio />}
+                                        label={label}
+                                        labelPlacement="bottom" />
                                 );
                             })
                         }
-                        <Grid item xs={1}>
-                            &nbsp;
-                        </Grid>
-                    </Grid>
                 </RadioGroup>
             </FormControl>
         </div>
@@ -147,6 +160,47 @@ const FreeFormTextQuestion = (props: SurveyQuestion) => {
                     variant="outlined" />
             </Grid>
         </Grid>
+    );
+}
+
+const YesOrNoQuestion = (props: SurveyQuestion) => {
+    const classes = styleClasses();
+    const body: YesOrNoBody = props.questionBody as YesOrNoBody;
+
+    const [ currentVal, setCurrentVal ] = useState<string | null>(null);
+    const handleRadioFormChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const nextVal = (event.target as HTMLInputElement).value;
+        setCurrentVal(nextVal);
+    };
+    return (
+        <div>
+            <Paragraph>
+                {props.questionText}
+            </Paragraph>
+            <FormControl className={classes.radioGroupContainer} component="fieldset">
+                <RadioGroup aria-label={`${props.id}-radiogroup`} name={`${props.id}-radiogroup`} value={currentVal} onChange={handleRadioFormChange} row>
+                    <Grid container>
+                        <Grid item xs={3}>
+                            &nbsp;
+                        </Grid>
+                        <Grid item xs={3}>
+                            <FormControlLabel
+                                className={classes.yesNoRadioButton}
+                                value={body.positiveLabel}
+                                control={<PrimaryRadio />}
+                                label={body.positiveLabel} />
+                        </Grid>
+                        <Grid item xs={3}>
+                            <FormControlLabel
+                                className={classes.yesNoRadioButton}
+                                value={body.negativeLabel}
+                                control={<PrimaryRadio />}
+                                label={body.negativeLabel} />
+                        </Grid>
+                    </Grid>
+                </RadioGroup>
+            </FormControl>
+        </div>
     );
 }
 

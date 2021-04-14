@@ -13,6 +13,7 @@ export type SurveySection = {
 export enum QuestionType {
     RadioQuestion = 'RadioQuestion',
     FreeFormText = 'FreeFormText',
+    YesOrNo = 'YesOrNo',
 }
 
 export type SurveyQuestion = {
@@ -22,7 +23,7 @@ export type SurveyQuestion = {
     questionBody: QuestionBody;
 }
 
-export type QuestionBody = RadioQuestionBody | FreeFormTextBody;
+export type QuestionBody = RadioQuestionBody | FreeFormTextBody | YesOrNoBody;
 
 export type RadioQuestionBody = {
     scaleMinimumLabel: string;
@@ -30,3 +31,8 @@ export type RadioQuestionBody = {
 }
 
 export type FreeFormTextBody = {};
+
+export type YesOrNoBody = {
+    positiveLabel: string;
+    negativeLabel: string;
+}

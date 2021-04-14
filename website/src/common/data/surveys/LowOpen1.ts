@@ -50,7 +50,7 @@ const LowOpenSurvey: Survey = {
                     },
                 }, {
                     id: "lowopen1-format-slider1",
-                    questionText: "I enjoy the format of an email.",
+                    questionText: "I enjoy the format of the email.",
                     questionType: QuestionType.RadioQuestion,
                     questionBody: {
                         scaleMinimumLabel: "Strongly Disagree",
@@ -67,6 +67,14 @@ const LowOpenSurvey: Survey = {
                     questionText: "Type anything you want here.",
                     questionType: QuestionType.FreeFormText,
                     questionBody: {},
+                }, {
+                    id: "lowopen1-contact",
+                    questionText: "Can we contact you to follow up on your responses?",
+                    questionType: QuestionType.YesOrNo,
+                    questionBody: {
+                        positiveLabel: "Yes",
+                        negativeLabel: "No",
+                    },
                 },
             ],
         },
