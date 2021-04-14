@@ -58,6 +58,17 @@ const LowOpenSurvey: Survey = {
                     },
                 },
             ],
+        }, {
+            header: "Do you have any other comments?",
+            description: "Here’s your chance to say what’s really on your mind. Maybe a new feature you’d like to see or a current feature that just isn’t working out well for you.",
+            questions: [
+                {
+                    id: "lowopen1-freeform",
+                    questionText: "Type anything you want here.",
+                    questionType: QuestionType.FreeFormText,
+                    questionBody: {},
+                },
+            ],
         },
     ],
 }

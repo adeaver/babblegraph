@@ -10,6 +10,7 @@ import { Heading1, Heading3 } from 'common/typography/Heading';
 import { TypographyColor } from 'common/typography/common';
 import Paragraph, { Size } from 'common/typography/Paragraph';
 import { PrimaryRadio } from 'common/components/Radio/Radio';
+import { PrimaryTextField } from 'common/components/TextField/TextField';
 
 import {
     Survey,
@@ -21,6 +22,9 @@ import {
 
 const styleClasses = makeStyles({
     radioGroupContainer: {
+        width: '100%',
+    },
+    freeTextField: {
         width: '100%',
     },
 });
@@ -70,6 +74,8 @@ const Section = (props: SurveySection) => {
 const Question = (props: SurveyQuestion) => {
     if (props.questionType === QuestionType.RadioQuestion) {
         return <RadioQuestion {...props} />;
+    } else if (props.questionType === QuestionType.FreeFormText) {
+        return <FreeFormTextQuestion {...props} />;
     } else {
         throw new Error('unimplemented question body');
     }
@@ -123,6 +129,25 @@ const RadioQuestion = (props: SurveyQuestion) => {
             </FormControl>
         </div>
     )
+}
+
+const FreeFormTextQuestion = (props: SurveyQuestion) => {
+    const classes = styleClasses();
+    return (
+        <Grid container>
+            <Grid item xs={false} md={3}>
+                &nbsp;
+            </Grid>
+            <Grid item xs={12} md={6}>
+                <PrimaryTextField
+                    className={classes.freeTextField}
+                    label={props.questionText}
+                    rows={5}
+                    multiline
+                    variant="outlined" />
+            </Grid>
+        </Grid>
+    );
 }
 
 export default Survey;
