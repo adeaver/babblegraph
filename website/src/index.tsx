@@ -19,6 +19,8 @@ import WordReinforcementPage from 'components/SubscriptionManagement/WordReinfor
 
 import NotFoundPage from 'components/NotFoundPage/NotFoundPage';
 
+import FeedbackSurveyPage from 'components/FeedbackSurveyPage/FeedbackSurveyPage';
+
 class App extends React.Component{
     render() {
         return (
@@ -30,6 +32,9 @@ class App extends React.Component{
                     <Route path="/manage/:token/interests" component={InterestSelectionPage} />
                     <Route path="/manage/:token/vocabulary" component={WordReinforcementPage} />
                     <Route exact path="/manage/:token" component={SubscriptionManagementDashboardPage} />
+
+                    { /* User Feedback */ }
+                    <Route path="/feedback/:token" component={FeedbackSurveyPage} />
 
                     { /* Home Page & About Page */ }
                     <Route path="/about" component={AboutPage} />
