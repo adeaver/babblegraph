@@ -16,11 +16,11 @@ import (
 func ServeIndexPage(indexFilenameWithPath string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		handleUTMParameters(w, r)
-		serveIndexTemplate(indexFilenameWithPath, w, r)
+		serveIndexTemplate(indexFilenameWithPath, struct{}{}, w, r)
 	}
 }
 
-func serveIndexTemplate(templateFileName string, w http.ResponseWriter, r *http.Request) {
+func serveIndexTemplate(templateFileName string, templateData interface{}, w http.ResponseWriter, r *http.Request) {
 	var err error
 	defer func() {
 		if err != nil {
@@ -33,7 +33,7 @@ func serveIndexTemplate(templateFileName string, w http.ResponseWriter, r *http.
 	if err != nil {
 		http.Error(w, http.StatusText(500), 500)
 	}
-	if err := tmpl.Execute(w, struct{}{}); err != nil {
+	if err := tmpl.Execute(w, templateData); err != nil {
 		http.Error(w, http.StatusText(500), 500)
 	}
 }
