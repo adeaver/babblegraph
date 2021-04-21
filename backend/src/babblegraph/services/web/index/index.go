@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"net/http"
 	"runtime"
+	"strings"
 
 	"github.com/getsentry/sentry-go"
 	"github.com/jmoiron/sqlx"
@@ -26,8 +27,9 @@ func serveIndexTemplate(templateFileName string, w http.ResponseWriter, r *http.
 			sentry.CaptureException(err)
 		}
 	}()
+	fileNameParts := strings.Split(templateFileName, "/")
 	var tmpl *template.Template
-	tmpl, err = template.New("index").ParseFiles(templateFileName)
+	tmpl, err = template.New(fileNameParts[len(fileNameParts)-1]).ParseFiles(templateFileName)
 	if err != nil {
 		http.Error(w, http.StatusText(500), 500)
 	}

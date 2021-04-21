@@ -14,6 +14,7 @@ type BlogPost struct {
 	Tags               []string
 	TrackingTag        string
 	URLPath            string
+	HeroImageURL       string
 	FirstPublishedDate time.Time
 	UpdateDate         *time.Time
 }
@@ -25,6 +26,7 @@ type dbBlogPost struct {
 	Tags               string     `db:"tags"`
 	TrackingTag        string     `db:"tracking_tag"`
 	URLPath            string     `db:"url_path"`
+	HeroImageURL       string     `db:"hero_image_url"`
 	FirstPublishedDate time.Time  `db:"first_published_date"`
 	UpdateDate         *time.Time `db:"updated_date"`
 	IsVisible          bool       `db:"is_visible"`

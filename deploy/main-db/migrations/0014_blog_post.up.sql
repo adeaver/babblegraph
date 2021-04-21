@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS blog_posts(
     tags TEXT,
     tracking_tag TEXT NOT NULL,
     url_path TEXT NOT NULL, -- This is the suffix for the url
+    hero_image_url TEXT NOT NULL, -- This is the suffix for the url
     first_published_date TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()),
     updated_date TIMESTAMP WITH TIME ZONE,
     is_visible BOOLEAN NOT NULL DEFAULT true,
