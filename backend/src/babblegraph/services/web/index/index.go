@@ -15,7 +15,10 @@ import (
 
 func ServeIndexPage(indexFilenameWithPath string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		handleUTMParameters(w, r)
+		utmParameters := utm.GetParametersForRequest(r)
+		if utmParameters != nil {
+			handleUTMParameters(*utmParameters, w, r)
+		}
 		serveIndexTemplate(indexFilenameWithPath, struct{}{}, w, r)
 	}
 }
@@ -38,39 +41,36 @@ func serveIndexTemplate(templateFileName string, templateData interface{}, w htt
 	}
 }
 
-func handleUTMParameters(w http.ResponseWriter, r *http.Request) {
-	utmParameters := utm.GetParametersForRequest(r)
-	if utmParameters != nil {
-		trackingID, err := utm.GetTrackingIDForRequest(r)
-		switch {
-		case err != nil:
-			sentry.CaptureException(err)
-		case trackingID != nil:
-			localHub := sentry.CurrentHub().Clone()
-			localHub.ConfigureScope(func(scope *sentry.Scope) {
-				scope.SetTag("utm-params", "go-func")
-			})
-			go func() {
-				defer func() {
-					if x := recover(); x != nil {
-						_, fn, line, _ := runtime.Caller(1)
-						err := fmt.Errorf("Panic handling utm parameters: %s: %d: %v\n", fn, line, x)
-						localHub.CaptureException(err)
-					}
-				}()
-				if err := database.WithTx(func(tx *sqlx.Tx) error {
-					return utm.RegisterUTMPageHit(tx, *trackingID, *utmParameters)
-				}); err != nil {
+func handleUTMParameters(utmParameters utm.Parameters, w http.ResponseWriter, r *http.Request) {
+	trackingID, err := utm.GetTrackingIDForRequest(r)
+	switch {
+	case err != nil:
+		sentry.CaptureException(err)
+	case trackingID != nil:
+		localHub := sentry.CurrentHub().Clone()
+		localHub.ConfigureScope(func(scope *sentry.Scope) {
+			scope.SetTag("utm-params", "go-func")
+		})
+		go func() {
+			defer func() {
+				if x := recover(); x != nil {
+					_, fn, line, _ := runtime.Caller(1)
+					err := fmt.Errorf("Panic handling utm parameters: %s: %d: %v\n", fn, line, x)
 					localHub.CaptureException(err)
 				}
 			}()
-			http.SetCookie(w, &http.Cookie{
-				Name:  utm.UTMTrackingIDCookieName,
-				Value: trackingID.Str(),
-			})
-		default:
-			err := fmt.Errorf("Unknown error making tracking ID for request, continuing...")
-			sentry.CaptureException(err)
-		}
+			if err := database.WithTx(func(tx *sqlx.Tx) error {
+				return utm.RegisterUTMPageHit(tx, *trackingID, utmParameters)
+			}); err != nil {
+				localHub.CaptureException(err)
+			}
+		}()
+		http.SetCookie(w, &http.Cookie{
+			Name:  utm.UTMTrackingIDCookieName,
+			Value: trackingID.Str(),
+		})
+	default:
+		err := fmt.Errorf("Unknown error making tracking ID for request, continuing...")
+		sentry.CaptureException(err)
 	}
 }

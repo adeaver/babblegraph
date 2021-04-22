@@ -1,0 +1,13 @@
+#!/bin/bash
+
+/home/postgres/scripts/insert-blog-post \
+    --title "Sample Blog Post" \
+    --desc "This is a sample blog post" \
+    --tags "sample" \
+    --hero_image_url "sample-hero-image.jpg" \
+    --hero_image_alt_text "This is a sample photo" \
+    --content_url "sample-blog.js" \
+    --url_path "sample-blog" \
+    --tracking_tag "sample-blog-1" \
+    --db-user dev \
+    --db-name babblegraph

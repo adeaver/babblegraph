@@ -1,0 +1,96 @@
+#!/bin/bash
+DB_NAME="${PG_DATABASE}"
+DB_USER="${PG_USER}"
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --title)
+            shift;
+            TITLE="$1"
+            ;;
+        --desc)
+            shift;
+            DESC="$1"
+            ;;
+        --tags)
+            shift;
+            TAGS="$1"
+            ;;
+        --tracking_tag)
+            shift;
+            TRACKING_TAG="$1"
+            ;;
+        --url_path)
+            shift;
+            URL_PATH="$1"
+            ;;
+        --hero_image_url)
+            shift;
+            HERO_IMAGE_URL="$1"
+            ;;
+        --hero_image_alt_text)
+            shift;
+            HERO_IMAGE_ALT_TEXT="$1"
+            ;;
+        --content_url)
+            shift;
+            CONTENT_URL="$1"
+            ;;
+        --db-name)
+            shift;
+            DB_NAME="$1"
+            ;;
+        --db-user)
+            shift;
+            DB_USER="$1"
+            ;;
+    esac
+    shift
+done
+
+if [[ -z "$TITLE" ]]; then
+    echo "No title"
+    exit 1
+fi;
+
+if [[ -z "$DESC" ]]; then
+    echo "No desc"
+    exit 1
+fi;
+
+if [[ -z "$TRACKING_TAG" ]]; then
+    echo "No tracking_tag"
+    exit 1
+fi;
+
+if [[ -z "$URL_PATH" ]]; then
+    echo "No url_path"
+    exit 1
+fi;
+
+if [[ -z "$HERO_IMAGE_URL" ]]; then
+    echo "No hero_image_url"
+    exit 1
+fi;
+
+if [[ -z "$HERO_IMAGE_ALT_TEXT" ]]; then
+    echo "No hero_image_alt_text"
+    exit 1
+fi;
+
+if [[ -z "$CONTENT_URL" ]]; then
+    echo "No content_url"
+    exit 1
+fi;
+
+if [[ -z "$DB_NAME" ]]; then
+    echo "No db_name"
+    exit 1
+fi;
+
+if [[ -z "$DB_USER" ]]; then
+    echo "No db_user"
+    exit 1
+fi;
+
+PGPASSWORD=$PG_PASSWORD psql -U $DB_USER -d $DB_NAME -c "INSERT INTO blog_posts (title, description, tags, tracking_tag, url_path, hero_image_url, hero_image_alt_text, content_url) VALUES ('$TITLE', '$DESC', '$TAGS', '$TRACKING_TAG', '$URL_PATH', '$HERO_IMAGE_URL', '$HERO_IMAGE_ALT_TEXT', '$CONTENT_URL')"
+exit
