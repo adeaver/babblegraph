@@ -1,5 +1,4 @@
 const imageBaseURL = "https://static.babblegraph.com/blog/assets";
-const contentBaseURL = "";
 
 export type BlogPost = {
     title: string;
@@ -7,6 +6,7 @@ export type BlogPost = {
     heroImageURL: string;
     heroImageAltText: string;
     content: Array<BlogContent>;
+    author: Author;
 }
 
 export type BlogContent = {
@@ -34,6 +34,12 @@ export type Link = {
 export type ImageContent = {
     sourceURL: string;
     altText: string;
+    caption: string;
+}
+
+export type Author = {
+    name: string;
+    link: string;
 }
 
 type BlogMetaData = {
@@ -45,6 +51,7 @@ type BlogMetaData = {
 }
 
 type BlogJSON = {
+    author: Author;
     content: Array<BlogContent>;
 }
 
@@ -65,6 +72,11 @@ export function loadBlogPost(
         description: blogData.blogPostDescription,
         heroImageURL: `${imageBaseURL}/${blogData.blogPostHeroImageURL}`,
         heroImageAltText: blogData.blogPostHeroImageAltText,
+        author: blogContent.author,
         content: blogContent.content,
     });
+}
+
+export function getImageURL(urlSuffix: string) {
+    return `${imageBaseURL}/${urlSuffix}`;
 }
