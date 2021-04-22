@@ -8,17 +8,17 @@ import (
 type BlogPostID string
 
 type BlogPost struct {
-	ID                 BlogPostID
-	Title              string
-	Description        string
-	Tags               []string
-	TrackingTag        string
-	URLPath            string
-	HeroImageURL       string
-	HeroImageAltText   string
-	ContentURL         string
-	FirstPublishedDate time.Time
-	UpdateDate         *time.Time
+	ID                 BlogPostID `json:"id"`
+	Title              string     `json:"title"`
+	Description        string     `json:"description"`
+	Tags               []string   `json:"tags"`
+	TrackingTag        string     `json:"tracking_tag"`
+	URLPath            string     `json:"url_path"`
+	HeroImageURL       string     `json:"hero_image_url"`
+	HeroImageAltText   string     `json:"hero_image_alt_text"`
+	ContentURL         string     `json:"content_url"`
+	FirstPublishedDate time.Time  `json:"first_published_date"`
+	UpdateDate         *time.Time `json:"updated_date"`
 }
 
 type dbBlogPost struct {

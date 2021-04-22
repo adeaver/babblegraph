@@ -5,10 +5,27 @@ import Grid from '@material-ui/core/Grid';
 import { Heading1 } from 'common/typography/Heading';
 import Page from 'common/components/Page/Page';
 
+import {
+    GetAllBlogPostsPaginatedResponse,
+    BlogPost,
+    getAllBlogPostsPaginated,
+} from 'api/blog/bloghome';
+
 type BlogHomePageProps = {}
 
 const BlogHomePage = (props: BlogHomePageProps) => {
-   return (
+    useEffect(() => {
+        getAllBlogPostsPaginated({
+            pageIndex: 0,
+        },
+        (resp: GetAllBlogPostsPaginatedResponse) => {
+            // TODO: fill this out
+        },
+        (err: Error) => {
+            // TODO: fill this out
+        });
+    }, []);
+    return (
         <Page>
             <Grid container>
                 <Grid item xs={false} md={3}>
@@ -19,7 +36,7 @@ const BlogHomePage = (props: BlogHomePageProps) => {
                 </Grid>
             </Grid>
         </Page>
-   );
+    );
 }
 
 export default BlogHomePage;

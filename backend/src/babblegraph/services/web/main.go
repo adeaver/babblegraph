@@ -4,6 +4,7 @@ import (
 	"babblegraph/actions/email"
 	"babblegraph/actions/verification"
 	"babblegraph/model/routes"
+	"babblegraph/services/web/api/blog"
 	"babblegraph/services/web/api/language"
 	"babblegraph/services/web/api/ses"
 	"babblegraph/services/web/api/token"
@@ -91,7 +92,6 @@ func main() {
 	r.PathPrefix("/dist").Handler(http.StripPrefix("/dist", http.FileServer(http.Dir(staticFileDirName))))
 	r.HandleFunc("/blog/", func(w http.ResponseWriter, r *http.Request) {
 		router.LogRequestWithoutBody(r)
-		log.Println("HERE")
 		index.ServeIndexPage(fmt.Sprintf("%s/index.html", staticFileDirName))(w, r)
 	})
 	r.HandleFunc("/blog/{url_path}", func(w http.ResponseWriter, r *http.Request) {
@@ -136,6 +136,9 @@ func registerAPI(r *mux.Router) error {
 		return err
 	}
 	if err := token.RegisterRouteGroups(); err != nil {
+		return err
+	}
+	if err := blog.RegisterRouteGroups(); err != nil {
 		return err
 	}
 	return nil
