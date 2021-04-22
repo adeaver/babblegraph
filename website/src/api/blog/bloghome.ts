@@ -59,7 +59,7 @@ export function getBlogPostData(
 }
 
 export function convertContentJSONStringToObject(contentString: string) {
-
+    return JSON.parse(contentString) as BlogJSON;
 }
 
 export type BlogJSON = {

@@ -12,15 +12,18 @@ import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
 import {
     getBlogPostData,
     BlogPost,
+    BlogContent,
     GetBlogPostDataResponse,
-} from 'api/blog/bloghome';
-
-import {
+    Link as BlogLink,
     ImageContent,
     TextSection,
     TextContent,
+    BlogJSON,
+    convertContentJSONStringToObject
+} from 'api/blog/bloghome';
+
+import {
     getImageURL,
-    Link as BlogLink,
 } from 'api/blog/blogpost';
 
 const styleClasses = makeStyles({
@@ -41,6 +44,7 @@ const BlogPostPage = (props: BlogPostPageProps) => {
 
     const [ isLoading, setIsLoading ] = useState<boolean>(true);
     const [ blogPost, setBlogPost ] = useState<BlogPost | undefined>(undefined);
+    const [ blogContent, setBlogContent ] = useState<BlogJSON | undefined>(undefined);
 
     useEffect(() => {
         getBlogPostData({
@@ -49,6 +53,7 @@ const BlogPostPage = (props: BlogPostPageProps) => {
         (resp: GetBlogPostDataResponse) => {
             setIsLoading(false);
             setBlogPost(resp.metadata);
+            setBlogContent(convertContentJSONStringToObject(resp.content));
         },
         (err: Error) => {
             // TODO: handle this
@@ -58,8 +63,8 @@ const BlogPostPage = (props: BlogPostPageProps) => {
     let body = null;
     if (isLoading) {
         body = <LoadingSpinner />
-    } else if (!!blogPost) {
-        body = <BlogDisplay {...blogPost} />
+    } else if (!!blogPost && !!blogContent) {
+        body = <BlogDisplay metadata={blogPost} content={blogContent} />
     }
 
     return (
@@ -76,19 +81,23 @@ const BlogPostPage = (props: BlogPostPageProps) => {
     );
 }
 
-const BlogDisplay = (props: BlogPost) => {
+type BlogPostDisplayProps = {
+    metadata: BlogPost;
+    content: BlogJSON;
+}
+
+const BlogDisplay = (props: BlogPostDisplayProps) => {
     const classes = styleClasses();
     return (
         <div>
-            <img className={classes.image} src={getImageURL(props.heroImageUrl)} alt={props.heroImageAltText} />
-            <Heading1>{props.title}</Heading1>
+            <img className={classes.image} src={getImageURL(props.metadata.heroImageUrl)} alt={props.metadata.heroImageAltText} />
+            <Heading1>{props.metadata.title}</Heading1>
             <Paragraph>
-                {props.description}
+                {props.metadata.description}
             </Paragraph>
-            { /*
-            <Heading4>{props.author.name}</Heading4>
+            <Heading4>{props.content.author.name}</Heading4>
             {
-                props.content.map((content: BlogContent, idx: number) => {
+                props.content.content.map((content: BlogContent, idx: number) => {
                     if (content.contentType === "text") {
                         return <TextSectionDisplay {...content.content as TextSection} />
                     } else if (content.contentType === "image") {
@@ -96,8 +105,6 @@ const BlogDisplay = (props: BlogPost) => {
                     }
                     throw new Error(`unrecognized content type ${content.contentType}`);
                 })
-            }
-            */
             }
         </div>
     );

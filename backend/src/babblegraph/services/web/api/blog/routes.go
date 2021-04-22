@@ -88,5 +88,5 @@ func handleGetBlogPostData(body []byte) (interface{}, error) {
 }
 
 func getBlogPostContent(contentURL string) (*string, error) {
-	return storage.NewS3StorageForEnvironment().GetData("prod-spaces-1/blog/content", contentURL)
+	return storage.NewS3StorageForEnvironment().GetData("prod-spaces-1", fmt.Sprintf("blog/content/%s", contentURL))
 }
