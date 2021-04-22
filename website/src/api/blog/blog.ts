@@ -1,5 +1,7 @@
 import { makePostRequestWithStandardEncoding } from 'api/bgfetch/bgfetch';
 
+const imageBaseURL = "https://static.babblegraph.com/blog/assets";
+
 export type BlogPost = {
     id: string;
     title: string;
@@ -98,4 +100,8 @@ export type ImageContent = {
     sourceURL: string;
     altText: string;
     caption: string;
+}
+
+export function getImageURL(urlSuffix: string) {
+    return `${imageBaseURL}/${urlSuffix}`;
 }

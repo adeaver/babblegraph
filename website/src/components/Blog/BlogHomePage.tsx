@@ -15,10 +15,8 @@ import {
     GetAllBlogPostsPaginatedResponse,
     BlogPost,
     getAllBlogPostsPaginated,
-} from 'api/blog/bloghome';
-import {
     getImageURL,
-} from 'api/blog/blogpost';
+} from 'api/blog/blog';
 
 const styleClasses = makeStyles({
     heroImage: {
