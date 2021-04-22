@@ -29,6 +29,8 @@ services:
       - AES_KEY=ryDMLNhwEqPBHMgu6YOsCZ0ihx4WgvqE
       - CAPTCHA_SECRET=$BABBLEGRAPH_CAPTCHA_SECRET
       - SENTRY_DSN=$BABBLEGRAPH_WEB_SENTRY_DSN
+      - S3_KEY=$BABBLEGRAPH_SPACES_KEY
+      - S3_SECRET=$BABBLEGRAPH_SPACES_SECRET
       - ENV=local-no-email
     command: go run /usr/local/go/src/babblegraph/services/web/main.go
   frontend:

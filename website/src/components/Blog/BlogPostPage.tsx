@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { RouteComponentProps, useHistory } from 'react-router-dom';
 
 import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
@@ -9,14 +10,17 @@ import Page from 'common/components/Page/Page';
 import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
 
 import {
+    getBlogPostData,
     BlogPost,
-    loadBlogPost,
-    BlogContent,
+    GetBlogPostDataResponse,
+} from 'api/blog/bloghome';
+
+import {
+    ImageContent,
     TextSection,
     TextContent,
-    ImageContent,
     getImageURL,
-    Link as BlogLink
+    Link as BlogLink,
 } from 'api/blog/blogpost';
 
 const styleClasses = makeStyles({
@@ -26,19 +30,29 @@ const styleClasses = makeStyles({
     },
 });
 
-type BlogPostPageProps = {}
+type Params = {
+    path: string;
+}
+
+type BlogPostPageProps = RouteComponentProps<Params>;
 
 const BlogPostPage = (props: BlogPostPageProps) => {
+    const { path } = props.match.params;
+
     const [ isLoading, setIsLoading ] = useState<boolean>(true);
     const [ blogPost, setBlogPost ] = useState<BlogPost | undefined>(undefined);
 
     useEffect(() => {
-        loadBlogPost(
-            (post: BlogPost) => {
-                setIsLoading(false);
-                setBlogPost(post);
-            },
-        )
+        getBlogPostData({
+            urlPath: path,
+        },
+        (resp: GetBlogPostDataResponse) => {
+            setIsLoading(false);
+            setBlogPost(resp.metadata);
+        },
+        (err: Error) => {
+            // TODO: handle this
+        });
     }, []);
 
     let body = null;
@@ -66,8 +80,12 @@ const BlogDisplay = (props: BlogPost) => {
     const classes = styleClasses();
     return (
         <div>
-            <img className={classes.image} src={props.heroImageURL} alt={props.heroImageAltText} />
+            <img className={classes.image} src={getImageURL(props.heroImageUrl)} alt={props.heroImageAltText} />
             <Heading1>{props.title}</Heading1>
+            <Paragraph>
+                {props.description}
+            </Paragraph>
+            { /*
             <Heading4>{props.author.name}</Heading4>
             {
                 props.content.map((content: BlogContent, idx: number) => {
@@ -78,6 +96,8 @@ const BlogDisplay = (props: BlogPost) => {
                     }
                     throw new Error(`unrecognized content type ${content.contentType}`);
                 })
+            }
+            */
             }
         </div>
     );
