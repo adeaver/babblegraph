@@ -13,7 +13,7 @@ func ServeBlogPost(blogPostTemplateFileName string, blogPostURLPath string) func
 			Description:      "Sample Description",
 			HeroImageURL:     "sample-hero-image.jpg",
 			HeroImageAltText: "Sample image for a blog",
-			ContentURL:       "sample-blog.json",
+			ContentURL:       "sample-blog.js",
 		}
 		serveIndexTemplate(blogPostTemplateFileName, b, w, r)
 	}

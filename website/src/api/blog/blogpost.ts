@@ -1,5 +1,5 @@
 const imageBaseURL = "https://static.babblegraph.com/blog/assets";
-const contentBaseURL = "https://static.babblegraph.com/blog/content";
+const contentBaseURL = "";
 
 export type BlogPost = {
     title: string;
@@ -9,7 +9,10 @@ export type BlogPost = {
     content: Array<BlogContent>;
 }
 
-export type BlogContent = TextSection | ImageContent
+export type BlogContent = {
+    contentType: string;
+    content: TextSection | ImageContent;
+}
 
 export type TextSection = {
     sectionTitle: TextContent;
@@ -48,36 +51,20 @@ type BlogJSON = {
 declare global {
     interface Window {
         blogData: BlogMetaData | null;
+        blogContent: BlogJSON;
     }
 }
 
 export function loadBlogPost(
     onSuccess: (post: BlogPost) => void,
-    onError: (err: Error) => void,
 ) {
     const blogData: BlogMetaData = window.blogData;
-    fetch(`${contentBaseURL}/${blogData.blogPostContentURL}`, {
-        method: 'GET',
-        mode: 'no-cors', // This is a hack.
-        headers: {
-            'Content-Type': 'application/json',
-        },
-    })
-    .then(response => {
-        if (!response.ok) {
-            console.log(response);
-            response.text().then(data => onError(new Error(data)));
-            return
-        }
-        response.json().then(data => {
-            const blogJSON: BlogJSON = data as BlogJSON;
-            onSuccess({
-                title: blogData.blogPostTitle,
-                description: blogData.blogPostDescription,
-                heroImageURL: `${imageBaseURL}/${blogData.blogPostHeroImageURL}`,
-                heroImageAltText: blogData.blogPostHeroImageAltText,
-                content: blogJSON.content,
-            });
-        });
+    const blogContent: BlogJSON = window.blogContent;
+    onSuccess({
+        title: blogData.blogPostTitle,
+        description: blogData.blogPostDescription,
+        heroImageURL: `${imageBaseURL}/${blogData.blogPostHeroImageURL}`,
+        heroImageAltText: blogData.blogPostHeroImageAltText,
+        content: blogContent.content,
     });
 }

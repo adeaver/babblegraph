@@ -6,7 +6,13 @@ import { Heading1 } from 'common/typography/Heading';
 import Page from 'common/components/Page/Page';
 import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
 
-import { BlogPost, loadBlogPost } from 'api/blog/blogpost';
+import {
+    BlogPost,
+    loadBlogPost,
+    BlogContent,
+    TextSection,
+    ImageContent,
+} from 'api/blog/blogpost';
 
 type BlogPostPageProps = {}
 
@@ -20,9 +26,6 @@ const BlogPostPage = (props: BlogPostPageProps) => {
                 setIsLoading(false);
                 setBlogPost(post);
             },
-            (err: Error) => {
-                // TODO: handle this
-            }
         )
     }, []);
 
@@ -52,7 +55,29 @@ const BlogDisplay = (props: BlogPost) => {
         <div>
             <img src={props.heroImageURL} />
             <Heading1>{props.title}</Heading1>
+            {
+                props.content.map((content: BlogContent, idx: number) => {
+                    if (content.contentType === "text") {
+                        return <TextSectionDisplay {...content.content as TextSection} />
+                    } else if (content.contentType === "image") {
+                        return <ImageContentDisplay {...content.content as ImageContent} />
+                    }
+                    throw new Error(`unrecognized content type ${content.contentType}`);
+                })
+            }
         </div>
+    );
+}
+
+const TextSectionDisplay = (props: TextSection) => {
+    return (
+        <div></div>
+    );
+}
+
+const ImageContentDisplay = (props: ImageContent) => {
+    return (
+        <div></div>
     );
 }
 
