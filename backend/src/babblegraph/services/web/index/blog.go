@@ -5,6 +5,7 @@ import (
 	"babblegraph/model/utm"
 	"babblegraph/util/database"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/getsentry/sentry-go"
@@ -21,8 +22,10 @@ func ServeBlogPost(blogPostTemplateFileName string, blogPostURLPath string) func
 				return err
 			}
 			if b == nil {
+				log.Println(fmt.Sprintf("No blog found for url path %s", blogPostURLPath))
 				return nil
 			}
+			log.Println(fmt.Sprintf("Found blog for url path %s", blogPostURLPath))
 			return blogposts.CaptureBlogPostView(tx, b.ID)
 		}); err != nil {
 			sentry.CaptureException(err)

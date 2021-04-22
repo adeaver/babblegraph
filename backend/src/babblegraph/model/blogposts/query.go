@@ -4,7 +4,7 @@ import "github.com/jmoiron/sqlx"
 
 const (
 	getBlogByURLPathQuery    = "SELECT * FROM blog_posts WHERE url_path = $1 AND is_visible = TRUE"
-	captureBlogPostViewQuery = "INSERT INTO blog_post_views (blog_post_id) VALUES ($1)"
+	captureBlogPostViewQuery = "INSERT INTO blog_post_view (blog_post_id) VALUES ($1)"
 )
 
 func LookupBlogByURLPath(tx *sqlx.Tx, urlPath string) (*BlogPost, error) {
