@@ -17,6 +17,9 @@ import DifficultyLevelSettingPage from 'components/SubscriptionManagement/Diffic
 import UnsubscribePage from 'components/SubscriptionManagement/UnsubscribePage';
 import WordReinforcementPage from 'components/SubscriptionManagement/WordReinforcementPage';
 
+import BlogHomePage from 'components/Blog/BlogHomePage';
+import BlogPostPage from 'components/Blog/BlogPostPage';
+
 import NotFoundPage from 'components/NotFoundPage/NotFoundPage';
 
 class App extends React.Component{
@@ -35,6 +38,10 @@ class App extends React.Component{
                     <Route path="/about" component={AboutPage} />
                     <Route path="/privacy-policy" component={PrivacyPolicyPage} />
                     <Route exact path="/" component={HomePage} />
+
+                    { /* Blog */ }
+                    <Route path="/blog/:path" component={BlogPostPage} />
+                    <Route exact path="/blog" component={BlogHomePage} />
 
                     { /* 404 Page */ }
                     <Route component={NotFoundPage} />
