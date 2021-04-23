@@ -25,6 +25,16 @@ func SetEmailFirstOpened(tx *sqlx.Tx, id ID) error {
 	return nil
 }
 
+const getEmailUsageForTypeQuery = "SELECT user_id, COUNT(DISTINCT _id) number_emails_sent, MAX(first_opened_at) IS NOT NULL AS has_opened_one_email FROM email_records WHERE type = $1 GROUP BY user_id"
+
+func GetEmailUsageForType(tx *sqlx.Tx, emailType EmailType) ([]EmailUsage, error) {
+	var matches []EmailUsage
+	if err := tx.Select(&matches, getEmailUsageForTypeQuery, emailType); err != nil {
+		return nil, err
+	}
+	return matches, nil
+}
+
 func NewEmailRecordID() ID {
 	return ID(uuid.New().String())
 }

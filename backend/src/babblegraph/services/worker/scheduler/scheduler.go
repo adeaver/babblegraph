@@ -25,11 +25,13 @@ func StartScheduler(linkProcessor *linkprocessing.LinkProcessor, errs chan error
 	case "prod":
 		c.AddFunc("30 2 * * *", makeRefetchSeedDomainJob(linkProcessor, errs))
 		c.AddFunc("30 5 * * *", makeEmailJob(errs))
+		c.AddFunc("30 12 * * *", makeUserFeedbackJob(errs))
 		c.AddFunc("*/1 * * * *", makeVerificationJob(errs))
 	case "local":
 		c.AddFunc("*/1 * * * *", makeVerificationJob(errs))
 		c.AddFunc("*/30 * * * *", makeRefetchSeedDomainJob(linkProcessor, errs))
 		makeEmailJob(errs)()
+		makeUserFeedbackJob(errs)()
 	case "local-no-email":
 		makeRefetchSeedDomainJob(linkProcessor, errs)()
 	}
@@ -118,6 +120,35 @@ func makeVerificationJob(errs chan error) func() {
 		})
 		log.Println("Starting verification job...")
 		if err := handlePendingVerifications(localHub, emailClient); err != nil {
+			localHub.CaptureException(err)
+			errs <- err
+		}
+	}
+}
+
+func makeUserFeedbackJob(errs chan error) func() {
+	return func() {
+		today := time.Now()
+		localHub := sentry.CurrentHub().Clone()
+		localHub.ConfigureScope(func(scope *sentry.Scope) {
+			scope.SetTag("user-feedback-job", fmt.Sprintf("user-feedback-job-%s-%d-%d-%d-%d", today.Month().String(), today.Day(), today.Year(), today.Hour(), today.Minute()))
+		})
+		defer func() {
+			if x := recover(); x != nil {
+				_, fn, line, _ := runtime.Caller(1)
+				err := fmt.Errorf("User Feedback Panic: %s: %d: %v\n", fn, line, x)
+				localHub.CaptureException(err)
+				debug.PrintStack()
+				errs <- err
+			}
+		}()
+		emailClient := ses.NewClient(ses.NewClientInput{
+			AWSAccessKey:       env.MustEnvironmentVariable("AWS_SES_ACCESS_KEY"),
+			AWSSecretAccessKey: env.MustEnvironmentVariable("AWS_SES_SECRET_KEY"),
+			AWSRegion:          "us-east-1",
+			FromAddress:        env.MustEnvironmentVariable("EMAIL_ADDRESS"),
+		})
+		if err := sendUserFeedbackEmails(localHub, emailClient); err != nil {
 			localHub.CaptureException(err)
 			errs <- err
 		}
