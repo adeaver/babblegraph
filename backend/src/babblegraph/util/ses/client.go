@@ -1,6 +1,7 @@
 package ses
 
 import (
+	"babblegraph/util/deref"
 	"fmt"
 	"log"
 
@@ -9,6 +10,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ses"
 )
+
+const defaultEmailSenderName = "Babblegraph"
 
 type Client struct {
 	awsAccessKey       string
@@ -34,9 +37,10 @@ func NewClient(input NewClientInput) *Client {
 }
 
 type SendEmailInput struct {
-	Recipient string
-	HTMLBody  string
-	Subject   string
+	Recipient       string
+	HTMLBody        string
+	Subject         string
+	EmailSenderName *string
 }
 
 func (cl *Client) SendEmail(input SendEmailInput) (*string, error) {
@@ -47,6 +51,7 @@ func (cl *Client) SendEmail(input SendEmailInput) (*string, error) {
 	if err != nil {
 		return nil, err
 	}
+	senderName := deref.String(input.EmailSenderName, defaultEmailSenderName)
 	svc := ses.New(sess)
 	sesInput := &ses.SendEmailInput{
 		Destination: &ses.Destination{
@@ -67,7 +72,7 @@ func (cl *Client) SendEmail(input SendEmailInput) (*string, error) {
 				Data:    aws.String(input.Subject),
 			},
 		},
-		Source: aws.String(fmt.Sprintf("\"Babblegraph\" <%s>", cl.fromAddress)),
+		Source: aws.String(fmt.Sprintf("\"%s\" <%s>", senderName, cl.fromAddress)),
 	}
 	output, err := svc.SendEmail(sesInput)
 	if err != nil {

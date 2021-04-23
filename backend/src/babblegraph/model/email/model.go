@@ -21,6 +21,7 @@ type EmailType string
 const (
 	EmailTypeDaily            EmailType = "daily-email"
 	EmailTypeUserVerification EmailType = "user-verification"
+	EmailTypeUserFeedback     EmailType = "user-feedback"
 )
 
 type Recipient struct {
@@ -33,4 +34,10 @@ type BaseEmailTemplate struct {
 	SubscriptionManagementLink string
 	HeroImageURL               string
 	HomePageURL                string
+}
+
+type EmailUsage struct {
+	UserID             users.UserID `db:"user_id"`
+	NumberOfSentEmails int          `db:"number_emails_sent"`
+	HasOpenedOneEmail  bool         `db:"has_opened_one_email"`
 }
