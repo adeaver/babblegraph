@@ -38,22 +38,25 @@ func sendUserFeedbackEmails(localSentryHub *sentry.Hub, emailClient *ses.Client)
 	for _, usage := range dailyEmailUsages {
 		emailAddress, ok := verifiedUsersByIDHash[usage.UserID]
 		if !ok {
-			// The user is no longer verified
+			log.Println(fmt.Sprintf("User %s is no longer verified. Continuing...", usage.UserID))
 			continue
 		}
-		if usage.NumberOfSentEmails != numberOfEmailsToSendAt || !usage.HasOpenedOneEmail {
-			continue
-		}
-		if err := database.WithTx(func(tx *sqlx.Tx) error {
-			_, err := email_actions.SendUserFeedbackEmailForRecipient(tx, emailClient, email.Recipient{
-				EmailAddress: emailAddress,
-				UserID:       usage.UserID,
-			})
-			return err
-		}); err != nil {
-			log.Println(fmt.Sprintf("Error fulfilling user feedback attempt for user %s: %s. Continuing...", userID, err.Error()))
-			localSentryHub.CaptureException(err)
-
+		switch {
+		case usage.NumberOfSentEmails != numberOfEmailsToSendAt:
+			log.Println(fmt.Sprintf("User %s has been sent the correct number of emails. Continuing...", usage.UserID))
+		case !usage.HasOpenedOneEmail:
+			log.Println(fmt.Sprintf("User %s has not opened an email. Continuing...", usage.UserID))
+		default:
+			if err := database.WithTx(func(tx *sqlx.Tx) error {
+				_, err := email_actions.SendUserFeedbackEmailForRecipient(tx, emailClient, email.Recipient{
+					EmailAddress: emailAddress,
+					UserID:       usage.UserID,
+				})
+				return err
+			}); err != nil {
+				log.Println(fmt.Sprintf("Error fulfilling user feedback attempt for user %s: %s. Continuing...", usage.UserID, err.Error()))
+				localSentryHub.CaptureException(err)
+			}
 		}
 	}
 	return nil
