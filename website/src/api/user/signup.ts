@@ -14,6 +14,7 @@ export enum SignupErrorMessage {
     InvalidEmailAddress = 'invalid-email',
     IncorrectStatus = 'invalid-account-status',
     RateLimited = 'rate-limited',
+    LowScore = 'low-score',
 }
 
 export function signupUser(

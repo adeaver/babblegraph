@@ -11,7 +11,10 @@ import (
 	"strings"
 )
 
-const verificationURL = "https://www.google.com/recaptcha/api/siteverify"
+const (
+	verificationURL       = "https://www.google.com/recaptcha/api/siteverify"
+	verificationThreshold = 0.5
+)
 
 type verificationResponse struct {
 	Success                     bool     `json:"success"`
@@ -22,31 +25,33 @@ type verificationResponse struct {
 	ErrorCodes                  []string `json:"error-codes,omitempty"`
 }
 
-func VerifyRecaptchaToken(action, token string) error {
+func VerifyRecaptchaToken(action, token string) (bool, error) {
 	data := url.Values{}
 	data.Set("secret", env.MustEnvironmentVariable("CAPTCHA_SECRET"))
 	data.Set("response", token)
 	resp, err := http.Post(verificationURL, "application/x-www-form-urlencoded", strings.NewReader(data.Encode()))
 	if err != nil {
-		return err
+		return false, err
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return err
+		return false, err
 	}
 	var unmarshalled verificationResponse
 	if err := json.Unmarshal(body, &unmarshalled); err != nil {
-		return err
+		return false, err
 	}
 	if !unmarshalled.Success {
 		log.Println(fmt.Sprintf("Got error codes %+v", unmarshalled.ErrorCodes))
-		return fmt.Errorf("reCAPTCHA verification failed")
+		return false, fmt.Errorf("reCAPTCHA verification failed")
 	}
 	if unmarshalled.Action != action {
 		log.Println(fmt.Sprintf("Action does not match"))
-		return fmt.Errorf("reCAPTCHA action does not match action provided. Expected %s, got %s", action, unmarshalled.Action)
+		return false, fmt.Errorf("reCAPTCHA action does not match action provided. Expected %s, got %s", action, unmarshalled.Action)
 	}
-	// TODO: decide on threshold
-	return nil
+	if unmarshalled.Score < verificationThreshold {
+		return false, nil
+	}
+	return true, nil
 }

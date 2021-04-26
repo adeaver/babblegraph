@@ -22,6 +22,7 @@ const (
 	signupErrorInvalidEmailAddress signupError = "invalid-email"
 	signupErrorIncorrectStatus     signupError = "invalid-account-status"
 	signupErrorRateLimited         signupError = "rate-limited"
+	signupErrorLowScore            signupError = "low-score"
 )
 
 func (s signupError) Ptr() *signupError {
@@ -43,8 +44,17 @@ func handleSignupUser(body []byte) (interface{}, error) {
 	if err := json.Unmarshal(body, &req); err != nil {
 		return nil, err
 	}
-	if err := recaptcha.VerifyRecaptchaToken("signup", req.CaptchaToken); err != nil {
+	isValid, err := recaptcha.VerifyRecaptchaToken("signup", req.CaptchaToken)
+	switch {
+	case err != nil:
 		return nil, err
+	case !isValid:
+		return signupUserResponse{
+			ErrorMessage: signupErrorLowScore.Ptr(),
+		}, nil
+	default:
+		// no-op
+		log.Println("Successfully cleared captcha")
 	}
 	formattedEmailAddress := email.FormatEmailAddress(req.EmailAddress)
 	if err := email.ValidateEmailAddress(formattedEmailAddress); err != nil {
