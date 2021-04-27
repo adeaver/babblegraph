@@ -2,6 +2,7 @@ package urlparser
 
 import (
 	"babblegraph/util/deref"
+	"babblegraph/util/ptr"
 	"fmt"
 	"regexp"
 	"strings"
@@ -11,6 +12,22 @@ var (
 	multipleSlashesRegex = regexp.MustCompile("/")
 	pageSeparatorRegex   = regexp.MustCompile("\\?|#")
 )
+
+func EnsureProtocol(u string) (*string, error) {
+	// This function is needed for Yahoo, which strips
+	// hrefs if they don't include the protocol
+	switch {
+	case strings.HasPrefix(u, "http://"),
+		strings.HasPrefix(u, "https://"):
+		return ptr.String(u), nil
+	case strings.HasPrefix(u, "ftp://"),
+		strings.HasPrefix(u, "sftp://"),
+		strings.HasPrefix(u, "mailto:"):
+		return nil, fmt.Errorf("invalid prefix")
+	default:
+		return ptr.String(fmt.Sprintf("https://%s", u)), nil
+	}
+}
 
 func IsValidURL(u string) bool {
 	urlParts := findURLParts(u)

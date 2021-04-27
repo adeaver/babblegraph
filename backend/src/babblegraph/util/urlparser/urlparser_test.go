@@ -261,6 +261,35 @@ func TestIsValidURL(t *testing.T) {
 	}
 }
 
+func TestEnsureProtocol(t *testing.T) {
+	type testCase struct {
+		input       string
+		expectedURL *string
+	}
+	tcs := []testCase{
+		{
+			input:       "http://google.com",
+			expectedURL: ptr.String("http://google.com"),
+		}, {
+			input:       "google.com",
+			expectedURL: ptr.String("https://google.com"),
+		}, {
+			input:       "https://google.com",
+			expectedURL: ptr.String("https://google.com"),
+		}, {
+			input:       "https.com",
+			expectedURL: ptr.String("https://https.com"),
+		}, {
+			input:       "sftp://https.com",
+			expectedURL: nil,
+		},
+	}
+	for idx, tc := range tcs {
+		result, _ := EnsureProtocol(tc.input)
+		testNullableString(t, idx, "url", result, tc.expectedURL)
+	}
+}
+
 func testNullableString(t *testing.T, testCaseIdx int, fieldName string, result, expected *string) {
 	switch {
 	case result == nil && expected != nil:
