@@ -77,6 +77,7 @@ const errorMessages = {
     [SignupErrorMessage.InvalidEmailAddress]: "Hmm, the email address you gave doesn’t appear to be valid. Check to make sure that you spelled everything right.",
     [SignupErrorMessage.RateLimited]: "It looks like we’re having some trouble reaching you. Contact our support so we can get you on the list!",
     [SignupErrorMessage.IncorrectStatus]: "It looks like you’re already signed up for Babblegraph!",
+    [SignupErrorMessage.LowScore]: "We’re having some trouble verifying your request. Contact us at hello@babblegraph.com to finish signing up.",
     "default": "Something went wrong. Contact our support so we can get you on the list!"
 
 }
