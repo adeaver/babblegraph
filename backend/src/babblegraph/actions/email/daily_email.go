@@ -143,14 +143,25 @@ func createLinksForDocuments(documents []documents.Document) []dailyEmailLink {
 		if isNotEmpty(doc.Metadata.Description) {
 			description = doc.Metadata.Description
 		}
-		if !urlparser.IsValidURL(doc.URL) {
+		var url *string
+		switch {
+		case isNotEmpty(doc.Metadata.URL) && urlparser.IsValidURL(*doc.Metadata.URL):
+			url = doc.Metadata.URL
+		case urlparser.IsValidURL(doc.URL):
+			url = ptr.String(doc.URL)
+		default:
+			continue
+		}
+		urlWithProtocol, err := urlparser.EnsureProtocol(*url)
+		if err != nil {
+			log.Println(fmt.Sprintf("Got error ensuring protocol for URL %s: %s", *url, err.Error()))
 			continue
 		}
 		links = append(links, dailyEmailLink{
 			ImageURL:    imageURL,
 			Title:       title,
 			Description: description,
-			URL:         doc.URL,
+			URL:         *urlWithProtocol,
 		})
 	}
 	return links
