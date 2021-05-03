@@ -27,6 +27,7 @@ func CreateNewAPIRouter(mainRouter *mux.Router) {
 			Repanic: true,
 		}),
 	}
+	registerUserAccountsRoutes()
 }
 
 type RouteGroup struct {
