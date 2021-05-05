@@ -1759,5 +1759,41 @@ var seedURLs = []SeedURL{
 		Topics: []contenttopics.ContentTopic{
 			contenttopics.ContentTopicCulture,
 		},
+	}, {
+		URL: "https://www.ngenespanol.com/traveler/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicTravel,
+		},
+	}, {
+		URL: "https://www.ngenespanol.com/animales/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEnvironment,
+		},
+	}, {
+		URL: "https://www.ngenespanol.com/el-mundo/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicWorldNews,
+		},
+	}, {
+		URL: "https://www.ngenespanol.com/el-espacio/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicAstronomy,
+			contenttopics.ContentTopicScience,
+		},
+	}, {
+		URL: "https://www.ngenespanol.com/ciencia/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicScience,
+		},
+	}, {
+		URL: "https://elpais.com/noticias/medio-ambiente/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEnvironment,
+		},
+	}, {
+		URL: "https://www.elespectador.com/ambiente/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEnvironment,
+		},
 	},
 }

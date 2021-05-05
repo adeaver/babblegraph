@@ -158,5 +158,9 @@ var allowableDomains = []AllowableDomain{
 		Domain:       "periodismoinvestigativo.com",
 		Country:      geo.CountryCodePuertoRico,
 		LanguageCode: wordsmith.LanguageCodeSpanish,
+	}, {
+		Domain:       "ngenespanol.com",
+		Country:      geo.CountryCodeUnitedStates,
+		LanguageCode: wordsmith.LanguageCodeSpanish,
 	},
 }

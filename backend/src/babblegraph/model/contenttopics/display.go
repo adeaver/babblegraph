@@ -9,6 +9,7 @@ type DisplayName string
 
 const (
 	DisplayNameArt                       DisplayName = "arte"
+	DisplayNameAstronomy                 DisplayName = "astronomía"
 	DisplayNameArchitecture              DisplayName = "arquitectura"
 	DisplayNameAutomotive                DisplayName = "autos"
 	DisplayNameBusiness                  DisplayName = "negocios"
@@ -33,6 +34,7 @@ const (
 	DisplayNameCurrentEventsUruguay      DisplayName = "noticias de uruguay"
 	DisplayNameEconomy                   DisplayName = "economía"
 	DisplayNameEntertainment             DisplayName = "entretenimiento"
+	DisplayNameEnvironment               DisplayName = "medio ambiente"
 	DisplayNameFashion                   DisplayName = "moda"
 	DisplayNameFilm                      DisplayName = "cine"
 	DisplayNameFinance                   DisplayName = "finanzas"
@@ -110,6 +112,8 @@ func ContentTopicNameToDisplayName(topic ContentTopic) (*DisplayName, error) {
 		return DisplayNameCurrentEventsUruguay.Ptr(), nil
 	case ContentTopicEconomy:
 		return DisplayNameEconomy.Ptr(), nil
+	case ContentTopicEnvironment:
+		return DisplayNameEnvironment.Ptr(), nil
 	case ContentTopicEntertainment:
 		return DisplayNameEntertainment.Ptr(), nil
 	case ContentTopicFashion:
