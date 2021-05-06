@@ -17,6 +17,8 @@ import DifficultyLevelSettingPage from 'components/SubscriptionManagement/Diffic
 import UnsubscribePage from 'components/SubscriptionManagement/UnsubscribePage';
 import WordReinforcementPage from 'components/SubscriptionManagement/WordReinforcementPage';
 
+import LoginPage from 'components/UserAccounts/LoginPage';
+
 import NotFoundPage from 'components/NotFoundPage/NotFoundPage';
 
 class App extends React.Component{
@@ -30,6 +32,9 @@ class App extends React.Component{
                     <Route path="/manage/:token/interests" component={InterestSelectionPage} />
                     <Route path="/manage/:token/vocabulary" component={WordReinforcementPage} />
                     <Route exact path="/manage/:token" component={SubscriptionManagementDashboardPage} />
+
+                    { /* User Account Management */ }
+                    <Route path="/login" component={LoginPage} />
 
                     { /* Home Page & About Page */ }
                     <Route path="/about" component={AboutPage} />

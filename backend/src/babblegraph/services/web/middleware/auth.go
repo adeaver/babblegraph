@@ -24,13 +24,16 @@ func AssignAuthToken(w http.ResponseWriter, userID users.UserID) {
 	})
 }
 
-func WithAuthorizationLevelVerification(validAuthorizationLevels []useraccounts.SubscriptionLevel, muxRoute func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
+func WithAuthorizationLevelVerification(validAuthorizationLevels []useraccounts.SubscriptionLevel, fn func(userID users.UserID) func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var userSubscriptionLevel *useraccounts.SubscriptionLevel
+		var userID *users.UserID
 		for _, cookie := range r.Cookies() {
 			if cookie.Name == authTokenCookieName {
+				var err error
+				var isValid bool
 				token := cookie.Value
-				userID, isValid, err := auth.VerifyJWTAndGetUserID(token)
+				userID, isValid, err = auth.VerifyJWTAndGetUserID(token)
 				switch {
 				case err != nil:
 					w.WriteHeader(http.StatusBadRequest)
@@ -49,6 +52,7 @@ func WithAuthorizationLevelVerification(validAuthorizationLevels []useraccounts.
 						w.WriteHeader(http.StatusBadRequest)
 						return
 					}
+					break
 				}
 			}
 		}
@@ -58,7 +62,7 @@ func WithAuthorizationLevelVerification(validAuthorizationLevels []useraccounts.
 		}
 		for _, validSubscriptionLevel := range validAuthorizationLevels {
 			if *userSubscriptionLevel == validSubscriptionLevel {
-				muxRoute(w, r)
+				fn(*userID)(w, r)
 				return
 			}
 		}
