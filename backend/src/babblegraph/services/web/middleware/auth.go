@@ -1,0 +1,67 @@
+package middleware
+
+import (
+	"babblegraph/model/useraccounts"
+	"babblegraph/model/users"
+	"babblegraph/services/web/util/auth"
+	"babblegraph/util/database"
+	"net/http"
+
+	"github.com/jmoiron/sqlx"
+)
+
+const authTokenCookieName = "session_token"
+
+func AssignAuthToken(w http.ResponseWriter, userID users.UserID) {
+	token, err := auth.CreateJWTForUser(userID)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	http.SetCookie(w, &http.Cookie{
+		Name:  authTokenCookieName,
+		Value: *token,
+	})
+}
+
+func WithAuthorizationLevelVerification(validAuthorizationLevels []useraccounts.SubscriptionLevel, muxRoute func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var userSubscriptionLevel *useraccounts.SubscriptionLevel
+		for _, cookie := range r.Cookies() {
+			if cookie.Name == authTokenCookieName {
+				token := cookie.Value
+				userID, isValid, err := auth.VerifyJWTAndGetUserID(token)
+				switch {
+				case err != nil:
+					w.WriteHeader(http.StatusBadRequest)
+					return
+				case !isValid:
+					// Redirect to login page
+				case userID == nil:
+					w.WriteHeader(http.StatusBadRequest)
+					return
+				default:
+					if err := database.WithTx(func(tx *sqlx.Tx) error {
+						var err error
+						userSubscriptionLevel, err = useraccounts.LookupSubscriptionLevelForUser(tx, *userID)
+						return err
+					}); err != nil {
+						w.WriteHeader(http.StatusBadRequest)
+						return
+					}
+				}
+			}
+		}
+		if userSubscriptionLevel == nil {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		for _, validSubscriptionLevel := range validAuthorizationLevels {
+			if *userSubscriptionLevel == validSubscriptionLevel {
+				muxRoute(w, r)
+				return
+			}
+		}
+		w.WriteHeader(http.StatusUnauthorized)
+	}
+}
