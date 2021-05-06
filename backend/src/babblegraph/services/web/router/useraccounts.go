@@ -3,6 +3,7 @@ package router
 import (
 	"babblegraph/model/useraccounts"
 	"babblegraph/model/users"
+	"babblegraph/services/web/middleware"
 	"babblegraph/util/database"
 	"babblegraph/util/email"
 	"encoding/json"
@@ -15,9 +16,9 @@ import (
 
 func registerUserAccountsRoutes() {
 	a.prefixes["useraccounts"] = true
-	a.r.HandleFunc("/api/useraccounts/login_user_1", withoutBodyLogger(loginUser))
+	a.r.HandleFunc("/api/useraccounts/login_user_1", middleware.WithoutBodyLogger(loginUser))
 	a.routeNames["/api/useraccounts/login_user_1"] = true
-	a.r.HandleFunc("/api/useraccounts/create_user_1", withoutBodyLogger(createUser))
+	a.r.HandleFunc("/api/useraccounts/create_user_1", middleware.WithoutBodyLogger(createUser))
 	a.routeNames["/api/useraccounts/create_user_1"] = true
 }
 
@@ -42,6 +43,7 @@ func loginUser(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
+	var userID *users.UserID
 	formattedEmailAddress := email.FormatEmailAddress(req.EmailAddress)
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		user, err := users.LookupUserByEmailAddress(tx, formattedEmailAddress)
@@ -51,17 +53,20 @@ func loginUser(w http.ResponseWriter, r *http.Request) {
 		case user == nil:
 			return fmt.Errorf("no user found for email address")
 		}
+		userID = &user.ID
 		return useraccounts.VerifyPasswordForUser(tx, user.ID, req.Password)
 	}); err != nil {
 		// TODO: write a successful request with error message
 	}
-	// TODO: set JWT and redirect based on key
+	middleware.AssignAuthToken(w, *userID)
+	// TODO: redirect
 }
 
 type createUserRequest struct {
-	EmailAddress   string `json:"email_address"`
-	Password       string `json:"password"`
-	RedirectURLKey string `json:"redirect_url_key"`
+	CreateUserToken string `json:"create_user_token"`
+	EmailAddress    string `json:"email_address"`
+	Password        string `json:"password"`
+	RedirectURLKey  string `json:"redirect_url_key"`
 }
 
 func createUser(w http.ResponseWriter, r *http.Request) {
@@ -79,6 +84,7 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
+	var userID *users.UserID
 	formattedEmailAddress := email.FormatEmailAddress(req.EmailAddress)
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		user, err := users.LookupUserByEmailAddress(tx, formattedEmailAddress)
@@ -88,6 +94,7 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 		case user == nil:
 			return fmt.Errorf("no user found for email address")
 		}
+		userID = &user.ID
 		subscriptionLevel, err := useraccounts.LookupSubscriptionLevelForUser(tx, user.ID)
 		switch {
 		case err != nil:
@@ -99,5 +106,6 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 	}); err != nil {
 		// TODO: write a successful request with error message
 	}
-	// TODO: set JWT and redirect based on key
+	middleware.AssignAuthToken(w, *userID)
+	// TODO: redirect based on key
 }

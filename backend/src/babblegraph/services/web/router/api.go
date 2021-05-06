@@ -1,6 +1,7 @@
 package router
 
 import (
+	"babblegraph/services/web/middleware"
 	"fmt"
 
 	sentryhttp "github.com/getsentry/sentry-go/http"
@@ -51,12 +52,15 @@ func RegisterRouteGroup(rg RouteGroup) error {
 		}
 		muxRoute := makeMuxRouter(r.Handler)
 		if r.ShouldLogBody {
-			muxRoute = withBodyLogger(muxRoute)
+			muxRoute = middleware.WithBodyLogger(muxRoute)
 		} else {
-			muxRoute = withoutBodyLogger(muxRoute)
+			muxRoute = middleware.WithoutBodyLogger(muxRoute)
 		}
 		if r.TrackEventWithID != nil {
-			muxRoute = withTrackingIDCapture(*r.TrackEventWithID, muxRoute)
+			muxRoute = middleware.WithTrackingIDCapture(*r.TrackEventWithID, muxRoute)
+		}
+		if len(r.WithValidAuthorizationLevel) > 0 {
+			muxRoute = middleware.WithAuthorizationLevelVerification(r.WithValidAuthorizationLevel, muxRoute)
 		}
 		a.r.HandleFunc(path, a.sentryHandler.HandleFunc(muxRoute)).Methods("POST")
 		a.routeNames[path] = true
