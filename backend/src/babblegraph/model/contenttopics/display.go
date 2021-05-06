@@ -66,6 +66,8 @@ func ContentTopicNameToDisplayName(topic ContentTopic) (*DisplayName, error) {
 	switch topic {
 	case ContentTopicArt:
 		return DisplayNameArt.Ptr(), nil
+	case ContentTopicAstronomy:
+		return DisplayNameAstronomy.Ptr(), nil
 	case ContentTopicArchitecture:
 		return DisplayNameArchitecture.Ptr(), nil
 	case ContentTopicAutomotive:
