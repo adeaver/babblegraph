@@ -87,4 +87,5 @@ export const contentTopicDisplayMappings: Array<ContentTopicDisplayMapping> = [
 	{ displayText: "Travel", apiValue: ["travel"] },
 	{ displayText: "Video Games", apiValue: ["video-games"] },
 	{ displayText: "World News", apiValue: ["world-news"] },
+    { displayText: "Environment", apiValue: ["environment"] },
 ];
