@@ -18,6 +18,7 @@ import UnsubscribePage from 'components/SubscriptionManagement/UnsubscribePage';
 import WordReinforcementPage from 'components/SubscriptionManagement/WordReinforcementPage';
 
 import LoginPage from 'components/UserAccounts/LoginPage';
+import SignupPage from 'components/UserAccounts/SignupPage';
 
 import NotFoundPage from 'components/NotFoundPage/NotFoundPage';
 
@@ -35,6 +36,7 @@ class App extends React.Component{
 
                     { /* User Account Management */ }
                     <Route path="/login" component={LoginPage} />
+                    <Route path="/signup/:token" component={SignupPage} />
 
                     { /* Home Page & About Page */ }
                     <Route path="/about" component={AboutPage} />

@@ -62,6 +62,9 @@ const LoginPage = (props: LoginPageProps) => {
     const [ isLoading, setIsLoading ] = useState<boolean>(false);
     const [ errorMessage, setErrorMessage ] = useState<string | null>(null);
 
+    // TODO: Add useEffect here to see if
+    // user is already logged in.
+
     const handleSubmit = () => {
         setIsLoading(true);
         loginUser({
