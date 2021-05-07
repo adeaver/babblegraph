@@ -1,14 +1,17 @@
 package router
 
 import (
+	"babblegraph/model/routes"
 	"babblegraph/model/useraccounts"
 	"babblegraph/model/users"
 	"babblegraph/services/web/middleware"
+	"babblegraph/services/web/util/routetoken"
 	"babblegraph/util/database"
 	"babblegraph/util/email"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 
 	"github.com/jmoiron/sqlx"
@@ -23,9 +26,23 @@ func registerUserAccountsRoutes() {
 }
 
 type loginUserRequest struct {
-	EmailAddress   string `json:"email_address"`
-	Password       string `json:"password"`
-	RedirectURLKey string `json:"redirect_url_key"`
+	EmailAddress string `json:"email_address"`
+	Password     string `json:"password"`
+}
+
+type loginUserResponse struct {
+	ManagementToken *string     `json:"management_token"`
+	LoginError      *loginError `json:"login_error"`
+}
+
+type loginError string
+
+const (
+	loginErrorInvalidCredentials loginError = "invalid-creds"
+)
+
+func (l loginError) Ptr() *loginError {
+	return &l
 }
 
 func loginUser(w http.ResponseWriter, r *http.Request) {
@@ -44,6 +61,7 @@ func loginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var userID *users.UserID
+	var lErr *loginError
 	formattedEmailAddress := email.FormatEmailAddress(req.EmailAddress)
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		user, err := users.LookupUserByEmailAddress(tx, formattedEmailAddress)
@@ -51,22 +69,66 @@ func loginUser(w http.ResponseWriter, r *http.Request) {
 		case err != nil:
 			return err
 		case user == nil:
+			lErr = loginErrorInvalidCredentials.Ptr()
 			return fmt.Errorf("no user found for email address")
 		}
 		userID = &user.ID
-		return useraccounts.VerifyPasswordForUser(tx, user.ID, req.Password)
+		err = useraccounts.VerifyPasswordForUser(tx, user.ID, req.Password)
+		if err != nil {
+			lErr = loginErrorInvalidCredentials.Ptr()
+			return err
+		}
+		return nil
 	}); err != nil {
-		// TODO: write a successful request with error message
+		log.Println(fmt.Sprintf("Got error logging user %s in: %s", formattedEmailAddress, err.Error()))
+		if lErr != nil {
+			writeJSONResponse(w, loginUserResponse{
+				LoginError: lErr,
+			})
+			return
+		}
+		writeErrorJSONResponse(w, errorResponse{
+			Message: "Request is not valid",
+		})
+		return
+	}
+	token, err := routes.MakeSubscriptionManagementToken(*userID)
+	if err != nil {
+		writeErrorJSONResponse(w, errorResponse{
+			Message: "Request is not valid",
+		})
+		return
 	}
 	middleware.AssignAuthToken(w, *userID)
-	// TODO: redirect
+	writeJSONResponse(w, loginUserResponse{
+		ManagementToken: token,
+	})
 }
 
 type createUserRequest struct {
 	CreateUserToken string `json:"create_user_token"`
 	EmailAddress    string `json:"email_address"`
 	Password        string `json:"password"`
-	RedirectURLKey  string `json:"redirect_url_key"`
+	ConfirmPassword string `json:"confirm_password"`
+}
+
+type createUserResponse struct {
+	ManagementToken *string          `json:"management_token"`
+	CreateUserError *createUserError `json:"create_user_error"`
+}
+
+type createUserError string
+
+const (
+	createUserErrorAlreadyExists        createUserError = "already-exists"
+	createUserErrorInvalidToken         createUserError = "invalid-token"
+	createUserErrorPasswordRequirements createUserError = "pass-requirements"
+	createUserErrorNoSubscription       createUserError = "no-subscription"
+	createUserErrorPasswordsNoMatch     createUserError = "passwords-no-match"
+)
+
+func (c createUserError) Ptr() *createUserError {
+	return &c
 }
 
 func createUser(w http.ResponseWriter, r *http.Request) {
@@ -84,28 +146,50 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	var userID *users.UserID
 	formattedEmailAddress := email.FormatEmailAddress(req.EmailAddress)
+	userID, err := routetoken.ValidateTokenAndEmailAndGetUserID(req.CreateUserToken, routes.CreateUserKey, formattedEmailAddress)
+	if err != nil {
+		writeJSONResponse(w, createUserResponse{
+			CreateUserError: createUserErrorInvalidToken.Ptr(),
+		})
+		return
+	}
+	// TODO: validate password
+	var cErr *createUserError
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
-		user, err := users.LookupUserByEmailAddress(tx, formattedEmailAddress)
-		switch {
-		case err != nil:
-			return err
-		case user == nil:
-			return fmt.Errorf("no user found for email address")
-		}
-		userID = &user.ID
-		subscriptionLevel, err := useraccounts.LookupSubscriptionLevelForUser(tx, user.ID)
+		subscriptionLevel, err := useraccounts.LookupSubscriptionLevelForUser(tx, *userID)
 		switch {
 		case err != nil:
 			return err
 		case subscriptionLevel == nil:
+			cErr = createUserErrorNoSubscription.Ptr()
 			return fmt.Errorf("no subscription found for user")
 		}
-		return useraccounts.CreateUserPasswordForUser(tx, user.ID, req.Password)
+		// TODO: validate that user doesn't already have account
+		return useraccounts.CreateUserPasswordForUser(tx, *userID, req.Password)
 	}); err != nil {
-		// TODO: write a successful request with error message
+		log.Println(fmt.Sprintf("Error signing up user %s: %s", formattedEmailAddress, err.Error()))
+		if cErr != nil {
+			writeJSONResponse(w, createUserResponse{
+				CreateUserError: createUserErrorInvalidToken.Ptr(),
+			})
+			return
+		}
+		writeErrorJSONResponse(w, errorResponse{
+			Message: "Request is not valid",
+		})
+		return
 	}
 	middleware.AssignAuthToken(w, *userID)
-	// TODO: redirect based on key
+	token, err := routes.MakeSubscriptionManagementToken(*userID)
+	if err != nil {
+		writeErrorJSONResponse(w, errorResponse{
+			Message: "Request is not valid",
+		})
+		return
+	}
+	middleware.AssignAuthToken(w, *userID)
+	writeJSONResponse(w, createUserResponse{
+		ManagementToken: token,
+	})
 }
