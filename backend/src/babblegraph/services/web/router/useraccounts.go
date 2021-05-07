@@ -99,7 +99,12 @@ func loginUser(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	middleware.AssignAuthToken(w, *userID)
+	if err := middleware.AssignAuthToken(w, *userID); err != nil {
+		writeErrorJSONResponse(w, errorResponse{
+			Message: "Request is not valid",
+		})
+		return
+	}
 	writeJSONResponse(w, loginUserResponse{
 		ManagementToken: token,
 	})
@@ -180,7 +185,6 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	middleware.AssignAuthToken(w, *userID)
 	token, err := routes.MakeSubscriptionManagementToken(*userID)
 	if err != nil {
 		writeErrorJSONResponse(w, errorResponse{
@@ -188,7 +192,12 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	middleware.AssignAuthToken(w, *userID)
+	if err := middleware.AssignAuthToken(w, *userID); err != nil {
+		writeErrorJSONResponse(w, errorResponse{
+			Message: "Request is not valid",
+		})
+		return
+	}
 	writeJSONResponse(w, createUserResponse{
 		ManagementToken: token,
 	})

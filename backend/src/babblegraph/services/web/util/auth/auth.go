@@ -17,7 +17,7 @@ func CreateJWTForUser(userID users.UserID) (*string, error) {
 		Subject:   string(userID),
 		IssuedAt:  time.Now().Unix(),
 	})
-	signedToken, err := accessToken.SignedString(env.MustEnvironmentVariable("HMAC_SECRET"))
+	signedToken, err := accessToken.SignedString([]byte(env.MustEnvironmentVariable("HMAC_SECRET")))
 	if err != nil {
 		return nil, err
 	}
