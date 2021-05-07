@@ -1,6 +1,7 @@
 package router
 
 import (
+	"babblegraph/model/routes"
 	"babblegraph/model/useraccounts"
 	"babblegraph/model/users"
 	"babblegraph/services/web/middleware"
@@ -9,6 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 
 	"github.com/jmoiron/sqlx"
@@ -23,9 +25,23 @@ func registerUserAccountsRoutes() {
 }
 
 type loginUserRequest struct {
-	EmailAddress   string `json:"email_address"`
-	Password       string `json:"password"`
-	RedirectURLKey string `json:"redirect_url_key"`
+	EmailAddress string `json:"email_address"`
+	Password     string `json:"password"`
+}
+
+type loginUserResponse struct {
+	ManagementToken *string     `json:"management_token"`
+	LoginError      *loginError `json:"login_error"`
+}
+
+type loginError string
+
+const (
+	loginErrorInvalidCredentials loginError = "invalid-creds"
+)
+
+func (l loginError) Ptr() *loginError {
+	return &l
 }
 
 func loginUser(w http.ResponseWriter, r *http.Request) {
@@ -44,6 +60,7 @@ func loginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var userID *users.UserID
+	var lErr *loginError
 	formattedEmailAddress := email.FormatEmailAddress(req.EmailAddress)
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		user, err := users.LookupUserByEmailAddress(tx, formattedEmailAddress)
@@ -51,22 +68,46 @@ func loginUser(w http.ResponseWriter, r *http.Request) {
 		case err != nil:
 			return err
 		case user == nil:
+			lErr = loginErrorInvalidCredentials.Ptr()
 			return fmt.Errorf("no user found for email address")
 		}
 		userID = &user.ID
-		return useraccounts.VerifyPasswordForUser(tx, user.ID, req.Password)
+		err = useraccounts.VerifyPasswordForUser(tx, user.ID, req.Password)
+		if err != nil {
+			lErr = loginErrorInvalidCredentials.Ptr()
+			return err
+		}
+		return nil
 	}); err != nil {
-		// TODO: write a successful request with error message
+		log.Println(fmt.Sprintf("Got error logging user %s in: %s", formattedEmailAddress, err.Error()))
+		if lErr != nil {
+			writeJSONResponse(w, loginUserResponse{
+				LoginError: lErr,
+			})
+			return
+		}
+		writeErrorJSONResponse(w, errorResponse{
+			Message: "Request is not valid",
+		})
+		return
+	}
+	token, err := routes.MakeSubscriptionManagementToken(*userID)
+	if err != nil {
+		writeErrorJSONResponse(w, errorResponse{
+			Message: "Request is not valid",
+		})
+		return
 	}
 	middleware.AssignAuthToken(w, *userID)
-	// TODO: redirect
+	writeJSONResponse(w, loginUserResponse{
+		ManagementToken: token,
+	})
 }
 
 type createUserRequest struct {
 	CreateUserToken string `json:"create_user_token"`
 	EmailAddress    string `json:"email_address"`
 	Password        string `json:"password"`
-	RedirectURLKey  string `json:"redirect_url_key"`
 }
 
 func createUser(w http.ResponseWriter, r *http.Request) {
