@@ -35,6 +35,6 @@ func VerifyJWTAndGetUserID(tokenString string) (*users.UserID, bool, error) {
 	if !token.Valid {
 		return nil, false, nil
 	}
-	userID := users.UserID(token.Subject)
+	userID := users.UserID(claims.Subject)
 	return &userID, true, nil
 }

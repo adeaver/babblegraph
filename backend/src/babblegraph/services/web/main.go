@@ -10,6 +10,7 @@ import (
 	"babblegraph/services/web/api/token"
 	"babblegraph/services/web/api/user"
 	utm_routes "babblegraph/services/web/api/utm"
+	"babblegraph/services/web/middleware"
 	"babblegraph/services/web/router"
 	"babblegraph/util/database"
 	"babblegraph/util/env"
@@ -46,7 +47,7 @@ func main() {
 
 	// TODO: move these out of of here
 	r.HandleFunc("/verify/{token}", func(w http.ResponseWriter, r *http.Request) {
-		router.LogRequestWithoutBody(r)
+		middleware.LogRequestWithoutBody(r)
 		routeVars := mux.Vars(r)
 		token, ok := routeVars["token"]
 		if !ok {
@@ -67,7 +68,7 @@ func main() {
 	})
 	// Warning: this next function is like one big hack.
 	r.HandleFunc("/dist/{token}/logo.png", func(w http.ResponseWriter, r *http.Request) {
-		router.LogRequestWithoutBody(r)
+		middleware.LogRequestWithoutBody(r)
 		// In order to collect information about whether an email was opened, we pass
 		// the logo hero image with a URL of the above format. This is done because
 		// 1) Some clients ban zero width images
@@ -90,7 +91,7 @@ func main() {
 	})
 	r.PathPrefix("/dist").Handler(http.StripPrefix("/dist", http.FileServer(http.Dir(staticFileDirName))))
 	r.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		router.LogRequestWithoutBody(r)
+		middleware.LogRequestWithoutBody(r)
 		utmParameters := utm.GetParametersForRequest(r)
 		if utmParameters != nil {
 			trackingID, err := utm.GetTrackingIDForRequest(r)
