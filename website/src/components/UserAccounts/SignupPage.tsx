@@ -67,6 +67,7 @@ type SignupPageProps = RouteComponentProps<Params>
 
 const SignupPage = (props: SignupPageProps) => {
     const classes = styleClasses();
+    const history = useHistory();
     const { token } = props.match.params;
 
     const [ isLoading, setIsLoading ] = useState<boolean>(false);
@@ -86,7 +87,7 @@ const SignupPage = (props: SignupPageProps) => {
         (resp: CreateUserResponse) => {
             setIsLoading(false);
             if (!!resp.managementToken) {
-                // TODO: redirect here
+                history.push(`/manage/${resp.managementToken}`);
             } else if (!!resp.createUserError) {
                 setErrorMessage(createUserErrorMessages[resp.createUserError] || createUserErrorMessages["default"]);
             } else {

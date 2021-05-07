@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useHistory } from 'react-router-dom';
 
 import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
@@ -56,11 +57,13 @@ type LoginPageProps = {};
 
 const LoginPage = (props: LoginPageProps) => {
     const classes = styleClasses();
+    const history = useHistory();
 
     const [ emailAddress, setEmailAddress ] = useState<string | null>(null);
     const [ password, setPassword ] = useState<string | null>(null);
     const [ isLoading, setIsLoading ] = useState<boolean>(false);
     const [ errorMessage, setErrorMessage ] = useState<string | null>(null);
+
 
     // TODO: Add useEffect here to see if
     // user is already logged in.
@@ -74,7 +77,7 @@ const LoginPage = (props: LoginPageProps) => {
         (resp: LoginUserResponse) => {
             setIsLoading(false);
             if (!!resp.managementToken) {
-                // TODO: redirect
+                history.push(`/manage/${resp.managementToken}`);
             } else if (!!resp.loginError) {
                 setErrorMessage(loginErrorMessages[resp.loginError] || loginErrorMessages["default"]);
             } else {
