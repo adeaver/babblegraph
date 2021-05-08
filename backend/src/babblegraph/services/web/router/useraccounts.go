@@ -99,7 +99,12 @@ func loginUser(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	middleware.AssignAuthToken(w, *userID)
+	if err := middleware.AssignAuthToken(w, *userID); err != nil {
+		writeErrorJSONResponse(w, errorResponse{
+			Message: "Request is not valid",
+		})
+		return
+	}
 	writeJSONResponse(w, loginUserResponse{
 		ManagementToken: token,
 	})
@@ -155,6 +160,8 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// TODO: validate password
+	// At least length 8, less than length 48
+	// Contains upper case, lower case, digit, symbol
 	var cErr *createUserError
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		subscriptionLevel, err := useraccounts.LookupSubscriptionLevelForUser(tx, *userID)
@@ -180,7 +187,6 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	middleware.AssignAuthToken(w, *userID)
 	token, err := routes.MakeSubscriptionManagementToken(*userID)
 	if err != nil {
 		writeErrorJSONResponse(w, errorResponse{
@@ -188,7 +194,12 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	middleware.AssignAuthToken(w, *userID)
+	if err := middleware.AssignAuthToken(w, *userID); err != nil {
+		writeErrorJSONResponse(w, errorResponse{
+			Message: "Request is not valid",
+		})
+		return
+	}
 	writeJSONResponse(w, createUserResponse{
 		ManagementToken: token,
 	})

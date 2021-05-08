@@ -69,3 +69,14 @@ func MakeWordReinforcementLink(userID users.UserID) (*string, error) {
 	}
 	return ptr.String(env.GetAbsoluteURLForEnvironment(fmt.Sprintf("manage/%s/vocabulary", *token))), nil
 }
+
+func MakeUserCreationLink(userID users.UserID) (*string, error) {
+	token, err := encrypt.GetToken(encrypt.TokenPair{
+		Key:   CreateUserKey.Str(),
+		Value: userID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return ptr.String(env.GetAbsoluteURLForEnvironment(fmt.Sprintf("signup/%s", *token))), nil
+}

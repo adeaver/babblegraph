@@ -21,6 +21,7 @@ type dbUserSubscription struct {
 	ID                userSubscriptionID `db:"_id"`
 	CreatedAt         time.Time          `db:"created_at"`
 	SubscriptionLevel SubscriptionLevel  `db:"subscription_level"`
+	UserID            users.UserID       `db:"user_id"`
 	ExpiresAt         time.Time          `db:"expires_at"`
 	IsActive          bool               `db:"is_active"`
 }

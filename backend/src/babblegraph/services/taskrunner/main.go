@@ -5,6 +5,7 @@ import (
 	"babblegraph/util/database"
 	"babblegraph/util/elastic"
 	"babblegraph/util/env"
+	"babblegraph/util/ses"
 	"flag"
 	"fmt"
 	"log"
@@ -17,7 +18,8 @@ func main() {
 	if err := setupDatabases(); err != nil {
 		log.Fatal(err.Error())
 	}
-	taskName := flag.String("task", "none", "Name of task to run [daily-email]")
+	taskName := flag.String("task", "none", "Name of task to run [daily-email] [create-user]")
+	userEmail := flag.String("user-email", "none", "Email address of user to create")
 	flag.Parse()
 	if taskName == nil {
 		log.Fatal("No task specified")
@@ -32,6 +34,20 @@ func main() {
 	switch *taskName {
 	case "daily-email":
 		if err := tasks.SendDailyEmail(); err != nil {
+			log.Fatal(err.Error())
+		}
+	case "create-user":
+		// Creates a user with Beta Premium Subscription
+		if userEmail == nil {
+			log.Fatal("no email specified")
+		}
+		emailClient := ses.NewClient(ses.NewClientInput{
+			AWSAccessKey:       env.MustEnvironmentVariable("AWS_SES_ACCESS_KEY"),
+			AWSSecretAccessKey: env.MustEnvironmentVariable("AWS_SES_SECRET_KEY"),
+			AWSRegion:          "us-east-1",
+			FromAddress:        env.MustEnvironmentVariable("EMAIL_ADDRESS"),
+		})
+		if err := tasks.CreateUserWithBetaPremiumSubscription(emailClient, *userEmail); err != nil {
 			log.Fatal(err.Error())
 		}
 	default:

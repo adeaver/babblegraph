@@ -9,11 +9,11 @@ import (
 )
 
 const (
-	createUserPasswordQuery = "INSERT INTO user_account_passwords (password_hash, user_id, salt) VALUES ($1, $2, $3) ON CONFLICT DO UPDATE password_hash = $1, salt = $3, created_at = timezone('utc', now()) WHERE user_id = $2"
+	createUserPasswordQuery = "INSERT INTO user_account_passwords (password_hash, user_id, salt) VALUES ($1, $2, $3) ON CONFLICT (user_id) DO UPDATE SET password_hash = $1, salt = $3, created_at = timezone('utc', now())"
 	getPasswordForUserQuery = "SELECT * FROM user_account_passwords WHERE user_id = $1"
 
 	getSubscriptionLevelForUserQuery = "SELECT * FROM user_account_subscription_levels WHERE user_id = $1 AND is_active = TRUE"
-	addSubscriptionLevelForUserQuery = "INSERT INTO user_account_subscription_levels (user_id, subscription_level, expires_at) VALUES ($1, $2, $3) ON CONFLICT DO UPDATE SET is_active = TRUE, subscription_level = $2, expires_at = $3 WHERE user_id = $1"
+	addSubscriptionLevelForUserQuery = "INSERT INTO user_account_subscription_levels (user_id, subscription_level, expires_at) VALUES ($1, $2, $3) ON CONFLICT (user_id) DO UPDATE SET is_active = TRUE, subscription_level = $2, expires_at = $3"
 	expireSubscriptionForUserQuery   = "UPDATE user_account_subscription_levels SET is_active = FALSE WHERE user_id = $1"
 )
 

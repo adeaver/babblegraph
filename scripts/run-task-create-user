@@ -1,0 +1,33 @@
+#!/bin/bash
+set -euo pipefail
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --email)
+            shift;
+            EMAIL="$1"
+            ;;
+    esac
+    shift
+done
+
+if [[ -z $EMAIL ]]; then
+    echo "Must specify email"
+    exit 1
+fi
+
+echo "Building..."
+docker build \
+    -f deploy/taskrunner/Dockerfile \
+    -t babblegraph.com/taskrunner:$(git rev-parse --short HEAD) \
+    ./backend/src/babblegraph
+
+echo "Removing old container..."
+docker stop babblegraph_task_runner && docker rm babblegraph_task_runner && true
+
+echo "Running new container..."
+docker run -d \
+    --env-file ./env/taskrunner.env \
+    --name babblegraph_task_runner \
+    babblegraph.com/taskrunner:$(git rev-parse --short HEAD) \
+    /bin/bash -c "./taskrunner --task=create-user --user-email=${EMAIL}"

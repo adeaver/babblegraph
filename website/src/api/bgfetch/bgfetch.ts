@@ -10,10 +10,11 @@ export function makePostRequest<T, U>(
     onError: (e: Error) => void,
 ) {
     fetch(url, {
+        credentials: 'include',
         method: 'POST',
-        cache: 'no-cache',
         headers: {
             'Content-Type': 'application/json',
+            'cache': 'no-cache',
         },
         body: JSON.stringify(body),
     })
