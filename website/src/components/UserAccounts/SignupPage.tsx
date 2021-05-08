@@ -10,7 +10,7 @@ import Color from 'common/styles/colors';
 import Page from 'common/components/Page/Page';
 import { Heading1 } from 'common/typography/Heading';
 import Paragraph, { Size } from 'common/typography/Paragraph';
-import { TypographyColor } from 'common/typography/common';
+import { Alignment, TypographyColor } from 'common/typography/common';
 import { PrimaryButton } from 'common/components/Button/Button';
 import { PrimaryTextField } from 'common/components/TextField/TextField';
 import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
@@ -193,6 +193,21 @@ const SignupForm = (props: SignupFormProps) => {
                         variant="outlined"
                         defaultValue={props.emailAddress}
                         onChange={handleEmailAddressChange} />
+                    <Paragraph align={Alignment.Left}>
+                        Password Requirements:
+                        <ul>
+                            <li>At least 8 characters</li>
+                            <li>No more than 32 characters</li>
+                            <li>Must include 3 of the following:
+                                <ul>
+                                    <li>Upper Case Latin Letter (A-Z)</li>
+                                    <li>Lower Case Latin Letter (a-z)</li>
+                                    <li>Number (0-9)</li>
+                                    <li>Special Character (such as !@#$%^&*)</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </Paragraph>
                     <PrimaryTextField
                         className={classes.textField}
                         id="password"

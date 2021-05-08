@@ -18,6 +18,9 @@ const (
 )
 
 func CreateUserPasswordForUser(tx *sqlx.Tx, userID users.UserID, password string) error {
+	if !ValidatePasswordMeetsRequirements(password) {
+		return fmt.Errorf("password does not meet requirements")
+	}
 	passwordSalt, err := generatePasswordSalt()
 	if err != nil {
 		return err
@@ -30,6 +33,14 @@ func CreateUserPasswordForUser(tx *sqlx.Tx, userID users.UserID, password string
 		return err
 	}
 	return nil
+}
+
+func DoesUserAlreadyHaveAccount(tx *sqlx.Tx, userID users.UserID) (bool, error) {
+	var matches []dbUserPassword
+	if err := tx.Select(&matches, getPasswordForUserQuery, userID); err != nil {
+		return false, err
+	}
+	return len(matches) > 0, nil
 }
 
 func VerifyPasswordForUser(tx *sqlx.Tx, userID users.UserID, password string) error {

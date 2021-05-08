@@ -6,11 +6,12 @@ import (
 	"encoding/base64"
 	"fmt"
 	"log"
+	"unicode"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
-const defaultSaltLength = 16
+const defaultSaltLength = 32
 
 func generatePasswordSalt() (*string, error) {
 	saltBytes := make([]byte, defaultSaltLength)
@@ -37,4 +38,33 @@ func makeSaltedPassword(password, salt string) []byte {
 func comparePasswords(hashedPassword, password, salt string) error {
 	saltedPassword := makeSaltedPassword(password, salt)
 	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), saltedPassword)
+}
+
+// Valid passwords contain:
+// Between 8 and 32 characters
+// At least 3 of: Capital Letter, Lowercase Letter, Number, Symbol
+func ValidatePasswordMeetsRequirements(password string) bool {
+	if len(password) < 8 || len(password) > 32 {
+		return false
+	}
+	requirements := []int{0, 0, 0, 0}
+	for _, c := range password {
+		switch {
+		case unicode.IsUpper(c):
+			requirements[0] = 1
+		case unicode.IsLower(c):
+			requirements[1] = 1
+		case unicode.IsNumber(c):
+			requirements[2] = 1
+		case unicode.IsPunct(c) || unicode.IsSymbol(c):
+			requirements[3] = 1
+		default:
+			return false
+		}
+	}
+	total := 0
+	for _, i := range requirements {
+		total += i
+	}
+	return total >= 3
 }
