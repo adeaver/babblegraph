@@ -159,11 +159,28 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	// TODO: validate password
-	// At least length 8, less than length 48
-	// Contains upper case, lower case, digit, symbol
+	if req.Password != req.ConfirmPassword {
+		writeJSONResponse(w, createUserResponse{
+			CreateUserError: createUserErrorPasswordsNoMatch.Ptr(),
+		})
+		return
+	}
+	if !useraccounts.ValidatePasswordMeetsRequirements(req.Password) {
+		writeJSONResponse(w, createUserResponse{
+			CreateUserError: createUserErrorPasswordRequirements.Ptr(),
+		})
+		return
+	}
 	var cErr *createUserError
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		alreadyHasAccount, err := useraccounts.DoesUserAlreadyHaveAccount(tx, *userID)
+		switch {
+		case err != nil:
+			return err
+		case alreadyHasAccount:
+			cErr = createUserErrorAlreadyExists.Ptr()
+			return fmt.Errorf("user already has account")
+		}
 		subscriptionLevel, err := useraccounts.LookupSubscriptionLevelForUser(tx, *userID)
 		switch {
 		case err != nil:
@@ -172,13 +189,12 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 			cErr = createUserErrorNoSubscription.Ptr()
 			return fmt.Errorf("no subscription found for user")
 		}
-		// TODO: validate that user doesn't already have account
 		return useraccounts.CreateUserPasswordForUser(tx, *userID, req.Password)
 	}); err != nil {
 		log.Println(fmt.Sprintf("Error signing up user %s: %s", formattedEmailAddress, err.Error()))
 		if cErr != nil {
 			writeJSONResponse(w, createUserResponse{
-				CreateUserError: createUserErrorInvalidToken.Ptr(),
+				CreateUserError: cErr,
 			})
 			return
 		}

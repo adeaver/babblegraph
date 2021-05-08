@@ -42,7 +42,7 @@ export type CreateUserResponse = {
 export enum CreateUserError {
     AlreadyExists = 'already-exists',
     InvalidToken = 'invalid-token',
-    PasswordRequirements = 'password-requirements',
+    PasswordRequirements = 'pass-requirements',
     NoSubscription = 'no-subscription',
     PasswordsNoMatch = 'passwords-no-match',
 }
