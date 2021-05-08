@@ -5,11 +5,12 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
+	"log"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
-const defaultSaltLength = 64
+const defaultSaltLength = 16
 
 func generatePasswordSalt() (*string, error) {
 	saltBytes := make([]byte, defaultSaltLength)
@@ -21,7 +22,8 @@ func generatePasswordSalt() (*string, error) {
 
 func generatePasswordHash(password, salt string) (*string, error) {
 	saltedPassword := makeSaltedPassword(password, salt)
-	hash, err := bcrypt.GenerateFromPassword(saltedPassword, bcrypt.MinCost)
+	log.Println(saltedPassword)
+	hash, err := bcrypt.GenerateFromPassword(saltedPassword, bcrypt.DefaultCost)
 	if err != nil {
 		return nil, err
 	}
@@ -29,7 +31,7 @@ func generatePasswordHash(password, salt string) (*string, error) {
 }
 
 func makeSaltedPassword(password, salt string) []byte {
-	return []byte(fmt.Sprintf("%s%s", salt, password))
+	return []byte(fmt.Sprintf("%s%s", password, salt))
 }
 
 func comparePasswords(hashedPassword, password, salt string) error {

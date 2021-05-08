@@ -160,6 +160,8 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// TODO: validate password
+	// At least length 8, less than length 48
+	// Contains upper case, lower case, digit, symbol
 	var cErr *createUserError
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		subscriptionLevel, err := useraccounts.LookupSubscriptionLevelForUser(tx, *userID)
