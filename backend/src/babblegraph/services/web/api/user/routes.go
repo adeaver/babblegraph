@@ -2,6 +2,7 @@ package user
 
 import (
 	"babblegraph/model/routes"
+	"babblegraph/model/useraccounts"
 	"babblegraph/model/users"
 	"babblegraph/services/web/router"
 	"babblegraph/util/database"

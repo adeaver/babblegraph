@@ -9,11 +9,11 @@ import (
 	"github.com/dgrijalva/jwt-go"
 )
 
-const expirationTime3days = 3 * 24 * time.Hour
+const SessionExpirationTime = 3 * 24 * time.Hour
 
 func CreateJWTForUser(userID users.UserID) (*string, error) {
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
-		ExpiresAt: time.Now().Add(expirationTime3days).Unix(),
+		ExpiresAt: time.Now().Add(SessionExpirationTime).Unix(),
 		Subject:   string(userID),
 		IssuedAt:  time.Now().Unix(),
 	})
@@ -26,8 +26,8 @@ func CreateJWTForUser(userID users.UserID) (*string, error) {
 
 func VerifyJWTAndGetUserID(tokenString string) (*users.UserID, bool, error) {
 	claims := jwt.StandardClaims{}
-	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
-		return env.MustEnvironmentVariable("HMAC_SECRET"), nil
+	token, err := jwt.ParseWithClaims(tokenString, &claims, func(token *jwt.Token) (interface{}, error) {
+		return []byte(env.MustEnvironmentVariable("HMAC_SECRET")), nil
 	})
 	if err != nil {
 		return nil, false, err

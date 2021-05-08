@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -21,8 +22,11 @@ func AssignAuthToken(w http.ResponseWriter, userID users.UserID) error {
 		return err
 	}
 	http.SetCookie(w, &http.Cookie{
-		Name:  authTokenCookieName,
-		Value: *token,
+		Name:     authTokenCookieName,
+		Value:    *token,
+		HttpOnly: true,
+		Path:     "/",
+		Expires:  time.Now().Add(auth.SessionExpirationTime),
 	})
 	return nil
 }
@@ -39,11 +43,13 @@ func WithAuthorizationLevelVerification(validAuthorizationLevels []useraccounts.
 				userID, isValid, err = auth.VerifyJWTAndGetUserID(token)
 				switch {
 				case err != nil:
+					log.Println(fmt.Sprintf("Error authenticating user: %s", err.Error()))
 					w.WriteHeader(http.StatusBadRequest)
 					return
 				case !isValid:
 					// Redirect to login page
 				case userID == nil:
+					log.Println(fmt.Sprintf("Error authenticating user: No user"))
 					w.WriteHeader(http.StatusBadRequest)
 					return
 				default:
@@ -52,6 +58,7 @@ func WithAuthorizationLevelVerification(validAuthorizationLevels []useraccounts.
 						userSubscriptionLevel, err = useraccounts.LookupSubscriptionLevelForUser(tx, *userID)
 						return err
 					}); err != nil {
+						log.Println(fmt.Sprintf("Error authenticating user: %s", err.Error()))
 						w.WriteHeader(http.StatusBadRequest)
 						return
 					}
