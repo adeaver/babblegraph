@@ -114,7 +114,6 @@ func TestQueryWithSort(t *testing.T) {
 }
 
 func TestQueryWithoutSort(t *testing.T) {
-	ascendingSort := NewAscendingSortBuilder("field").AsSort()
 	testQuery := searchBody{
 		Query: MatchAll(),
 		Sort:  []sort{},
