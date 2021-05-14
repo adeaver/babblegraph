@@ -1,0 +1,1 @@
+ALTER TABLE links2 ADD COLUMN IF NOT EXISTS seed_job_ingest_timestamp NUMERIC DEFAULT NULL;
