@@ -2,9 +2,11 @@ package links2
 
 import (
 	"babblegraph/util/database"
+	"babblegraph/util/ptr"
 	"babblegraph/util/urlparser"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -71,14 +73,18 @@ func LookupBulkUnfetchedLinksForDomain(tx *sqlx.Tx, domain string, chunkSize int
 	return out, nil
 }
 
-func UpsertLinkWithEmptyFetchStatus(tx *sqlx.Tx, urls []urlparser.ParsedURL) error {
-	queryBuilder, err := database.NewBulkInsertQueryBuilder("links2", "url_identifier", "domain", "url")
+func UpsertLinkWithEmptyFetchStatus(tx *sqlx.Tx, urls []urlparser.ParsedURL, includeTimestamp bool) error {
+	queryBuilder, err := database.NewBulkInsertQueryBuilder("links2", "url_identifier", "domain", "url", "first_seed_fetch_timestamp")
 	if err != nil {
 		return err
 	}
 	queryBuilder.AddConflictResolution("(url_identifier) DO UPDATE SET last_fetch_version = NULL")
+	var firstSeedFetchTimestamp *int64
+	if includeTimestamp {
+		firstSeedFetchTimestamp = ptr.Int64(time.Now().Unix())
+	}
 	for _, u := range urls {
-		if err := queryBuilder.AddValues(u.URLIdentifier, u.Domain, u.URL); err != nil {
+		if err := queryBuilder.AddValues(u.URLIdentifier, u.Domain, u.URL, firstSeedFetchTimestamp); err != nil {
 			log.Println(fmt.Sprintf("Error inserting url with identifier %s: %s", u.URLIdentifier, err.Error()))
 		}
 	}

@@ -1,0 +1,1 @@
+ALTER TABLE links2 ADD COLUMN IF NOT EXISTS first_seed_fetch_timestamp NUMERIC DEFAULT NULL;
