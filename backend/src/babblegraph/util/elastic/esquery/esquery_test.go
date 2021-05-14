@@ -103,7 +103,7 @@ func TestQueryWithSort(t *testing.T) {
 			ascendingSort,
 		},
 	}
-	expectedBody := `{"query":{"match_all":{}},"sort":{"field":{"order":"asc"}}}`
+	expectedBody := `{"query":{"match_all":{}},"sort":{"field":{"order":"asc","missing":"_last"}}}`
 	jsonBytes, err := json.Marshal(testQuery)
 	if err != nil {
 		t.Fatalf("Error on testing query with sort: %s", err.Error())
