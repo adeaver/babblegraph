@@ -62,6 +62,7 @@ type Document struct {
 	Metadata                           Metadata                     `json:"metadata"`
 	Domain                             string                       `json:"domain"`
 	Topics                             []contenttopics.ContentTopic `json:"content_topics"`
+	SeedJobIngestTimestamp             *int64                       `json:"seed_job_ingest_timestamp,omitempty"`
 	LemmatizedDescription              *string                      `json:"lemmatized_description,omitempty"`
 	LemmatizedDescriptionIndexMappings []int                        `json:"lemmatized_description_index_mappings,omitempty"`
 

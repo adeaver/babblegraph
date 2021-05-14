@@ -170,12 +170,13 @@ func startWorkerThread(workerNumber int, linkProcessor *linkprocessing.LinkProce
 			}
 			log.Println(fmt.Sprintf("Indexing text for URL %s", u))
 			err = indexing.IndexDocument(indexing.IndexDocumentInput{
-				ParsedHTMLPage:  *parsedHTMLPage,
-				TextMetadata:    *textMetadata,
-				LanguageCode:    languageCode,
-				DocumentVersion: documents.CurrentDocumentVersion,
-				URL:             urlparser.MustParseURL(u),
-				TopicsForURL:    topicsForURL,
+				ParsedHTMLPage:         *parsedHTMLPage,
+				TextMetadata:           *textMetadata,
+				LanguageCode:           languageCode,
+				DocumentVersion:        documents.CurrentDocumentVersion,
+				URL:                    urlparser.MustParseURL(u),
+				TopicsForURL:           topicsForURL,
+				SeedJobIngestTimestamp: link.SeedJobIngestTimestamp,
 			})
 			if err != nil {
 				log.Println(fmt.Sprintf("Got error indexing document for url %s: %s. Continuing...", u, err.Error()))

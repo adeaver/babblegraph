@@ -14,7 +14,8 @@ type Link struct {
 	// This is the UNIX timestamp of the first
 	// time the seed job picked up the link.
 	// IMPORTANT: The crawler should not populate this field.
-	FirstSeedFetchTimestamp *int64
+	// This is used as an approximation for publication date time.
+	SeedJobIngestTimestamp *int64
 }
 
 type FetchVersion int64
@@ -39,21 +40,22 @@ const (
 )
 
 type dbLink struct {
-	URLIdentifier           URLIdentifier `db:"url_identifier"`
-	Domain                  string        `db:"domain"`
-	URL                     string        `db:"url"`
-	LastFetchVersion        *FetchVersion `db:"last_fetch_version"`
-	FetchedOn               *time.Time    `db:"fetched_on"`
-	SeqNum                  int           `db:"seq_num"`
-	FirstSeedFetchTimestamp *int64        `db:"first_seed_fetch_timestamp"`
+	URLIdentifier          URLIdentifier `db:"url_identifier"`
+	Domain                 string        `db:"domain"`
+	URL                    string        `db:"url"`
+	LastFetchVersion       *FetchVersion `db:"last_fetch_version"`
+	FetchedOn              *time.Time    `db:"fetched_on"`
+	SeqNum                 int           `db:"seq_num"`
+	SeedJobIngestTimestamp *int64        `db:"seed_job_ingest_timestamp"`
 }
 
 func (d dbLink) ToNonDB() Link {
 	return Link{
-		URLIdentifier:    d.URLIdentifier,
-		Domain:           d.Domain,
-		URL:              d.URL,
-		LastFetchVersion: d.LastFetchVersion,
-		FetchedOn:        d.FetchedOn,
+		URLIdentifier:          d.URLIdentifier,
+		Domain:                 d.Domain,
+		URL:                    d.URL,
+		LastFetchVersion:       d.LastFetchVersion,
+		FetchedOn:              d.FetchedOn,
+		SeedJobIngestTimestamp: d.SeedJobIngestTimestamp,
 	}
 }
