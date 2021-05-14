@@ -94,8 +94,14 @@ func (d *documentsQueryBuilder) ExecuteQuery() ([]DocumentWithScore, error) {
 	if len(d.lemmas) > 0 {
 		queryBuilder.AddShould(esquery.Match("lemmatized_description", strings.Join(d.lemmas, " ")))
 	}
+	// This will sort by score and everything with the same score will be sorted by timestamp
+	scoreSort := esquery.NewDescendingSortBuilder("_score").AsSort()
+	timestampSortBuilder := esquery.NewDescendingSortBuilder("seed_job_ingest_timestamp")
+	timestampSortBuilder.WithMissingValuesLast()
+	timestampSortBuilder.AsUnmappedTypeLong()
+	orderedSort := esquery.NewOrderedSort(scoreSort, timestampSortBuilder.AsSort())
 	var docs []DocumentWithScore
-	if err := esquery.ExecuteSearch(documentIndex{}, queryBuilder.BuildBoolQuery(), func(source []byte, score decimal.Number) error {
+	if err := esquery.ExecuteSearch(documentIndex{}, queryBuilder.BuildBoolQuery(), orderedSort, func(source []byte, score decimal.Number) error {
 		log.Println(fmt.Sprintf("Document search got body %s", string(source)))
 		var doc Document
 		if err := json.Unmarshal(source, &doc); err != nil {
