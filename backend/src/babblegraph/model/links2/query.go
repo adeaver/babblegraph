@@ -74,7 +74,7 @@ func LookupBulkUnfetchedLinksForDomain(tx *sqlx.Tx, domain string, chunkSize int
 }
 
 func UpsertLinkWithEmptyFetchStatus(tx *sqlx.Tx, urls []urlparser.ParsedURL, includeTimestamp bool) error {
-	queryBuilder, err := database.NewBulkInsertQueryBuilder("links2", "url_identifier", "domain", "url", "first_seed_fetch_timestamp")
+	queryBuilder, err := database.NewBulkInsertQueryBuilder("links2", "url_identifier", "domain", "url", "seed_job_ingest_timestamp")
 	if err != nil {
 		return err
 	}
