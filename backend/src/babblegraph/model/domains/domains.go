@@ -2,6 +2,7 @@ package domains
 
 import (
 	"babblegraph/util/geo"
+	"babblegraph/util/ptr"
 	"babblegraph/wordsmith"
 )
 
@@ -23,9 +24,10 @@ var allowableDomains = []AllowableDomain{
 		Country:      geo.CountryCodeChile,
 		LanguageCode: wordsmith.LanguageCodeSpanish,
 	}, {
-		Domain:       "latercera.com",
-		Country:      geo.CountryCodeChile,
-		LanguageCode: wordsmith.LanguageCodeSpanish,
+		Domain:                      "latercera.com",
+		Country:                     geo.CountryCodeChile,
+		LanguageCode:                wordsmith.LanguageCodeSpanish,
+		NumberOfMonthlyFreeArticles: ptr.Int64(15),
 	}, {
 		Domain:       "lacuarta.cl",
 		Country:      geo.CountryCodeChile,
@@ -38,14 +40,14 @@ var allowableDomains = []AllowableDomain{
 		Domain:       "elespectador.com",
 		Country:      geo.CountryCodeColombia,
 		LanguageCode: wordsmith.LanguageCodeSpanish,
+		PaywallValidation: &PaywallValidation{
+			PaywallClasses: []string{"premium_validation"},
+		},
 	}, {
-		Domain:       "nacion.com",
-		Country:      geo.CountryCodeCostaRica,
-		LanguageCode: wordsmith.LanguageCodeSpanish,
-	}, {
-		Domain:       "elsalvador.com",
-		Country:      geo.CountryCodeElSalvador,
-		LanguageCode: wordsmith.LanguageCodeSpanish,
+		Domain:                      "elsalvador.com",
+		Country:                     geo.CountryCodeElSalvador,
+		LanguageCode:                wordsmith.LanguageCodeSpanish,
+		NumberOfMonthlyFreeArticles: ptr.Int64(20),
 	}, {
 		Domain:       "elmundo.sv",
 		Country:      geo.CountryCodeElSalvador,
@@ -58,6 +60,9 @@ var allowableDomains = []AllowableDomain{
 		Domain:       "prensalibre.com",
 		Country:      geo.CountryCodeGuatemala,
 		LanguageCode: wordsmith.LanguageCodeSpanish,
+		PaywallValidation: &PaywallValidation{
+			PaywallClasses: []string{"pl_plus", "type-pl_plus"},
+		},
 	}, {
 		Domain:       "laprensa.hn",
 		Country:      geo.CountryCodeHonduras,
@@ -74,14 +79,21 @@ var allowableDomains = []AllowableDomain{
 		Domain:       "yucatan.com.mx",
 		Country:      geo.CountryCodeMexico,
 		LanguageCode: wordsmith.LanguageCodeSpanish,
+		PaywallValidation: &PaywallValidation{
+			PaywallClasses: []string{"tag-central-9"},
+		},
 	}, {
 		Domain:       "informador.mx",
 		Country:      geo.CountryCodeMexico,
 		LanguageCode: wordsmith.LanguageCodeSpanish,
 	}, {
-		Domain:       "laprensa.com.ni",
-		Country:      geo.CountryCodeNicaragua,
-		LanguageCode: wordsmith.LanguageCodeSpanish,
+		Domain:                      "laprensa.com.ni",
+		Country:                     geo.CountryCodeNicaragua,
+		LanguageCode:                wordsmith.LanguageCodeSpanish,
+		NumberOfMonthlyFreeArticles: ptr.Int64(5),
+		PaywallValidation: &PaywallValidation{
+			PaywallClasses: []string{"tag-exclusivo"},
+		},
 	}, {
 		Domain:       "lajornadanet.com",
 		Country:      geo.CountryCodeNicaragua,
@@ -106,30 +118,43 @@ var allowableDomains = []AllowableDomain{
 		Domain:       "abc.es",
 		Country:      geo.CountryCodeSpain,
 		LanguageCode: wordsmith.LanguageCodeSpanish,
+		PaywallValidation: &PaywallValidation{
+			UseLDJSONValidation: &struct{}{},
+		},
 	}, {
 		Domain:       "elmundo.es",
 		Country:      geo.CountryCodeSpain,
 		LanguageCode: wordsmith.LanguageCodeSpanish,
+		PaywallValidation: &PaywallValidation{
+			UseLDJSONValidation: &struct{}{},
+		},
 	}, {
-		Domain:       "elpais.com",
-		Country:      geo.CountryCodeSpain,
-		LanguageCode: wordsmith.LanguageCodeSpanish,
+		Domain:                      "elpais.com",
+		Country:                     geo.CountryCodeSpain,
+		LanguageCode:                wordsmith.LanguageCodeSpanish,
+		NumberOfMonthlyFreeArticles: ptr.Int64(10),
 	}, {
-		Domain:       "elcomercio.es",
-		Country:      geo.CountryCodeSpain,
-		LanguageCode: wordsmith.LanguageCodeSpanish,
+		Domain:                      "elcomercio.es",
+		Country:                     geo.CountryCodeSpain,
+		LanguageCode:                wordsmith.LanguageCodeSpanish,
+		NumberOfMonthlyFreeArticles: ptr.Int64(10),
+		PaywallValidation: &PaywallValidation{
+			UseLDJSONValidation: &struct{}{},
+		},
 	}, {
 		Domain:       "diariolasamericas.com",
 		Country:      geo.CountryCodeUnitedStates,
 		LanguageCode: wordsmith.LanguageCodeSpanish,
 	}, {
-		Domain:       "laopinion.com",
-		Country:      geo.CountryCodeUnitedStates,
-		LanguageCode: wordsmith.LanguageCodeSpanish,
+		Domain:                      "laopinion.com",
+		Country:                     geo.CountryCodeUnitedStates,
+		LanguageCode:                wordsmith.LanguageCodeSpanish,
+		NumberOfMonthlyFreeArticles: ptr.Int64(20),
 	}, {
-		Domain:       "eldiariony.com",
-		Country:      geo.CountryCodeUnitedStates,
-		LanguageCode: wordsmith.LanguageCodeSpanish,
+		Domain:                      "eldiariony.com",
+		Country:                     geo.CountryCodeUnitedStates,
+		LanguageCode:                wordsmith.LanguageCodeSpanish,
+		NumberOfMonthlyFreeArticles: ptr.Int64(20),
 	}, {
 		Domain:       "hoylosangeles.com",
 		Country:      geo.CountryCodeUnitedStates,
@@ -146,18 +171,19 @@ var allowableDomains = []AllowableDomain{
 		Domain:       "brecha.com.uy",
 		Country:      geo.CountryCodeUruguay,
 		LanguageCode: wordsmith.LanguageCodeSpanish,
+		PaywallValidation: &PaywallValidation{
+			UseLDJSONValidation: &struct{}{},
+		},
 	}, {
-		Domain:       "elpais.com.uy",
-		Country:      geo.CountryCodeUruguay,
-		LanguageCode: wordsmith.LanguageCodeSpanish,
+		Domain:                      "elpais.com.uy",
+		Country:                     geo.CountryCodeUruguay,
+		LanguageCode:                wordsmith.LanguageCodeSpanish,
+		NumberOfMonthlyFreeArticles: ptr.Int64(10),
 	}, {
-		Domain:       "ladiaria.com.uy",
-		Country:      geo.CountryCodeUruguay,
-		LanguageCode: wordsmith.LanguageCodeSpanish,
-	}, {
-		Domain:       "periodismoinvestigativo.com",
-		Country:      geo.CountryCodePuertoRico,
-		LanguageCode: wordsmith.LanguageCodeSpanish,
+		Domain:                      "ladiaria.com.uy",
+		Country:                     geo.CountryCodeUruguay,
+		LanguageCode:                wordsmith.LanguageCodeSpanish,
+		NumberOfMonthlyFreeArticles: ptr.Int64(10),
 	}, {
 		Domain:       "ngenespanol.com",
 		Country:      geo.CountryCodeUnitedStates,
