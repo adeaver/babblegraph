@@ -188,5 +188,9 @@ var allowableDomains = []AllowableDomain{
 		Domain:       "ngenespanol.com",
 		Country:      geo.CountryCodeUnitedStates,
 		LanguageCode: wordsmith.LanguageCodeSpanish,
+	}, {
+		Domain:       "primerahora.com",
+		Country:      geo.CountryCodePuertoRico,
+		LanguageCode: wordsmith.LanguageCodeSpanish,
 	},
 }
