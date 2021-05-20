@@ -107,15 +107,13 @@ func parseHTML(domain, htmlStr, cset string) (*ParsedHTMLPage, error) {
 					log.Println(fmt.Sprintf("Error unmarshalling ld+json for string %s", node.Data))
 				} else {
 					if isAccessibleInterface, ok := ldJSON["isAccessibleForFree"]; ok {
-						isAccessibleForFree, ok := isAccessibleInterface.(string)
+						isAccessibleForFree, ok := isAccessibleInterface.(bool)
 						if ok {
-							if strings.ToLower(isAccessibleForFree) == "false" {
+							if !isAccessibleForFree {
 								isPaywalled = true
-							} else {
-								log.Println(fmt.Sprintf("isAccessibleForFree has value: %s", strings.ToLower(isAccessibleForFree)))
 							}
 						} else {
-							log.Println("Could not convert isAccessibleForFree key to string")
+							log.Println("Could not convert isAccessibleForFree key to bool")
 						}
 					} else {
 						log.Println("LD+JSON does not contain isAccessibleForFree, assuming not paywalled")
