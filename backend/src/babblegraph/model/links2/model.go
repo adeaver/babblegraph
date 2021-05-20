@@ -45,7 +45,7 @@ type dbLink struct {
 	URL                    string        `db:"url"`
 	LastFetchVersion       *FetchVersion `db:"last_fetch_version"`
 	FetchedOn              *time.Time    `db:"fetched_on"`
-	SeqNum                 int           `db:"seq_num"`
+	SeqNum                 int64         `db:"seq_num"`
 	SeedJobIngestTimestamp *int64        `db:"seed_job_ingest_timestamp"`
 }
 

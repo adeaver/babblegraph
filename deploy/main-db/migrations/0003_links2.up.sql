@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS links2(
     url TEXT NOT NULL,
     last_fetch_version INT,
     fetched_on TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()),
-    seq_num SERIAL NOT NULL,
+    seq_num BIGSERIAL NOT NULL,
 
     PRIMARY KEY (url_identifier)
 );
