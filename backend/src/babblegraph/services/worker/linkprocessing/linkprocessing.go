@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	defaultChunkSize     = 2000
+	defaultChunkSize     = 500
 	defaultTimeUntilFree = 5 * time.Second
 )
 

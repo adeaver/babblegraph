@@ -63,7 +63,7 @@ func LookupUnfetchedLinkForDomain(tx *sqlx.Tx, domain string) (*Link, error) {
 
 func LookupBulkUnfetchedLinksForDomain(tx *sqlx.Tx, domain string, chunkSize int) ([]Link, error) {
 	var matches []dbLink
-	if err := tx.Select(&matches, "SELECT * FROM links2 WHERE last_fetch_version IS DISTINCT FROM $1 AND domain=$2 ORDER BY seq_num ASC LIMIT $3", CurrentFetchVersion, domain, chunkSize); err != nil {
+	if err := tx.Select(&matches, "SELECT * FROM links2 WHERE last_fetch_version IS DISTINCT FROM $1 AND domain=$2 ORDER BY seed_job_ingest_timestamp DESC NULLS LAST, seq_num ASC LIMIT $3", CurrentFetchVersion, domain, chunkSize); err != nil {
 		return nil, err
 	}
 	var out []Link
