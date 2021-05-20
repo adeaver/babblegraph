@@ -14,11 +14,12 @@ import (
 )
 
 type ParsedHTMLPage struct {
-	Links    []string
-	BodyText string
-	Language *string
-	PageType *string
-	Metadata map[string]string
+	Links       []string
+	BodyText    string
+	Language    *string
+	PageType    *string
+	Metadata    map[string]string
+	IsPaywalled bool
 }
 
 func parseHTML(domain, htmlStr, cset string) (*ParsedHTMLPage, error) {
@@ -101,14 +102,26 @@ func parseHTML(domain, htmlStr, cset string) (*ParsedHTMLPage, error) {
 				bodyText = append(bodyText, node.Data)
 			case isParseLDJSON:
 				var ldJSON map[string]interface{}
-				if err := json.Unmarshal(&ldJSON, node.Data); err != nil {
-					log.Println("Error unmarshalling ld+json: %s", err.Error())
+				if err := json.Unmarshal([]byte(node.Data), &ldJSON); err != nil {
+					log.Println(fmt.Sprintf("Error unmarshalling ld+json: %s", err.Error()))
+					log.Println(fmt.Sprintf("Error unmarshalling ld+json for string %s", node.Data))
 				} else {
-					isAccessible, ok := ldJSON["isAccessibleForFree"]
-					if ok && !isAccessible {
-						isPaywalled = true
+					if isAccessibleInterface, ok := ldJSON["isAccessibleForFree"]; ok {
+						isAccessibleForFree, ok := isAccessibleInterface.(string)
+						if ok {
+							if strings.ToLower(isAccessibleForFree) == "false" {
+								isPaywalled = true
+							} else {
+								log.Println(fmt.Sprintf("isAccessibleForFree has value: %s", strings.ToLower(isAccessibleForFree)))
+							}
+						} else {
+							log.Println("Could not convert isAccessibleForFree key to string")
+						}
+					} else {
+						log.Println("LD+JSON does not contain isAccessibleForFree, assuming not paywalled")
 					}
 				}
+				isParseLDJSON = false
 			}
 		case html.ErrorNode:
 			log.Println(fmt.Sprintf("Error: %s", node.Data))
@@ -128,10 +141,11 @@ func parseHTML(domain, htmlStr, cset string) (*ParsedHTMLPage, error) {
 		pageType = ptr.String(ogType)
 	}
 	return &ParsedHTMLPage{
-		Links:    links,
-		BodyText: bodyTextStr,
-		Language: language,
-		PageType: pageType,
-		Metadata: metadata,
+		Links:       links,
+		BodyText:    bodyTextStr,
+		Language:    language,
+		PageType:    pageType,
+		Metadata:    metadata,
+		IsPaywalled: isPaywalled,
 	}, nil
 }
