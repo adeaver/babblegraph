@@ -1,7 +1,9 @@
 package ingesthtml
 
 import (
+	"babblegraph/model/domains"
 	"babblegraph/util/ptr"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -34,7 +36,11 @@ func parseHTML(domain, htmlStr, cset string) (*ParsedHTMLPage, error) {
 	if err != nil {
 		return nil, err
 	}
-	var isParseInTextNodeType bool
+	domainMetadata, err := domains.GetDomainMetadata(domain)
+	if err != nil {
+		return nil, err
+	}
+	var isParseInTextNodeType, isParseLDJSON, isPaywalled bool
 	var bodyText, links []string
 	var language *string
 	metadata := make(map[string]string)
@@ -42,6 +48,33 @@ func parseHTML(domain, htmlStr, cset string) (*ParsedHTMLPage, error) {
 	f = func(node *html.Node) {
 		switch node.Type {
 		case html.ElementNode:
+			if paywallValidation := domainMetadata.PaywallValidation; paywallValidation != nil {
+				switch {
+				case paywallValidation.UseLDJSONValidation != nil:
+					if node.Data == "script" {
+						for _, attr := range node.Attr {
+							if attr.Key == "type" && attr.Val == "application/ld+json" {
+								isParseLDJSON = true
+							}
+						}
+					}
+				case len(paywallValidation.PaywallClasses) != 0:
+					for _, attr := range node.Attr {
+						if attr.Key == "class" {
+							classes := strings.Split(attr.Val, " ")
+							for _, c := range classes {
+								for _, paywallClass := range paywallValidation.PaywallClasses {
+									if c == paywallClass {
+										isPaywalled = true
+									}
+								}
+							}
+						}
+					}
+				default:
+					log.Println("Paywall validation is not null, but no paywall validation type is specified")
+				}
+			}
 			// The way that this works is that we encounter
 			// the marker of a text node (i.e. the p tag)
 			// prior to encountering the text for that node
@@ -63,8 +96,19 @@ func parseHTML(domain, htmlStr, cset string) (*ParsedHTMLPage, error) {
 				}
 			}
 		case html.TextNode:
-			if isParseInTextNodeType {
+			switch {
+			case isParseInTextNodeType:
 				bodyText = append(bodyText, node.Data)
+			case isParseLDJSON:
+				var ldJSON map[string]interface{}
+				if err := json.Unmarshal(&ldJSON, node.Data); err != nil {
+					log.Println("Error unmarshalling ld+json: %s", err.Error())
+				} else {
+					isAccessible, ok := ldJSON["isAccessibleForFree"]
+					if ok && !isAccessible {
+						isPaywalled = true
+					}
+				}
 			}
 		case html.ErrorNode:
 			log.Println(fmt.Sprintf("Error: %s", node.Data))
