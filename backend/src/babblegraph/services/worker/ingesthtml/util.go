@@ -1,6 +1,7 @@
 package ingesthtml
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -69,4 +70,20 @@ func getKeyValuePairFromMetaTag(n *html.Node) (_key, _value *string) {
 		return nil, nil
 	}
 	return &name, &value
+}
+
+func processPaywallFromLDJSON(ldJSONData string) (bool, error) {
+	var ldJSON map[string]interface{}
+	if err := json.Unmarshal([]byte(ldJSONData), &ldJSON); err != nil {
+		return false, err
+	}
+	isAccessibleInterface, ok := ldJSON["isAccessibleForFree"]
+	if !ok {
+		return false, fmt.Errorf("LD+JSON does not contain isAccessibleForFree, assuming not paywalled")
+	}
+	isAccessibleForFree, ok := isAccessibleInterface.(bool)
+	if !ok {
+		return false, fmt.Errorf("Could not convert isAccessibleForFree key to bool")
+	}
+	return !isAccessibleForFree, nil
 }

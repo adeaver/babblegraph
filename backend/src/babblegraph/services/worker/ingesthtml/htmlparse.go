@@ -3,7 +3,6 @@ package ingesthtml
 import (
 	"babblegraph/model/domains"
 	"babblegraph/util/ptr"
-	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -101,24 +100,11 @@ func parseHTML(domain, htmlStr, cset string) (*ParsedHTMLPage, error) {
 			case isParseInTextNodeType:
 				bodyText = append(bodyText, node.Data)
 			case isParseLDJSON:
-				var ldJSON map[string]interface{}
-				if err := json.Unmarshal([]byte(node.Data), &ldJSON); err != nil {
+				ldJSONPaywall, err := processPaywallFromLDJSON(node.Data)
+				if err != nil {
 					log.Println(fmt.Sprintf("Error unmarshalling ld+json: %s", err.Error()))
-					log.Println(fmt.Sprintf("Error unmarshalling ld+json for string %s", node.Data))
-				} else {
-					if isAccessibleInterface, ok := ldJSON["isAccessibleForFree"]; ok {
-						isAccessibleForFree, ok := isAccessibleInterface.(bool)
-						if ok {
-							if !isAccessibleForFree {
-								isPaywalled = true
-							}
-						} else {
-							log.Println("Could not convert isAccessibleForFree key to bool")
-						}
-					} else {
-						log.Println("LD+JSON does not contain isAccessibleForFree, assuming not paywalled")
-					}
 				}
+				isPaywalled = isPaywalled || ldJSONPaywall
 				isParseLDJSON = false
 			}
 		case html.ErrorNode:
