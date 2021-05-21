@@ -87,3 +87,19 @@ func processPaywallFromLDJSON(ldJSONData string) (bool, error) {
 	}
 	return !isAccessibleForFree, nil
 }
+
+func processPaywallFromClasses(node *html.Node, paywallValidationClasses []string) bool {
+	for _, attr := range node.Attr {
+		if attr.Key == "class" {
+			classes := strings.Split(attr.Val, " ")
+			for _, c := range classes {
+				for _, paywallClass := range paywallValidationClasses {
+					if c == paywallClass {
+						return true
+					}
+				}
+			}
+		}
+	}
+	return false
+}

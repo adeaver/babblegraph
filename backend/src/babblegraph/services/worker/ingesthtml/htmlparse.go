@@ -59,18 +59,7 @@ func parseHTML(domain, htmlStr, cset string) (*ParsedHTMLPage, error) {
 						}
 					}
 				case len(paywallValidation.PaywallClasses) != 0:
-					for _, attr := range node.Attr {
-						if attr.Key == "class" {
-							classes := strings.Split(attr.Val, " ")
-							for _, c := range classes {
-								for _, paywallClass := range paywallValidation.PaywallClasses {
-									if c == paywallClass {
-										isPaywalled = true
-									}
-								}
-							}
-						}
-					}
+					isPaywalled = isPaywalled || processPaywallFromClasses(node, paywallValidation.PaywallClasses)
 				default:
 					log.Println("Paywall validation is not null, but no paywall validation type is specified")
 				}

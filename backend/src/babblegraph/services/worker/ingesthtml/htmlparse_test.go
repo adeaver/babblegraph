@@ -194,3 +194,61 @@ func TestParseLDJSONNotPaywalledHTML(t *testing.T) {
 		t.Errorf("Expected content not to be paywalled, but it is")
 	}
 }
+
+func TestParseClassesNotPaywalledHTML(t *testing.T) {
+	classesNotPaywalledHTML := `<html lang="es">
+<head>
+		<title>Page Title</title>
+		<meta property="og:type" content="article" />
+		<meta property="og:title" content="This is an Article" />
+		<meta data-ue-u="og:title" content="Not an article" />
+		<link rel="stylesheet" href="stylesheet.css" />
+</head>
+<body>
+		<p>Some body text</p>
+		<p>Text with a <a href="www.google.com">link</a></p>
+		<p>Text with <strong>styling</strong> and a <span>span</span></p>
+		<div>Text in a div</div>
+		<script>
+			some random javascript
+		</script>
+		<a href="/relative-link">relative link</a>
+</body>`
+	parsed, err := parseHTML("elespectador.com", classesNotPaywalledHTML, "utf-8")
+	if err != nil {
+		t.Errorf("Not expecting error, but got one: %s", err.Error())
+		return
+	}
+	if parsed.IsPaywalled {
+		t.Errorf("Expected content not to be paywalled, but it is")
+	}
+}
+
+func TestParseClassesPaywalledHTML(t *testing.T) {
+	classesPaywalledHTML := `<html lang="es">
+<head>
+		<title>Page Title</title>
+		<meta property="og:type" content="article" />
+		<meta property="og:title" content="This is an Article" />
+		<meta data-ue-u="og:title" content="Not an article" />
+		<link rel="stylesheet" href="stylesheet.css" />
+</head>
+<body>
+		<p>Some body text</p>
+		<p>Text with a <a href="www.google.com">link</a></p>
+		<p>Text with <strong>styling</strong> and a <span class="something something2 premium_validation something_else">span</span></p>
+		<div>Text in a div</div>
+		<script>
+			some random javascript
+		</script>
+		<a href="/relative-link">relative link</a>
+</body>`
+	parsed, err := parseHTML("elespectador.com", classesPaywalledHTML, "utf-8")
+	if err != nil {
+		t.Errorf("Not expecting error, but got one: %s", err.Error())
+		return
+	}
+	if !parsed.IsPaywalled {
+		t.Errorf("Expected content to be paywalled, but it is not")
+	}
+}
