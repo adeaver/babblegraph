@@ -3,6 +3,7 @@ package ingesthtml
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"strings"
 
 	"golang.org/x/net/html"
@@ -79,7 +80,8 @@ func processPaywallFromLDJSON(ldJSONData string) (bool, error) {
 	}
 	isAccessibleInterface, ok := ldJSON["isAccessibleForFree"]
 	if !ok {
-		return false, fmt.Errorf("LD+JSON does not contain isAccessibleForFree, assuming not paywalled")
+		log.Println("LD+JSON does not contain isAccessibleForFree, assuming not paywalled")
+		return false, nil
 	}
 	isAccessibleForFree, ok := isAccessibleInterface.(bool)
 	if !ok {

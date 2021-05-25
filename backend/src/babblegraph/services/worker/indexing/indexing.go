@@ -38,6 +38,7 @@ func IndexDocument(input IndexDocumentInput) error {
 		LemmatizedDescription:              lemmatizedDescriptionText,
 		LemmatizedDescriptionIndexMappings: lemmatizedDescriptionIndexMappings,
 		SeedJobIngestTimestamp:             input.SeedJobIngestTimestamp,
+		HasPaywall:                         input.ParsedHTMLPage.IsPaywalled,
 
 		// These will get changed later
 		Version: input.DocumentVersion,

@@ -1,5 +1,4 @@
-# use version
-FROM postgres
+FROM postgres:11
 
 ENV POSTGRES_DB babblegraph
 ENV POSTGRES_USER dev

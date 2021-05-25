@@ -17,3 +17,7 @@ func Int(i int) *int {
 func Time(t time.Time) *time.Time {
 	return &t
 }
+
+func Bool(b bool) *bool {
+	return &b
+}
