@@ -36,7 +36,11 @@ const (
 	// Fix bug with encoding of html pages
 	FetchVersion4 FetchVersion = 4
 
-	CurrentFetchVersion FetchVersion = FetchVersion4
+	// Version 5 Updates:
+	// Add Paywall Detection
+	FetchVersion5 FetchVersion = 5
+
+	CurrentFetchVersion FetchVersion = FetchVersion5
 )
 
 type dbLink struct {
