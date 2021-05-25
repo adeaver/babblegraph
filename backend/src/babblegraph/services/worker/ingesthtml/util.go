@@ -85,7 +85,12 @@ func processPaywallFromLDJSON(ldJSONData string) (bool, error) {
 	}
 	isAccessibleForFree, ok := isAccessibleInterface.(bool)
 	if !ok {
-		return false, fmt.Errorf("Could not convert isAccessibleForFree key to bool")
+		log.Println("Could not convert isAccessibleForFree key to bool, trying string...")
+		isAccessibleForFreeStr, ok := isAccessibleInterface.(string)
+		if !ok {
+			return false, fmt.Errorf("Could not convert isAccessibleForFree to bool or string")
+		}
+		isAccessibleForFree = strings.ToLower(isAccessibleForFreeStr) != "false"
 	}
 	return !isAccessibleForFree, nil
 }

@@ -252,3 +252,71 @@ func TestParseClassesPaywalledHTML(t *testing.T) {
 		t.Errorf("Expected content to be paywalled, but it is not")
 	}
 }
+
+func TestParseLDJSONPaywalledHTMLWithString(t *testing.T) {
+	ldjsonPaywalledHTML := `<html lang="es">
+<head>
+		<title>Page Title</title>
+		<meta property="og:type" content="article" />
+		<meta property="og:title" content="This is an Article" />
+		<meta data-ue-u="og:title" content="Not an article" />
+		<link rel="stylesheet" href="stylesheet.css" />
+        <script type="application/ld+json">
+        {
+            "@context": "http://schema.org",
+            "@type":
+                "OpinionNewsArticle",
+                "mainEntityOfPage":{
+                    "@type":"WebPage",
+                    "@id":"https://www.elmundo.es/internacional/2021/05/20/60a53d22fc6c83a70e8b45c8.html"
+                },
+                "headline": "Rusia quiere mandar en el nuevo Ártico",
+                "articleSection": "internacional",
+                "datePublished": "2021-05-19T23:30:36Z",
+                "dateModified": "2021-05-19T23:30:36Z",
+                "image":{
+                    "@type": "ImageObject",
+                    "url": "https://phantom-elmundo.unidadeditorial.es/1fb5c7650df5663badbd70bcbdcd0b00/resize/1200/f/jpg/assets/multimedia/imagenes/2021/05/19/16214418327466.jpg",
+                    "height": 800,
+                    "width": 1200
+                },
+                "publisher": {
+                    "@type": "NewsMediaOrganization",
+                    "name": "El mundo",
+                        "logo": {
+                            "@type": "ImageObject",
+                            "url": "https://e00-elmundo.uecdn.es/assets/desktop/master/img/iconos/elmundo.png",
+                            "width": 204,
+                            "height": 27
+                        }
+                },
+                "description": "Rusia está reafirmando su posición como gran potencia mundial también en el Ártico, una zona que desde que Vladimir Putin llegó al Kremlin se ha convertido en un escenario...",
+                "isAccessibleForFree": false,
+                "hasPart":
+                {
+                    "@type": "WebPageElement",
+                    "isAccessibleForFree": "False",
+                    "cssSelector": ".paywall"
+                }
+        }
+        </script>
+</head>
+<body>
+		<p>Some body text</p>
+		<p>Text with a <a href="www.google.com">link</a></p>
+		<p>Text with <strong>styling</strong> and a <span>span</span></p>
+		<div>Text in a div</div>
+		<script>
+			some random javascript
+		</script>
+		<a href="/relative-link">relative link</a>
+</body>`
+	parsed, err := parseHTML("elmundo.es", ldjsonPaywalledHTML, "utf-8")
+	if err != nil {
+		t.Errorf("Not expecting error, but got one: %s", err.Error())
+		return
+	}
+	if !parsed.IsPaywalled {
+		t.Errorf("Expected content to be paywalled, but isn't")
+	}
+}
