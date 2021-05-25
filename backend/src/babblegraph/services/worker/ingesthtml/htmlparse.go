@@ -1,6 +1,7 @@
 package ingesthtml
 
 import (
+	"babblegraph/model/domains"
 	"babblegraph/util/ptr"
 	"fmt"
 	"io"
@@ -12,11 +13,12 @@ import (
 )
 
 type ParsedHTMLPage struct {
-	Links    []string
-	BodyText string
-	Language *string
-	PageType *string
-	Metadata map[string]string
+	Links       []string
+	BodyText    string
+	Language    *string
+	PageType    *string
+	Metadata    map[string]string
+	IsPaywalled bool
 }
 
 func parseHTML(domain, htmlStr, cset string) (*ParsedHTMLPage, error) {
@@ -34,7 +36,11 @@ func parseHTML(domain, htmlStr, cset string) (*ParsedHTMLPage, error) {
 	if err != nil {
 		return nil, err
 	}
-	var isParseInTextNodeType bool
+	domainMetadata, err := domains.GetDomainMetadata(domain)
+	if err != nil {
+		return nil, err
+	}
+	var isParseInTextNodeType, isParseLDJSON, isPaywalled bool
 	var bodyText, links []string
 	var language *string
 	metadata := make(map[string]string)
@@ -42,6 +48,22 @@ func parseHTML(domain, htmlStr, cset string) (*ParsedHTMLPage, error) {
 	f = func(node *html.Node) {
 		switch node.Type {
 		case html.ElementNode:
+			if paywallValidation := domainMetadata.PaywallValidation; paywallValidation != nil {
+				switch {
+				case paywallValidation.UseLDJSONValidation != nil:
+					if node.Data == "script" {
+						for _, attr := range node.Attr {
+							if attr.Key == "type" && attr.Val == "application/ld+json" {
+								isParseLDJSON = true
+							}
+						}
+					}
+				case len(paywallValidation.PaywallClasses) != 0:
+					isPaywalled = isPaywalled || processPaywallFromClasses(node, paywallValidation.PaywallClasses)
+				default:
+					log.Println("Paywall validation is not null, but no paywall validation type is specified")
+				}
+			}
 			// The way that this works is that we encounter
 			// the marker of a text node (i.e. the p tag)
 			// prior to encountering the text for that node
@@ -63,8 +85,16 @@ func parseHTML(domain, htmlStr, cset string) (*ParsedHTMLPage, error) {
 				}
 			}
 		case html.TextNode:
-			if isParseInTextNodeType {
+			switch {
+			case isParseInTextNodeType:
 				bodyText = append(bodyText, node.Data)
+			case isParseLDJSON:
+				ldJSONPaywall, err := processPaywallFromLDJSON(node.Data)
+				if err != nil {
+					log.Println(fmt.Sprintf("Error unmarshalling ld+json: %s", err.Error()))
+				}
+				isPaywalled = isPaywalled || ldJSONPaywall
+				isParseLDJSON = false
 			}
 		case html.ErrorNode:
 			log.Println(fmt.Sprintf("Error: %s", node.Data))
@@ -84,10 +114,11 @@ func parseHTML(domain, htmlStr, cset string) (*ParsedHTMLPage, error) {
 		pageType = ptr.String(ogType)
 	}
 	return &ParsedHTMLPage{
-		Links:    links,
-		BodyText: bodyTextStr,
-		Language: language,
-		PageType: pageType,
-		Metadata: metadata,
+		Links:       links,
+		BodyText:    bodyTextStr,
+		Language:    language,
+		PageType:    pageType,
+		Metadata:    metadata,
+		IsPaywalled: isPaywalled,
 	}, nil
 }

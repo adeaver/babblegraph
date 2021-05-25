@@ -17,6 +17,10 @@ type AllowableDomain struct {
 	// i.e. Motortrend magazine is all about cars
 	// If a domain has multiple topics, this can and should be empty
 	Topics []contenttopics.ContentTopic
+
+	// Null means that there is no limit
+	NumberOfMonthlyFreeArticles *int64
+	PaywallValidation           *PaywallValidation
 }
 
 // A seed url is a URL from which to start pulling content
@@ -25,4 +29,9 @@ type AllowableDomain struct {
 type SeedURL struct {
 	URL    string
 	Topics []contenttopics.ContentTopic
+}
+
+type PaywallValidation struct {
+	UseLDJSONValidation *struct{}
+	PaywallClasses      []string
 }

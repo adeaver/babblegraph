@@ -32,6 +32,7 @@ const (
 	DisplayNameCurrentEventsUnitedStates DisplayName = "noticias de estados unidos"
 	DisplayNameCurrentEventsVenezuela    DisplayName = "noticias de venezuela"
 	DisplayNameCurrentEventsUruguay      DisplayName = "noticias de uruguay"
+	DisplayNameCurrentEventsPuertoRico   DisplayName = "noticias de puerto rico"
 	DisplayNameEconomy                   DisplayName = "economía"
 	DisplayNameEntertainment             DisplayName = "entretenimiento"
 	DisplayNameEnvironment               DisplayName = "medio ambiente"
@@ -112,6 +113,8 @@ func ContentTopicNameToDisplayName(topic ContentTopic) (*DisplayName, error) {
 		return DisplayNameCurrentEventsVenezuela.Ptr(), nil
 	case ContentTopicCurrentEventsUruguay:
 		return DisplayNameCurrentEventsUruguay.Ptr(), nil
+	case ContentTopicCurrentEventsPuertoRico:
+		return DisplayNameCurrentEventsPuertoRico.Ptr(), nil
 	case ContentTopicEconomy:
 		return DisplayNameEconomy.Ptr(), nil
 	case ContentTopicEnvironment:

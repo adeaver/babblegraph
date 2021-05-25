@@ -27,6 +27,7 @@ const (
 	ContentTopicCurrentEventsUnitedStates ContentTopic = "current-events-united-states"
 	ContentTopicCurrentEventsVenezuela    ContentTopic = "current-events-venezuela"
 	ContentTopicCurrentEventsUruguay      ContentTopic = "current-events-uruguay"
+	ContentTopicCurrentEventsPuertoRico   ContentTopic = "current-events-puerto-rico"
 	ContentTopicEconomy                   ContentTopic = "economy"
 	ContentTopicEntertainment             ContentTopic = "entertainment"
 	ContentTopicEnvironment               ContentTopic = "environment"
