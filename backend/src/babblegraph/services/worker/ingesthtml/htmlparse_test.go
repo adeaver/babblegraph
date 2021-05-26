@@ -320,3 +320,61 @@ func TestParseLDJSONPaywalledHTMLWithString(t *testing.T) {
 		t.Errorf("Expected content to be paywalled, but isn't")
 	}
 }
+
+func TestParseIDsPaywalledHTML(t *testing.T) {
+	idsPaywalledHTML := `<html lang="es">
+<head>
+		<title>Page Title</title>
+		<meta property="og:type" content="article" />
+		<meta property="og:title" content="This is an Article" />
+		<meta data-ue-u="og:title" content="Not an article" />
+		<link rel="stylesheet" href="stylesheet.css" />
+</head>
+<body>
+		<p>Some body text</p>
+		<p>Text with a <a href="www.google.com">link</a></p>
+		<p id="is_c9_article">Text with <strong>styling</strong> and a <span>span</span></p>
+		<div>Text in a div</div>
+		<script>
+			some random javascript
+		</script>
+		<a href="/relative-link">relative link</a>
+</body>`
+	parsed, err := parseHTML("yucatan.com.mx", idsPaywalledHTML, "utf-8")
+	if err != nil {
+		t.Errorf("Not expecting error, but got one: %s", err.Error())
+		return
+	}
+	if !parsed.IsPaywalled {
+		t.Errorf("Expected content to be paywalled, but it is not")
+	}
+}
+
+func TestParseNotIDsPaywalledHTML(t *testing.T) {
+	idsNotPaywalledHTML := `<html lang="es">
+<head>
+		<title>Page Title</title>
+		<meta property="og:type" content="article" />
+		<meta property="og:title" content="This is an Article" />
+		<meta data-ue-u="og:title" content="Not an article" />
+		<link rel="stylesheet" href="stylesheet.css" />
+</head>
+<body>
+		<p>Some body text</p>
+		<p id="not-a-paywall">Text with a <a href="www.google.com">link</a></p>
+		<p>Text with <strong>styling</strong> and a <span>span</span></p>
+		<div>Text in a div</div>
+		<script>
+			some random javascript
+		</script>
+		<a href="/relative-link">relative link</a>
+</body>`
+	parsed, err := parseHTML("yucatan.com.mx", idsNotPaywalledHTML, "utf-8")
+	if err != nil {
+		t.Errorf("Not expecting error, but got one: %s", err.Error())
+		return
+	}
+	if parsed.IsPaywalled {
+		t.Errorf("Expected content not to be paywalled, but it is")
+	}
+}
