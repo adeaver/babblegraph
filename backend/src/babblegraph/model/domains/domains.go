@@ -80,7 +80,7 @@ var allowableDomains = []AllowableDomain{
 		Country:      geo.CountryCodeMexico,
 		LanguageCode: wordsmith.LanguageCodeSpanish,
 		PaywallValidation: &PaywallValidation{
-			PaywallClasses: []string{"tag-central-9"},
+			PaywallIDs: []string{"is_c9_article"},
 		},
 	}, {
 		Domain:       "informador.mx",

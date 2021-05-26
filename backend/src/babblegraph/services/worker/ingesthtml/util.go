@@ -96,12 +96,20 @@ func processPaywallFromLDJSON(ldJSONData string) (bool, error) {
 }
 
 func processPaywallFromClasses(node *html.Node, paywallValidationClasses []string) bool {
+	return processPaywallFromAttr(node, "class", paywallValidationClasses)
+}
+
+func processPaywallFromIDs(node *html.Node, paywallValidationIDs []string) bool {
+	return processPaywallFromAttr(node, "id", paywallValidationIDs)
+}
+
+func processPaywallFromAttr(node *html.Node, attrName string, checkValues []string) bool {
 	for _, attr := range node.Attr {
-		if attr.Key == "class" {
-			classes := strings.Split(attr.Val, " ")
-			for _, c := range classes {
-				for _, paywallClass := range paywallValidationClasses {
-					if c == paywallClass {
+		if attr.Key == attrName {
+			values := strings.Split(attr.Val, " ")
+			for _, v := range values {
+				for _, paywallAttrVal := range checkValues {
+					if v == paywallAttrVal {
 						return true
 					}
 				}

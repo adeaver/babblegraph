@@ -34,4 +34,5 @@ type SeedURL struct {
 type PaywallValidation struct {
 	UseLDJSONValidation *struct{}
 	PaywallClasses      []string
+	PaywallIDs          []string
 }

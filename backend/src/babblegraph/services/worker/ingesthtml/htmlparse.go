@@ -60,6 +60,8 @@ func parseHTML(domain, htmlStr, cset string) (*ParsedHTMLPage, error) {
 					}
 				case len(paywallValidation.PaywallClasses) != 0:
 					isPaywalled = isPaywalled || processPaywallFromClasses(node, paywallValidation.PaywallClasses)
+				case len(paywallValidation.PaywallIDs) != 0:
+					isPaywalled = isPaywalled || processPaywallFromIDs(node, paywallValidation.PaywallIDs)
 				default:
 					log.Println("Paywall validation is not null, but no paywall validation type is specified")
 				}
