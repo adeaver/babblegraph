@@ -40,6 +40,8 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
+	r.HandleFunc("/article/{token}", index.HandleArticleLink)
+	r.HandleFunc("/paywall-report/{token}", index.HandlePaywallReport)
 	r.HandleFunc("/verify/{token}", index.HandleVerificationForToken)
 	r.HandleFunc("/dist/{token}/logo.png", index.HandleServeLogo(staticFileDirName))
 	r.PathPrefix("/dist").Handler(http.StripPrefix("/dist", http.FileServer(http.Dir(staticFileDirName))))

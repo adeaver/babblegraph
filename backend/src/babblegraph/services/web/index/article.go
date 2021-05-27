@@ -46,3 +46,37 @@ func HandleArticleLink(w http.ResponseWriter, r *http.Request) {
 	}
 	http.Redirect(w, r, articleBody.URL, http.StatusPermanentRedirect)
 }
+
+func HandlePaywallReport(w http.ResponseWriter, r *http.Request) {
+	router.LogRequestWithoutBody(r)
+	routeVars := mux.Vars(r)
+	token, ok := routeVars["token"]
+	if !ok {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	var paywallReportBody routes.PaywallReportBody
+	if err := encrypt.WithDecodedToken(token, func(tokenPair encrypt.TokenPair) error {
+		if tokenPair.Key != routes.PaywallReportKey.Str() {
+			return fmt.Errorf("Wrong key type")
+		}
+		var ok bool
+		paywallReportBody, ok = tokenPair.Value.(routes.PaywallReportBody)
+		if !ok {
+			return fmt.Errorf("Article Body unmarshalled incorrectly")
+		}
+		return nil
+	}); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		u := urlparser.MustParseURL(paywallReportBody.URL)
+		return userlinks.ReportPaywall(tx, paywallReportBody.UserID, u, paywallReportBody.EmailRecordID)
+	}); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	// TODO: build a better page for this to redirect to
+	http.Redirect(w, r, "/", http.StatusPermanentRedirect)
+}
