@@ -9,10 +9,10 @@ import (
 )
 
 const (
-	registerUserLinkClickQuery               = "INSERT INTO user_link_clicks (user_id, domain, url_identifier, email_record_id, access_month) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (url_identifier, access_month) DO NOTHING"
+	registerUserLinkClickQuery               = "INSERT INTO user_link_clicks (user_id, domain, url_identifier, email_record_id, access_month) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (user_id, url_identifier, access_month) DO NOTHING"
 	getDomainCountsByCurrentAccessMonthQuery = "SELECT user_id, domain, COUNT(*) count FROM user_link_clicks WHERE user_id = $1 access_month = $2 GROUP BY domain"
 
-	reportPaywallQuery = "INSERT INTO paywall_reports VALUES (user_id, domain, url_identifier, email_record_id, access_month) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (url_identifier, access_month) DO NOTHING"
+	reportPaywallQuery = "INSERT INTO paywall_reports (user_id, domain, url_identifier, email_record_id, access_month) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (user_id, url_identifier, access_month) DO NOTHING"
 )
 
 func RegisterUserLinkClick(tx *sqlx.Tx, userID users.UserID, u urlparser.ParsedURL, emailRecordID email.ID) error {

@@ -26,3 +26,11 @@ func MakeRandomString(inputLength int) (*string, error) {
 	}
 	return ptr.String(string(chars)), nil
 }
+
+func MustMakeRandomString(inputLength int) string {
+	s, err := MakeRandomString(inputLength)
+	if err != nil {
+		panic(err.Error())
+	}
+	return *s
+}

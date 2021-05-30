@@ -8,5 +8,7 @@ CREATE TABLE IF NOT EXISTS paywall_reports(
     email_record_id TEXT NOT NULL REFERENCES email_records(_id),
     access_month TEXT NOT NULL,
 
-    PRIMARY KEY (_id),
-)
+    PRIMARY KEY (_id)
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS user_paywalls_unique_url_month ON paywall_reports(user_id, url_identifier, access_month);
