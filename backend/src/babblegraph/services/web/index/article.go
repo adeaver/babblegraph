@@ -6,13 +6,29 @@ import (
 	"babblegraph/services/web/router"
 	"babblegraph/util/database"
 	"babblegraph/util/encrypt"
+	"babblegraph/util/random"
 	"babblegraph/util/urlparser"
+	"encoding/json"
 	"fmt"
 	"net/http"
+	"reflect"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
 )
+
+func getArticleLinkBodyFromMap(m map[string]interface{}) (*routes.ArticleLinkBody, error) {
+	var articleBody routes.ArticleLinkBody
+	bytes, err := json.Marshal(m)
+	if err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal(bytes, &articleBody); err != nil {
+		return nil, err
+	}
+	return &articleBody, nil
+}
 
 func HandleArticleLink(w http.ResponseWriter, r *http.Request) {
 	router.LogRequestWithoutBody(r)
@@ -22,19 +38,28 @@ func HandleArticleLink(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	var articleBody routes.ArticleLinkBody
+	localHub := sentry.CurrentHub().Clone()
+	localHub.ConfigureScope(func(scope *sentry.Scope) {
+		scope.SetTag("handle-article-link", fmt.Sprintf("article-link-%s", random.MustMakeRandomString(12)))
+	})
+	var articleBody *routes.ArticleLinkBody
 	if err := encrypt.WithDecodedToken(token, func(tokenPair encrypt.TokenPair) error {
 		if tokenPair.Key != routes.ArticleLinkKey.Str() {
 			return fmt.Errorf("Wrong key type")
 		}
-		var ok bool
-		articleBody, ok = tokenPair.Value.(routes.ArticleLinkBody)
+		m, ok := tokenPair.Value.(map[string]interface{})
 		if !ok {
-			return fmt.Errorf("Article Body unmarshalled incorrectly")
+			return fmt.Errorf("Article body did not marshal correctly, got type %v", reflect.TypeOf(tokenPair.Value))
+		}
+		var err error
+		articleBody, err = getArticleLinkBodyFromMap(m)
+		if err != nil {
+			return err
 		}
 		return nil
 	}); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
+		localHub.CaptureException(err)
 		return
 	}
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
@@ -42,9 +67,22 @@ func HandleArticleLink(w http.ResponseWriter, r *http.Request) {
 		return userlinks.RegisterUserLinkClick(tx, articleBody.UserID, u, articleBody.EmailRecordID)
 	}); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
+		localHub.CaptureException(err)
 		return
 	}
 	http.Redirect(w, r, articleBody.URL, http.StatusPermanentRedirect)
+}
+
+func getPaywallReportBodyFromMap(m map[string]interface{}) (*routes.PaywallReportBody, error) {
+	var paywallReportBody routes.PaywallReportBody
+	bytes, err := json.Marshal(m)
+	if err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal(bytes, &paywallReportBody); err != nil {
+		return nil, err
+	}
+	return &paywallReportBody, nil
 }
 
 func HandlePaywallReport(w http.ResponseWriter, r *http.Request) {
@@ -55,19 +93,29 @@ func HandlePaywallReport(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	var paywallReportBody routes.PaywallReportBody
+	localHub := sentry.CurrentHub().Clone()
+	localHub.ConfigureScope(func(scope *sentry.Scope) {
+		scope.SetTag("handle-paywall-report-link", fmt.Sprintf("paywall-report-link-%s", random.MustMakeRandomString(12)))
+	})
+	var paywallReportBody *routes.PaywallReportBody
 	if err := encrypt.WithDecodedToken(token, func(tokenPair encrypt.TokenPair) error {
 		if tokenPair.Key != routes.PaywallReportKey.Str() {
 			return fmt.Errorf("Wrong key type")
 		}
 		var ok bool
-		paywallReportBody, ok = tokenPair.Value.(routes.PaywallReportBody)
+		m, ok := tokenPair.Value.(map[string]interface{})
 		if !ok {
 			return fmt.Errorf("Article Body unmarshalled incorrectly")
+		}
+		var err error
+		paywallReportBody, err = getPaywallReportBodyFromMap(m)
+		if err != nil {
+			return err
 		}
 		return nil
 	}); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
+		localHub.CaptureException(err)
 		return
 	}
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
@@ -75,6 +123,7 @@ func HandlePaywallReport(w http.ResponseWriter, r *http.Request) {
 		return userlinks.ReportPaywall(tx, paywallReportBody.UserID, u, paywallReportBody.EmailRecordID)
 	}); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
+		localHub.CaptureException(err)
 		return
 	}
 	// TODO: build a better page for this to redirect to

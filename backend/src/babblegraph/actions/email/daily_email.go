@@ -5,6 +5,7 @@ import (
 	"babblegraph/model/documents"
 	"babblegraph/model/email"
 	"babblegraph/model/routes"
+	"babblegraph/model/users"
 	"babblegraph/util/deref"
 	"babblegraph/util/ptr"
 	"babblegraph/util/ses"
@@ -35,10 +36,11 @@ type dailyEmailCategory struct {
 }
 
 type dailyEmailLink struct {
-	ImageURL    *string
-	Title       *string
-	Description *string
-	URL         string
+	ImageURL         *string
+	Title            *string
+	Description      *string
+	URL              string
+	PaywallReportURL string
 }
 
 type CategorizedDocuments struct {
@@ -81,7 +83,7 @@ func createDailyEmailTemplate(emailRecordID email.ID, recipient email.Recipient,
 	if err != nil {
 		return nil, err
 	}
-	categories := createEmailCategories(input.CategorizedDocuments)
+	categories := createEmailCategories(recipient.UserID, emailRecordID, input.CategorizedDocuments)
 	var setTopicsLink *string
 	if !input.HasSetTopics {
 		setTopicsLink, err = routes.MakeSetTopicsLink(recipient.UserID)
@@ -101,7 +103,7 @@ func createDailyEmailTemplate(emailRecordID email.ID, recipient email.Recipient,
 	}, nil
 }
 
-func createEmailCategories(categorizedDocuments []CategorizedDocuments) []dailyEmailCategory {
+func createEmailCategories(userID users.UserID, emailRecordID email.ID, categorizedDocuments []CategorizedDocuments) []dailyEmailCategory {
 	var out []dailyEmailCategory
 	// TODO(other-languages): don't hardcode this
 	languageCode := wordsmith.LanguageCodeSpanish
@@ -124,13 +126,13 @@ func createEmailCategories(categorizedDocuments []CategorizedDocuments) []dailyE
 		}
 		out = append(out, dailyEmailCategory{
 			CategoryName: contentTopicCategory,
-			Links:        createLinksForDocuments(categorized.Documents),
+			Links:        createLinksForDocuments(userID, emailRecordID, categorized.Documents),
 		})
 	}
 	return out
 }
 
-func createLinksForDocuments(documents []documents.Document) []dailyEmailLink {
+func createLinksForDocuments(userID users.UserID, emailRecordID email.ID, documents []documents.Document) []dailyEmailLink {
 	var links []dailyEmailLink
 	for _, doc := range documents {
 		var title, imageURL, description *string
@@ -150,6 +152,7 @@ func createLinksForDocuments(documents []documents.Document) []dailyEmailLink {
 		case urlparser.IsValidURL(doc.URL):
 			url = ptr.String(doc.URL)
 		default:
+			log.Println(fmt.Sprintf("Invalid URL %s", *url))
 			continue
 		}
 		urlWithProtocol, err := urlparser.EnsureProtocol(*url)
@@ -157,11 +160,22 @@ func createLinksForDocuments(documents []documents.Document) []dailyEmailLink {
 			log.Println(fmt.Sprintf("Got error ensuring protocol for URL %s: %s", *url, err.Error()))
 			continue
 		}
+		link, err := routes.MakeArticleLink(userID, emailRecordID, *urlWithProtocol)
+		if err != nil {
+			log.Println(fmt.Sprintf("Got error making article link for URL %s: %s", *url, err.Error()))
+			continue
+		}
+		paywallReportLink, err := routes.MakePaywallReportLink(userID, emailRecordID, *urlWithProtocol)
+		if err != nil {
+			log.Println(fmt.Sprintf("Got error making paywall report link for URL %s: %s", *url, err.Error()))
+			continue
+		}
 		links = append(links, dailyEmailLink{
-			ImageURL:    imageURL,
-			Title:       title,
-			Description: description,
-			URL:         *urlWithProtocol,
+			ImageURL:         imageURL,
+			Title:            title,
+			Description:      description,
+			URL:              *link,
+			PaywallReportURL: *paywallReportLink,
 		})
 	}
 	return links
