@@ -126,7 +126,7 @@ func HandlePaywallReport(w http.ResponseWriter, r *http.Request) {
 		localHub.CaptureException(err)
 		return
 	}
-	subscriptionManagementLink, err := routes.MakeSubscriptionManagementRouteForUserID(paywallReportBody.UserID)
+	subscriptionManagementLink, err := routes.MakeSubscriptionManagementToken(paywallReportBody.UserID)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		localHub.CaptureException(err)
