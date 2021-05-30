@@ -126,6 +126,11 @@ func HandlePaywallReport(w http.ResponseWriter, r *http.Request) {
 		localHub.CaptureException(err)
 		return
 	}
-	// TODO: build a better page for this to redirect to
-	http.Redirect(w, r, "/", http.StatusPermanentRedirect)
+	subscriptionManagementLink, err := routes.MakeSubscriptionManagementRouteForUserID(paywallReportBody.UserID)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		localHub.CaptureException(err)
+		return
+	}
+	http.Redirect(w, r, fmt.Sprintf("/paywall-thank-you/%s", *subscriptionManagementLink), http.StatusPermanentRedirect)
 }
