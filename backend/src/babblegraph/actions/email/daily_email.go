@@ -36,11 +36,11 @@ type dailyEmailCategory struct {
 }
 
 type dailyEmailLink struct {
-	ImageURL          *string
-	Title             *string
-	Description       *string
-	URL               string
-	PaywallReportLink string
+	ImageURL         *string
+	Title            *string
+	Description      *string
+	URL              string
+	PaywallReportURL string
 }
 
 type CategorizedDocuments struct {
@@ -152,6 +152,7 @@ func createLinksForDocuments(userID users.UserID, emailRecordID email.ID, docume
 		case urlparser.IsValidURL(doc.URL):
 			url = ptr.String(doc.URL)
 		default:
+			log.Println(fmt.Sprintf("Invalid URL %s", *url))
 			continue
 		}
 		urlWithProtocol, err := urlparser.EnsureProtocol(*url)
@@ -170,11 +171,11 @@ func createLinksForDocuments(userID users.UserID, emailRecordID email.ID, docume
 			continue
 		}
 		links = append(links, dailyEmailLink{
-			ImageURL:          imageURL,
-			Title:             title,
-			Description:       description,
-			URL:               *link,
-			PaywallReportLink: *paywallReportLink,
+			ImageURL:         imageURL,
+			Title:            title,
+			Description:      description,
+			URL:              *link,
+			PaywallReportURL: *paywallReportLink,
 		})
 	}
 	return links
