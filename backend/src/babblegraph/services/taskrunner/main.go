@@ -17,7 +17,7 @@ func main() {
 	if err := setupDatabases(); err != nil {
 		log.Fatal(err.Error())
 	}
-	taskName := flag.String("task", "none", "Name of task to run [daily-email]")
+	taskName := flag.String("task", "none", "Name of task to run [daily-email, privacy-policy]")
 	flag.Parse()
 	if taskName == nil {
 		log.Fatal("No task specified")
@@ -34,6 +34,8 @@ func main() {
 		if err := tasks.SendDailyEmail(); err != nil {
 			log.Fatal(err.Error())
 		}
+	case "privacy-policy":
+		tasks.SendPrivacyPolicyUpdate()
 	default:
 		log.Fatal(fmt.Sprintf("Invalid task specified %s", *taskName))
 	}

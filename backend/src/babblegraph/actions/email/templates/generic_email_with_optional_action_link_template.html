@@ -116,7 +116,7 @@
                                 <img src="{{.BaseEmailTemplate.HeroImageURL}}" alt="Babblegraph Subscription Verification" width="100%" height="auto" />
                             </a>
                         </h1>
-                        {{ $paragraph := .BeforeParagraphs }}
+                        {{range $paragraph := .BeforeParagraphs }}
                             <p style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; Margin-bottom: 15px;">{{ $paragraph }}</p>
                         {{end}}
                         {{ if .Action }}
@@ -137,7 +137,7 @@
                                 </table>
                         {{ end }}
                         <p style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; Margin-bottom: 15px;">If you’re having trouble clicking that button, copy this link into your web browser: <a href="{{ .VerificationLink }}" target="_blank" style="display: inline-block; color: #20A4F3; cursor: pointer; text-decoration: underline; font-size: 14px; font-weight: bold; margin: 0; padding: 12px 25px; border-color: #A663CC;">{{ .Action.Link }}</a></p>
-                        {{ $paragraph := .AfterParagraphs }}
+                        {{range $paragraph := .AfterParagraphs }}
                             <p style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; Margin-bottom: 15px;">{{ $paragraph }}</p>
                         {{ end }}
                       </td>
