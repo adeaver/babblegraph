@@ -4,6 +4,7 @@ import (
 	email_actions "babblegraph/actions/email"
 	"babblegraph/model/contenttopics"
 	"babblegraph/model/documents"
+	"babblegraph/model/domains"
 	"babblegraph/util/ptr"
 	"babblegraph/util/urlparser"
 	"babblegraph/wordsmith"
@@ -32,6 +33,24 @@ type documentsWithTopic struct {
 	documents []documents.DocumentWithScore
 }
 
+func getAllowedDomains(userDomainCounts map[string]int64) ([]string, error) {
+	var out []string
+	for _, d := range domains.GetDomains() {
+		countForDomain, ok := userDomainCounts[d]
+		if ok {
+			metadata, err := domains.GetDomainMetadata(d)
+			if err != nil {
+				return nil, err
+			}
+			if metadata.NumberOfMonthlyFreeArticles != nil && countForDomain >= *metadata.NumberOfMonthlyFreeArticles {
+				continue
+			}
+		}
+		out = append(out, d)
+	}
+	return out, nil
+}
+
 func queryDocsForUser(userInfo userEmailInfo) (_categorizedDocument []documentsWithTopic, _genericDocuments []documents.DocumentWithScore, _err error) {
 	var trackingLemmas []wordsmith.LemmaID
 	for _, lemmaMapping := range userInfo.TrackingLemmas {
@@ -39,10 +58,20 @@ func queryDocsForUser(userInfo userEmailInfo) (_categorizedDocument []documentsW
 			trackingLemmas = append(trackingLemmas, lemmaMapping.LemmaID)
 		}
 	}
+	userDomainCounts := make(map[string]int64)
+	for _, domainCount := range userInfo.UserDomainCounts {
+		userDomainCounts[domainCount.Domain] = domainCount.Count
+	}
+	allowableDomains, err := getAllowedDomains(userDomainCounts)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	docQueryBuilder := documents.NewDocumentsQueryBuilderForLanguage(userInfo.Languages[0])
 	readingLevelLowerBound := ptr.Int64(userInfo.ReadingLevel.LowerBound)
 	readingLevelUpperBound := ptr.Int64(userInfo.ReadingLevel.UpperBound)
 
+	docQueryBuilder.WithValidDomains(allowableDomains)
 	docQueryBuilder.NotContainingDocuments(userInfo.SentDocuments)
 	docQueryBuilder.ForVersionRange(documents.Version3.Ptr(), documents.Version6.Ptr())
 	docQueryBuilder.ForReadingLevelRange(readingLevelLowerBound, readingLevelUpperBound)
