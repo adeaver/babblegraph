@@ -29,7 +29,7 @@ func getCurrentAccessMonth() string {
 type UserDomainCount struct {
 	UserID users.UserID `db:"user_id"`
 	Domain string       `db:"domain"`
-	Count  int64        `db:"counter"`
+	Count  int64        `db:"count"`
 }
 
 type paywallReportID string

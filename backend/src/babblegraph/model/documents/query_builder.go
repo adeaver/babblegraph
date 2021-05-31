@@ -34,16 +34,19 @@ type documentsQueryBuilder struct {
 	// relevant for that topic - not the union of the two
 	topic  *contenttopics.ContentTopic
 	lemmas []string
+
+	domains []string
 }
 
 func NewDocumentsQueryBuilderForLanguage(languageCode wordsmith.LanguageCode) *documentsQueryBuilder {
-	return &documentsQueryBuilder{languageCode: languageCode}
+	return &documentsQueryBuilder{languageCode: languageCode, domains: domains.GetDomains()}
 }
 
 func (d *documentsQueryBuilder) ExecuteQuery() ([]DocumentWithScore, error) {
 	queryBuilder := esquery.NewBoolQueryBuilder()
 	queryBuilder.AddMust(esquery.Match("language_code", d.languageCode.Str()))
-	queryBuilder.AddMust(esquery.Terms("domain.keyword", domains.GetDomains()))
+	queryBuilder.AddMust(esquery.Terms("domain.keyword", d.domains))
+	queryBuilder.AddMustNot(esquery.Match("has_paywall", true))
 	/*
 	   We want to filter out articles that are assigned to all keywords
 	   because they are irrelevant. This is necessary since those articles
@@ -153,4 +156,8 @@ func (d *documentsQueryBuilder) ContainingLemmas(lemmaIDs []wordsmith.LemmaID) {
 	for _, l := range lemmaIDs {
 		d.lemmas = append(d.lemmas, l.Str())
 	}
+}
+
+func (d *documentsQueryBuilder) WithValidDomains(domains []string) {
+	d.domains = domains
 }
