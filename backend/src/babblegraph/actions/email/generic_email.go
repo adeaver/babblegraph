@@ -17,6 +17,7 @@ const (
 
 type genericEmailWithOptionalActionTemplate struct {
 	email.BaseEmailTemplate
+	EmailTitle       string
 	PreheaderText    string
 	BeforeParagraphs []string
 	Action           *GenericEmailAction
@@ -37,6 +38,7 @@ type SendGenericEmailWithOptionalActionForRecipientInput struct {
 	GenericEmailAction *GenericEmailAction
 	FromEmailName      *string
 	Subject            string
+	EmailTitle         string
 }
 
 func SendGenericEmailWithOptionalActionForRecipient(tx *sqlx.Tx, cl *ses.Client, input SendGenericEmailWithOptionalActionForRecipientInput) (*email.ID, error) {
@@ -49,6 +51,8 @@ func SendGenericEmailWithOptionalActionForRecipient(tx *sqlx.Tx, cl *ses.Client,
 		return nil, fmt.Errorf("Cannot have empty button text in email")
 	case len(input.Subject) == 0:
 		return nil, fmt.Errorf("Cannot have empty subject for email")
+	case len(input.EmailTitle) == 0:
+		return nil, fmt.Errorf("Cannot have empty title for email")
 	}
 	emailRecordID := email.NewEmailRecordID()
 	template, err := createGenericEmailWithOptionalActionTemplate(emailRecordID, input)
@@ -81,6 +85,7 @@ func createGenericEmailWithOptionalActionTemplate(emailRecordID email.ID, input 
 	}
 	return &genericEmailWithOptionalActionTemplate{
 		BaseEmailTemplate: *baseTemplate,
+		EmailTitle:        input.EmailTitle,
 		PreheaderText:     input.PreheaderText,
 		BeforeParagraphs:  input.BeforeParagraphs,
 		AfterParagraphs:   input.AfterParagraphs,

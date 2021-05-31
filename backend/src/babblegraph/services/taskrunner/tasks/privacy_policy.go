@@ -32,14 +32,15 @@ func SendPrivacyPolicyUpdate() {
 				EmailType:     email.EmailTypePrivacyPolicyUpdateJune2021,
 				FromEmailName: ptr.String("Andrew from Babblegraph"),
 				Subject:       "Updated Privacy Policy",
+				EmailTitle:    "Privacy Policy Update",
 				Recipient: email.Recipient{
 					EmailAddress: u.EmailAddress,
 					UserID:       u.ID,
 				},
 				BeforeParagraphs: []string{
 					"Hola!",
-					"As a result of a recent feature release that attempts to limit the amount of content that requires a paid subscription that is sent by Babblegraph, I’ve updated the privacy policy.",
-					"Starting now, Babblegraph will be collecting information when links are clicked in the daily email. This helps keep track of whether or not you’ve reached your monthly quota of free articles for news sources that enforce a limit.",
+					"As a result of a recent feature release, I’ve updated the privacy policy.",
+					"Starting now, Babblegraph will be collecting information when links are clicked in the daily email. This helps keep track of whether or not you’ve reached your monthly quota of free articles for news sources that enforce a limit. Likewise, Babblegraph will now attempt to completely avoid sending all content that requires a paid subscription to access!",
 					"Take a minute to read the privacy policy, which is linked below.",
 				},
 				GenericEmailAction: &email_actions.GenericEmailAction{
