@@ -42,7 +42,7 @@ func getAllowedDomains(userDomainCounts map[string]int64) ([]string, error) {
 			if err != nil {
 				return nil, err
 			}
-			if metadata.NumberOfMonthlyFreeArticles != nil && countForDomain > *metadata.NumberOfMonthlyFreeArticles {
+			if metadata.NumberOfMonthlyFreeArticles != nil && countForDomain >= *metadata.NumberOfMonthlyFreeArticles {
 				continue
 			}
 		}
