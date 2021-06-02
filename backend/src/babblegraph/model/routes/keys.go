@@ -13,6 +13,8 @@ const (
 	EmailOpenedKey                           RouteEncryptionKey = "email-opened"
 	UserVerificationKey                      RouteEncryptionKey = "user-verification"
 	WordReinforcementKey                     RouteEncryptionKey = "word-reinforcement"
+	ArticleLinkKey                           RouteEncryptionKey = "article-link"
+	PaywallReportKey                         RouteEncryptionKey = "paywall-report"
 )
 
 func (r RouteEncryptionKey) Str() string {

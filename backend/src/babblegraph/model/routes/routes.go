@@ -69,3 +69,33 @@ func MakeWordReinforcementLink(userID users.UserID) (*string, error) {
 	}
 	return ptr.String(env.GetAbsoluteURLForEnvironment(fmt.Sprintf("manage/%s/vocabulary", *token))), nil
 }
+
+func MakeArticleLink(userID users.UserID, emailRecordID email.ID, u string) (*string, error) {
+	token, err := encrypt.GetToken(encrypt.TokenPair{
+		Key: ArticleLinkKey.Str(),
+		Value: ArticleLinkBody{
+			UserID:        userID,
+			EmailRecordID: emailRecordID,
+			URL:           u,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	return ptr.String(env.GetAbsoluteURLForEnvironment(fmt.Sprintf("article/%s", *token))), nil
+}
+
+func MakePaywallReportLink(userID users.UserID, emailRecordID email.ID, u string) (*string, error) {
+	token, err := encrypt.GetToken(encrypt.TokenPair{
+		Key: PaywallReportKey.Str(),
+		Value: PaywallReportBody{
+			UserID:        userID,
+			EmailRecordID: emailRecordID,
+			URL:           u,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	return ptr.String(env.GetAbsoluteURLForEnvironment(fmt.Sprintf("paywall-report/%s", *token))), nil
+}
