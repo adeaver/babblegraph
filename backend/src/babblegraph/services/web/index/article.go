@@ -70,7 +70,7 @@ func HandleArticleLink(w http.ResponseWriter, r *http.Request) {
 		localHub.CaptureException(err)
 		return
 	}
-	http.Redirect(w, r, articleBody.URL, http.StatusPermanentRedirect)
+	http.Redirect(w, r, articleBody.URL, http.StatusFound)
 }
 
 func getPaywallReportBodyFromMap(m map[string]interface{}) (*routes.PaywallReportBody, error) {
