@@ -22,6 +22,8 @@ const (
 	EmailTypeDaily            EmailType = "daily-email"
 	EmailTypeUserVerification EmailType = "user-verification"
 	EmailTypeUserFeedback     EmailType = "user-feedback"
+
+	EmailTypePrivacyPolicyUpdateJune2021 = "privacy-policy-update-june-2021"
 )
 
 type Recipient struct {

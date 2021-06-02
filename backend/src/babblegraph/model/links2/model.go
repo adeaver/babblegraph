@@ -40,7 +40,11 @@ const (
 	// Add Paywall Detection
 	FetchVersion5 FetchVersion = 5
 
-	CurrentFetchVersion FetchVersion = FetchVersion5
+	// Version 6 Updates:
+	// Fixes some bugs with Paywall Detection
+	FetchVersion6 FetchVersion = 6
+
+	CurrentFetchVersion FetchVersion = FetchVersion6
 )
 
 type dbLink struct {

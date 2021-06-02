@@ -36,7 +36,7 @@ const PrivacyPolicyPage = () => {
                             PERSONAL INFORMATION WE COLLECT
                         </Heading3>
                         <Paragraph align={Alignment.Left}>
-                            When you visit the Site, we automatically collect certain information about your device, including information about your web browser, IP address, time zone, and some of the cookies that are installed on your device. Additionally, when you open emails sent by Babblegraph, we collect information when an email is first opened, including timestamps. At this time, we do not collect any information regarding which links were followed in the email. We also collect information about how you interact with the Site. We refer to this automatically-collected information as “Device Information.”
+                            When you visit the Site, we automatically collect certain information about your device, including information about your web browser, IP address, time zone, and some of the cookies that are installed on your device. Additionally, when you open emails sent by Babblegraph, we collect information when an email is first opened or when a link in an email sent by Babblegraph is clicked, including timestamps. We also collect information about how you interact with the Site. We refer to this automatically-collected information as “Device Information.”
                         </Paragraph>
                         <Paragraph align={Alignment.Left}>
                             We collect Device Information using the following technologies:
@@ -49,7 +49,7 @@ const PrivacyPolicyPage = () => {
                             </li>
                             <li>
                                 <Paragraph align={Alignment.Left}>
-                                    “Web beacons,” “tags,” and “pixels” are electronic files used to record information about how you browse the Site, including when emails sent by Babblegraph are opened.
+                                    “Web beacons,” “tags,” and “pixels” are electronic files used to record information about how you browse the Site, including when emails sent by Babblegraph are opened or when links in the daily email are clicked.
                                 </Paragraph>
                             </li>
                         </ul>

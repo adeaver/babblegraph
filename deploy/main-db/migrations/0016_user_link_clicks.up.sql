@@ -12,5 +12,4 @@ CREATE TABLE IF NOT EXISTS user_link_clicks(
     PRIMARY KEY (_id)
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS user_link_clicks_unique_url_month ON user_link_clicks(user_id, url_identifier, access_month);
 CREATE INDEX IF NOT EXISTS user_link_clicks_user_access_month ON user_link_clicks(user_id, access_month);
