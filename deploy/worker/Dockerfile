@@ -27,6 +27,9 @@ COPY --chown=$SERVICE_USER:$SERVICE_USER --from=builder /usr/local/go/src/babble
 COPY --chown=$SERVICE_USER:$SERVICE_USER --from=builder /usr/local/go/bin/worker .
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 
+RUN ln -sf /dev/stdout /var/log/worker/stdout.log \
+    && ln -sf /dev/stderr /var/log/worker/stderr.log
+
 USER $SERVICE_USER
 
 CMD ["./worker"]

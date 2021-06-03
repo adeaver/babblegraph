@@ -49,9 +49,8 @@ func makeRefetchSeedDomainJob(linkProcessor *linkprocessing.LinkProcessor, errs 
 		defer func() {
 			if x := recover(); x != nil {
 				_, fn, line, _ := runtime.Caller(1)
-				err := fmt.Errorf("Refetch Panic: %s: %d: %v\n", fn, line, x)
+				err := fmt.Errorf("Refetch Panic: %s: %d: %v\n%s", fn, line, x, string(debug.Stack()))
 				localHub.CaptureException(err)
-				debug.PrintStack()
 				errs <- err
 			}
 		}()
@@ -73,9 +72,8 @@ func makeEmailJob(errs chan error) func() {
 		defer func() {
 			if x := recover(); x != nil {
 				_, fn, line, _ := runtime.Caller(1)
-				err := fmt.Errorf("Email Panic: %s: %d: %v\n", fn, line, x)
+				err := fmt.Errorf("Email Panic: %s: %d: %v\n%s", fn, line, x, string(debug.Stack()))
 				localHub.CaptureException(err)
-				debug.PrintStack()
 				errs <- err
 			}
 		}()
@@ -104,9 +102,8 @@ func makeVerificationJob(errs chan error) func() {
 		})
 		defer func() {
 			if x := recover(); x != nil {
-				debug.PrintStack()
 				_, fn, line, _ := runtime.Caller(1)
-				err := fmt.Errorf("Verification Panic: %s: %d: %v\n", fn, line, x)
+				err := fmt.Errorf("Verification Panic: %s: %d: %v\n%s", fn, line, x, string(debug.Stack()))
 				localHub.CaptureException(err)
 				errs <- err
 			}
@@ -136,9 +133,8 @@ func makeUserFeedbackJob(errs chan error) func() {
 		defer func() {
 			if x := recover(); x != nil {
 				_, fn, line, _ := runtime.Caller(1)
-				err := fmt.Errorf("User Feedback Panic: %s: %d: %v\n", fn, line, x)
+				err := fmt.Errorf("User Feedback Panic: %s: %d: %v\n%s", fn, line, x, string(debug.Stack()))
 				localHub.CaptureException(err)
-				debug.PrintStack()
 				errs <- err
 			}
 		}()

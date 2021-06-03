@@ -13,6 +13,7 @@ docker stop babblegraph_worker && docker rm babblegraph_worker && true
 echo "Running new container..."
 docker run -d \
     --env-file ./env/worker.env \
+    --volume deploy/worker/log:/var/log/worker
     --restart unless-stopped \
     --name babblegraph_worker \
     babblegraph.com/worker:$(git rev-parse --short HEAD)
