@@ -1,0 +1,3 @@
+#/bin/bash
+
+/usr/sbin/logrotate /root/babblegraph/deploy/worker/logrotate.conf --state /root/babblegraph/deploy/worker/logrotate-state --verbose
