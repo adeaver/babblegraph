@@ -96,9 +96,8 @@ func startWorkerThread(workerNumber int, linkProcessor *linkprocessing.LinkProce
 		})
 		defer func() {
 			if x := recover(); x != nil {
-				debug.PrintStack()
 				_, fn, line, _ := runtime.Caller(1)
-				err := fmt.Errorf("Worker Panic: %s: %d: %v\n", fn, line, x)
+				err := fmt.Errorf("Worker Panic: %s: %d: %v\n%s", fn, line, x, string(debug.Stack()))
 				localHub.CaptureException(err)
 				errs <- err
 			}

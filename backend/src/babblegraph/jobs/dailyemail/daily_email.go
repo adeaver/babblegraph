@@ -49,8 +49,7 @@ func sendDailyEmailToUser(emailClient *ses.Client, user users.User) error {
 			return err
 		}
 		if len(docs) == 0 {
-			log.Println(fmt.Sprintf("No documents for user %s", user.EmailAddress))
-			return nil
+			return fmt.Errorf("No documents for user %s", user.EmailAddress)
 		}
 		recipient := email.Recipient{
 			UserID:       user.ID,
