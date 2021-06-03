@@ -77,10 +77,10 @@ func getPaywallReportBodyFromMap(m map[string]interface{}) (*routes.PaywallRepor
 	var paywallReportBody routes.PaywallReportBody
 	bytes, err := json.Marshal(m)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Got error %s marshalling map %+v", err.Error(), m)
 	}
 	if err := json.Unmarshal(bytes, &paywallReportBody); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Got error %s unmarshalling string: %s", err.Error(), string(bytes))
 	}
 	return &paywallReportBody, nil
 }
