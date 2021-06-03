@@ -22,10 +22,10 @@ func getArticleLinkBodyFromMap(m map[string]interface{}) (*routes.ArticleLinkBod
 	var articleBody routes.ArticleLinkBody
 	bytes, err := json.Marshal(m)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Got error %s marshalling map %+v", err.Error(), m)
 	}
 	if err := json.Unmarshal(bytes, &articleBody); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Got error %s unmarshalling string: %s", err.Error(), string(bytes))
 	}
 	return &articleBody, nil
 }
