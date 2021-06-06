@@ -27,7 +27,8 @@ func StartScheduler(linkProcessor *linkprocessing.LinkProcessor, errs chan error
 		c.AddFunc("30 5 * * *", makeEmailJob(errs))
 		c.AddFunc("30 12 * * *", makeUserFeedbackJob(errs))
 		c.AddFunc("*/1 * * * *", makeVerificationJob(errs))
-	case "local":
+	case "local-test-emails",
+		"local":
 		c.AddFunc("*/1 * * * *", makeVerificationJob(errs))
 		c.AddFunc("*/30 * * * *", makeRefetchSeedDomainJob(linkProcessor, errs))
 		makeEmailJob(errs)()

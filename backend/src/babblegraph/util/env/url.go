@@ -5,10 +5,11 @@ import "fmt"
 type Environment string
 
 const (
-	EnvironmentProd         Environment = "prod"
-	EnvironmentStage        Environment = "stage"
-	EnvironmentLocal        Environment = "local"
-	EnvironmentLocalNoEmail Environment = "local-no-emails"
+	EnvironmentProd           Environment = "prod"
+	EnvironmentStage          Environment = "stage"
+	EnvironmentLocal          Environment = "local"
+	EnvironmentLocalNoEmail   Environment = "local-no-emails"
+	EnvironmentLocalTestEmail Environment = "local-test-emails"
 )
 
 func (e Environment) Str() string {
@@ -25,6 +26,8 @@ func mustEnvironmentFromString(s string) Environment {
 		return EnvironmentLocal
 	case "local-no-email":
 		return EnvironmentLocalNoEmail
+	case "local-test-emails":
+		return EnvironmentLocalTestEmail
 	default:
 		panic(fmt.Sprintf("Unrecognized environment: %s", s))
 	}
@@ -38,6 +41,7 @@ func GetAbsoluteURLForEnvironment(path string) string {
 	case EnvironmentStage:
 		panic("unimplemented")
 	case EnvironmentLocal,
+		EnvironmentLocalTestEmail,
 		EnvironmentLocalNoEmail:
 		return fmt.Sprintf("http://localhost:8080/%s", path)
 	default:

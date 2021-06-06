@@ -2,6 +2,7 @@ package routes
 
 import (
 	"babblegraph/model/email"
+	"babblegraph/model/userdocuments"
 	"babblegraph/model/users"
 	"babblegraph/util/encrypt"
 	"babblegraph/util/env"
@@ -70,14 +71,10 @@ func MakeWordReinforcementLink(userID users.UserID) (*string, error) {
 	return ptr.String(env.GetAbsoluteURLForEnvironment(fmt.Sprintf("manage/%s/vocabulary", *token))), nil
 }
 
-func MakeArticleLink(userID users.UserID, emailRecordID email.ID, u string) (*string, error) {
+func MakeArticleLink(userDocumentID userdocuments.UserDocumentID) (*string, error) {
 	token, err := encrypt.GetToken(encrypt.TokenPair{
-		Key: ArticleLinkKey.Str(),
-		Value: ArticleLinkBody{
-			UserID:        userID,
-			EmailRecordID: emailRecordID,
-			URL:           u,
-		},
+		Key:   ArticleLinkKeyForUserDocumentID.Str(),
+		Value: userDocumentID,
 	})
 	if err != nil {
 		return nil, err
@@ -85,14 +82,10 @@ func MakeArticleLink(userID users.UserID, emailRecordID email.ID, u string) (*st
 	return ptr.String(env.GetAbsoluteURLForEnvironment(fmt.Sprintf("article/%s", *token))), nil
 }
 
-func MakePaywallReportLink(userID users.UserID, emailRecordID email.ID, u string) (*string, error) {
+func MakePaywallReportLink(userDocumentID userdocuments.UserDocumentID) (*string, error) {
 	token, err := encrypt.GetToken(encrypt.TokenPair{
-		Key: PaywallReportKey.Str(),
-		Value: PaywallReportBody{
-			UserID:        userID,
-			EmailRecordID: emailRecordID,
-			URL:           u,
-		},
+		Key:   PaywallReportKeyForUserDocumentID.Str(),
+		Value: userDocumentID,
 	})
 	if err != nil {
 		return nil, err

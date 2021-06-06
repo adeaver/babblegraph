@@ -2,10 +2,8 @@ package dailyemail
 
 import (
 	email_actions "babblegraph/actions/email"
-	"babblegraph/model/documents"
 	"babblegraph/model/email"
 	"babblegraph/model/usercontenttopics"
-	"babblegraph/model/userdocuments"
 	"babblegraph/model/users"
 	"babblegraph/util/database"
 	"babblegraph/util/ses"
@@ -59,19 +57,9 @@ func sendDailyEmailToUser(emailClient *ses.Client, user users.User) error {
 		if err != nil {
 			return err
 		}
-		emailRecordID, err := email_actions.SendDailyEmailForDocuments(tx, emailClient, recipient, email_actions.DailyEmailInput{
+		return email_actions.SendDailyEmailForDocuments(tx, emailClient, recipient, email_actions.DailyEmailInput{
 			CategorizedDocuments: docs,
 			HasSetTopics:         len(contentTopics) != 0,
 		})
-		if err != nil {
-			return err
-		}
-		var docIDs []documents.DocumentID
-		for _, categorizedDocs := range docs {
-			for _, doc := range categorizedDocs.Documents {
-				docIDs = append(docIDs, doc.ID)
-			}
-		}
-		return userdocuments.InsertDocumentIDsForUser(tx, user.ID, *emailRecordID, docIDs)
 	})
 }
