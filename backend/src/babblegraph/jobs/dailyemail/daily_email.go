@@ -35,6 +35,37 @@ func GetDailyEmailJob(localSentryHub *sentry.Hub, emailClient *ses.Client) func(
 	}
 }
 
+func SendDailyEmailToUsersByEmailAddress(localSentryHub *sentry.Hub, emailClient *ses.Client) func([]string) error {
+	return func(emailAddresses []string) error {
+		return database.WithTx(func(tx *sqlx.Tx) error {
+			for _, emailAddress := range emailAddresses {
+				u, err := users.LookupUserByEmailAddress(tx, emailAddress)
+				if err != nil {
+					nErr := fmt.Errorf("Error finding user by email address for daily email to %s: %s", emailAddress, err.Error())
+					log.Println(nErr.Error())
+					localSentryHub.CaptureException(nErr)
+					continue
+				}
+				if u == nil {
+					log.Println(fmt.Sprintf("No user for email address %s, continuing", emailAddress))
+					continue
+				}
+				if u.Status != users.UserStatusVerified {
+					log.Println(fmt.Sprintf("User %s is not verified, continuing", emailAddress))
+					continue
+				}
+				if err := sendDailyEmailToUser(emailClient, *u); err != nil {
+					nErr := fmt.Errorf("Error sending daily email to %s: %s", u.EmailAddress, err.Error())
+					log.Println(nErr.Error())
+					localSentryHub.CaptureException(nErr)
+					continue
+				}
+			}
+			return nil
+		})
+	}
+}
+
 func sendDailyEmailToUser(emailClient *ses.Client, user users.User) error {
 	var docs []email_actions.CategorizedDocuments
 	return database.WithTx(func(tx *sqlx.Tx) error {
