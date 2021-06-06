@@ -78,7 +78,7 @@ func HandleArticleLink(w http.ResponseWriter, r *http.Request) {
 				if userDocument.DocumentURL == nil {
 					return fmt.Errorf("User Document has no document URL")
 				}
-				emailRecordID = userDocument.EmailRecordID
+				emailRecordID = userDocument.EmailID
 				userID = &userDocument.UserID
 				u := urlparser.MustParseURL(*userDocument.DocumentURL)
 				url = &u
@@ -164,7 +164,7 @@ func HandlePaywallReport(w http.ResponseWriter, r *http.Request) {
 				if userDocument.DocumentURL == nil {
 					return fmt.Errorf("User Document has no document URL")
 				}
-				emailRecordID = userDocument.EmailRecordID
+				emailRecordID = userDocument.EmailID
 				userID = &userDocument.UserID
 				u := urlparser.MustParseURL(*userDocument.DocumentURL)
 				url = &u

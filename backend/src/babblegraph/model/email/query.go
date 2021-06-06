@@ -38,7 +38,7 @@ func GetEmailUsageForType(tx *sqlx.Tx, emailType EmailType) ([]EmailUsage, error
 const updateEmailRecordIDWithSESMessageIDQuery = "UPDATE email_records SET ses_message_id = $1 WHERE _id = $2"
 
 func UpdateEmailRecordIDWithSESMessageID(tx *sqlx.Tx, id ID, sesMessageID string) error {
-	if _, err := tx.Exec(updateEmailRecordIDWithSESMessageIDQuery, id, sesMessageID); err != nil {
+	if _, err := tx.Exec(updateEmailRecordIDWithSESMessageIDQuery, sesMessageID, id); err != nil {
 		return err
 	}
 	return nil

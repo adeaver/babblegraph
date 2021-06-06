@@ -9,7 +9,7 @@ type ID string
 
 type dbEmail struct {
 	ID            ID           `db:"_id"`
-	SESMessageID  string       `db:"ses_message_id"`
+	SESMessageID  *string      `db:"ses_message_id"`
 	UserID        users.UserID `db:"user_id"`
 	SentAt        time.Time    `db:"sent_at"`
 	FirstOpenedAt *time.Time   `db:"first_opened_at"`
