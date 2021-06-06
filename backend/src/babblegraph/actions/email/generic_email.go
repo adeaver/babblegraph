@@ -5,6 +5,7 @@ import (
 	"babblegraph/util/ptr"
 	"babblegraph/util/ses"
 	"fmt"
+	"log"
 	"strings"
 	"text/template"
 
@@ -55,6 +56,9 @@ func SendGenericEmailWithOptionalActionForRecipient(tx *sqlx.Tx, cl *ses.Client,
 		return nil, fmt.Errorf("Cannot have empty title for email")
 	}
 	emailRecordID := email.NewEmailRecordID()
+	if err := email.InsertEmailRecord(tx, emailRecordID, input.Recipient.UserID, input.EmailType); err != nil {
+		return nil, err
+	}
 	template, err := createGenericEmailWithOptionalActionTemplate(emailRecordID, input)
 	if err != nil {
 		return nil, err
@@ -72,8 +76,14 @@ func SendGenericEmailWithOptionalActionForRecipient(tx *sqlx.Tx, cl *ses.Client,
 	if err != nil {
 		return nil, err
 	}
-	if err := email.InsertEmailRecord(tx, emailRecordID, *sesMessageID, input.Recipient.UserID, input.EmailType); err != nil {
-		return nil, err
+	if err := email.UpdateEmailRecordIDWithSESMessageID(tx, emailRecordID, *sesMessageID); err != nil {
+		// **** VERY IMPORTANT HERE ****
+		// This *cannot* return an error if it fails
+		// since SES has already successfully sent the email and returning an error
+		// causes the transaction to abort and rollback. However, SES has a side effect.
+		// The only thing that this does is update the email record
+		// to have the SES message ID. It is not super important - but it is useful.
+		log.Println(fmt.Sprintf("Error updating email record %s with SES Message ID %s: %s", emailRecordID, *sesMessageID, err.Error()))
 	}
 	return &emailRecordID, nil
 }

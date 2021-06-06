@@ -63,6 +63,9 @@ func SendDailyEmailForDocuments(tx *sqlx.Tx, cl *ses.Client, recipient email.Rec
 	   and insert all the user documents.
 	*/
 	emailRecordID := email.NewEmailRecordID()
+	if err := email.InsertEmailRecord(tx, emailRecordID, recipient.UserID, email.EmailTypeDaily); err != nil {
+		return err
+	}
 	template, err := createDailyEmailTemplate(tx, emailRecordID, recipient, input)
 	if err != nil {
 		return err
@@ -72,9 +75,6 @@ func SendDailyEmailForDocuments(tx *sqlx.Tx, cl *ses.Client, recipient email.Rec
 		return err
 	}
 	today := time.Now()
-	if err := email.InsertEmailRecord(tx, emailRecordID, recipient.UserID, email.EmailTypeDaily); err != nil {
-		return err
-	}
 	sesMessageID, err := cl.SendEmail(ses.SendEmailInput{
 		Recipient: recipient.EmailAddress,
 		HTMLBody:  *emailBody,

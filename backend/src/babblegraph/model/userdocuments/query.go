@@ -46,7 +46,7 @@ func GetDocumentIDsSentToUser(tx *sqlx.Tx, userID users.UserID) ([]documents.Doc
 
 const selectByIDQuery = `SELECT * FROM user_documents WHERE _id = $1`
 
-func GetUserDocumentID(tx *sqlx.Tx, id UserDocumentID) (*UserDocumentID, error) {
+func GetUserDocumentID(tx *sqlx.Tx, id UserDocumentID) (*UserDocument, error) {
 	var matches []dbUserDocument
 	if err := tx.Select(&matches, selectByIDQuery, id); err != nil {
 		return nil, err
@@ -54,5 +54,6 @@ func GetUserDocumentID(tx *sqlx.Tx, id UserDocumentID) (*UserDocumentID, error) 
 	if len(matches) != 1 {
 		return nil, fmt.Errorf("Expected exactly one record, but got %d", len(matches))
 	}
-	return &matches[0].ToNonDB(), nil
+	out := matches[0].ToNonDB()
+	return &out, nil
 }

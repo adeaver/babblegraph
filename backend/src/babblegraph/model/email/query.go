@@ -7,7 +7,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-const createEmailRecordQuery = "INSERT INTO email_records (_id, user_id, type) VALUES ($1, $2, $3, $4)"
+const createEmailRecordQuery = "INSERT INTO email_records (_id, user_id, type) VALUES ($1, $2, $3)"
 
 func InsertEmailRecord(tx *sqlx.Tx, id ID, userID users.UserID, emailType EmailType) error {
 	if _, err := tx.Exec(createEmailRecordQuery, id, userID, emailType); err != nil {
