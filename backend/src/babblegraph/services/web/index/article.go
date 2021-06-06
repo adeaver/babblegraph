@@ -1,8 +1,11 @@
 package index
 
 import (
+	"babblegraph/model/email"
 	"babblegraph/model/routes"
+	"babblegraph/model/userdocuments"
 	"babblegraph/model/userlinks"
+	"babblegraph/model/users"
 	"babblegraph/services/web/router"
 	"babblegraph/util/database"
 	"babblegraph/util/encrypt"
@@ -18,8 +21,8 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func getArticleLinkBodyFromMap(m map[string]interface{}) (*routes.ArticleLinkBody, error) {
-	var articleBody routes.ArticleLinkBody
+func getArticleLinkBodyFromMap(m map[string]interface{}) (*routes.ArticleLinkBodyDEPRECATED, error) {
+	var articleBody routes.ArticleLinkBodyDEPRECATED
 	bytes, err := json.Marshal(m)
 	if err != nil {
 		return nil, fmt.Errorf("Got error %s marshalling map %+v", err.Error(), m)
@@ -42,39 +45,70 @@ func HandleArticleLink(w http.ResponseWriter, r *http.Request) {
 	localHub.ConfigureScope(func(scope *sentry.Scope) {
 		scope.SetTag("handle-article-link", fmt.Sprintf("article-link-%s", random.MustMakeRandomString(12)))
 	})
-	var articleBody *routes.ArticleLinkBody
+	var emailRecordID *email.ID
+	var userID *users.UserID
+	var url *urlparser.ParsedURL
 	if err := encrypt.WithDecodedToken(token, func(tokenPair encrypt.TokenPair) error {
-		if tokenPair.Key != routes.ArticleLinkKey.Str() {
-			return fmt.Errorf("Wrong key type")
+		switch {
+		case tokenPair.Key == routes.ArticleLinkKeyDEPRECATED.Str():
+			m, ok := tokenPair.Value.(map[string]interface{})
+			if !ok {
+				return fmt.Errorf("Article body did not marshal correctly, got type %v", reflect.TypeOf(tokenPair.Value))
+			}
+			articleBody, err := getArticleLinkBodyFromMap(m)
+			if err != nil {
+				return err
+			}
+			emailRecordID = &articleBody.EmailRecordID
+			userID = &articleBody.UserID
+			u := urlparser.MustParseURL(articleBody.URL)
+			url = &u
+			return nil
+		case tokenPair.Key == routes.ArticleLinkKeyForUserDocumentID.Str():
+			userDocumentIDStr, ok := tokenPair.Value.(string)
+			if !ok {
+				return fmt.Errorf("Article body did not marshal correctly, got type %v", reflect.TypeOf(tokenPair.Value))
+			}
+			userDocumentID := userdocuments.UserDocumentID(userDocumentIDStr)
+			return database.WithTx(func(tx *sqlx.Tx) error {
+				userDocument, err := userdocuments.GetUserDocumentID(tx, userDocumentID)
+				if err != nil {
+					return err
+				}
+				if userDocument.DocumentURL == nil {
+					return fmt.Errorf("User Document has no document URL")
+				}
+				emailRecordID = userDocument.EmailRecordID
+				userID = &userDocument.UserID
+				u := urlparser.MustParseURL(*userDocument.DocumentURL)
+				url = &u
+				return nil
+			})
+		default:
+			return fmt.Errorf("Incorrect key type: %s", tokenPair.Key)
 		}
-		m, ok := tokenPair.Value.(map[string]interface{})
-		if !ok {
-			return fmt.Errorf("Article body did not marshal correctly, got type %v", reflect.TypeOf(tokenPair.Value))
-		}
-		var err error
-		articleBody, err = getArticleLinkBodyFromMap(m)
-		if err != nil {
-			return err
-		}
-		return nil
 	}); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		localHub.CaptureException(err)
+		return
+	}
+	if emailRecordID == nil || userID == nil || url == nil {
+		w.WriteHeader(http.StatusBadRequest)
+		localHub.CaptureException(fmt.Errorf("Token does not have email record, user id, or url: %s", token))
 		return
 	}
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
-		u := urlparser.MustParseURL(articleBody.URL)
-		return userlinks.RegisterUserLinkClick(tx, articleBody.UserID, u, articleBody.EmailRecordID)
+		return userlinks.RegisterUserLinkClick(tx, *userID, *url, *emailRecordID)
 	}); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		localHub.CaptureException(err)
 		return
 	}
-	http.Redirect(w, r, articleBody.URL, http.StatusFound)
+	http.Redirect(w, r, url.URL, http.StatusFound)
 }
 
-func getPaywallReportBodyFromMap(m map[string]interface{}) (*routes.PaywallReportBody, error) {
-	var paywallReportBody routes.PaywallReportBody
+func getPaywallReportBodyFromMap(m map[string]interface{}) (*routes.PaywallReportBodyDEPRECATED, error) {
+	var paywallReportBody routes.PaywallReportBodyDEPRECATED
 	bytes, err := json.Marshal(m)
 	if err != nil {
 		return nil, fmt.Errorf("Got error %s marshalling map %+v", err.Error(), m)
@@ -97,36 +131,66 @@ func HandlePaywallReport(w http.ResponseWriter, r *http.Request) {
 	localHub.ConfigureScope(func(scope *sentry.Scope) {
 		scope.SetTag("handle-paywall-report-link", fmt.Sprintf("paywall-report-link-%s", random.MustMakeRandomString(12)))
 	})
-	var paywallReportBody *routes.PaywallReportBody
+	var emailRecordID *email.ID
+	var userID *users.UserID
+	var url *urlparser.ParsedURL
 	if err := encrypt.WithDecodedToken(token, func(tokenPair encrypt.TokenPair) error {
-		if tokenPair.Key != routes.PaywallReportKey.Str() {
-			return fmt.Errorf("Wrong key type")
+		switch {
+		case tokenPair.Key == routes.PaywallReportKeyDEPRECATED.Str():
+			m, ok := tokenPair.Value.(map[string]interface{})
+			if !ok {
+				return fmt.Errorf("Paywall report body did not marshal correctly, got type %v", reflect.TypeOf(tokenPair.Value))
+			}
+			paywallReportBody, err := getPaywallReportBodyFromMap(m)
+			if err != nil {
+				return err
+			}
+			emailRecordID = &paywallReportBody.EmailRecordID
+			userID = &paywallReportBody.UserID
+			u := urlparser.MustParseURL(paywallReportBody.URL)
+			url = &u
+			return nil
+		case tokenPair.Key == routes.PaywallReportKeyForUserDocumentID.Str():
+			userDocumentIDStr, ok := tokenPair.Value.(string)
+			if !ok {
+				return fmt.Errorf("Paywall report body did not marshal correctly, got type %v", reflect.TypeOf(tokenPair.Value))
+			}
+			userDocumentID := userdocuments.UserDocumentID(userDocumentIDStr)
+			return database.WithTx(func(tx *sqlx.Tx) error {
+				userDocument, err := userdocuments.GetUserDocumentID(tx, userDocumentID)
+				if err != nil {
+					return err
+				}
+				if userDocument.DocumentURL == nil {
+					return fmt.Errorf("User Document has no document URL")
+				}
+				emailRecordID = userDocument.EmailRecordID
+				userID = &userDocument.UserID
+				u := urlparser.MustParseURL(*userDocument.DocumentURL)
+				url = &u
+				return nil
+			})
+		default:
+			return fmt.Errorf("Incorrect key type: %s", tokenPair.Key)
 		}
-		var ok bool
-		m, ok := tokenPair.Value.(map[string]interface{})
-		if !ok {
-			return fmt.Errorf("Article Body unmarshalled incorrectly")
-		}
-		var err error
-		paywallReportBody, err = getPaywallReportBodyFromMap(m)
-		if err != nil {
-			return err
-		}
-		return nil
 	}); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		localHub.CaptureException(err)
+		return
+	}
+	if emailRecordID == nil || userID == nil || url == nil {
+		w.WriteHeader(http.StatusBadRequest)
+		localHub.CaptureException(fmt.Errorf("Token does not have email record, user id, or url: %s", token))
 		return
 	}
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
-		u := urlparser.MustParseURL(paywallReportBody.URL)
-		return userlinks.ReportPaywall(tx, paywallReportBody.UserID, u, paywallReportBody.EmailRecordID)
+		return userlinks.ReportPaywall(tx, *userID, *url, *emailRecordID)
 	}); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		localHub.CaptureException(err)
 		return
 	}
-	subscriptionManagementLink, err := routes.MakeSubscriptionManagementToken(paywallReportBody.UserID)
+	subscriptionManagementLink, err := routes.MakeSubscriptionManagementToken(*userID)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		localHub.CaptureException(err)
