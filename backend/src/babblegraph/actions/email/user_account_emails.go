@@ -58,7 +58,7 @@ func SendAccountReactivationEmailForRecipient(tx *sqlx.Tx, cl *ses.Client, recip
 
 func SendAccountExpirationEmail(tx *sqlx.Tx, cl *ses.Client, recipient email.Recipient) (*email.ID, error) {
 	return SendGenericEmailWithOptionalActionForRecipient(tx, cl, SendGenericEmailWithOptionalActionForRecipientInput{
-		EmailType:     email.EmailTypeUserReactivation,
+		EmailType:     email.EmailTypeUserExpiration,
 		Recipient:     recipient,
 		Subject:       "Sad to see you go!",
 		EmailTitle:    "Babblegraph Premium Subscription",

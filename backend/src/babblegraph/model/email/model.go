@@ -27,6 +27,7 @@ const (
 
 	EmailTypeUserCreation     EmailType = "user-creation"
 	EmailTypeUserReactivation EmailType = "user-reactivation"
+	EmailTypeUserExpiration   EmailType = "user-expiration"
 )
 
 type Recipient struct {
