@@ -33,13 +33,13 @@ type GenericEmailAction struct {
 type SendGenericEmailWithOptionalActionForRecipientInput struct {
 	EmailType          email.EmailType
 	Recipient          email.Recipient
-	PreheaderText      string
-	BeforeParagraphs   []string
-	AfterParagraphs    []string
-	GenericEmailAction *GenericEmailAction
 	FromEmailName      *string
 	Subject            string
 	EmailTitle         string
+	PreheaderText      string
+	BeforeParagraphs   []string
+	GenericEmailAction *GenericEmailAction
+	AfterParagraphs    []string
 }
 
 func SendGenericEmailWithOptionalActionForRecipient(tx *sqlx.Tx, cl *ses.Client, input SendGenericEmailWithOptionalActionForRecipientInput) (*email.ID, error) {
