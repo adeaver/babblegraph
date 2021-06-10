@@ -19,12 +19,8 @@ func main() {
 	if err := setupDatabases(); err != nil {
 		log.Fatal(err.Error())
 	}
-<<<<<<< HEAD
-	taskName := flag.String("task", "none", "Name of task to run [daily-email] [create-user]")
+	taskName := flag.String("task", "none", "Name of task to run [daily-email, privacy-policy, email-for-addresses, create-user]")
 	userEmail := flag.String("user-email", "none", "Email address of user to create")
-=======
-	taskName := flag.String("task", "none", "Name of task to run [daily-email, privacy-policy, email-for-addresses]")
->>>>>>> master
 	flag.Parse()
 	if taskName == nil {
 		log.Fatal("No task specified")
