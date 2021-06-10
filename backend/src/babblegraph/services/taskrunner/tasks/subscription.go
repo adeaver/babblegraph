@@ -20,6 +20,10 @@ func CreateUserWithBetaPremiumSubscription(emailClient *ses.Client, emailAddress
 		if err != nil {
 			return err
 		}
+		if user == nil {
+			log.Println("No user found for email subscription")
+			return nil
+		}
 		didUserHaveSubscriptionBeforeTask, wasSubscriptionAlreadyActive, err := useraccounts.DoesUserHaveSubscription(tx, user.ID)
 		switch {
 		case err != nil:
@@ -52,6 +56,39 @@ func CreateUserWithBetaPremiumSubscription(emailClient *ses.Client, emailAddress
 			// no-op
 			log.Println("User already had an active account, skipping...")
 
+		}
+		return nil
+	})
+}
+
+func DeactivateUserSubscriptionForUser(emailClient *ses.Client, emailAddress string) error {
+	formattedEmailAddress := email.FormatEmailAddress(emailAddress)
+	return database.WithTx(func(tx *sqlx.Tx) error {
+		user, err := users.LookupUserByEmailAddress(tx, formattedEmailAddress)
+		if err != nil {
+			return err
+		}
+		if user == nil {
+			log.Println("No user found for email subscription")
+			return nil
+		}
+		didUserHaveSubscriptionBeforeTask, wasSubscriptionAlreadyActive, err := useraccounts.DoesUserHaveSubscription(tx, user.ID)
+		switch {
+		case err != nil:
+			return err
+		case !didUserHaveSubscriptionBeforeTask,
+			!wasSubscriptionAlreadyActive:
+			log.Println("User did not have an active subscription, skipping...")
+		default:
+			if err := useraccounts.ExpireSubscriptionForUser(tx, user.ID); err != nil {
+				return err
+			}
+			if _, err := email_actions.SendAccountExpirationEmail(tx, emailClient, email_model.Recipient{
+				UserID:       user.ID,
+				EmailAddress: formattedEmailAddress,
+			}); err != nil {
+				return err
+			}
 		}
 		return nil
 	})

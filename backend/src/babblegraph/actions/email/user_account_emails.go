@@ -55,3 +55,20 @@ func SendAccountReactivationEmailForRecipient(tx *sqlx.Tx, cl *ses.Client, recip
 		},
 	})
 }
+
+func SendAccountExpirationEmail(tx *sqlx.Tx, cl *ses.Client, recipient email.Recipient) (*email.ID, error) {
+	return SendGenericEmailWithOptionalActionForRecipient(tx, cl, SendGenericEmailWithOptionalActionForRecipientInput{
+		EmailType:     email.EmailTypeUserReactivation,
+		Recipient:     recipient,
+		Subject:       "Sad to see you go!",
+		EmailTitle:    "Babblegraph Premium Subscription",
+		PreheaderText: "Your access to Babblegraph Premium features has expired",
+		BeforeParagraphs: []string{
+			"Hola!",
+			"Thank you so much for supporting Babblegraph! It’s support from people like you that enable me to continue to work on and grow Babblegraph.",
+			"This email is to let you know that your access to premium features has expired. You will still receive the daily email. If you would like to unsubscribe, click on the link at the bottom of this email.",
+			"If you think this is an error, just reply to this email to let me know! You can still log into your account; however, you will not be able to access premium features. If you change your mind and want access again, head on over to Babblegraph’s Buy Me A Coffee page!",
+			"Thanks again for supporting Babblegraph!",
+		},
+	})
+}
