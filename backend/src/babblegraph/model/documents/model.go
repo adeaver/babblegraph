@@ -21,7 +21,10 @@ const (
 	// Version 5 fixes an issue with URL parser
 	Version5 Version = 5
 
-	CurrentDocumentVersion Version = Version5
+	// Version 6 adds paywall tracking
+	Version6 Version = 6
+
+	CurrentDocumentVersion Version = Version6
 )
 
 func (v Version) Ptr() *Version {
@@ -62,7 +65,9 @@ type Document struct {
 	Metadata                           Metadata                     `json:"metadata"`
 	Domain                             string                       `json:"domain"`
 	Topics                             []contenttopics.ContentTopic `json:"content_topics"`
+	SeedJobIngestTimestamp             *int64                       `json:"seed_job_ingest_timestamp,omitempty"`
 	LemmatizedDescription              *string                      `json:"lemmatized_description,omitempty"`
+	HasPaywall                         *bool                        `json:"has_paywall"`
 	LemmatizedDescriptionIndexMappings []int                        `json:"lemmatized_description_index_mappings,omitempty"`
 
 	LemmatizedBodyDEPRECATED *string `json:"lemmatized_body,omitempty"`

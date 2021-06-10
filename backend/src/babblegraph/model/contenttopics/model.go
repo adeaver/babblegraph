@@ -4,6 +4,7 @@ type ContentTopic string
 
 const (
 	ContentTopicArt                       ContentTopic = "art"
+	ContentTopicAstronomy                 ContentTopic = "astronomy"
 	ContentTopicArchitecture              ContentTopic = "architecture"
 	ContentTopicAutomotive                ContentTopic = "automotive"
 	ContentTopicBusiness                  ContentTopic = "business"
@@ -26,8 +27,10 @@ const (
 	ContentTopicCurrentEventsUnitedStates ContentTopic = "current-events-united-states"
 	ContentTopicCurrentEventsVenezuela    ContentTopic = "current-events-venezuela"
 	ContentTopicCurrentEventsUruguay      ContentTopic = "current-events-uruguay"
+	ContentTopicCurrentEventsPuertoRico   ContentTopic = "current-events-puerto-rico"
 	ContentTopicEconomy                   ContentTopic = "economy"
 	ContentTopicEntertainment             ContentTopic = "entertainment"
+	ContentTopicEnvironment               ContentTopic = "environment"
 	ContentTopicFashion                   ContentTopic = "fashion"
 	ContentTopicFilm                      ContentTopic = "film"
 	ContentTopicFinance                   ContentTopic = "finance"

@@ -1,0 +1,3 @@
+#/bin/bash
+
+docker logs babblegraph_worker --since 1h > /root/babblegraph/deploy/worker/log/worker.log 2>&1

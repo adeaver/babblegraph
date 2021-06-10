@@ -13,12 +13,13 @@ import (
 )
 
 type IndexDocumentInput struct {
-	ParsedHTMLPage  ingesthtml.ParsedHTMLPage
-	TextMetadata    textprocessing.TextMetadata
-	LanguageCode    wordsmith.LanguageCode
-	DocumentVersion documents.Version
-	URL             urlparser.ParsedURL
-	TopicsForURL    []contenttopics.ContentTopic
+	ParsedHTMLPage         ingesthtml.ParsedHTMLPage
+	TextMetadata           textprocessing.TextMetadata
+	LanguageCode           wordsmith.LanguageCode
+	DocumentVersion        documents.Version
+	URL                    urlparser.ParsedURL
+	TopicsForURL           []contenttopics.ContentTopic
+	SeedJobIngestTimestamp *int64
 }
 
 func IndexDocument(input IndexDocumentInput) error {
@@ -36,6 +37,8 @@ func IndexDocument(input IndexDocumentInput) error {
 		Topics:                             input.TopicsForURL,
 		LemmatizedDescription:              lemmatizedDescriptionText,
 		LemmatizedDescriptionIndexMappings: lemmatizedDescriptionIndexMappings,
+		SeedJobIngestTimestamp:             input.SeedJobIngestTimestamp,
+		HasPaywall:                         input.ParsedHTMLPage.IsPaywalled,
 
 		// These will get changed later
 		Version: input.DocumentVersion,

@@ -36,12 +36,18 @@ func makeQuery(key string, value interface{}) query {
 }
 
 type searchBody struct {
-	Query query `json:"query"`
+	Query query  `json:"query"`
+	Sort  []sort `json:"sort,omitempty"`
 }
 
-func ExecuteSearch(index elastic.Index, query query, fn func(source []byte, relevance decimal.Number) error) error {
+func ExecuteSearch(index elastic.Index, query query, orderedSort *orderedSort, fn func(source []byte, relevance decimal.Number) error) error {
+	var sorts []sort
+	if orderedSort != nil {
+		sorts = orderedSort.sorts
+	}
 	bodyBytes, err := json.Marshal(searchBody{
 		Query: query,
+		Sort:  sorts,
 	})
 	if err != nil {
 		return err

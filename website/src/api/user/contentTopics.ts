@@ -70,6 +70,7 @@ export const contentTopicDisplayMappings: Array<ContentTopicDisplayMapping> = [
 	{ displayText: "United States", apiValue: ["current-events-united-states"] },
 	{ displayText: "Venezuela", apiValue: ["current-events-venezuela"] },
 	{ displayText: "Uruguay", apiValue: ["current-events-uruguay"] },
+	{ displayText: "Puerto Rico", apiValue: ["current-events-puerto-rico"] },
 	{ displayText: "Economy", apiValue: ["economy"] },
 	{ displayText: "Entertainment", apiValue: ["entertainment", "culture"] },
 	{ displayText: "Fashion", apiValue: ["fashion"] },
@@ -87,4 +88,5 @@ export const contentTopicDisplayMappings: Array<ContentTopicDisplayMapping> = [
 	{ displayText: "Travel", apiValue: ["travel"] },
 	{ displayText: "Video Games", apiValue: ["video-games"] },
 	{ displayText: "World News", apiValue: ["world-news"] },
+    { displayText: "Environment", apiValue: ["environment"] },
 ];

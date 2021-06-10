@@ -1,7 +1,9 @@
 package ingesthtml
 
 import (
+	"encoding/json"
 	"fmt"
+	"log"
 	"strings"
 
 	"golang.org/x/net/html"
@@ -69,4 +71,50 @@ func getKeyValuePairFromMetaTag(n *html.Node) (_key, _value *string) {
 		return nil, nil
 	}
 	return &name, &value
+}
+
+func processPaywallFromLDJSON(ldJSONData string) (bool, error) {
+	var ldJSON map[string]interface{}
+	if err := json.Unmarshal([]byte(ldJSONData), &ldJSON); err != nil {
+		return false, err
+	}
+	isAccessibleInterface, ok := ldJSON["isAccessibleForFree"]
+	if !ok {
+		log.Println("LD+JSON does not contain isAccessibleForFree, assuming not paywalled")
+		return false, nil
+	}
+	isAccessibleForFree, ok := isAccessibleInterface.(bool)
+	if !ok {
+		log.Println("Could not convert isAccessibleForFree key to bool, trying string...")
+		isAccessibleForFreeStr, ok := isAccessibleInterface.(string)
+		if !ok {
+			return false, fmt.Errorf("Could not convert isAccessibleForFree to bool or string")
+		}
+		isAccessibleForFree = strings.ToLower(isAccessibleForFreeStr) != "false"
+	}
+	return !isAccessibleForFree, nil
+}
+
+func processPaywallFromClasses(node *html.Node, paywallValidationClasses []string) bool {
+	return processPaywallFromAttr(node, "class", paywallValidationClasses)
+}
+
+func processPaywallFromIDs(node *html.Node, paywallValidationIDs []string) bool {
+	return processPaywallFromAttr(node, "id", paywallValidationIDs)
+}
+
+func processPaywallFromAttr(node *html.Node, attrName string, checkValues []string) bool {
+	for _, attr := range node.Attr {
+		if attr.Key == attrName {
+			values := strings.Split(attr.Val, " ")
+			for _, v := range values {
+				for _, paywallAttrVal := range checkValues {
+					if v == paywallAttrVal {
+						return true
+					}
+				}
+			}
+		}
+	}
+	return false
 }

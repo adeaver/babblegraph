@@ -27,7 +27,8 @@ func StartScheduler(linkProcessor *linkprocessing.LinkProcessor, errs chan error
 		c.AddFunc("30 5 * * *", makeEmailJob(errs))
 		c.AddFunc("30 12 * * *", makeUserFeedbackJob(errs))
 		c.AddFunc("*/1 * * * *", makeVerificationJob(errs))
-	case "local":
+	case "local-test-emails",
+		"local":
 		c.AddFunc("*/1 * * * *", makeVerificationJob(errs))
 		c.AddFunc("*/30 * * * *", makeRefetchSeedDomainJob(linkProcessor, errs))
 		makeEmailJob(errs)()
@@ -49,9 +50,8 @@ func makeRefetchSeedDomainJob(linkProcessor *linkprocessing.LinkProcessor, errs 
 		defer func() {
 			if x := recover(); x != nil {
 				_, fn, line, _ := runtime.Caller(1)
-				err := fmt.Errorf("Refetch Panic: %s: %d: %v\n", fn, line, x)
+				err := fmt.Errorf("Refetch Panic: %s: %d: %v\n%s", fn, line, x, string(debug.Stack()))
 				localHub.CaptureException(err)
-				debug.PrintStack()
 				errs <- err
 			}
 		}()
@@ -73,9 +73,8 @@ func makeEmailJob(errs chan error) func() {
 		defer func() {
 			if x := recover(); x != nil {
 				_, fn, line, _ := runtime.Caller(1)
-				err := fmt.Errorf("Email Panic: %s: %d: %v\n", fn, line, x)
+				err := fmt.Errorf("Email Panic: %s: %d: %v\n%s", fn, line, x, string(debug.Stack()))
 				localHub.CaptureException(err)
-				debug.PrintStack()
 				errs <- err
 			}
 		}()
@@ -104,9 +103,8 @@ func makeVerificationJob(errs chan error) func() {
 		})
 		defer func() {
 			if x := recover(); x != nil {
-				debug.PrintStack()
 				_, fn, line, _ := runtime.Caller(1)
-				err := fmt.Errorf("Verification Panic: %s: %d: %v\n", fn, line, x)
+				err := fmt.Errorf("Verification Panic: %s: %d: %v\n%s", fn, line, x, string(debug.Stack()))
 				localHub.CaptureException(err)
 				errs <- err
 			}
@@ -136,9 +134,8 @@ func makeUserFeedbackJob(errs chan error) func() {
 		defer func() {
 			if x := recover(); x != nil {
 				_, fn, line, _ := runtime.Caller(1)
-				err := fmt.Errorf("User Feedback Panic: %s: %d: %v\n", fn, line, x)
+				err := fmt.Errorf("User Feedback Panic: %s: %d: %v\n%s", fn, line, x, string(debug.Stack()))
 				localHub.CaptureException(err)
-				debug.PrintStack()
 				errs <- err
 			}
 		}()

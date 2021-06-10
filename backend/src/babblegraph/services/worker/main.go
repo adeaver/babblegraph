@@ -51,12 +51,15 @@ func main() {
 			log.Fatal(err.Error())
 		}
 	}
+	currentEnvironmentName := env.MustEnvironmentName()
 	workerNum := 0
 	errs := make(chan error, 1)
-	for i := 0; i < numWorkerThreads; i++ {
-		workerThread := startWorkerThread(workerNum, linkProcessor, errs)
-		go workerThread()
-		workerNum++
+	if currentEnvironmentName != env.EnvironmentLocalTestEmail {
+		for i := 0; i < numWorkerThreads; i++ {
+			workerThread := startWorkerThread(workerNum, linkProcessor, errs)
+			go workerThread()
+			workerNum++
+		}
 	}
 	schedulerErrs := make(chan error, 1)
 	if err := scheduler.StartScheduler(linkProcessor, schedulerErrs); err != nil {
@@ -66,9 +69,11 @@ func main() {
 		select {
 		case err := <-errs:
 			log.Println(fmt.Sprintf("Saw panic: %s. Starting new worker thread.", err.Error()))
-			workerThread := startWorkerThread(workerNum, linkProcessor, errs)
-			go workerThread()
-			workerNum++
+			if currentEnvironmentName != env.EnvironmentLocalTestEmail {
+				workerThread := startWorkerThread(workerNum, linkProcessor, errs)
+				go workerThread()
+				workerNum++
+			}
 		case err := <-schedulerErrs:
 			log.Println(fmt.Sprintf("Saw panic: %s in scheduler.", err.Error()))
 		}
@@ -96,9 +101,8 @@ func startWorkerThread(workerNumber int, linkProcessor *linkprocessing.LinkProce
 		})
 		defer func() {
 			if x := recover(); x != nil {
-				debug.PrintStack()
 				_, fn, line, _ := runtime.Caller(1)
-				err := fmt.Errorf("Worker Panic: %s: %d: %v\n", fn, line, x)
+				err := fmt.Errorf("Worker Panic: %s: %d: %v\n%s", fn, line, x, string(debug.Stack()))
 				localHub.CaptureException(err)
 				errs <- err
 			}
@@ -170,12 +174,13 @@ func startWorkerThread(workerNumber int, linkProcessor *linkprocessing.LinkProce
 			}
 			log.Println(fmt.Sprintf("Indexing text for URL %s", u))
 			err = indexing.IndexDocument(indexing.IndexDocumentInput{
-				ParsedHTMLPage:  *parsedHTMLPage,
-				TextMetadata:    *textMetadata,
-				LanguageCode:    languageCode,
-				DocumentVersion: documents.CurrentDocumentVersion,
-				URL:             urlparser.MustParseURL(u),
-				TopicsForURL:    topicsForURL,
+				ParsedHTMLPage:         *parsedHTMLPage,
+				TextMetadata:           *textMetadata,
+				LanguageCode:           languageCode,
+				DocumentVersion:        documents.CurrentDocumentVersion,
+				URL:                    urlparser.MustParseURL(u),
+				TopicsForURL:           topicsForURL,
+				SeedJobIngestTimestamp: link.SeedJobIngestTimestamp,
 			})
 			if err != nil {
 				log.Println(fmt.Sprintf("Got error indexing document for url %s: %s. Continuing...", u, err.Error()))

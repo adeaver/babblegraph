@@ -9,7 +9,7 @@ type ID string
 
 type dbEmail struct {
 	ID            ID           `db:"_id"`
-	SESMessageID  string       `db:"ses_message_id"`
+	SESMessageID  *string      `db:"ses_message_id"`
 	UserID        users.UserID `db:"user_id"`
 	SentAt        time.Time    `db:"sent_at"`
 	FirstOpenedAt *time.Time   `db:"first_opened_at"`
@@ -23,6 +23,8 @@ const (
 	EmailTypeUserVerification EmailType = "user-verification"
 	EmailTypeUserFeedback     EmailType = "user-feedback"
 	EmailTypeUserCreation     EmailType = "user-creation"
+
+	EmailTypePrivacyPolicyUpdateJune2021 = "privacy-policy-update-june-2021"
 )
 
 type Recipient struct {

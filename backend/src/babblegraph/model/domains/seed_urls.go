@@ -348,76 +348,6 @@ var seedURLs = []SeedURL{
 			contenttopics.ContentTopicHealth,
 		},
 	}, {
-		URL: "https://www.nacion.com/el-pais",
-		Topics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicCurrentEventsCostaRica,
-		},
-	}, {
-		URL: "https://www.nacion.com/puro-deporte",
-		Topics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicSports,
-		},
-	}, {
-		URL: "https://www.nacion.com/economia",
-		Topics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicEconomy,
-		},
-	}, {
-		URL: "https://www.nacion.com/opinion",
-		Topics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicOpinion,
-		},
-	}, {
-		URL: "https://www.nacion.com/viva/cine",
-		Topics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicFilm,
-		},
-	}, {
-		URL: "https://www.nacion.com/viva/entretenimiento",
-		Topics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicEntertainment,
-		},
-	}, {
-		URL: "https://www.nacion.com/viva/musica",
-		Topics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicMusic,
-		},
-	}, {
-		URL: "https://www.nacion.com/viva/moda",
-		Topics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicFashion,
-		},
-	}, {
-		URL: "https://www.nacion.com/el-mundo",
-		Topics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicWorldNews,
-		},
-	}, {
-		URL: "https://www.nacion.com/ciencia",
-		Topics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicScience,
-		},
-	}, {
-		URL: "https://www.nacion.com/ciencia/salud",
-		Topics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicHealth,
-		},
-	}, {
-		URL: "https://www.nacion.com/tecnologia",
-		Topics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicTechnology,
-		},
-	}, {
-		URL: "https://www.nacion.com/tecnologia/videojuegos",
-		Topics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicVideoGames,
-		},
-	}, {
-		URL: "https://www.nacion.com/sabores",
-		Topics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicCooking,
-		},
-	}, {
 		URL: "https://www.elsalvador.com/category/noticias/internacional",
 		Topics: []contenttopics.ContentTopic{
 			contenttopics.ContentTopicWorldNews,
@@ -1758,6 +1688,149 @@ var seedURLs = []SeedURL{
 		URL: "https://www.informador.mx/seccion/cultura/",
 		Topics: []contenttopics.ContentTopic{
 			contenttopics.ContentTopicCulture,
+		},
+	}, {
+		URL: "https://www.ngenespanol.com/traveler/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicTravel,
+		},
+	}, {
+		URL: "https://www.ngenespanol.com/animales/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEnvironment,
+		},
+	}, {
+		URL: "https://www.ngenespanol.com/el-mundo/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicWorldNews,
+		},
+	}, {
+		URL: "https://www.ngenespanol.com/el-espacio/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicAstronomy,
+			contenttopics.ContentTopicScience,
+		},
+	}, {
+		URL: "https://www.ngenespanol.com/ciencia/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicScience,
+		},
+	}, {
+		URL: "https://elpais.com/noticias/medio-ambiente/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEnvironment,
+		},
+	}, {
+		URL: "https://www.elespectador.com/ambiente/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEnvironment,
+		},
+	}, {
+		URL: "https://www.primerahora.com/noticias/puerto-rico/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCurrentEventsPuertoRico,
+		},
+	}, {
+		URL: "https://www.primerahora.com/noticias/policia-tribunales/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCurrentEventsPuertoRico,
+		},
+	}, {
+		URL: "https://www.primerahora.com/noticias/gobierno-politica/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCurrentEventsPuertoRico,
+			contenttopics.ContentTopicPolitics,
+		},
+	}, {
+		URL: "https://www.primerahora.com/noticias/consumo/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEconomy,
+		},
+	}, {
+		URL: "https://www.primerahora.com/noticias/estados-unidos/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCurrentEventsUnitedStates,
+		},
+	}, {
+		URL: "https://www.primerahora.com/noticias/mundo/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicWorldNews,
+		},
+	}, {
+		URL: "https://www.primerahora.com/noticias/ciencia-tecnologia/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicScience,
+			contenttopics.ContentTopicTechnology,
+		},
+	}, {
+		URL: "https://www.primerahora.com/entretenimiento/farandula/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCelebrityNews,
+		},
+	}, {
+		URL: "https://www.primerahora.com/entretenimiento/musica/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicMusic,
+		},
+	}, {
+		URL: "https://www.primerahora.com/entretenimiento/cine-tv/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicFilm,
+		},
+	}, {
+		URL: "https://www.primerahora.com/entretenimiento/cultura-teatro/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicTheater,
+		},
+	}, {
+		URL: "https://www.primerahora.com/entretenimiento/otras/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicEntertainment,
+		},
+	}, {
+		URL: "https://www.primerahora.com/deportes/baloncesto/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicSports,
+		},
+	}, {
+		URL: "https://www.primerahora.com/deportes/beisbol/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicSports,
+		},
+	}, {
+		URL: "https://www.primerahora.com/deportes/boxeo/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicSports,
+		},
+	}, {
+		URL: "https://www.primerahora.com/deportes/voleibol/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicSports,
+		},
+	}, {
+		URL: "https://www.primerahora.com/deportes/hipismo/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicSports,
+		},
+	}, {
+		URL: "https://www.primerahora.com/deportes/otros/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicSports,
+		},
+	}, {
+		URL: "https://www.primerahora.com/estilos-de-vida/ph-mas-saludable/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicHealth,
+		},
+	}, {
+		URL: "https://www.primerahora.com/estilos-de-vida/cocina/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicCooking,
+		},
+	}, {
+		URL: "https://www.primerahora.com/estilos-de-vida/moda-estilo/",
+		Topics: []contenttopics.ContentTopic{
+			contenttopics.ContentTopicFashion,
 		},
 	},
 }

@@ -9,6 +9,7 @@ type DisplayName string
 
 const (
 	DisplayNameArt                       DisplayName = "arte"
+	DisplayNameAstronomy                 DisplayName = "astronomía"
 	DisplayNameArchitecture              DisplayName = "arquitectura"
 	DisplayNameAutomotive                DisplayName = "autos"
 	DisplayNameBusiness                  DisplayName = "negocios"
@@ -31,8 +32,10 @@ const (
 	DisplayNameCurrentEventsUnitedStates DisplayName = "noticias de estados unidos"
 	DisplayNameCurrentEventsVenezuela    DisplayName = "noticias de venezuela"
 	DisplayNameCurrentEventsUruguay      DisplayName = "noticias de uruguay"
+	DisplayNameCurrentEventsPuertoRico   DisplayName = "noticias de puerto rico"
 	DisplayNameEconomy                   DisplayName = "economía"
 	DisplayNameEntertainment             DisplayName = "entretenimiento"
+	DisplayNameEnvironment               DisplayName = "medio ambiente"
 	DisplayNameFashion                   DisplayName = "moda"
 	DisplayNameFilm                      DisplayName = "cine"
 	DisplayNameFinance                   DisplayName = "finanzas"
@@ -64,6 +67,8 @@ func ContentTopicNameToDisplayName(topic ContentTopic) (*DisplayName, error) {
 	switch topic {
 	case ContentTopicArt:
 		return DisplayNameArt.Ptr(), nil
+	case ContentTopicAstronomy:
+		return DisplayNameAstronomy.Ptr(), nil
 	case ContentTopicArchitecture:
 		return DisplayNameArchitecture.Ptr(), nil
 	case ContentTopicAutomotive:
@@ -108,8 +113,12 @@ func ContentTopicNameToDisplayName(topic ContentTopic) (*DisplayName, error) {
 		return DisplayNameCurrentEventsVenezuela.Ptr(), nil
 	case ContentTopicCurrentEventsUruguay:
 		return DisplayNameCurrentEventsUruguay.Ptr(), nil
+	case ContentTopicCurrentEventsPuertoRico:
+		return DisplayNameCurrentEventsPuertoRico.Ptr(), nil
 	case ContentTopicEconomy:
 		return DisplayNameEconomy.Ptr(), nil
+	case ContentTopicEnvironment:
+		return DisplayNameEnvironment.Ptr(), nil
 	case ContentTopicEntertainment:
 		return DisplayNameEntertainment.Ptr(), nil
 	case ContentTopicFashion:

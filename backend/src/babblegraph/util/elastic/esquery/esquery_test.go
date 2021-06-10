@@ -94,3 +94,36 @@ func TestScript(t *testing.T) {
 		t.Errorf("Expected %s, got %s", expected, string(out))
 	}
 }
+
+func TestQueryWithSort(t *testing.T) {
+	ascendingSort := NewAscendingSortBuilder("field").AsSort()
+	testQuery := searchBody{
+		Query: MatchAll(),
+		Sort: []sort{
+			ascendingSort,
+		},
+	}
+	expectedBody := `{"query":{"match_all":{}},"sort":[{"field":{"order":"asc"}}]}`
+	jsonBytes, err := json.Marshal(testQuery)
+	if err != nil {
+		t.Fatalf("Error on testing query with sort: %s", err.Error())
+	}
+	if string(jsonBytes) != expectedBody {
+		t.Errorf("Error on testing query with sort: expected %s, but got %s", expectedBody, string(jsonBytes))
+	}
+}
+
+func TestQueryWithoutSort(t *testing.T) {
+	testQuery := searchBody{
+		Query: MatchAll(),
+		Sort:  []sort{},
+	}
+	expectedBody := `{"query":{"match_all":{}}}`
+	jsonBytes, err := json.Marshal(testQuery)
+	if err != nil {
+		t.Fatalf("Error on testing query without sort: %s", err.Error())
+	}
+	if string(jsonBytes) != expectedBody {
+		t.Errorf("Error on testing query without sort: expected %s, but got %s", expectedBody, string(jsonBytes))
+	}
+}

@@ -26,6 +26,8 @@ deploy/web/dhparam/**
 deploy/main-db/data/**
 deploy/main-db/backups/**
 deploy/wordsmith/data/**
+deploy/worker/log
+deploy/worker/logrotate-state
 
 # Other
 env/**

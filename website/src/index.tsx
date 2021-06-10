@@ -10,6 +10,7 @@ import {
 import HomePage from 'components/HomePage/HomePage';
 import AboutPage from 'components/AboutPage/AboutPage';
 import PrivacyPolicyPage from 'components/PrivacyPolicyPage/PrivacyPolicyPage';
+import PaywallReportPage from 'components/PaywallReportPage/PaywallReportPage';
 
 import SubscriptionManagementDashboardPage from 'components/SubscriptionManagement/SubscriptionManagementDashboardPage';
 import InterestSelectionPage from 'components/SubscriptionManagement/InterestSelectionPage';
@@ -33,6 +34,7 @@ class App extends React.Component{
                     <Route path="/manage/:token/interests" component={InterestSelectionPage} />
                     <Route path="/manage/:token/vocabulary" component={WordReinforcementPage} />
                     <Route exact path="/manage/:token" component={SubscriptionManagementDashboardPage} />
+                    <Route path="/paywall-thank-you/:token" component={PaywallReportPage} />
 
                     { /* User Account Management */ }
                     <Route path="/login" component={LoginPage} />

@@ -43,6 +43,8 @@ type IndexDocumentInput struct {
 	LanguageCode                       wordsmith.LanguageCode
 	ReadabilityScore                   int64
 	Topics                             []contenttopics.ContentTopic
+	SeedJobIngestTimestamp             *int64
+	HasPaywall                         bool
 	LemmatizedDescription              *string
 	LemmatizedDescriptionIndexMappings []int
 }
@@ -61,6 +63,8 @@ func AssignIDAndIndexDocument(input IndexDocumentInput) (*DocumentID, error) {
 		Topics:                             input.Topics,
 		LemmatizedDescription:              input.LemmatizedDescription,
 		LemmatizedDescriptionIndexMappings: input.LemmatizedDescriptionIndexMappings,
+		SeedJobIngestTimestamp:             input.SeedJobIngestTimestamp,
+		HasPaywall:                         ptr.Bool(input.HasPaywall),
 		Metadata: Metadata{
 			Title:              ogMetadata.Title,
 			Image:              ogMetadata.ImageURL,

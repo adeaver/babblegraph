@@ -76,7 +76,7 @@ func processSeedURL(seedURL domains.SeedURL) error {
 		for _, p := range parsedURLs {
 			toInsert = append(toInsert, p)
 		}
-		if err := links2.UpsertLinkWithEmptyFetchStatus(tx, toInsert); err != nil {
+		if err := links2.UpsertLinkWithEmptyFetchStatus(tx, toInsert, true); err != nil {
 			return err
 		}
 		if len(seedURL.Topics) == 0 {

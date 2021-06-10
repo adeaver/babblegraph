@@ -9,6 +9,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/getsentry/sentry-go"
@@ -18,8 +19,12 @@ func main() {
 	if err := setupDatabases(); err != nil {
 		log.Fatal(err.Error())
 	}
+<<<<<<< HEAD
 	taskName := flag.String("task", "none", "Name of task to run [daily-email] [create-user]")
 	userEmail := flag.String("user-email", "none", "Email address of user to create")
+=======
+	taskName := flag.String("task", "none", "Name of task to run [daily-email, privacy-policy, email-for-addresses]")
+>>>>>>> master
 	flag.Parse()
 	if taskName == nil {
 		log.Fatal("No task specified")
@@ -50,6 +55,19 @@ func main() {
 		if err := tasks.CreateUserWithBetaPremiumSubscription(emailClient, *userEmail); err != nil {
 			log.Fatal(err.Error())
 		}
+	case "email-for-addresses":
+		today := time.Now()
+		todayStr := fmt.Sprintf("%02d%02d%d", today.Month(), today.Day(), today.Year())
+		if todayStr == "06062021" {
+			emailAddresses := strings.Split(env.MustEnvironmentVariable("EMAIL_ADDRESSES"), ",")
+			if err := tasks.SendDailyEmailForEmailAddresses(emailAddresses); err != nil {
+				log.Fatal(err.Error())
+			}
+		} else {
+			log.Println(fmt.Sprintf("Expected 06062021, but got %s", todayStr))
+		}
+	case "privacy-policy":
+		tasks.SendPrivacyPolicyUpdate()
 	default:
 		log.Fatal(fmt.Sprintf("Invalid task specified %s", *taskName))
 	}

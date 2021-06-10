@@ -5,11 +5,12 @@ import (
 	"babblegraph/model/documents"
 	"babblegraph/model/email"
 	"babblegraph/model/routes"
+	"babblegraph/model/userdocuments"
+	"babblegraph/model/users"
 	"babblegraph/util/deref"
 	"babblegraph/util/ptr"
 	"babblegraph/util/ses"
 	"babblegraph/util/text"
-	"babblegraph/util/urlparser"
 	"babblegraph/wordsmith"
 	"fmt"
 	"log"
@@ -35,10 +36,11 @@ type dailyEmailCategory struct {
 }
 
 type dailyEmailLink struct {
-	ImageURL    *string
-	Title       *string
-	Description *string
-	URL         string
+	ImageURL         *string
+	Title            *string
+	Description      *string
+	URL              string
+	PaywallReportURL string
 }
 
 type CategorizedDocuments struct {
@@ -51,15 +53,26 @@ type DailyEmailInput struct {
 	HasSetTopics         bool
 }
 
-func SendDailyEmailForDocuments(tx *sqlx.Tx, cl *ses.Client, recipient email.Recipient, input DailyEmailInput) (*email.ID, error) {
+func SendDailyEmailForDocuments(tx *sqlx.Tx, cl *ses.Client, recipient email.Recipient, input DailyEmailInput) error {
+	/*
+	   This function looks backwards but it is not.
+	   This all happens in a transaction, so it is either all succesful or all failed.
+	   However, sending an email has a side effect - i.e. if it is successful, it does something. It cannot
+	   be reversed like all other parts of the transaction, so we want it to be the last thing we do so that way
+	   if anything else fails, we can revert without side effects. So the first thing we do is insert the email record
+	   and insert all the user documents.
+	*/
 	emailRecordID := email.NewEmailRecordID()
-	template, err := createDailyEmailTemplate(emailRecordID, recipient, input)
+	if err := email.InsertEmailRecord(tx, emailRecordID, recipient.UserID, email.EmailTypeDaily); err != nil {
+		return err
+	}
+	template, err := createDailyEmailTemplate(tx, emailRecordID, recipient, input)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	emailBody, err := createEmailBody(*template)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	today := time.Now()
 	sesMessageID, err := cl.SendEmail(ses.SendEmailInput{
@@ -68,20 +81,26 @@ func SendDailyEmailForDocuments(tx *sqlx.Tx, cl *ses.Client, recipient email.Rec
 		Subject:   fmt.Sprintf("Babblegraph Daily Links - %s %d, %d", today.Month().String(), today.Day(), today.Year()),
 	})
 	if err != nil {
-		return nil, err
+		return err
 	}
-	if err := email.InsertEmailRecord(tx, emailRecordID, *sesMessageID, recipient.UserID, email.EmailTypeDaily); err != nil {
-		return nil, err
+	if err := email.UpdateEmailRecordIDWithSESMessageID(tx, emailRecordID, *sesMessageID); err != nil {
+		// **** VERY IMPORTANT HERE ****
+		// This *cannot* return an error if it fails
+		// since SES has already successfully sent the email and returning an error
+		// causes the transaction to abort and rollback. However, SES has a side effect.
+		// The only thing that this does is update the email record
+		// to have the SES message ID. It is not super important - but it is useful.
+		log.Println(fmt.Sprintf("Error updating email record %s with SES Message ID %s: %s", emailRecordID, *sesMessageID, err.Error()))
 	}
-	return &emailRecordID, nil
+	return nil
 }
 
-func createDailyEmailTemplate(emailRecordID email.ID, recipient email.Recipient, input DailyEmailInput) (*dailyEmailTemplate, error) {
+func createDailyEmailTemplate(tx *sqlx.Tx, emailRecordID email.ID, recipient email.Recipient, input DailyEmailInput) (*dailyEmailTemplate, error) {
 	baseTemplate, err := createBaseTemplate(emailRecordID, recipient)
 	if err != nil {
 		return nil, err
 	}
-	categories := createEmailCategories(input.CategorizedDocuments)
+	categories := createEmailCategories(tx, recipient.UserID, emailRecordID, input.CategorizedDocuments)
 	var setTopicsLink *string
 	if !input.HasSetTopics {
 		setTopicsLink, err = routes.MakeSetTopicsLink(recipient.UserID)
@@ -101,7 +120,7 @@ func createDailyEmailTemplate(emailRecordID email.ID, recipient email.Recipient,
 	}, nil
 }
 
-func createEmailCategories(categorizedDocuments []CategorizedDocuments) []dailyEmailCategory {
+func createEmailCategories(tx *sqlx.Tx, userID users.UserID, emailRecordID email.ID, categorizedDocuments []CategorizedDocuments) []dailyEmailCategory {
 	var out []dailyEmailCategory
 	// TODO(other-languages): don't hardcode this
 	languageCode := wordsmith.LanguageCodeSpanish
@@ -124,13 +143,13 @@ func createEmailCategories(categorizedDocuments []CategorizedDocuments) []dailyE
 		}
 		out = append(out, dailyEmailCategory{
 			CategoryName: contentTopicCategory,
-			Links:        createLinksForDocuments(categorized.Documents),
+			Links:        createLinksForDocuments(tx, userID, emailRecordID, categorized.Documents),
 		})
 	}
 	return out
 }
 
-func createLinksForDocuments(documents []documents.Document) []dailyEmailLink {
+func createLinksForDocuments(tx *sqlx.Tx, userID users.UserID, emailRecordID email.ID, documents []documents.Document) []dailyEmailLink {
 	var links []dailyEmailLink
 	for _, doc := range documents {
 		var title, imageURL, description *string
@@ -143,25 +162,27 @@ func createLinksForDocuments(documents []documents.Document) []dailyEmailLink {
 		if isNotEmpty(doc.Metadata.Description) {
 			description = doc.Metadata.Description
 		}
-		var url *string
-		switch {
-		case isNotEmpty(doc.Metadata.URL) && urlparser.IsValidURL(*doc.Metadata.URL):
-			url = doc.Metadata.URL
-		case urlparser.IsValidURL(doc.URL):
-			url = ptr.String(doc.URL)
-		default:
+		userDocumentID, err := userdocuments.InsertDocumentForUserAndReturnID(tx, userID, emailRecordID, doc)
+		if err != nil {
+			log.Println(err.Error())
 			continue
 		}
-		urlWithProtocol, err := urlparser.EnsureProtocol(*url)
+		link, err := routes.MakeArticleLink(*userDocumentID)
 		if err != nil {
-			log.Println(fmt.Sprintf("Got error ensuring protocol for URL %s: %s", *url, err.Error()))
+			log.Println(fmt.Sprintf("Got error making article link: %s", err.Error()))
+			continue
+		}
+		paywallReportLink, err := routes.MakePaywallReportLink(*userDocumentID)
+		if err != nil {
+			log.Println(fmt.Sprintf("Got error making paywall report link: %s", err.Error()))
 			continue
 		}
 		links = append(links, dailyEmailLink{
-			ImageURL:    imageURL,
-			Title:       title,
-			Description: description,
-			URL:         *urlWithProtocol,
+			ImageURL:         imageURL,
+			Title:            title,
+			Description:      description,
+			URL:              *link,
+			PaywallReportURL: *paywallReportLink,
 		})
 	}
 	return links

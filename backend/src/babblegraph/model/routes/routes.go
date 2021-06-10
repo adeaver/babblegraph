@@ -2,6 +2,7 @@ package routes
 
 import (
 	"babblegraph/model/email"
+	"babblegraph/model/userdocuments"
 	"babblegraph/model/users"
 	"babblegraph/util/encrypt"
 	"babblegraph/util/env"
@@ -79,4 +80,26 @@ func MakeUserCreationLink(userID users.UserID) (*string, error) {
 		return nil, err
 	}
 	return ptr.String(env.GetAbsoluteURLForEnvironment(fmt.Sprintf("signup/%s", *token))), nil
+}
+
+func MakeArticleLink(userDocumentID userdocuments.UserDocumentID) (*string, error) {
+	token, err := encrypt.GetToken(encrypt.TokenPair{
+		Key:   ArticleLinkKeyForUserDocumentID.Str(),
+		Value: userDocumentID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return ptr.String(env.GetAbsoluteURLForEnvironment(fmt.Sprintf("article/%s", *token))), nil
+}
+
+func MakePaywallReportLink(userDocumentID userdocuments.UserDocumentID) (*string, error) {
+	token, err := encrypt.GetToken(encrypt.TokenPair{
+		Key:   PaywallReportKeyForUserDocumentID.Str(),
+		Value: userDocumentID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return ptr.String(env.GetAbsoluteURLForEnvironment(fmt.Sprintf("paywall-report/%s", *token))), nil
 }
