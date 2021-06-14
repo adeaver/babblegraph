@@ -26,6 +26,7 @@ func RegisterIndexRoutes(r *mux.Router, indexPages []IndexPage) error {
 			middleware.WithAuthorizationCheck(w, r, *page.HandleAuthorization)
 		})
 	}
+	r.HandleFunc("/logout", HandleLogout())
 	r.HandleFunc("/login", HandleLoginPage(staticFileDirName))
 	r.HandleFunc("/article/{token}", HandleArticleLink)
 	r.HandleFunc("/paywall-report/{token}", HandlePaywallReport)
