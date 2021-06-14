@@ -6,10 +6,7 @@ import (
 	"babblegraph/services/web/api/token"
 	"babblegraph/services/web/api/user"
 	utm_routes "babblegraph/services/web/api/utm"
-	"babblegraph/services/web/middleware"
-=======
 	"babblegraph/services/web/index"
->>>>>>> master
 	"babblegraph/services/web/router"
 	"babblegraph/util/database"
 	"babblegraph/util/env"
@@ -26,7 +23,6 @@ import (
 func main() {
 	log.Println("Starting babblegraph web server")
 	r := mux.NewRouter()
-	staticFileDirName := env.MustEnvironmentVariable("STATIC_DIR")
 
 	if err := setupDatabases(); err != nil {
 		log.Fatal(err.Error())
@@ -41,13 +37,9 @@ func main() {
 	if err := registerAPI(r); err != nil {
 		log.Fatal(err.Error())
 	}
-	r.PathPrefix("/dist").Handler(http.StripPrefix("/dist", http.FileServer(http.Dir(staticFileDirName))))
-	r.HandleFunc("/article/{token}", index.HandleArticleLink)
-	r.HandleFunc("/paywall-report/{token}", index.HandlePaywallReport)
-	r.HandleFunc("/verify/{token}", index.HandleVerificationForToken)
-	r.HandleFunc("/dist/{token}/logo.png", index.HandleServeLogo(staticFileDirName))
-	r.PathPrefix("/dist").Handler(http.StripPrefix("/dist", http.FileServer(http.Dir(staticFileDirName))))
-	r.PathPrefix("/").HandlerFunc(index.HandleServeIndexPage(staticFileDirName))
+	if err := index.RegisterIndexRoutes(r, []index.IndexPage{}); err != nil {
+		log.Fatal(err.Error())
+	}
 
 	http.ListenAndServe(":8080", r)
 }
