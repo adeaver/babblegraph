@@ -5,17 +5,16 @@ import (
 	"babblegraph/model/useraccounts"
 	"babblegraph/model/users"
 	"babblegraph/services/web/middleware"
-	"babblegraph/services/web/util/auth"
 	"babblegraph/services/web/util/routetoken"
 	"babblegraph/util/database"
 	"babblegraph/util/email"
+	"babblegraph/util/ptr"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 
-	"github.com/getsentry/sentry-go"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -226,44 +225,35 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 }
 
 type getUserProfileResponse struct {
-	ManagementToken   *string                         `json:"management_token,omitempty"`
 	EmailAddress      *string                         `json:"email_address,omitempty"`
 	SubscriptionLevel *useraccounts.SubscriptionLevel `json:"subscription_level,omitempty"`
 }
 
 func getUserProfile(w http.ResponseWriter, r *http.Request) {
-	var managementToken, emailAddress *string
-	var userSubscriptionLevel *useraccounts.SubscriptionLevel
-	for _, cookie := range r.Cookies() {
-		if cookie.Name == middleware.AuthTokenCookieName {
-			token := cookie.Value
-			userID, isValid, err := auth.VerifyJWTAndGetUserID(token)
-			switch {
-			case err != nil,
-				!isValid,
-				userID == nil:
-				break
-			default:
-				managementToken, err = routes.MakeSubscriptionManagementToken(*userID)
-				if err != nil {
-					writeErrorJSONResponse(w, errorResponse{
-						Message: "Request is not valid",
-					})
-					return
-				}
-				if err := database.WithTx(func(tx *sqlx.Tx) error {
-					var err error
-					userSubscriptionLevel, err = useraccounts.LookupSubscriptionLevelForUser(tx, *userID)
-					return err
-				}); err != nil {
-					sentry.CaptureException(fmt.Errorf("Error getting subscription level for user with ID %s: %s", *userID, err.Error()))
-				}
+	middleware.WithAuthorizationCheck(w, r, middleware.WithAuthorizationCheckInput{
+		HandleFoundSubscribedUser: func(userID users.UserID, subscriptionLevel useraccounts.SubscriptionLevel, w http.ResponseWriter, r *http.Request) {
+			var user *users.User
+			if err := database.WithTx(func(tx *sqlx.Tx) error {
+				var err error
+				user, err = users.GetUser(tx, userID)
+				return err
+			}); err != nil {
+				writeErrorJSONResponse(w, errorResponse{
+					Message: "Request is not valid",
+				})
+				return
 			}
-		}
-	}
-	writeJSONResponse(w, getUserProfileResponse{
-		EmailAddress:      emailAddress,
-		ManagementToken:   managementToken,
-		SubscriptionLevel: userSubscriptionLevel,
+			writeJSONResponse(w, getUserProfileResponse{
+				EmailAddress:      ptr.String(user.EmailAddress),
+				SubscriptionLevel: subscriptionLevel.Ptr(),
+			})
+		},
+		HandleNoUserFound: func(w http.ResponseWriter, r *http.Request) {
+			writeJSONResponse(w, getUserProfileResponse{})
+		},
+		HandleInvalidAuthenticationToken: func(w http.ResponseWriter, r *http.Request) {
+			writeJSONResponse(w, getUserProfileResponse{})
+		},
+		HandleError: middleware.HandleAuthorizationError,
 	})
 }
