@@ -5,6 +5,7 @@ import (
 	"babblegraph/model/useraccounts"
 	"babblegraph/model/users"
 	"babblegraph/services/web/middleware"
+	"babblegraph/services/web/util/auth"
 	"babblegraph/services/web/util/routetoken"
 	"babblegraph/util/database"
 	"babblegraph/util/email"
@@ -14,6 +15,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -23,6 +25,8 @@ func registerUserAccountsRoutes() {
 	a.routeNames["/api/useraccounts/login_user_1"] = true
 	a.r.HandleFunc("/api/useraccounts/create_user_1", middleware.WithoutBodyLogger(createUser))
 	a.routeNames["/api/useraccounts/create_user_1"] = true
+	a.r.HandleFunc("/api/useraccounts/get_user_profile_1", middleware.WithoutBodyLogger(getUserProfile))
+	a.routeNames["/api/useraccounts/get_user_profile_1"] = true
 }
 
 type loginUserRequest struct {
@@ -218,5 +222,48 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSONResponse(w, createUserResponse{
 		ManagementToken: token,
+	})
+}
+
+type getUserProfileResponse struct {
+	ManagementToken   *string                         `json:"management_token,omitempty"`
+	EmailAddress      *string                         `json:"email_address,omitempty"`
+	SubscriptionLevel *useraccounts.SubscriptionLevel `json:"subscription_level,omitempty"`
+}
+
+func getUserProfile(w http.ResponseWriter, r *http.Request) {
+	var managementToken, emailAddress *string
+	var userSubscriptionLevel *useraccounts.SubscriptionLevel
+	for _, cookie := range r.Cookies() {
+		if cookie.Name == middleware.AuthTokenCookieName {
+			token := cookie.Value
+			userID, isValid, err := auth.VerifyJWTAndGetUserID(token)
+			switch {
+			case err != nil,
+				!isValid,
+				userID == nil:
+				break
+			default:
+				managementToken, err = routes.MakeSubscriptionManagementToken(*userID)
+				if err != nil {
+					writeErrorJSONResponse(w, errorResponse{
+						Message: "Request is not valid",
+					})
+					return
+				}
+				if err := database.WithTx(func(tx *sqlx.Tx) error {
+					var err error
+					userSubscriptionLevel, err = useraccounts.LookupSubscriptionLevelForUser(tx, *userID)
+					return err
+				}); err != nil {
+					sentry.CaptureException(fmt.Errorf("Error getting subscription level for user with ID %s: %s", *userID, err.Error()))
+				}
+			}
+		}
+	}
+	writeJSONResponse(w, getUserProfileResponse{
+		EmailAddress:      emailAddress,
+		ManagementToken:   managementToken,
+		SubscriptionLevel: userSubscriptionLevel,
 	})
 }

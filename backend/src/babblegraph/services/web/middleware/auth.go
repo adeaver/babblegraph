@@ -13,7 +13,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-const authTokenCookieName = "session_token"
+const AuthTokenCookieName = "session_token"
 
 func AssignAuthToken(w http.ResponseWriter, userID users.UserID) error {
 	token, err := auth.CreateJWTForUser(userID)
@@ -22,7 +22,7 @@ func AssignAuthToken(w http.ResponseWriter, userID users.UserID) error {
 		return err
 	}
 	http.SetCookie(w, &http.Cookie{
-		Name:     authTokenCookieName,
+		Name:     AuthTokenCookieName,
 		Value:    *token,
 		HttpOnly: true,
 		Path:     "/",
@@ -36,7 +36,7 @@ func WithAuthorizationLevelVerification(validAuthorizationLevels []useraccounts.
 		var userSubscriptionLevel *useraccounts.SubscriptionLevel
 		var userID *users.UserID
 		for _, cookie := range r.Cookies() {
-			if cookie.Name == authTokenCookieName {
+			if cookie.Name == AuthTokenCookieName {
 				var err error
 				var isValid bool
 				token := cookie.Value
