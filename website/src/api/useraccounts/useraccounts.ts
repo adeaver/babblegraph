@@ -60,7 +60,9 @@ export function createUser(
     );
 }
 
-export type GetUserProfileRequest = {}
+export type GetUserProfileRequest = {
+    subscriptionManagementToken: string
+}
 
 export type GetUserProfileResponse = {
     emailAddress: string | undefined;

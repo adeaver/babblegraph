@@ -91,7 +91,9 @@ const SubscriptionManagementDashboardPage = (props: SubscriptionManagementDashbo
             setIsReinforcementTokenLoading(false);
             setError(e);
         });
-        getUserProfile({},
+        getUserProfile({
+            subscriptionManagementToken: token,
+        },
         (resp: GetUserProfileResponse) => {
             setIsUserProfileLoading(false);
             setEmailAddress(resp.emailAddress);
