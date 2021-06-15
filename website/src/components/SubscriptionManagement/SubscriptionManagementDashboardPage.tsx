@@ -10,8 +10,14 @@ import ArrowForwardIcon from '@material-ui/icons/ArrowForward';
 import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
 import Page from 'common/components/Page/Page';
 import Paragraph, { Size } from 'common/typography/Paragraph';
+import { Heading4 } from 'common/typography/Heading';
 import { Alignment, TypographyColor } from 'common/typography/common';
 import { getReinforcementToken, GetReinforcementTokenResponse } from 'api/token/reinforcementToken';
+
+import {
+    getUserProfile,
+    GetUserProfileResponse
+} from 'api/useraccounts/useraccounts';
 
 type Params = {
     token: string
@@ -67,44 +73,65 @@ const SubscriptionManagementDashboardPage = (props: SubscriptionManagementDashbo
     const classes = styleClasses();
     const { token } = props.match.params;
 
-    const [ isLoading, setIsLoading ] = useState<boolean>(true);
+    const [ isReinforcementTokenLoading, setIsReinforcementTokenLoading ] = useState<boolean>(true);
+    const [ isUserProfileLoading, setIsUserProfileLoading ] = useState<boolean>(true);
     const [ error, setError ] = useState<Error>(null);
     const [ reinforcementToken, setReinforcementToken ] = useState<string | null>(null);
+    const [ emailAddress, setEmailAddress ] = useState<string | null>(null);
 
     useEffect(() => {
         getReinforcementToken({
             token: token,
         },
         (resp: GetReinforcementTokenResponse) => {
-            setIsLoading(false);
+            setIsReinforcementTokenLoading(false);
             setReinforcementToken(resp.token);
         },
         (e: Error) => {
-            setIsLoading(false);
+            setIsReinforcementTokenLoading(false);
+            setError(e);
+        });
+        getUserProfile({
+            subscriptionManagementToken: token,
+        },
+        (resp: GetUserProfileResponse) => {
+            setIsUserProfileLoading(false);
+            setEmailAddress(resp.emailAddress);
+        },
+        (e: Error) => {
+            setIsUserProfileLoading(false);
             setError(e);
         });
     }, []);
 
+    const isLoading = isReinforcementTokenLoading || isUserProfileLoading;
     return (
         <Page>
             {
                 isLoading ? (
                     <LoadingSpinner />
                 ) : (
-                    <Grid container spacing={2}>
-                        <ActionCard redirectURL={`/manage/${token}/interests`} title='Manage Your Interests'>
-                            Select some topics you’re interested in reading more about or deselect some topics you’d like to read about less. This is a great way to make sure that the content you get is fun and engaging.
-                        </ActionCard>
-                        <ActionCard redirectURL={`/manage/${reinforcementToken}/vocabulary`} title='Track words to reinforce'>
-                            Learn a new word recently and want to make sure it sticks? You can track it, which will send you articles containing these words. Seeing a word frequently is a great way to make sure you remember it.
-                        </ActionCard>
-                        <ActionCard redirectURL={`/manage/${token}/level`} title='Set your difficulty level'>
-                            If your daily email is too hard or too easy, you can change the difficulty level here.
-                        </ActionCard>
-                        <ActionCard redirectURL={`/manage/${token}/unsubscribe`} title='Unsubscribe'>
-                            If you’re no longer interested in receiving daily emails, you can unsubscribe here. By unsubscribing, we won’t send you any more emails about anything.
-                        </ActionCard>
-                    </Grid>
+                    <div>
+                        {
+                            !!emailAddress && (
+                                <Heading4 color={TypographyColor.Primary}>Logged in as {emailAddress}</Heading4>
+                            )
+                        }
+                        <Grid container spacing={2}>
+                            <ActionCard redirectURL={`/manage/${token}/interests`} title='Manage Your Interests'>
+                                Select some topics you’re interested in reading more about or deselect some topics you’d like to read about less. This is a great way to make sure that the content you get is fun and engaging.
+                            </ActionCard>
+                            <ActionCard redirectURL={`/manage/${reinforcementToken}/vocabulary`} title='Track words to reinforce'>
+                                Learn a new word recently and want to make sure it sticks? You can track it, which will send you articles containing these words. Seeing a word frequently is a great way to make sure you remember it.
+                            </ActionCard>
+                            <ActionCard redirectURL={`/manage/${token}/level`} title='Set your difficulty level'>
+                                If your daily email is too hard or too easy, you can change the difficulty level here.
+                            </ActionCard>
+                            <ActionCard redirectURL={`/manage/${token}/unsubscribe`} title='Unsubscribe'>
+                                If you’re no longer interested in receiving daily emails, you can unsubscribe here. By unsubscribing, we won’t send you any more emails about anything.
+                            </ActionCard>
+                        </Grid>
+                    </div>
                 )
             }
         </Page>

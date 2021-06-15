@@ -8,6 +8,7 @@ import (
 	"babblegraph/services/web/util/routetoken"
 	"babblegraph/util/database"
 	"babblegraph/util/email"
+	"babblegraph/util/ptr"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -23,6 +24,8 @@ func registerUserAccountsRoutes() {
 	a.routeNames["/api/useraccounts/login_user_1"] = true
 	a.r.HandleFunc("/api/useraccounts/create_user_1", middleware.WithoutBodyLogger(createUser))
 	a.routeNames["/api/useraccounts/create_user_1"] = true
+	a.r.HandleFunc("/api/useraccounts/get_user_profile_1", middleware.WithoutBodyLogger(getUserProfile))
+	a.routeNames["/api/useraccounts/get_user_profile_1"] = true
 }
 
 type loginUserRequest struct {
@@ -218,5 +221,72 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSONResponse(w, createUserResponse{
 		ManagementToken: token,
+	})
+}
+
+type getUserProfileRequest struct {
+	SubscriptionManagementToken string `json:"subscription_management_token"`
+}
+
+type getUserProfileResponse struct {
+	EmailAddress      *string                         `json:"email_address,omitempty"`
+	SubscriptionLevel *useraccounts.SubscriptionLevel `json:"subscription_level,omitempty"`
+}
+
+func getUserProfile(w http.ResponseWriter, r *http.Request) {
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Println(fmt.Sprintf("Got error getting user profile: %s", err.Error()))
+		writeErrorJSONResponse(w, errorResponse{
+			Message: "Request is not valid",
+		})
+		return
+	}
+	var req getUserProfileRequest
+	if err := json.Unmarshal(body, &req); err != nil {
+		log.Println(fmt.Sprintf("Got error getting user profile: %s", err.Error()))
+		writeErrorJSONResponse(w, errorResponse{
+			Message: "Request is not valid",
+		})
+		return
+	}
+	expectedUserID, err := routetoken.ValidateTokenAndGetUserID(req.SubscriptionManagementToken, routes.SubscriptionManagementRouteEncryptionKey)
+	if err != nil {
+		log.Println(fmt.Sprintf("Got error getting user profile: %s", err.Error()))
+		writeErrorJSONResponse(w, errorResponse{
+			Message: "Request is not valid",
+		})
+		return
+	}
+	middleware.WithAuthorizationCheck(w, r, middleware.WithAuthorizationCheckInput{
+		HandleFoundSubscribedUser: func(userID users.UserID, subscriptionLevel useraccounts.SubscriptionLevel, w http.ResponseWriter, r *http.Request) {
+			if *expectedUserID != userID {
+				middleware.RemoveAuthToken(w)
+				writeJSONResponse(w, getUserProfileResponse{})
+				return
+			}
+			var user *users.User
+			if err := database.WithTx(func(tx *sqlx.Tx) error {
+				var err error
+				user, err = users.GetUser(tx, userID)
+				return err
+			}); err != nil {
+				writeErrorJSONResponse(w, errorResponse{
+					Message: "Request is not valid",
+				})
+				return
+			}
+			writeJSONResponse(w, getUserProfileResponse{
+				EmailAddress:      ptr.String(user.EmailAddress),
+				SubscriptionLevel: subscriptionLevel.Ptr(),
+			})
+		},
+		HandleNoUserFound: func(w http.ResponseWriter, r *http.Request) {
+			writeJSONResponse(w, getUserProfileResponse{})
+		},
+		HandleInvalidAuthenticationToken: func(w http.ResponseWriter, r *http.Request) {
+			writeJSONResponse(w, getUserProfileResponse{})
+		},
+		HandleError: middleware.HandleAuthorizationError,
 	})
 }

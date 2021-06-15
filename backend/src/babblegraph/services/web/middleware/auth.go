@@ -31,6 +31,17 @@ func AssignAuthToken(w http.ResponseWriter, userID users.UserID) error {
 	return nil
 }
 
+func RemoveAuthToken(w http.ResponseWriter) error {
+	http.SetCookie(w, &http.Cookie{
+		Name:     authTokenCookieName,
+		Value:    "",
+		HttpOnly: true,
+		Path:     "/",
+		Expires:  time.Now().Add(-5 * 60 * time.Second),
+	})
+	return nil
+}
+
 type WithAuthorizationCheckInput struct {
 	HandleFoundSubscribedUser        func(users.UserID, useraccounts.SubscriptionLevel, http.ResponseWriter, *http.Request)
 	HandleNoUserFound                func(http.ResponseWriter, *http.Request)

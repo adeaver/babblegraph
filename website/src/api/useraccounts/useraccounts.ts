@@ -59,3 +59,25 @@ export function createUser(
         onError,
     );
 }
+
+export type GetUserProfileRequest = {
+    subscriptionManagementToken: string
+}
+
+export type GetUserProfileResponse = {
+    emailAddress: string | undefined;
+    subscriptionLevel: string | undefined;
+}
+
+export function getUserProfile(
+    req: GetUserProfileRequest,
+    onSuccess: (resp: GetUserProfileResponse) => void,
+    onError: (e: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<GetUserProfileRequest, GetUserProfileResponse>(
+        '/api/useraccounts/get_user_profile_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}
