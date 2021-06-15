@@ -7,6 +7,7 @@ import Card from '@material-ui/core/Card';
 import Divider from '@material-ui/core/Divider';
 import ArrowForwardIcon from '@material-ui/icons/ArrowForward';
 
+import Link, { LinkTarget } from 'common/components/Link/Link';
 import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
 import Page from 'common/components/Page/Page';
 import Paragraph, { Size } from 'common/typography/Paragraph';
@@ -24,6 +25,11 @@ type Params = {
 }
 
 const styleClasses = makeStyles({
+    loginInfoContainer: {
+        marginTop: '45px',
+        display: 'inline-block',
+        width: '100%',
+    },
     actionCard: {
         padding: '10px',
         height: '100%',
@@ -112,11 +118,6 @@ const SubscriptionManagementDashboardPage = (props: SubscriptionManagementDashbo
                     <LoadingSpinner />
                 ) : (
                     <div>
-                        {
-                            !!emailAddress && (
-                                <Heading4 color={TypographyColor.Primary}>Logged in as {emailAddress}</Heading4>
-                            )
-                        }
                         <Grid container spacing={2}>
                             <ActionCard redirectURL={`/manage/${token}/interests`} title='Manage Your Interests'>
                                 Select some topics you’re interested in reading more about or deselect some topics you’d like to read about less. This is a great way to make sure that the content you get is fun and engaging.
@@ -131,6 +132,14 @@ const SubscriptionManagementDashboardPage = (props: SubscriptionManagementDashbo
                                 If you’re no longer interested in receiving daily emails, you can unsubscribe here. By unsubscribing, we won’t send you any more emails about anything.
                             </ActionCard>
                         </Grid>
+                        {
+                            !!emailAddress && (
+                                <div className={classes.loginInfoContainer}>
+                                    <Heading4 color={TypographyColor.Primary}>Logged in as {emailAddress}</Heading4>
+                                    <Link href="/logout" target={LinkTarget.Self}>Click here to logout</Link>
+                                </div>
+                            )
+                        }
                     </div>
                 )
             }

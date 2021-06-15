@@ -12,7 +12,7 @@ import (
 func HandleLoginPage(staticFileDirName string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		middleware.WithAuthorizationCheck(w, r, middleware.WithAuthorizationCheckInput{
-			HandleFoundSubscribedUser: func(userID users.UserID, subscriptionLevel useraccounts.SubscriptionLevel, w http.ResponseWriter, r *http.Request) {
+			HandleFoundUser: func(userID users.UserID, subscriptionLevel *useraccounts.SubscriptionLevel, w http.ResponseWriter, r *http.Request) {
 				subscriptionManagementRoute, err := routes.MakeSubscriptionManagementRouteForUserID(userID)
 				if err != nil {
 					w.WriteHeader(http.StatusBadRequest)
@@ -30,7 +30,7 @@ func HandleLoginPage(staticFileDirName string) func(w http.ResponseWriter, r *ht
 func HandleLogout() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		middleware.WithAuthorizationCheck(w, r, middleware.WithAuthorizationCheckInput{
-			HandleFoundSubscribedUser: func(userID users.UserID, subscriptionLevel useraccounts.SubscriptionLevel, w http.ResponseWriter, r *http.Request) {
+			HandleFoundUser: func(userID users.UserID, subscriptionLevel *useraccounts.SubscriptionLevel, w http.ResponseWriter, r *http.Request) {
 				middleware.RemoveAuthToken(w)
 				http.Redirect(w, r, env.GetAbsoluteURLForEnvironment("login"), http.StatusTemporaryRedirect)
 			},

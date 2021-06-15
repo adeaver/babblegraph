@@ -259,7 +259,7 @@ func getUserProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	middleware.WithAuthorizationCheck(w, r, middleware.WithAuthorizationCheckInput{
-		HandleFoundSubscribedUser: func(userID users.UserID, subscriptionLevel useraccounts.SubscriptionLevel, w http.ResponseWriter, r *http.Request) {
+		HandleFoundUser: func(userID users.UserID, subscriptionLevel *useraccounts.SubscriptionLevel, w http.ResponseWriter, r *http.Request) {
 			if *expectedUserID != userID {
 				middleware.RemoveAuthToken(w)
 				writeJSONResponse(w, getUserProfileResponse{})
@@ -278,7 +278,7 @@ func getUserProfile(w http.ResponseWriter, r *http.Request) {
 			}
 			writeJSONResponse(w, getUserProfileResponse{
 				EmailAddress:      ptr.String(user.EmailAddress),
-				SubscriptionLevel: subscriptionLevel.Ptr(),
+				SubscriptionLevel: subscriptionLevel,
 			})
 		},
 		HandleNoUserFound: func(w http.ResponseWriter, r *http.Request) {
