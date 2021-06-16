@@ -18,7 +18,7 @@ func HandleLoginPage(staticFileDirName string) func(w http.ResponseWriter, r *ht
 			HandleFoundUser: func(userID users.UserID, subscriptionLevel *useraccounts.SubscriptionLevel, w http.ResponseWriter, r *http.Request) {
 				params := r.URL.Query()
 				var redirectLocation string
-				if redirectLocationParams, _ := params["d"]; len(redirectLocationParams) > 0 {
+				if redirectLocationParams, _ := params[routes.RedirectKeyParameter]; len(redirectLocationParams) > 0 {
 					redirectLocation = redirectLocationParams[0]
 				}
 				redirectKeyForLocation := routes.GetLoginRedirectKeyOrDefault(redirectLocation)

@@ -2,14 +2,18 @@ package routes
 
 import (
 	"babblegraph/model/users"
+	"babblegraph/util/env"
 	"fmt"
 )
+
+const RedirectKeyParameter string = "d"
 
 type LoginRedirectKey string
 
 const (
 	LoginRedirectKeySubscriptionManagement LoginRedirectKey = "sbmgmt"
 	LoginRedirectKeyVocabulary             LoginRedirectKey = "vb"
+	LoginRedirectKeyContentTopics          LoginRedirectKey = "cts"
 
 	LoginRedirectKeyDefault = LoginRedirectKeySubscriptionManagement
 )
@@ -24,6 +28,8 @@ func GetLoginRedirectKeyOrDefault(loginKey string) LoginRedirectKey {
 		return LoginRedirectKeySubscriptionManagement
 	case LoginRedirectKeyVocabulary.Str():
 		return LoginRedirectKeyVocabulary
+	case LoginRedirectKeyContentTopics.Str():
+		return LoginRedirectKeyContentTopics
 	default:
 		return LoginRedirectKeyDefault
 	}
@@ -35,7 +41,21 @@ func GetLoginRedirectRouteForKeyAndUser(loginRedirectKey LoginRedirectKey, userI
 		return MakeSubscriptionManagementRouteForUserID(userID)
 	case LoginRedirectKeyVocabulary:
 		return MakeWordReinforcementLink(userID)
+	case LoginRedirectKeyContentTopics:
+		return MakeSetTopicsLink(userID)
 	default:
 		return nil, fmt.Errorf("unimplemented")
 	}
+}
+
+func MakeLoginLinkWithContentTopicsRedirect() string {
+	return makeLoginLinkForLoginRedirectKey(LoginRedirectKeyContentTopics)
+}
+
+func MakeLoginLinkWithReinforcementRedirect() string {
+	return makeLoginLinkForLoginRedirectKey(LoginRedirectKeyVocabulary)
+}
+
+func makeLoginLinkForLoginRedirectKey(key LoginRedirectKey) string {
+	return env.GetAbsoluteURLForEnvironment(fmt.Sprintf("login?%s=%s", RedirectKeyParameter, key.Str()))
 }
