@@ -96,7 +96,7 @@ func SendDailyEmailForDocuments(tx *sqlx.Tx, cl *ses.Client, recipient email.Rec
 }
 
 func createDailyEmailTemplate(tx *sqlx.Tx, emailRecordID email.ID, recipient email.Recipient, input DailyEmailInput) (*dailyEmailTemplate, error) {
-	baseTemplate, err := createBaseTemplate(emailRecordID, recipient)
+	baseTemplate, err := createBaseTemplate(tx, emailRecordID, recipient)
 	if err != nil {
 		return nil, err
 	}

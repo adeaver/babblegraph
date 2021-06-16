@@ -27,7 +27,7 @@ func SendVerificationEmailForRecipient(tx *sqlx.Tx, cl *ses.Client, recipient em
 	if err := email.InsertEmailRecord(tx, emailRecordID, recipient.UserID, email.EmailTypeUserVerification); err != nil {
 		return nil, err
 	}
-	template, err := createUserVerificationEmailTemplate(emailRecordID, recipient)
+	template, err := createUserVerificationEmailTemplate(tx, emailRecordID, recipient)
 	if err != nil {
 		return nil, err
 	}
@@ -55,8 +55,8 @@ func SendVerificationEmailForRecipient(tx *sqlx.Tx, cl *ses.Client, recipient em
 	return &emailRecordID, nil
 }
 
-func createUserVerificationEmailTemplate(emailRecordID email.ID, recipient email.Recipient) (*userVerificationEmailTemplate, error) {
-	baseTemplate, err := createBaseTemplate(emailRecordID, recipient)
+func createUserVerificationEmailTemplate(tx *sqlx.Tx, emailRecordID email.ID, recipient email.Recipient) (*userVerificationEmailTemplate, error) {
+	baseTemplate, err := createBaseTemplate(tx, emailRecordID, recipient)
 	if err != nil {
 		return nil, err
 	}

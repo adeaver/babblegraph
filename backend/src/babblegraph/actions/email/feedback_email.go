@@ -27,7 +27,7 @@ func SendUserFeedbackEmailForRecipient(tx *sqlx.Tx, cl *ses.Client, recipient em
 	if err := email.InsertEmailRecord(tx, emailRecordID, recipient.UserID, email.EmailTypeUserFeedback); err != nil {
 		return nil, err
 	}
-	baseTemplate, err := createBaseTemplate(emailRecordID, recipient)
+	baseTemplate, err := createBaseTemplate(tx, emailRecordID, recipient)
 	if err != nil {
 		return nil, err
 	}
