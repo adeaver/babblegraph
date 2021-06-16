@@ -8,12 +8,14 @@ import (
 	"babblegraph/services/web/util/routetoken"
 	"babblegraph/util/database"
 	"babblegraph/util/email"
+	"babblegraph/util/env"
 	"babblegraph/util/ptr"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -31,11 +33,12 @@ func registerUserAccountsRoutes() {
 type loginUserRequest struct {
 	EmailAddress string `json:"email_address"`
 	Password     string `json:"password"`
+	RedirectKey  string `json:"redirect_key"`
 }
 
 type loginUserResponse struct {
-	ManagementToken *string     `json:"management_token"`
-	LoginError      *loginError `json:"login_error"`
+	Location   *string     `json:"location,omitempty"`
+	LoginError *loginError `json:"login_error"`
 }
 
 type loginError string
@@ -95,7 +98,8 @@ func loginUser(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	token, err := routes.MakeSubscriptionManagementToken(*userID)
+	redirectKeyForLocation := routes.GetLoginRedirectKeyOrDefault(req.RedirectKey)
+	redirectURL, err := routes.GetLoginRedirectRouteForKeyAndUser(redirectKeyForLocation, *userID)
 	if err != nil {
 		writeErrorJSONResponse(w, errorResponse{
 			Message: "Request is not valid",
@@ -108,8 +112,10 @@ func loginUser(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
+	// This is a hack
+	redirectPath := fmt.Sprintf("/%s", strings.TrimPrefix(*redirectURL, env.GetAbsoluteURLForEnvironment("")))
 	writeJSONResponse(w, loginUserResponse{
-		ManagementToken: token,
+		Location: ptr.String(redirectPath),
 	})
 }
 
