@@ -5,6 +5,7 @@ import (
 	"babblegraph/model/documents"
 	"babblegraph/model/email"
 	"babblegraph/model/routes"
+	"babblegraph/model/useraccounts"
 	"babblegraph/model/userdocuments"
 	"babblegraph/model/users"
 	"babblegraph/util/deref"
@@ -96,21 +97,34 @@ func SendDailyEmailForDocuments(tx *sqlx.Tx, cl *ses.Client, recipient email.Rec
 }
 
 func createDailyEmailTemplate(tx *sqlx.Tx, emailRecordID email.ID, recipient email.Recipient, input DailyEmailInput) (*dailyEmailTemplate, error) {
-	baseTemplate, err := createBaseTemplate(emailRecordID, recipient)
+	baseTemplate, err := createBaseTemplate(tx, emailRecordID, recipient)
+	if err != nil {
+		return nil, err
+	}
+	alreadyHasAccount, err := useraccounts.DoesUserAlreadyHaveAccount(tx, recipient.UserID)
 	if err != nil {
 		return nil, err
 	}
 	categories := createEmailCategories(tx, recipient.UserID, emailRecordID, input.CategorizedDocuments)
 	var setTopicsLink *string
 	if !input.HasSetTopics {
-		setTopicsLink, err = routes.MakeSetTopicsLink(recipient.UserID)
+		if alreadyHasAccount {
+			setTopicsLink = ptr.String(routes.MakeLoginLinkWithContentTopicsRedirect())
+		} else {
+			setTopicsLink, err = routes.MakeSetTopicsLink(recipient.UserID)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	var reinforcementLink *string
+	if alreadyHasAccount {
+		reinforcementLink = ptr.String(routes.MakeLoginLinkWithReinforcementRedirect())
+	} else {
+		reinforcementLink, err = routes.MakeWordReinforcementLink(recipient.UserID)
 		if err != nil {
 			return nil, err
 		}
-	}
-	reinforcementLink, err := routes.MakeWordReinforcementLink(recipient.UserID)
-	if err != nil {
-		return nil, err
 	}
 	return &dailyEmailTemplate{
 		BaseEmailTemplate: *baseTemplate,

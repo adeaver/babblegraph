@@ -3,10 +3,11 @@ import { makePostRequestWithStandardEncoding } from 'api/bgfetch/bgfetch';
 export type LoginUserRequest = {
     emailAddress: string;
     password: string;
+    redirectKey: string;
 }
 
 export type LoginUserResponse = {
-    managementToken: string | null;
+    location: string | undefined;
     loginError: LoginError | null;
 }
 

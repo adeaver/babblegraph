@@ -65,19 +65,19 @@ const LoginPage = (props: LoginPageProps) => {
     const [ errorMessage, setErrorMessage ] = useState<string | null>(null);
 
 
-    // TODO: Add useEffect here to see if
-    // user is already logged in.
+    const urlSearchParams = new URLSearchParams(window.location.search);
 
     const handleSubmit = () => {
         setIsLoading(true);
         loginUser({
             emailAddress: emailAddress,
             password: password,
+            redirectKey: urlSearchParams.get("d") || "",
         },
         (resp: LoginUserResponse) => {
             setIsLoading(false);
-            if (!!resp.managementToken) {
-                history.push(`/manage/${resp.managementToken}`);
+            if (!!resp.location) {
+                history.push(resp.location);
             } else if (!!resp.loginError) {
                 setErrorMessage(loginErrorMessages[resp.loginError] || loginErrorMessages["default"]);
             } else {

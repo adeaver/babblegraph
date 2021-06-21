@@ -43,7 +43,7 @@ func RemoveAuthToken(w http.ResponseWriter) error {
 }
 
 type WithAuthorizationCheckInput struct {
-	HandleFoundSubscribedUser        func(users.UserID, useraccounts.SubscriptionLevel, http.ResponseWriter, *http.Request)
+	HandleFoundUser                  func(users.UserID, *useraccounts.SubscriptionLevel, http.ResponseWriter, *http.Request)
 	HandleNoUserFound                func(http.ResponseWriter, *http.Request)
 	HandleInvalidAuthenticationToken func(http.ResponseWriter, *http.Request)
 	HandleError                      func(error, http.ResponseWriter, *http.Request)
@@ -77,22 +77,25 @@ func WithAuthorizationCheck(w http.ResponseWriter, r *http.Request, input WithAu
 					input.HandleError(err, w, r)
 					return
 				}
+				input.HandleFoundUser(*userID, userSubscriptionLevel, w, r)
+				return
 			}
 		}
 	}
-	if userSubscriptionLevel == nil {
-		input.HandleNoUserFound(w, r)
-		return
-	}
-	input.HandleFoundSubscribedUser(*userID, *userSubscriptionLevel, w, r)
+	input.HandleNoUserFound(w, r)
 }
 
 func WithAuthorizationLevelVerification(validAuthorizationLevels []useraccounts.SubscriptionLevel, fn func(userID users.UserID) func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		WithAuthorizationCheck(w, r, WithAuthorizationCheckInput{
-			HandleFoundSubscribedUser: func(userID users.UserID, subscriptionLevel useraccounts.SubscriptionLevel, w http.ResponseWriter, r *http.Request) {
+			HandleFoundUser: func(userID users.UserID, subscriptionLevel *useraccounts.SubscriptionLevel, w http.ResponseWriter, r *http.Request) {
+				// Users can have accounts without having a valid subscription
+				if subscriptionLevel == nil {
+					w.WriteHeader(http.StatusUnauthorized)
+					return
+				}
 				for _, validSubscriptionLevel := range validAuthorizationLevels {
-					if subscriptionLevel == validSubscriptionLevel {
+					if *subscriptionLevel == validSubscriptionLevel {
 						fn(userID)(w, r)
 						return
 					}
