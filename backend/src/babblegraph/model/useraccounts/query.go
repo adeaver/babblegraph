@@ -3,6 +3,7 @@ package useraccounts
 import (
 	"babblegraph/model/users"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -16,6 +17,16 @@ const (
 	getSubscriptionLevelForUserQuery = "SELECT * FROM user_account_subscription_levels WHERE user_id = $1 AND is_active = TRUE"
 	addSubscriptionLevelForUserQuery = "INSERT INTO user_account_subscription_levels (user_id, subscription_level, expires_at) VALUES ($1, $2, $3) ON CONFLICT (user_id) DO UPDATE SET is_active = TRUE, subscription_level = $2, expires_at = $3"
 	expireSubscriptionForUserQuery   = "UPDATE user_account_subscription_levels SET is_active = FALSE WHERE user_id = $1"
+
+	forgotPasswordExpirationTime   = 15 * 60 * time.Second
+	maxDailyForgotPasswordRequests = 5
+
+	getAllUnfulfilledForgotPasswordAttemptsQuery       = "SELECT * FROM user_forgot_password_attempts WHERE is_archived IS FALSE AND fulfilled_at IS NULL"
+	fulfillForgotPasswordAttemptByIDQuery              = "UPDATE user_forgot_password_attempts SET fulfilled_at = (now() at time zone 'utc') WHERE _id = $1"
+	getNotArchivedForgotPasswordAttemptsForUserIDQuery = "SELECT * FROM user_forgot_password_attempts WHERE is_archived IS FALSE AND user_id = $1"
+	getNotArchivedForgotPasswordAttemptsForIDQuery     = "SELECT * FROM user_forgot_password_attempts WHERE is_archived IS FALSE AND _id = $1"
+	addForgotPasswordAttemptQuery                      = "INSERT INTO user_forgot_password_attempts (user_id) VALUES ($1) ON CONFLICT user_id DO NOTHING"
+	archiveAllFulfilledForgotPasswordAttemptsQuery     = "UPDATE user_forgot_password_attempts SET is_archived = TRUE WHERE is_archived = FALSE AND fulfilled_at IS NOT NULL AND fulfilled_at < NOW() - interval '20 minutes'"
 )
 
 func CreateUserPasswordForUser(tx *sqlx.Tx, userID users.UserID, password string) error {
@@ -92,6 +103,75 @@ func AddSubscriptionLevelForUser(tx *sqlx.Tx, userID users.UserID, level Subscri
 
 func ExpireSubscriptionForUser(tx *sqlx.Tx, userID users.UserID) error {
 	if _, err := tx.Exec(expireSubscriptionForUserQuery, userID); err != nil {
+		return err
+	}
+	return nil
+}
+
+func GetAllUnfulfilledForgotPasswordAttempts(tx *sqlx.Tx) ([]ForgotPasswordAttempt, error) {
+	var matches []dbUserForgotPasswordAttempt
+	if err := tx.Select(&matches, getAllUnfulfilledForgotPasswordAttemptsQuery); err != nil {
+		return nil, err
+	}
+	var out []ForgotPasswordAttempt
+	for _, m := range matches {
+		out = append(out, m.ToNonDB())
+	}
+	return out, nil
+}
+
+func FulfillForgotPasswordAttempt(tx *sqlx.Tx, id ForgotPasswordAttemptID) error {
+	if _, err := tx.Exec(fulfillForgotPasswordAttemptByIDQuery, id); err != nil {
+		return err
+	}
+	return nil
+}
+
+func GetUnexpiredForgotPasswordAttemptByID(tx *sqlx.Tx, id ForgotPasswordAttemptID) (_res *ForgotPasswordAttempt, _isExpired bool, _err error) {
+	// A forgot password attempt is considered unexpired if:
+	// 1) It is not archived
+	// 2) It was fulfilled less than the expiration time ago
+	var matches []dbUserForgotPasswordAttempt
+	if err := tx.Select(&matches, getNotArchivedForgotPasswordAttemptsForIDQuery); err != nil {
+		return nil, false, err
+	}
+	switch {
+	case len(matches) == 0:
+		// This is not an error because it can be easily user generated
+		// is expected if a user clicks a very old link and we want to send a sentry
+		// if there's a real error
+		log.Println(fmt.Sprintf("No unarchived password attempt found for ID: %s", id))
+		return nil, false, nil
+	case len(matches) > 1:
+		return nil, false, fmt.Errorf("Expected 1 unarchived password attempt for ID %s, but got %d", id, len(matches))
+	case matches[0].FulfilledAt == nil:
+		return nil, false, fmt.Errorf("Forgot password attempt with ID %s is unfulfilled", id)
+	default:
+		expirationTime := matches[0].FulfilledAt.Add(forgotPasswordExpirationTime)
+		if time.Now().After(expirationTime) {
+			return nil, true, nil
+		}
+		out := matches[0].ToNonDB()
+		return &out, false, nil
+	}
+}
+
+func AddForgotPasswordAttemptForUserID(tx *sqlx.Tx, userID users.UserID) (_hasTooManyAttempts bool, _err error) {
+	var matches []dbUserForgotPasswordAttempt
+	if err := tx.Select(&matches, getNotArchivedForgotPasswordAttemptsForUserIDQuery); err != nil {
+		return false, err
+	}
+	if len(matches) >= maxDailyForgotPasswordRequests {
+		return true, nil
+	}
+	if _, err := tx.Exec(addForgotPasswordAttemptQuery, userID); err != nil {
+		return false, err
+	}
+	return false, nil
+}
+
+func ArchiveAllForgotPasswordAttemptsOlderThan20Minutes(tx *sqlx.Tx) error {
+	if _, err := tx.Exec(archiveAllFulfilledForgotPasswordAttemptsQuery); err != nil {
 		return err
 	}
 	return nil
