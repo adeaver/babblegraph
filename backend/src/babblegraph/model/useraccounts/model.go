@@ -38,12 +38,17 @@ func (s SubscriptionLevel) Ptr() *SubscriptionLevel {
 
 type ForgotPasswordAttemptID string
 
+func (f ForgotPasswordAttemptID) Ptr() *ForgotPasswordAttemptID {
+	return &f
+}
+
 type dbUserForgotPasswordAttempt struct {
 	ID          ForgotPasswordAttemptID `db:"_id"`
 	CreatedAt   time.Time               `db:"created_at"`
 	FulfilledAt *time.Time              `db:"fulfilled_at"`
 	UserID      users.UserID            `db:"user_id"`
 	IsArchived  bool                    `db:"is_archived"`
+	HasBeenUsed bool                    `db:"has_been_used"`
 }
 
 func (d *dbUserForgotPasswordAttempt) ToNonDB() ForgotPasswordAttempt {

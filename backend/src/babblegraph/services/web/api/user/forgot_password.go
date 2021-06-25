@@ -28,7 +28,7 @@ func requestPasswordResetLink(body []byte) (interface{}, error) {
 	if err := json.Unmarshal(body, &req); err != nil {
 		return nil, err
 	}
-	isValid, err := recaptcha.VerifyRecaptchaToken("forgot-password", req.CaptchaToken)
+	isValid, err := recaptcha.VerifyRecaptchaToken("forgotpassword", req.CaptchaToken)
 	switch {
 	case err != nil:
 		sentry.CaptureException(err)
@@ -76,6 +76,7 @@ func requestPasswordResetLink(body []byte) (interface{}, error) {
 		if shouldSendSentryOnError {
 			sentry.CaptureException(fmt.Errorf("Error adding new forgot password request for user %s: %s", formattedEmailAddress, err.Error()))
 		}
+		log.Println(fmt.Sprintf("Error adding new forgot password request for user %s: %s", formattedEmailAddress, err.Error()))
 		return requestPasswordResetLinkResponse{
 			Success: false,
 		}, nil

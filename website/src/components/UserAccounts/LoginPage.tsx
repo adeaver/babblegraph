@@ -14,7 +14,7 @@ import { TypographyColor } from 'common/typography/common';
 import { PrimaryButton } from 'common/components/Button/Button';
 import { PrimaryTextField } from 'common/components/TextField/TextField';
 import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
-import Link from 'common/components/Link/Link';
+import Link, { LinkTarget } from 'common/components/Link/Link';
 
 import {
     loginUser,
@@ -193,7 +193,7 @@ const LoginForm = (props: LoginFormProps) => {
                     </PrimaryButton>
                 </Grid>
             </Grid>
-            <Link href="/forgot-password">
+            <Link href="/forgot-password" target={LinkTarget.Self}>
                 Forgot your password?
             </Link>
             <Paragraph>

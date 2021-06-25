@@ -20,6 +20,8 @@ import WordReinforcementPage from 'components/SubscriptionManagement/WordReinfor
 
 import LoginPage from 'components/UserAccounts/LoginPage';
 import SignupPage from 'components/UserAccounts/SignupPage';
+import ForgotPasswordPage from 'components/UserAccounts/ForgotPasswordPage';
+import ResetPasswordPage from 'components/UserAccounts/ResetPasswordPage';
 
 import NotFoundPage from 'components/NotFoundPage/NotFoundPage';
 
@@ -39,6 +41,8 @@ class App extends React.Component{
                     { /* User Account Management */ }
                     <Route path="/login" component={LoginPage} />
                     <Route path="/signup/:token" component={SignupPage} />
+                    <Route path="/forgot-password" component={ForgotPasswordPage} />
+                    <Route path="/password-reset/:token" component={ResetPasswordPage} />
 
                     { /* Home Page & About Page */ }
                     <Route path="/about" component={AboutPage} />

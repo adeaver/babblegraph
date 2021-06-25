@@ -82,3 +82,36 @@ export function getUserProfile(
         onError,
     );
 }
+
+export enum ResetPasswordError {
+    InvalidToken = 'invalid-token',
+    TokenExpired = 'token-expired',
+    PasswordRequirements = 'pass-requirements',
+    PasswordsNoMatch = 'passwords-no-match',
+    NoAccount = 'no-account',
+}
+
+export type ResetPasswordRequest = {
+    resetPasswordToken: string;
+    emailAddress: string;
+    password: string;
+    confirmPassword: string;
+}
+
+export type ResetPasswordResponse = {
+    managementToken: string | null;
+    resetPasswordError: ResetPasswordError | null;
+}
+
+export function resetPassword(
+    req: ResetPasswordRequest,
+    onSuccess: (resp: ResetPasswordResponse) => void,
+    onError: (e: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<ResetPasswordRequest, ResetPasswordResponse>(
+        '/api/useraccounts/reset_password_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}

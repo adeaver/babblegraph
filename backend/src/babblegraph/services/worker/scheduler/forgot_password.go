@@ -77,6 +77,9 @@ func sendForgotPasswordEmailForUserAndAttemptID(tx *sqlx.Tx, sesClient *ses.Clie
 			Link:       *passwordResetLink,
 			ButtonText: "Reset your password",
 		},
+		AfterParagraphs: []string{
+			"This link is only valid for 15 minutes after the delivery time.",
+		},
 	}); err != nil {
 		return err
 	}
