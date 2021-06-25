@@ -26,6 +26,8 @@ func registerUserAccountsRoutes() {
 	a.routeNames["/api/useraccounts/login_user_1"] = true
 	a.r.HandleFunc("/api/useraccounts/create_user_1", middleware.WithoutBodyLogger(createUser))
 	a.routeNames["/api/useraccounts/create_user_1"] = true
+	a.r.HandleFunc("/api/useraccounts/reset_password_1", middleware.WithoutBodyLogger(createUser))
+	a.routeNames["/api/useraccounts/reset_password_1"] = true
 	a.r.HandleFunc("/api/useraccounts/get_user_profile_1", middleware.WithoutBodyLogger(getUserProfile))
 	a.routeNames["/api/useraccounts/get_user_profile_1"] = true
 }
@@ -295,4 +297,96 @@ func getUserProfile(w http.ResponseWriter, r *http.Request) {
 		},
 		HandleError: middleware.HandleAuthorizationError,
 	})
+}
+
+type resetPasswordRequest struct {
+	ResetPasswordToken string `json:"reset_password_token"`
+	EmailAddress       string `json:"email_address"`
+	Password           string `json:"password"`
+	ConfirmPassword    string `json:"confirm_password"`
+}
+
+type resetPasswordResponse struct {
+	ResetPasswordError *resetPasswordError `json:"reset_password_error"`
+}
+
+type resetPasswordError string
+
+const (
+	resetPasswordErrorInvalidToken         resetPasswordError = "invalid-token"
+	resetPasswordErrorPasswordRequirements resetPasswordError = "pass-requirements"
+	resetPasswordErrorPasswordsNoMatch     resetPasswordError = "passwords-no-match"
+	resetPasswordErrorNoAccount            resetPasswordError = "no-account"
+)
+
+func (r resetPasswordError) Ptr() *resetPasswordError {
+	return &r
+}
+
+func resetPassword(w http.ResponseWriter, r *http.Request) {
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		writeErrorJSONResponse(w, errorResponse{
+			Message: "Request is not valid",
+		})
+		return
+	}
+	var req resetPasswordRequest
+	if err := json.Unmarshal(body, &req); err != nil {
+		writeErrorJSONResponse(w, errorResponse{
+			Message: "Request is not valid",
+		})
+		return
+	}
+	formattedEmailAddress := email.FormatEmailAddress(req.EmailAddress)
+	userID, err := routetoken.ValidateTokenAndEmailAndGetUserID(req.ResetPasswordToken, routes.ForgotPasswordKey, formattedEmailAddress)
+	if err != nil {
+		writeJSONResponse(w, resetPasswordResponse{
+			ResetPasswordError: resetPasswordErrorInvalidToken.Ptr(),
+		})
+		return
+	}
+	if req.Password != req.ConfirmPassword {
+		writeJSONResponse(w, resetPasswordResponse{
+			ResetPasswordError: resetPasswordErrorPasswordsNoMatch.Ptr(),
+		})
+		return
+	}
+	if !useraccounts.ValidatePasswordMeetsRequirements(req.Password) {
+		writeJSONResponse(w, resetPasswordResponse{
+			ResetPasswordError: resetPasswordErrorPasswordRequirements.Ptr(),
+		})
+		return
+	}
+	var rErr *resetPasswordError
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		alreadyHasAccount, err := useraccounts.DoesUserAlreadyHaveAccount(tx, *userID)
+		switch {
+		case err != nil:
+			return err
+		case !alreadyHasAccount:
+			rErr = resetPasswordErrorNoAccount.Ptr()
+			return fmt.Errorf("user does not have account")
+		}
+		return useraccounts.CreateUserPasswordForUser(tx, *userID, req.Password)
+	}); err != nil {
+		log.Println(fmt.Sprintf("Error signing up user %s: %s", formattedEmailAddress, err.Error()))
+		if rErr != nil {
+			writeJSONResponse(w, resetPasswordResponse{
+				ResetPasswordError: rErr,
+			})
+			return
+		}
+		writeErrorJSONResponse(w, errorResponse{
+			Message: "Request is not valid",
+		})
+		return
+	}
+	if err := middleware.AssignAuthToken(w, *userID); err != nil {
+		writeErrorJSONResponse(w, errorResponse{
+			Message: "Request is not valid",
+		})
+		return
+	}
+	writeJSONResponse(w, resetPasswordResponse{})
 }
