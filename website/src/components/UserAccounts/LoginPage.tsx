@@ -199,6 +199,9 @@ const LoginForm = (props: LoginFormProps) => {
             <Paragraph>
                 If you don’t have a premium account and would like one, check out Babblegraph’s BuyMeACoffee page.
             </Paragraph>
+            <Link href="https://buymeacoffee.com/babblegraph">
+                Click here for the BuyMeACoffee page
+            </Link>
         </div>
     );
 }
