@@ -8,6 +8,7 @@ import (
 	"babblegraph/services/web/util/routetoken"
 	"babblegraph/util/database"
 	"babblegraph/util/email"
+	"babblegraph/util/encrypt"
 	"babblegraph/util/env"
 	"babblegraph/util/ptr"
 	"encoding/json"
@@ -26,7 +27,7 @@ func registerUserAccountsRoutes() {
 	a.routeNames["/api/useraccounts/login_user_1"] = true
 	a.r.HandleFunc("/api/useraccounts/create_user_1", middleware.WithoutBodyLogger(createUser))
 	a.routeNames["/api/useraccounts/create_user_1"] = true
-	a.r.HandleFunc("/api/useraccounts/reset_password_1", middleware.WithoutBodyLogger(createUser))
+	a.r.HandleFunc("/api/useraccounts/reset_password_1", middleware.WithoutBodyLogger(resetPassword))
 	a.routeNames["/api/useraccounts/reset_password_1"] = true
 	a.r.HandleFunc("/api/useraccounts/get_user_profile_1", middleware.WithoutBodyLogger(getUserProfile))
 	a.routeNames["/api/useraccounts/get_user_profile_1"] = true
@@ -307,6 +308,7 @@ type resetPasswordRequest struct {
 }
 
 type resetPasswordResponse struct {
+	ManagementToken    *string             `json:"management_token"`
 	ResetPasswordError *resetPasswordError `json:"reset_password_error"`
 }
 
@@ -314,6 +316,7 @@ type resetPasswordError string
 
 const (
 	resetPasswordErrorInvalidToken         resetPasswordError = "invalid-token"
+	resetPasswordErrorTokenExpired         resetPasswordError = "token-expired"
 	resetPasswordErrorPasswordRequirements resetPasswordError = "pass-requirements"
 	resetPasswordErrorPasswordsNoMatch     resetPasswordError = "passwords-no-match"
 	resetPasswordErrorNoAccount            resetPasswordError = "no-account"
@@ -339,10 +342,29 @@ func resetPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	formattedEmailAddress := email.FormatEmailAddress(req.EmailAddress)
-	userID, err := routetoken.ValidateTokenAndEmailAndGetUserID(req.ResetPasswordToken, routes.ForgotPasswordKey, formattedEmailAddress)
-	if err != nil {
-		writeJSONResponse(w, resetPasswordResponse{
-			ResetPasswordError: resetPasswordErrorInvalidToken.Ptr(),
+	var rErr *resetPasswordError
+	var forgotPasswordID *useraccounts.ForgotPasswordAttemptID
+	if err := encrypt.WithDecodedToken(req.ResetPasswordToken, func(tokenPair encrypt.TokenPair) error {
+		if tokenPair.Key != routes.ForgotPasswordKey.Str() {
+			rErr = resetPasswordErrorInvalidToken.Ptr()
+			return fmt.Errorf("Invalid token")
+		}
+		forgotPasswordIDStr, ok := tokenPair.Value.(string)
+		if !ok {
+			return fmt.Errorf("Bad value for token pair")
+		}
+		forgotPasswordID = useraccounts.ForgotPasswordAttemptID(forgotPasswordIDStr).Ptr()
+		return nil
+	}); err != nil {
+		log.Println(fmt.Sprintf("Error resetting password for user %s: %s", formattedEmailAddress, err.Error()))
+		if rErr != nil {
+			writeJSONResponse(w, resetPasswordResponse{
+				ResetPasswordError: rErr,
+			})
+			return
+		}
+		writeErrorJSONResponse(w, errorResponse{
+			Message: "Request is not valid",
 		})
 		return
 	}
@@ -358,9 +380,28 @@ func resetPassword(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	var rErr *resetPasswordError
+	var userID *users.UserID
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
-		alreadyHasAccount, err := useraccounts.DoesUserAlreadyHaveAccount(tx, *userID)
+		forgotPasswordAttempt, isExpired, err := useraccounts.GetUnexpiredForgotPasswordAttemptByID(tx, *forgotPasswordID)
+		switch {
+		case err != nil:
+			return err
+		case isExpired:
+			rErr = resetPasswordErrorTokenExpired.Ptr()
+			return fmt.Errorf("Token has expired")
+		case forgotPasswordAttempt == nil:
+			return fmt.Errorf("Token has not expired, no error, but no forgot password attempt")
+		}
+		user, err := users.LookupUserForIDAndEmail(tx, forgotPasswordAttempt.UserID, formattedEmailAddress)
+		switch {
+		case err != nil:
+			return err
+		case user == nil:
+			rErr = resetPasswordErrorInvalidToken.Ptr()
+			return fmt.Errorf("The user does not correspond to the token")
+		}
+		userID = &user.ID
+		alreadyHasAccount, err := useraccounts.DoesUserAlreadyHaveAccount(tx, user.ID)
 		switch {
 		case err != nil:
 			return err
@@ -368,9 +409,12 @@ func resetPassword(w http.ResponseWriter, r *http.Request) {
 			rErr = resetPasswordErrorNoAccount.Ptr()
 			return fmt.Errorf("user does not have account")
 		}
-		return useraccounts.CreateUserPasswordForUser(tx, *userID, req.Password)
+		if err := useraccounts.CreateUserPasswordForUser(tx, user.ID, req.Password); err != nil {
+			return err
+		}
+		return useraccounts.SetForgotPasswordAttemptAsUsed(tx, forgotPasswordAttempt.ID)
 	}); err != nil {
-		log.Println(fmt.Sprintf("Error signing up user %s: %s", formattedEmailAddress, err.Error()))
+		log.Println(fmt.Sprintf("Error resetting password for user %s: %s", formattedEmailAddress, err.Error()))
 		if rErr != nil {
 			writeJSONResponse(w, resetPasswordResponse{
 				ResetPasswordError: rErr,
@@ -388,5 +432,14 @@ func resetPassword(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	writeJSONResponse(w, resetPasswordResponse{})
+	token, err := routes.MakeSubscriptionManagementToken(*userID)
+	if err != nil {
+		writeErrorJSONResponse(w, errorResponse{
+			Message: "Request is not valid",
+		})
+		return
+	}
+	writeJSONResponse(w, resetPasswordResponse{
+		ManagementToken: token,
+	})
 }

@@ -24,8 +24,9 @@ const (
 	getAllUnfulfilledForgotPasswordAttemptsQuery       = "SELECT * FROM user_forgot_password_attempts WHERE is_archived IS FALSE AND fulfilled_at IS NULL"
 	fulfillForgotPasswordAttemptByIDQuery              = "UPDATE user_forgot_password_attempts SET fulfilled_at = (now() at time zone 'utc') WHERE _id = $1"
 	getNotArchivedForgotPasswordAttemptsForUserIDQuery = "SELECT * FROM user_forgot_password_attempts WHERE is_archived IS FALSE AND user_id = $1"
-	getNotArchivedForgotPasswordAttemptsForIDQuery     = "SELECT * FROM user_forgot_password_attempts WHERE is_archived IS FALSE AND _id = $1"
-	addForgotPasswordAttemptQuery                      = "INSERT INTO user_forgot_password_attempts (user_id) VALUES ($1) ON CONFLICT user_id DO NOTHING"
+	getNotArchivedForgotPasswordAttemptsForIDQuery     = "SELECT * FROM user_forgot_password_attempts WHERE is_archived IS FALSE AND has_been_used IS FALSE AND _id = $1"
+	setForgotPasswordAttemptAsUsedQuery                = "UPDATE user_forgot_password_attempts SET has_been_used = TRUE WHERE _id = $1"
+	addForgotPasswordAttemptQuery                      = "INSERT INTO user_forgot_password_attempts (user_id) VALUES ($1) ON CONFLICT DO NOTHING"
 	archiveAllFulfilledForgotPasswordAttemptsQuery     = "UPDATE user_forgot_password_attempts SET is_archived = TRUE WHERE is_archived = FALSE AND fulfilled_at IS NOT NULL AND fulfilled_at < NOW() - interval '20 minutes'"
 )
 
@@ -131,8 +132,9 @@ func GetUnexpiredForgotPasswordAttemptByID(tx *sqlx.Tx, id ForgotPasswordAttempt
 	// A forgot password attempt is considered unexpired if:
 	// 1) It is not archived
 	// 2) It was fulfilled less than the expiration time ago
+	// 3) It has not been used
 	var matches []dbUserForgotPasswordAttempt
-	if err := tx.Select(&matches, getNotArchivedForgotPasswordAttemptsForIDQuery); err != nil {
+	if err := tx.Select(&matches, getNotArchivedForgotPasswordAttemptsForIDQuery, id); err != nil {
 		return nil, false, err
 	}
 	switch {
@@ -156,9 +158,16 @@ func GetUnexpiredForgotPasswordAttemptByID(tx *sqlx.Tx, id ForgotPasswordAttempt
 	}
 }
 
+func SetForgotPasswordAttemptAsUsed(tx *sqlx.Tx, id ForgotPasswordAttemptID) error {
+	if _, err := tx.Exec(setForgotPasswordAttemptAsUsedQuery, id); err != nil {
+		return err
+	}
+	return nil
+}
+
 func AddForgotPasswordAttemptForUserID(tx *sqlx.Tx, userID users.UserID) (_hasTooManyAttempts bool, _err error) {
 	var matches []dbUserForgotPasswordAttempt
-	if err := tx.Select(&matches, getNotArchivedForgotPasswordAttemptsForUserIDQuery); err != nil {
+	if err := tx.Select(&matches, getNotArchivedForgotPasswordAttemptsForUserIDQuery, userID); err != nil {
 		return false, err
 	}
 	if len(matches) >= maxDailyForgotPasswordRequests {
