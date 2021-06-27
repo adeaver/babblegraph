@@ -132,6 +132,10 @@ type LoginFormProps = {
 const LoginForm = (props: LoginFormProps) => {
     const classes = styleClasses();
 
+    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        props.handleSubmit();
+    }
     const handleEmailAddressChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         props.updateEmailAddress((event.target as HTMLInputElement).value);
     };
@@ -167,38 +171,43 @@ const LoginForm = (props: LoginFormProps) => {
                     </Grid>
                 )
             }
-            <Grid container className={classes.formGridContainer}>
-                <Grid item xs={12} md={5} className={classes.formGridItem}>
-                    <PrimaryTextField
-                        className={classes.textField}
-                        id="email"
-                        label="Email Address"
-                        variant="outlined"
-                        defaultValue={props.emailAddress}
-                        onChange={handleEmailAddressChange} />
+            <form onSubmit={handleSubmit} noValidate autoComplete="off">
+                <Grid container className={classes.formGridContainer}>
+                    <Grid item xs={12} md={5} className={classes.formGridItem}>
+                        <PrimaryTextField
+                            className={classes.textField}
+                            id="email"
+                            label="Email Address"
+                            variant="outlined"
+                            defaultValue={props.emailAddress}
+                            onChange={handleEmailAddressChange} />
+                    </Grid>
+                    <Grid item xs={12} md={5} className={classes.formGridItem}>
+                        <PrimaryTextField
+                            className={classes.textField}
+                            id="password"
+                            label="Password"
+                            type="password"
+                            variant="outlined"
+                            defaultValue={props.password}
+                            onChange={handlePasswordChange} />
+                    </Grid>
+                    <Grid item xs={12} md={2} className={classes.formGridItem}>
+                        <PrimaryButton type="submit" disabled={!props.emailAddress || !props.password}>
+                            Login
+                        </PrimaryButton>
+                    </Grid>
                 </Grid>
-                <Grid item xs={12} md={5} className={classes.formGridItem}>
-                    <PrimaryTextField
-                        className={classes.textField}
-                        id="password"
-                        label="Password"
-                        type="password"
-                        variant="outlined"
-                        defaultValue={props.password}
-                        onChange={handlePasswordChange} />
-                </Grid>
-                <Grid item xs={12} md={2} className={classes.formGridItem}>
-                    <PrimaryButton onClick={props.handleSubmit} disabled={!props.emailAddress && !props.password}>
-                        Login
-                    </PrimaryButton>
-                </Grid>
-            </Grid>
+            </form>
             <Link href="/forgot-password" target={LinkTarget.Self}>
                 Forgot your password?
             </Link>
             <Paragraph>
                 If you don’t have a premium account and would like one, check out Babblegraph’s BuyMeACoffee page.
             </Paragraph>
+            <Link href="https://buymeacoffee.com/babblegraph">
+                Click here to learn more
+            </Link>
         </div>
     );
 }

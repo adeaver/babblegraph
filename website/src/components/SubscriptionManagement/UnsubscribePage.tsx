@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { RouteComponentProps, useHistory } from 'react-router-dom';
 
 import { makeStyles } from '@material-ui/core/styles';
@@ -16,8 +16,13 @@ import Paragraph, { Size } from 'common/typography/Paragraph';
 import { Alignment, TypographyColor } from 'common/typography/common';
 import { PrimaryButton } from 'common/components/Button/Button';
 import { PrimaryTextField } from 'common/components/TextField/TextField';
+import Link from 'common/components/Link/Link';
 
 import { UnsubscribeUser, UnsubscribeResponse } from 'api/user/unsubscribe';
+import {
+    getUserProfile,
+    GetUserProfileResponse
+} from 'api/useraccounts/useraccounts';
 
 const styleClasses = makeStyles({
     displayCard: {
@@ -53,27 +58,45 @@ type UnsubscribePageProps = RouteComponentProps<Params>
 const UnsubscribePage = (props: UnsubscribePageProps) => {
     const { token } = props.match.params;
 
-    const [ isLoading, setIsLoading ] = useState<boolean>(false);
+    const [ isUnsubscribeRequestLoading, setIsUnsubscribeRequestLoading ] = useState<boolean>(false);
     const [ emailAddress, setEmailAddress ] = useState<string | null>(null);
     const [ error, setError ] = useState<Error | null>(null);
     const [ didUpdate, setDidUpdate ] = useState<boolean | null>(null);
+    const [ isUserProfileLoading, setIsUserProfileLoading ] = useState<boolean>(true);
+    const [ hasUserProfile, setHasUserProfile ] = useState<boolean>(false);
 
     const handleSubmit = () => {
+        setIsUserProfileLoading(true);
         UnsubscribeUser({
             Token: token,
             EmailAddress: emailAddress,
         },
         (resp: UnsubscribeResponse) => {
-            setIsLoading(false);
+            setIsUnsubscribeRequestLoading(false);
             setDidUpdate(resp.Success);
         },
         (e: Error) => {
-            setIsLoading(false);
+            setIsUnsubscribeRequestLoading(false);
             setError(e);
         });
     }
 
+    useEffect(() => {
+        getUserProfile({
+            subscriptionManagementToken: token,
+        },
+        (resp: GetUserProfileResponse) => {
+            setIsUserProfileLoading(false);
+            setHasUserProfile(!!resp.subscriptionLevel);
+        },
+        (e: Error) => {
+            setIsUserProfileLoading(false);
+            setError(e);
+        });
+    }, []);
+
     const classes = styleClasses();
+    const isLoading = isUnsubscribeRequestLoading || isUserProfileLoading;
     return (
         <Page>
             <Grid container>
@@ -93,6 +116,7 @@ const UnsubscribePage = (props: UnsubscribePageProps) => {
                             ) : (
                                 <UnsubscribeForm
                                     emailAddress={emailAddress}
+                                    hasUserProfile={hasUserProfile}
                                     handleEmailAddressChange={setEmailAddress}
                                     handleSubmit={handleSubmit} />
                             )
@@ -137,6 +161,7 @@ const ContentHeader = (props: ContentHeaderProps) => {
 
 type UnsubscribeFormProps = {
     emailAddress: string;
+    hasUserProfile: boolean;
     handleEmailAddressChange: (v: string) => void;
     handleSubmit: () => void;
 }
@@ -145,10 +170,26 @@ const UnsubscribeForm = (props: UnsubscribeFormProps) => {
     const handleEmailAddressChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         props.handleEmailAddressChange((event.target as HTMLInputElement).value);
     };
+    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        props.handleSubmit();
+    }
 
     const classes = styleClasses();
     return (
-        <form className={classes.formContainer} noValidate autoComplete="off">
+        <form onSubmit={handleSubmit} className={classes.formContainer} noValidate autoComplete="off">
+            {
+                props.hasUserProfile && (
+                    <div>
+                        <Paragraph>
+                            IMPORTANT: unsubscribing does not automatically cancel your subscription. Please make sure that you don’t have any recurring payments setup by going to the BuyMeACoffee Page.
+                        </Paragraph>
+                        <Link href="https://buymeacoffee.com/babblegraph">
+                            Click here for BuyMeACoffee
+                        </Link>
+                    </div>
+                )
+            }
             <Grid container>
                 <Grid item xs={9} md={10}>
                     <PrimaryTextField
@@ -159,7 +200,7 @@ const UnsubscribeForm = (props: UnsubscribeFormProps) => {
                         onChange={handleEmailAddressChange} />
                 </Grid>
                 <Grid item xs={3} md={2} className={classes.submitButtonContainer}>
-                    <PrimaryButton onClick={props.handleSubmit} disabled={!props.emailAddress}>
+                    <PrimaryButton type="submit" disabled={!props.emailAddress}>
                         Submit
                     </PrimaryButton>
                 </Grid>

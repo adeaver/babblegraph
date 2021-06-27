@@ -17,4 +17,4 @@ if [[ -z $EMAIL ]]; then
     exit 1
 fi
 
-EMAIL=$EMAIL docker-compose -f taskrunner-compose.up.yaml up --build
+EMAIL=$EMAIL docker-compose -f $(pwd)/task-compose.yaml up --build
