@@ -18,6 +18,11 @@ import DifficultyLevelSettingPage from 'components/SubscriptionManagement/Diffic
 import UnsubscribePage from 'components/SubscriptionManagement/UnsubscribePage';
 import WordReinforcementPage from 'components/SubscriptionManagement/WordReinforcementPage';
 
+import LoginPage from 'components/UserAccounts/LoginPage';
+import SignupPage from 'components/UserAccounts/SignupPage';
+import ForgotPasswordPage from 'components/UserAccounts/ForgotPasswordPage';
+import ResetPasswordPage from 'components/UserAccounts/ResetPasswordPage';
+
 import NotFoundPage from 'components/NotFoundPage/NotFoundPage';
 
 class App extends React.Component{
@@ -32,6 +37,12 @@ class App extends React.Component{
                     <Route path="/manage/:token/vocabulary" component={WordReinforcementPage} />
                     <Route exact path="/manage/:token" component={SubscriptionManagementDashboardPage} />
                     <Route path="/paywall-thank-you/:token" component={PaywallReportPage} />
+
+                    { /* User Account Management */ }
+                    <Route path="/login" component={LoginPage} />
+                    <Route path="/signup/:token" component={SignupPage} />
+                    <Route path="/forgot-password" component={ForgotPasswordPage} />
+                    <Route path="/password-reset/:token" component={ResetPasswordPage} />
 
                     { /* Home Page & About Page */ }
                     <Route path="/about" component={AboutPage} />

@@ -2,6 +2,7 @@ package routes
 
 import (
 	"babblegraph/model/email"
+	"babblegraph/model/useraccounts"
 	"babblegraph/model/userdocuments"
 	"babblegraph/model/users"
 	"babblegraph/util/encrypt"
@@ -71,6 +72,17 @@ func MakeWordReinforcementLink(userID users.UserID) (*string, error) {
 	return ptr.String(env.GetAbsoluteURLForEnvironment(fmt.Sprintf("manage/%s/vocabulary", *token))), nil
 }
 
+func MakeUserCreationLink(userID users.UserID) (*string, error) {
+	token, err := encrypt.GetToken(encrypt.TokenPair{
+		Key:   CreateUserKey.Str(),
+		Value: userID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return ptr.String(env.GetAbsoluteURLForEnvironment(fmt.Sprintf("signup/%s", *token))), nil
+}
+
 func MakeArticleLink(userDocumentID userdocuments.UserDocumentID) (*string, error) {
 	token, err := encrypt.GetToken(encrypt.TokenPair{
 		Key:   ArticleLinkKeyForUserDocumentID.Str(),
@@ -91,4 +103,15 @@ func MakePaywallReportLink(userDocumentID userdocuments.UserDocumentID) (*string
 		return nil, err
 	}
 	return ptr.String(env.GetAbsoluteURLForEnvironment(fmt.Sprintf("paywall-report/%s", *token))), nil
+}
+
+func MakeForgotPasswordLink(forgotPasswordAttemptID useraccounts.ForgotPasswordAttemptID) (*string, error) {
+	token, err := encrypt.GetToken(encrypt.TokenPair{
+		Key:   ForgotPasswordKey.Str(),
+		Value: forgotPasswordAttemptID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return ptr.String(env.GetAbsoluteURLForEnvironment(fmt.Sprintf("password-reset/%s", *token))), nil
 }

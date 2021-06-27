@@ -23,13 +23,17 @@ func StartScheduler(linkProcessor *linkprocessing.LinkProcessor, errs chan error
 	c := cron.New(cron.WithLocation(usEastern))
 	switch env.GetEnvironmentVariableOrDefault("ENV", "prod") {
 	case "prod":
+		c.AddFunc("30 0 * * *", makeArchiveForgotPasswordAttemptsJob(errs))
 		c.AddFunc("30 2 * * *", makeRefetchSeedDomainJob(linkProcessor, errs))
 		c.AddFunc("30 5 * * *", makeEmailJob(errs))
 		c.AddFunc("30 12 * * *", makeUserFeedbackJob(errs))
 		c.AddFunc("*/1 * * * *", makeVerificationJob(errs))
+		c.AddFunc("*/3 * * * *", makeForgotPasswordJob(errs))
 	case "local-test-emails",
 		"local":
 		c.AddFunc("*/1 * * * *", makeVerificationJob(errs))
+		c.AddFunc("*/1 * * * *", makeForgotPasswordJob(errs))
+		c.AddFunc("*/5 * * * *", makeArchiveForgotPasswordAttemptsJob(errs))
 		c.AddFunc("*/30 * * * *", makeRefetchSeedDomainJob(linkProcessor, errs))
 		makeEmailJob(errs)()
 		makeUserFeedbackJob(errs)()
@@ -146,6 +150,59 @@ func makeUserFeedbackJob(errs chan error) func() {
 			FromAddress:        env.MustEnvironmentVariable("EMAIL_ADDRESS"),
 		})
 		if err := sendUserFeedbackEmails(localHub, emailClient); err != nil {
+			localHub.CaptureException(err)
+			errs <- err
+		}
+	}
+}
+
+func makeForgotPasswordJob(errs chan error) func() {
+	return func() {
+		today := time.Now()
+		localHub := sentry.CurrentHub().Clone()
+		localHub.ConfigureScope(func(scope *sentry.Scope) {
+			scope.SetTag("forgot-password-job", fmt.Sprintf("forgot-password-job-%s-%d-%d-%d-%d", today.Month().String(), today.Day(), today.Year(), today.Hour(), today.Minute()))
+		})
+		defer func() {
+			if x := recover(); x != nil {
+				_, fn, line, _ := runtime.Caller(1)
+				err := fmt.Errorf("Forgotten Password Panic: %s: %d: %v\n%s", fn, line, x, string(debug.Stack()))
+				localHub.CaptureException(err)
+				errs <- err
+			}
+		}()
+		log.Println("Initializing forgot password job...")
+		emailClient := ses.NewClient(ses.NewClientInput{
+			AWSAccessKey:       env.MustEnvironmentVariable("AWS_SES_ACCESS_KEY"),
+			AWSSecretAccessKey: env.MustEnvironmentVariable("AWS_SES_SECRET_KEY"),
+			AWSRegion:          "us-east-1",
+			FromAddress:        env.MustEnvironmentVariable("EMAIL_ADDRESS"),
+		})
+		log.Println("Starting forgot password job...")
+		if err := handlePendingForgotPasswordAttempts(localHub, emailClient); err != nil {
+			localHub.CaptureException(err)
+			errs <- err
+		}
+	}
+}
+
+func makeArchiveForgotPasswordAttemptsJob(errs chan error) func() {
+	return func() {
+		today := time.Now()
+		localHub := sentry.CurrentHub().Clone()
+		localHub.ConfigureScope(func(scope *sentry.Scope) {
+			scope.SetTag("archive-forgot-password-job", fmt.Sprintf("archive-forgot-password-job-%s-%d-%d-%d-%d", today.Month().String(), today.Day(), today.Year(), today.Hour(), today.Minute()))
+		})
+		defer func() {
+			if x := recover(); x != nil {
+				_, fn, line, _ := runtime.Caller(1)
+				err := fmt.Errorf("Forgot Password Archive Panic: %s: %d: %v\n%s", fn, line, x, string(debug.Stack()))
+				localHub.CaptureException(err)
+				errs <- err
+			}
+		}()
+		log.Println("Starting forgot password archive job...")
+		if err := handleArchiveForgotPasswordAttempts(); err != nil {
 			localHub.CaptureException(err)
 			errs <- err
 		}

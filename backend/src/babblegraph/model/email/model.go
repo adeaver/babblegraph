@@ -24,6 +24,12 @@ const (
 	EmailTypeUserFeedback     EmailType = "user-feedback"
 
 	EmailTypePrivacyPolicyUpdateJune2021 = "privacy-policy-update-june-2021"
+
+	EmailTypeUserCreation     EmailType = "user-creation"
+	EmailTypeUserReactivation EmailType = "user-reactivation"
+	EmailTypeUserExpiration   EmailType = "user-expiration"
+
+	EmailTypePasswordReset EmailType = "password-reset"
 )
 
 type Recipient struct {

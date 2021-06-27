@@ -33,13 +33,13 @@ type GenericEmailAction struct {
 type SendGenericEmailWithOptionalActionForRecipientInput struct {
 	EmailType          email.EmailType
 	Recipient          email.Recipient
-	PreheaderText      string
-	BeforeParagraphs   []string
-	AfterParagraphs    []string
-	GenericEmailAction *GenericEmailAction
 	FromEmailName      *string
 	Subject            string
 	EmailTitle         string
+	PreheaderText      string
+	BeforeParagraphs   []string
+	GenericEmailAction *GenericEmailAction
+	AfterParagraphs    []string
 }
 
 func SendGenericEmailWithOptionalActionForRecipient(tx *sqlx.Tx, cl *ses.Client, input SendGenericEmailWithOptionalActionForRecipientInput) (*email.ID, error) {
@@ -59,7 +59,7 @@ func SendGenericEmailWithOptionalActionForRecipient(tx *sqlx.Tx, cl *ses.Client,
 	if err := email.InsertEmailRecord(tx, emailRecordID, input.Recipient.UserID, input.EmailType); err != nil {
 		return nil, err
 	}
-	template, err := createGenericEmailWithOptionalActionTemplate(emailRecordID, input)
+	template, err := createGenericEmailWithOptionalActionTemplate(tx, emailRecordID, input)
 	if err != nil {
 		return nil, err
 	}
@@ -88,8 +88,8 @@ func SendGenericEmailWithOptionalActionForRecipient(tx *sqlx.Tx, cl *ses.Client,
 	return &emailRecordID, nil
 }
 
-func createGenericEmailWithOptionalActionTemplate(emailRecordID email.ID, input SendGenericEmailWithOptionalActionForRecipientInput) (*genericEmailWithOptionalActionTemplate, error) {
-	baseTemplate, err := createBaseTemplate(emailRecordID, input.Recipient)
+func createGenericEmailWithOptionalActionTemplate(tx *sqlx.Tx, emailRecordID email.ID, input SendGenericEmailWithOptionalActionForRecipientInput) (*genericEmailWithOptionalActionTemplate, error) {
+	baseTemplate, err := createBaseTemplate(tx, emailRecordID, input.Recipient)
 	if err != nil {
 		return nil, err
 	}

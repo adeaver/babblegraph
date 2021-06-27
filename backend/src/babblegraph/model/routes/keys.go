@@ -13,8 +13,12 @@ const (
 	EmailOpenedKey                           RouteEncryptionKey = "email-opened"
 	UserVerificationKey                      RouteEncryptionKey = "user-verification"
 	WordReinforcementKey                     RouteEncryptionKey = "word-reinforcement"
-	ArticleLinkKeyForUserDocumentID          RouteEncryptionKey = "article-link-user-document"
-	PaywallReportKeyForUserDocumentID        RouteEncryptionKey = "paywall-report-user-document"
+
+	CreateUserKey     RouteEncryptionKey = "create-user"
+	ForgotPasswordKey RouteEncryptionKey = "forgot-password"
+
+	ArticleLinkKeyForUserDocumentID   RouteEncryptionKey = "article-link-user-document"
+	PaywallReportKeyForUserDocumentID RouteEncryptionKey = "paywall-report-user-document"
 
 	/*
 			   A mistake to learn from:

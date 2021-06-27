@@ -6,7 +6,7 @@ import (
 	"babblegraph/model/userdocuments"
 	"babblegraph/model/userlinks"
 	"babblegraph/model/users"
-	"babblegraph/services/web/router"
+	"babblegraph/services/web/middleware"
 	"babblegraph/util/database"
 	"babblegraph/util/encrypt"
 	"babblegraph/util/random"
@@ -34,7 +34,7 @@ func getArticleLinkBodyFromMap(m map[string]interface{}) (*routes.ArticleLinkBod
 }
 
 func HandleArticleLink(w http.ResponseWriter, r *http.Request) {
-	router.LogRequestWithoutBody(r)
+	middleware.LogRequestWithoutBody(r)
 	routeVars := mux.Vars(r)
 	token, ok := routeVars["token"]
 	if !ok {
@@ -120,7 +120,7 @@ func getPaywallReportBodyFromMap(m map[string]interface{}) (*routes.PaywallRepor
 }
 
 func HandlePaywallReport(w http.ResponseWriter, r *http.Request) {
-	router.LogRequestWithoutBody(r)
+	middleware.LogRequestWithoutBody(r)
 	routeVars := mux.Vars(r)
 	token, ok := routeVars["token"]
 	if !ok {

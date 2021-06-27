@@ -29,6 +29,10 @@ import {
     updateUserPreferencesForToken,
     UpdateUserPreferencesForTokenResponse,
 } from 'api/user/difficultyLevel';
+import {
+    getUserProfile,
+    GetUserProfileResponse
+} from 'api/useraccounts/useraccounts';
 
 const styleClasses = makeStyles({
     displayCard: {
@@ -45,6 +49,10 @@ const styleClasses = makeStyles({
     },
     radioController: {
         width: '100%',
+    },
+    submitButton: {
+        display: 'block',
+        margin: 'auto',
     },
     submitButtonContainer: {
         alignSelf: 'center',
@@ -83,10 +91,15 @@ type DifficultyLevelSettingPageProps = RouteComponentProps<Params>
 const DifficultyLevelSettingPage = (props: DifficultyLevelSettingPageProps) => {
     const { token } = props.match.params;
 
-    const [ emailAddress, setEmailAddress ] = useState<string | null>(null);
-    const [ isLoading, setIsLoading ] = useState<boolean>(true);
+    // User Profile State
+    const [ userProfile, setUserProfile ] = useState<GetUserProfileResponse | null>(null);
+    const [ isLoadingUserProfile, setIsLoadingUserProfile ] = useState<boolean>(true);
+
+    // Reading Classification State
     const [ readingLevelClassifications, setReadingLevelClassifications ] = useState<Array<ReadingLevelClassificationForLanguage>>([]);
-    const [ hasFetched, setHasFetched ] = useState<boolean>(false);
+    const [ isLoadingReadingLevelClassification, setIsLoadingReadingLevelClassification ] = useState<boolean>(true);
+
+    const [ emailAddress, setEmailAddress ] = useState<string | null>(null);
     const [ error, setError ] = useState<Error | null>(null);
     const [ didUpdate, setDidUpdate ] = useState<boolean | null>(null);
 
@@ -117,7 +130,7 @@ const DifficultyLevelSettingPage = (props: DifficultyLevelSettingPageProps) => {
         }, null);
     }
     const handleSubmit = () => {
-        setIsLoading(true);
+        setIsLoadingReadingLevelClassification(true);
         setError(null);
         setDidUpdate(null);
         updateUserPreferencesForToken({
@@ -126,33 +139,45 @@ const DifficultyLevelSettingPage = (props: DifficultyLevelSettingPageProps) => {
             classificationsByLanguage: readingLevelClassifications,
         },
         (resp: UpdateUserPreferencesForTokenResponse) => {
-            setIsLoading(false);
+            setIsLoadingReadingLevelClassification(false);
             setDidUpdate(resp.didUpdate);
         },
         (e: Error) => {
-            setIsLoading(false);
+            setIsLoadingReadingLevelClassification(false);
             setError(e);
         });
     }
 
     useEffect(() => {
-        if (!hasFetched) {
-            getUserPreferencesForToken({
-                token: token,
-            },
-            (resp: GetUserPreferencesForTokenResponse) => {
-                setReadingLevelClassifications(resp.classificationsByLanguage);
-                setIsLoading(false);
-            },
-            (e: Error) => {
-                setIsLoading(false);
-                setError(e);
-            });
-            setHasFetched(true);
-        }
-    });
+        getUserProfile({
+            subscriptionManagementToken: token,
+        },
+        (resp: GetUserProfileResponse) => {
+            setIsLoadingUserProfile(false);
+            if (!!resp.emailAddress) {
+                setEmailAddress(resp.emailAddress);
+                setUserProfile(resp);
+            }
+        },
+        (e: Error) => {
+            setIsLoadingUserProfile(false);
+            setError(e);
+        });
+        getUserPreferencesForToken({
+            token: token,
+        },
+        (resp: GetUserPreferencesForTokenResponse) => {
+            setReadingLevelClassifications(resp.classificationsByLanguage);
+            setIsLoadingReadingLevelClassification(false);
+        },
+        (e: Error) => {
+            setIsLoadingReadingLevelClassification(false);
+            setError(e);
+        });
+    }, []);
 
     const classes = styleClasses();
+    const isLoading = isLoadingReadingLevelClassification || isLoadingUserProfile;
     return (
         <Page>
             <Grid container>
@@ -173,6 +198,7 @@ const DifficultyLevelSettingPage = (props: DifficultyLevelSettingPageProps) => {
                                 <ReadingLevelRadioForm
                                     value={getReadingLevel()}
                                     options={radioFormOptions}
+                                    userProfile={userProfile}
                                     emailAddress={emailAddress}
                                     handleValueChange={handleSetReadingLevel}
                                     handleEmailAddressChange={setEmailAddress}
@@ -234,6 +260,7 @@ type ReadingLevelRadioFormProps = {
     value: string | null;
     options: ReadingLevelRadioFormOption[];
     emailAddress: string;
+    userProfile: GetUserProfileResponse | null;
     handleValueChange: (v: string) => void;
     handleEmailAddressChange: (v: string) => void;
     handleSubmit: () => void;
@@ -273,16 +300,27 @@ const ReadingLevelRadioForm = (props: ReadingLevelRadioFormProps) => {
             <Divider />
             <form className={classes.confirmationForm} noValidate autoComplete="off">
                 <Grid container>
-                    <Grid item xs={9} md={10}>
-                        <PrimaryTextField
-                            id="email"
-                            className={classes.emailField}
-                            label="Email Address"
-                            variant="outlined"
-                            onChange={handleEmailAddressChange} />
-                    </Grid>
-                    <Grid item xs={3} md={2} className={classes.submitButtonContainer}>
-                        <PrimaryButton onClick={props.handleSubmit} disabled={!props.emailAddress || !props.value}>
+                {
+                    !!props.userProfile ? (
+                        <Grid item xs={4} md={5}>
+                            &nbsp;
+                        </Grid>
+                    ) : (
+                        <Grid item xs={8} md={10}>
+                            <PrimaryTextField
+                                id="email"
+                                className={classes.emailField}
+                                label="Email Address"
+                                variant="outlined"
+                                onChange={handleEmailAddressChange} />
+                        </Grid>
+                    )
+                }
+                    <Grid item xs={4} md={2} className={classes.submitButtonContainer}>
+                        <PrimaryButton
+                            className={classes.submitButton}
+                            onClick={props.handleSubmit}
+                            disabled={!props.emailAddress || !props.value}>
                             Submit
                         </PrimaryButton>
                     </Grid>

@@ -29,6 +29,10 @@ import {
     updateUserContentTopicsForToken,
     UpdateUserContentTopicsForTokenResponse,
 } from 'api/user/contentTopics';
+import {
+    getUserProfile,
+    GetUserProfileResponse
+} from 'api/useraccounts/useraccounts';
 
 const styleClasses = makeStyles({
     displayCard: {
@@ -40,6 +44,10 @@ const styleClasses = makeStyles({
     },
     loadingSpinner: {
         color: Color.Primary,
+        display: 'block',
+        margin: 'auto',
+    },
+    submitButton: {
         display: 'block',
         margin: 'auto',
     },
@@ -66,32 +74,48 @@ const InterestSelectionPage = (props: InterestSelectionPageProps) => {
     const classes = styleClasses();
     const { token } = props.match.params;
 
-    const [ isLoading, setIsLoading ] = useState<boolean>(true);
+    // User Profile State
+    const [ userProfile, setUserProfile ] = useState<GetUserProfileResponse | null>(null);
+    const [ isLoadingUserProfile, setIsLoadingUserProfile ] = useState<boolean>(true);
+
+    // Content Topics State
+    const [ selectedContentTopics, setSelectedContentTopics ] = useState<Object>({});
+    const [ isLoadingContentTopics, setIsLoadingContentTopics ] = useState<boolean>(true);
+
     const [ emailAddress, setEmailAddress ] = useState<string>('');
     const [ didUpdate, setDidUpdate ] = useState<boolean>(false);
     const [ error, setError ] = useState<Error>(null);
-    const [ hasFetched, setHasFetched ] = useState<boolean>(false);
-    const [ selectedContentTopics, setSelectedContentTopics ] = useState<Object>({});
 
     useEffect(() => {
-        if (!hasFetched) {
-            getUserContentTopicsForToken({
-                token: token,
-            },
-            (resp: GetUserContentTopicsForTokenResponse) => {
-                setIsLoading(false);
-                setSelectedContentTopics((resp.contentTopics || []).reduce((accumulator: Object, next: string) => ({
-                    ...accumulator,
-                    [next]: true,
-                }), {}));
-            },
-            (e: Error) => {
-                setIsLoading(false);
-                setError(e);
-            })
-        }
-        setHasFetched(true);
-    });
+        getUserProfile({
+            subscriptionManagementToken: token,
+        },
+        (resp: GetUserProfileResponse) => {
+            setIsLoadingUserProfile(false);
+            if (!!resp.emailAddress) {
+                setEmailAddress(resp.emailAddress);
+                setUserProfile(resp);
+            }
+        },
+        (e: Error) => {
+            setIsLoadingUserProfile(false);
+            setError(e);
+        });
+        getUserContentTopicsForToken({
+            token: token,
+        },
+        (resp: GetUserContentTopicsForTokenResponse) => {
+            setIsLoadingContentTopics(false);
+            setSelectedContentTopics((resp.contentTopics || []).reduce((accumulator: Object, next: string) => ({
+                ...accumulator,
+                [next]: true,
+            }), {}));
+        },
+        (e: Error) => {
+            setIsLoadingContentTopics(false);
+            setError(e);
+        });
+    }, []);
 
     const handleSelectContentTopicMapping = (apiValue: string[]) => {
         setSelectedContentTopics(apiValue.reduce((accumulator: Object, next: string) => ({
@@ -100,7 +124,7 @@ const InterestSelectionPage = (props: InterestSelectionPageProps) => {
         }), selectedContentTopics));
     };
     const handleSubmit = () => {
-        setIsLoading(true);
+        setIsLoadingContentTopics(true);
         setDidUpdate(false);
         setError(null);
         updateUserContentTopicsForToken({
@@ -109,15 +133,16 @@ const InterestSelectionPage = (props: InterestSelectionPageProps) => {
             contentTopics: Object.keys(selectedContentTopics).filter((key: string) => !!selectedContentTopics[key]),
         },
         (resp: UpdateUserContentTopicsForTokenResponse) => {
-            setIsLoading(false);
+            setIsLoadingContentTopics(false);
             setDidUpdate(true);
         },
         (e: Error) => {
-            setIsLoading(false);
+            setIsLoadingContentTopics(false);
             setError(e);
         });
     }
 
+    const isLoading = isLoadingContentTopics || isLoadingUserProfile;
     return (
         <Page>
             <Grid container>
@@ -143,6 +168,7 @@ const InterestSelectionPage = (props: InterestSelectionPageProps) => {
                                             ), false),
                                         })
                                     )}
+                                    userProfile={userProfile}
                                     emailAddress={emailAddress}
                                     handleEmailAddressChange={setEmailAddress}
                                     handleSelectContentTopicMapping={handleSelectContentTopicMapping}
@@ -207,6 +233,7 @@ type ContentTopicDisplayMappingWithChecked = {
 type ContentTopicSelectionFormProps = {
     contentTopicDisplayMappings: Array<ContentTopicDisplayMappingWithChecked>;
     emailAddress: string;
+    userProfile: GetUserProfileResponse | null;
     handleSelectContentTopicMapping: (v: string[]) => void;
     handleEmailAddressChange: (v: string) => void;
     handleSubmit: () => void;
@@ -239,16 +266,27 @@ const ContentTopicSelectionForm = (props: ContentTopicSelectionFormProps) => {
             <Divider />
             <form className={classes.confirmationForm} noValidate autoComplete="off">
                 <Grid container>
-                    <Grid item xs={9} md={10}>
-                        <PrimaryTextField
-                            id="email"
-                            className={classes.emailField}
-                            label="Email Address"
-                            variant="outlined"
-                            onChange={handleEmailAddressChange} />
-                    </Grid>
-                    <Grid item xs={3} md={2} className={classes.submitButtonContainer}>
-                        <PrimaryButton onClick={props.handleSubmit} disabled={!props.emailAddress}>
+                    {
+                        !!props.userProfile ? (
+                            <Grid item xs={4} md={5}>
+                                &nbsp;
+                            </Grid>
+                        ) : (
+                            <Grid item xs={8} md={10}>
+                                <PrimaryTextField
+                                    id="email"
+                                    className={classes.emailField}
+                                    label="Email Address"
+                                    variant="outlined"
+                                    onChange={handleEmailAddressChange} />
+                            </Grid>
+                        )
+                    }
+                    <Grid item xs={4} md={2} className={classes.submitButtonContainer}>
+                        <PrimaryButton
+                            className={classes.submitButton}
+                            onClick={props.handleSubmit}
+                            disabled={!props.emailAddress}>
                             Submit
                         </PrimaryButton>
                     </Grid>

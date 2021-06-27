@@ -23,7 +23,6 @@ import (
 func main() {
 	log.Println("Starting babblegraph web server")
 	r := mux.NewRouter()
-	staticFileDirName := env.MustEnvironmentVariable("STATIC_DIR")
 
 	if err := setupDatabases(); err != nil {
 		log.Fatal(err.Error())
@@ -35,17 +34,12 @@ func main() {
 		log.Fatal(err.Error())
 	}
 	defer sentry.Flush(2 * time.Second)
-
 	if err := registerAPI(r); err != nil {
 		log.Fatal(err.Error())
 	}
-
-	r.HandleFunc("/article/{token}", index.HandleArticleLink)
-	r.HandleFunc("/paywall-report/{token}", index.HandlePaywallReport)
-	r.HandleFunc("/verify/{token}", index.HandleVerificationForToken)
-	r.HandleFunc("/dist/{token}/logo.png", index.HandleServeLogo(staticFileDirName))
-	r.PathPrefix("/dist").Handler(http.StripPrefix("/dist", http.FileServer(http.Dir(staticFileDirName))))
-	r.PathPrefix("/").HandlerFunc(index.HandleServeIndexPage(staticFileDirName))
+	if err := index.RegisterIndexRoutes(r, []index.IndexPage{}); err != nil {
+		log.Fatal(err.Error())
+	}
 
 	http.ListenAndServe(":8080", r)
 }

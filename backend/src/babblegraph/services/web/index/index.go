@@ -2,7 +2,7 @@ package index
 
 import (
 	"babblegraph/model/utm"
-	"babblegraph/services/web/router"
+	"babblegraph/services/web/middleware"
 	"babblegraph/util/database"
 	"fmt"
 	"log"
@@ -13,7 +13,7 @@ import (
 
 func HandleServeIndexPage(staticFileDirName string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		router.LogRequestWithoutBody(r)
+		middleware.LogRequestWithoutBody(r)
 		utmParameters := utm.GetParametersForRequest(r)
 		if utmParameters != nil {
 			trackingID, err := utm.GetTrackingIDForRequest(r)

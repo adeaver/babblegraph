@@ -2,7 +2,7 @@ package index
 
 import (
 	"babblegraph/actions/email"
-	"babblegraph/services/web/router"
+	"babblegraph/services/web/middleware"
 	"babblegraph/util/database"
 	"fmt"
 	"log"
@@ -14,7 +14,7 @@ import (
 
 func HandleServeLogo(staticFileDirName string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		router.LogRequestWithoutBody(r)
+		middleware.LogRequestWithoutBody(r)
 		// In order to collect information about whether an email was opened, we pass
 		// the logo hero image with a URL of the above format. This is done because
 		// 1) Some clients ban zero width images

@@ -3,14 +3,14 @@ package index
 import (
 	"babblegraph/actions/verification"
 	"babblegraph/model/routes"
-	"babblegraph/services/web/router"
+	"babblegraph/services/web/middleware"
 	"net/http"
 
 	"github.com/gorilla/mux"
 )
 
 func HandleVerificationForToken(w http.ResponseWriter, r *http.Request) {
-	router.LogRequestWithoutBody(r)
+	middleware.LogRequestWithoutBody(r)
 	routeVars := mux.Vars(r)
 	token, ok := routeVars["token"]
 	if !ok {

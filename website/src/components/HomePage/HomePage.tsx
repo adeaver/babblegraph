@@ -20,7 +20,7 @@ import { PrimaryButton } from 'common/components/Button/Button';
 import { PrimaryTextField } from 'common/components/TextField/TextField';
 import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
 import { PhotoKey } from 'common/data/photos/Photos';
-import Link from 'common/components/Link/Link';
+import Link, { LinkTarget } from 'common/components/Link/Link';
 import { withCaptchaToken, loadCaptchaScript } from 'common/util/grecaptcha/grecaptcha';
 
 import {
@@ -157,6 +157,14 @@ const HomePage = () => {
                 <Grid item xs={12} md={6}>
                     <Card className={classes.displayCard} variant='outlined'>
                         {body}
+                    </Card>
+                    <Card className={classes.displayCard} variant='outlined'>
+                        <Paragraph>
+                            Have an account?
+                        </Paragraph>
+                        <Link href="/login" target={LinkTarget.Self}>
+                            Click here to login
+                        </Link>
                     </Card>
                 </Grid>
             </Grid>

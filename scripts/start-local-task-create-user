@@ -1,0 +1,20 @@
+#!/bin/bash
+set -euo pipefail
+
+EMAIL=""
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --email)
+            shift;
+            EMAIL="$1"
+            ;;
+    esac
+    shift
+done
+
+if [[ -z $EMAIL ]]; then
+    echo "Must specify email"
+    exit 1
+fi
+
+EMAIL=$EMAIL docker-compose -f $(pwd)/task-compose.yaml up --build

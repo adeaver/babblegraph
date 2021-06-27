@@ -1,7 +1,10 @@
 package router
 
 import (
+	"babblegraph/model/users"
+	"babblegraph/services/web/middleware"
 	"fmt"
+	"net/http"
 
 	sentryhttp "github.com/getsentry/sentry-go/http"
 	"github.com/gorilla/mux"
@@ -27,11 +30,13 @@ func CreateNewAPIRouter(mainRouter *mux.Router) {
 			Repanic: true,
 		}),
 	}
+	registerUserAccountsRoutes()
 }
 
 type RouteGroup struct {
-	Prefix string
-	Routes []Route
+	Prefix              string
+	Routes              []Route
+	AuthenticatedRoutes []AuthenticatedRoute
 }
 
 func RegisterRouteGroup(rg RouteGroup) error {
@@ -44,21 +49,52 @@ func RegisterRouteGroup(rg RouteGroup) error {
 	}
 	a.prefixes[rg.Prefix] = true
 	for _, r := range rg.Routes {
-		path := fmt.Sprintf("/%s/%s/%s", apiPrefix, rg.Prefix, r.Path)
-		if _, ok := a.routeNames[path]; ok {
-			return fmt.Errorf("Duplicate paths %s", path)
+		if err := registerRoute(registerRouteInput{
+			shouldLogBody:    r.ShouldLogBody,
+			trackEventWithID: r.TrackEventWithID,
+			muxRoute:         makeMuxRouter(r.Handler),
+			path:             fmt.Sprintf("/%s/%s/%s", apiPrefix, rg.Prefix, r.Path),
+		}); err != nil {
+			return err
 		}
-		muxRoute := makeMuxRouter(r.Handler)
-		if r.ShouldLogBody {
-			muxRoute = withBodyLogger(muxRoute)
-		} else {
-			muxRoute = withoutBodyLogger(muxRoute)
-		}
-		if r.TrackEventWithID != nil {
-			muxRoute = withTrackingIDCapture(*r.TrackEventWithID, muxRoute)
-		}
-		a.r.HandleFunc(path, a.sentryHandler.HandleFunc(muxRoute)).Methods("POST")
-		a.routeNames[path] = true
 	}
+	for _, ar := range rg.AuthenticatedRoutes {
+		muxRoute := middleware.WithAuthorizationLevelVerification(ar.ValidAuthorizationLevels, func(userID users.UserID) func(http.ResponseWriter, *http.Request) {
+			return makeAuthenticatedMuxRouter(userID, ar.Handler)
+		})
+		if err := registerRoute(registerRouteInput{
+			shouldLogBody:    ar.ShouldLogBody,
+			trackEventWithID: ar.TrackEventWithID,
+			muxRoute:         muxRoute,
+			path:             fmt.Sprintf("/%s/%s/%s", apiPrefix, rg.Prefix, ar.Path),
+		}); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+type registerRouteInput struct {
+	shouldLogBody    bool
+	trackEventWithID *string
+	path             string
+	muxRoute         func(http.ResponseWriter, *http.Request)
+}
+
+func registerRoute(input registerRouteInput) error {
+	if _, ok := a.routeNames[input.path]; ok {
+		return fmt.Errorf("Duplicate paths %s", input.path)
+	}
+	muxRoute := input.muxRoute
+	if input.shouldLogBody {
+		muxRoute = middleware.WithBodyLogger(muxRoute)
+	} else {
+		muxRoute = middleware.WithoutBodyLogger(muxRoute)
+	}
+	if input.trackEventWithID != nil {
+		muxRoute = middleware.WithTrackingIDCapture(*input.trackEventWithID, muxRoute)
+	}
+	a.r.HandleFunc(input.path, a.sentryHandler.HandleFunc(muxRoute)).Methods("POST")
+	a.routeNames[input.path] = true
 	return nil
 }
