@@ -2,6 +2,7 @@ package user
 
 import (
 	"babblegraph/model/routes"
+	"babblegraph/model/useraccounts"
 	"babblegraph/model/users"
 	"babblegraph/services/web/router"
 	"babblegraph/util/database"
@@ -48,6 +49,15 @@ func RegisterRouteGroups() error {
 			}, {
 				Path:    "handle_request_password_reset_link_1",
 				Handler: requestPasswordResetLink,
+			},
+		},
+		AuthenticatedRoutes: []router.AuthenticatedRoute{
+			{
+				Path:    "add_user_schedule_1",
+				Handler: handleAddUserNewsletterSchedule,
+				ValidAuthorizationLevels: []useraccounts.SubscriptionLevel{
+					useraccounts.SubscriptionLevelBetaPremium,
+				},
 			},
 		},
 	})
