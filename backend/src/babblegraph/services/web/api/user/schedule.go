@@ -1,6 +1,7 @@
 package user
 
 import (
+	"babblegraph/model/contenttopics"
 	"babblegraph/model/usernewsletterschedule"
 	"babblegraph/model/users"
 	"babblegraph/util/database"
@@ -9,6 +10,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -62,5 +64,70 @@ func handleAddUserNewsletterSchedule(userID users.UserID, body []byte) (interfac
 	}
 	return handleAddUserNewsletterScheduleResponse{
 		Success: true,
+	}, nil
+}
+
+type handleGetUserNewsletterScheduleRequest struct {
+	IANATimezone string `json:"iana_timezone"`
+}
+
+type handleGetUserNewsletterScheduleResponse struct {
+	ScheduleByLanguageCode []scheduleByLanguageCode `json:"schedule_by_language_code"`
+}
+
+type scheduleByLanguageCode struct {
+	LanguageCode wordsmith.LanguageCode `json:"language_code"`
+	ScheduleDays []scheduleDay          `json:"schedule_days"`
+}
+
+type scheduleDay struct {
+	DayOfWeekIndex   int                          `json:"day_of_week_index"`
+	HourOfDayIndex   int                          `json:"hour_of_day_index"`
+	QuarterHourIndex int                          `json:"quarter_hour_index"`
+	ContentTopics    []contenttopics.ContentTopic `json:"content_topics"`
+	NumberOfArticles int                          `json:"number_of_articles"`
+	IsActive         bool                         `json:"is_active"`
+}
+
+func handleGetUserNewsletterSchedule(userID users.UserID, body []byte) (interface{}, error) {
+	var req handleGetUserNewsletterScheduleRequest
+	if err := json.Unmarshal(body, &req); err != nil {
+		return nil, err
+	}
+	var daySchedules []usernewsletterschedule.UserNewsletterScheduleDayMetadata
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		var err error
+		daySchedules, err = usernewsletterschedule.GetNewsletterDayMetadataForUser(tx, userID)
+		return err
+	}); err != nil {
+		sentry.CaptureException(err)
+		return nil, err
+	}
+	daySchedulesByLanguageCode := make(map[wordsmith.LanguageCode][]scheduleDay)
+	for _, d := range daySchedules {
+		requestDayIndex, requestHourIndex, requestQuarterHourIndex, err := usernewsletterschedule.ConvertIndexedTimeUTCToUserTimezone(d.DayOfWeekIndexUTC, d.HourOfDayIndexUTC, d.QuarterHourIndexUTC, req.IANATimezone)
+		if err != nil {
+			sentry.CaptureException(err)
+			return nil, err
+		}
+		daysForLanguageCode, _ := daySchedulesByLanguageCode[d.LanguageCode]
+		daySchedulesByLanguageCode[d.LanguageCode] = append(daysForLanguageCode, scheduleDay{
+			DayOfWeekIndex:   *requestDayIndex,
+			HourOfDayIndex:   *requestHourIndex,
+			QuarterHourIndex: *requestQuarterHourIndex,
+			ContentTopics:    d.ContentTopics,
+			NumberOfArticles: d.NumberOfArticles,
+			IsActive:         d.IsActive,
+		})
+	}
+	var outputSchedules []scheduleByLanguageCode
+	for languageCode, scheduleDays := range daySchedulesByLanguageCode {
+		outputSchedules = append(outputSchedules, scheduleByLanguageCode{
+			LanguageCode: languageCode,
+			ScheduleDays: scheduleDays,
+		})
+	}
+	return handleGetUserNewsletterScheduleResponse{
+		ScheduleByLanguageCode: outputSchedules,
 	}, nil
 }
