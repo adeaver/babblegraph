@@ -84,6 +84,7 @@ const SubscriptionManagementDashboardPage = (props: SubscriptionManagementDashbo
     const [ error, setError ] = useState<Error>(null);
     const [ reinforcementToken, setReinforcementToken ] = useState<string | null>(null);
     const [ emailAddress, setEmailAddress ] = useState<string | null>(null);
+    const [ subscriptionLevel, setSubscriptionLevel ] = useState<string | null>(null);
 
     useEffect(() => {
         getReinforcementToken({
@@ -103,6 +104,7 @@ const SubscriptionManagementDashboardPage = (props: SubscriptionManagementDashbo
         (resp: GetUserProfileResponse) => {
             setIsUserProfileLoading(false);
             setEmailAddress(resp.emailAddress);
+            resp.subscriptionLevel && setSubscriptionLevel(resp.subscriptionLevel)
         },
         (e: Error) => {
             setIsUserProfileLoading(false);
@@ -125,6 +127,13 @@ const SubscriptionManagementDashboardPage = (props: SubscriptionManagementDashbo
                             <ActionCard redirectURL={`/manage/${reinforcementToken}/vocabulary`} title='Track words to reinforce'>
                                 Learn a new word recently and want to make sure it sticks? You can track it, which will send you articles containing these words. Seeing a word frequently is a great way to make sure you remember it.
                             </ActionCard>
+                            {
+                                subscriptionLevel && (
+                                    <ActionCard redirectURL={`/manage/${token}/schedule`} title='Newsletter schedule and preferences'>
+                                        Select which days you receive newsletter emails from Babblegraph. You can also configure how many articles you receive in each email and what topics are in each email.
+                                    </ActionCard>
+                                )
+                            }
                             <ActionCard redirectURL={`/manage/${token}/level`} title='Set your difficulty level'>
                                 If your daily email is too hard or too easy, you can change the difficulty level here.
                             </ActionCard>
