@@ -29,9 +29,9 @@ const (
             user_id, language_code, day_of_week_index_utc
         ) DO UPDATE
         SET
-            hour_of_day_index=$3,
+            hour_of_day_index_utc=$3,
             quarter_hour_index_utc=$4,
-            content_topic=$6,
+            content_topics=$6,
             number_of_articles=$7,
             is_active=$8`
 )

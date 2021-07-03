@@ -1,10 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { RouteComponentProps, useHistory } from 'react-router-dom';
 
+import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import ClearIcon from '@material-ui/icons/Clear';
+import InputLabel from '@material-ui/core/InputLabel';
+import MenuItem from '@material-ui/core/MenuItem';
+import FormControl from '@material-ui/core/FormControl';
+import Select from '@material-ui/core/Select';
+import Divider from '@material-ui/core/Divider';
+import Snackbar from '@material-ui/core/Snackbar';
 
+import Alert from 'common/components/Alert/Alert';
+import Color from 'common/styles/colors';
 import Page from 'common/components/Page/Page';
 import { Heading1 } from 'common/typography/Heading';
 import DisplayCard from 'common/components/DisplayCard/DisplayCard';
@@ -12,10 +21,15 @@ import Paragraph, { Size } from 'common/typography/Paragraph';
 import { Alignment, TypographyColor } from 'common/typography/common';
 import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
 import { PrimaryTextField } from 'common/components/TextField/TextField';
+import { PrimaryButton } from 'common/components/Button/Button';
 import { PrimaryCheckbox } from 'common/components/Checkbox/Checkbox';
 
 import { ContentHeader } from './common';
 
+import {
+    ContentTopicDisplayMapping,
+    contentTopicDisplayMappings,
+} from 'api/user/contentTopics';
 import {
     getUserProfile,
     GetUserProfileResponse
@@ -35,10 +49,59 @@ type Params = {
     token: string;
 }
 
+const styleClasses = makeStyles({
+    daySelectorContainer: {
+        minHeight: '100%',
+        padding: '10px',
+    },
+    numberOfArticlesSelector: {
+        margin: '5px',
+    },
+    savePreferencesButton: {
+        display: 'block',
+        margin: '10px auto',
+    },
+    /* Pretty sure this is about as hacky as it gets */
+    removeContentTopicButtonContainer: {
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'flex-start',
+        justifyContent: 'center',
+    },
+    removeContentTopicIcon: {
+        color: Color.Warning,
+    },
+    contentTopicSelect: {
+        minWidth: '100%',
+        marginBottom: '10px',
+    },
+});
+
+const makeDefaultScheduleDay = (dayIndex: number) => ({
+    dayOfWeekIndex: dayIndex,
+    hourOfDayIndex: 0,
+    quarterHourIndex: 0,
+    contentTopics: [],
+    numberOfArticles: defaultNumberOfArticles,
+    isActive: true,
+});
+
 const defaultNumberOfArticles = 12;
+const minimumNumberOfArticles = 4;
+const maximumNumberOfArticles = 12;
+
 const dayNameForLanguageCode = {
     "es": ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sabádo"],
 }
+
+type ContentTopicDisplayNamesByAPIValue = { [apiValue: string]: string }
+const contentTopicNamesForDisplayValue = contentTopicDisplayMappings.reduce((acc: ContentTopicDisplayNamesByAPIValue, contentTopicDisplayMapping: ContentTopicDisplayMapping) => ({
+    ...acc,
+    ...contentTopicDisplayMapping.apiValue.reduce((acc: ContentTopicDisplayNamesByAPIValue, apiValue: string) => ({
+        ...acc,
+        [apiValue]: contentTopicDisplayMapping.displayText,
+    }), {}),
+}), {});
 
 type SchedulePageProps = RouteComponentProps<Params>
 
@@ -54,6 +117,9 @@ const SchedulePage = (props: SchedulePageProps) => {
     const [ userScheduleByLanguageCode, setUserScheduleByLanguageCode ] = useState<ScheduleDaysByLanguageCode>({});
     const [ isLoadingSchedule, setIsLoadingSchedule ] = useState<boolean>(true);
 
+    const [ wasUpdateNewsletterScheduleSuccessful, setWasUpdateNewsletterScheduleSuccessful ] = useState<boolean | null>(null);
+    const [ isLoadingNewsletterUpdate, setIsLoadingNewsletterUpdate ] = useState<boolean>(false);
+
     const [ error, setError ] = useState<Error>(null);
 
     const updateUserScheduleDay = (languageCode: string, dayIndex: number, scheduleDay: ScheduleDay) => {
@@ -63,6 +129,34 @@ const SchedulePage = (props: SchedulePageProps) => {
                 ...userScheduleByLanguageCode[languageCode],
                 [dayIndex]: scheduleDay,
             }
+        });
+    }
+    const handleSubmit = (languageCode: string) => {
+        setIsLoadingNewsletterUpdate(true);
+        addUserNewsletterSchedule({
+            // TODO: replace this
+            ianaTimezone: "US/Eastern",
+            languageCode: languageCode,
+            userScheduleDayRequests: [...Array(7).keys()].map((dayIndex: number) => {
+                let scheduleDay = makeDefaultScheduleDay(dayIndex);
+                if (userScheduleByLanguageCode[languageCode] && userScheduleByLanguageCode[languageCode][dayIndex]) {
+                    scheduleDay = userScheduleByLanguageCode[languageCode][dayIndex];
+                }
+                return {
+                    dayOfWeekIndex: dayIndex,
+                    contentTopics: scheduleDay.contentTopics,
+                    numberOfArticles: scheduleDay.numberOfArticles,
+                    isActive: scheduleDay.isActive,
+                }
+            }),
+        },
+        (resp: AddUserNewsletterScheduleResponse) => {
+            setIsLoadingNewsletterUpdate(false);
+            setWasUpdateNewsletterScheduleSuccessful(resp.success);
+        },
+        (e: Error) => {
+            setIsLoadingNewsletterUpdate(false);
+            setError(e);
         });
     }
 
@@ -107,7 +201,12 @@ const SchedulePage = (props: SchedulePageProps) => {
         });
     }, []);
 
-    const isLoading = isLoadingUserProfile && isLoadingSchedule;
+    const closeSnackbar = () => {
+        setWasUpdateNewsletterScheduleSuccessful(null);
+        setError(null);
+    }
+
+    const isLoading = isLoadingUserProfile || isLoadingSchedule || isLoadingNewsletterUpdate;
     return (
         <Page>
             <Grid container>
@@ -126,9 +225,16 @@ const SchedulePage = (props: SchedulePageProps) => {
                                 <SchedulePreferencesView
                                     subscriptionLevel={subscriptionLevel}
                                     userScheduleByLanguageCode={userScheduleByLanguageCode}
+                                    handleSubmit={handleSubmit}
                                     updateUserScheduleDay={updateUserScheduleDay} />
                             )
                         }
+                        <Snackbar open={(!wasUpdateNewsletterScheduleSuccessful && wasUpdateNewsletterScheduleSuccessful != null) || !!error} autoHideDuration={6000} onClose={closeSnackbar}>
+                            <Alert severity="error">Something went wrong processing your request.</Alert>
+                        </Snackbar>
+                        <Snackbar open={wasUpdateNewsletterScheduleSuccessful} autoHideDuration={6000} onClose={closeSnackbar}>
+                            <Alert severity="success">Successfully updated your email preferences.</Alert>
+                        </Snackbar>
                     </DisplayCard>
                 </Grid>
             </Grid>
@@ -140,10 +246,12 @@ type SchedulePreferencesViewProps = {
     subscriptionLevel: string | null;
     userScheduleByLanguageCode: ScheduleDaysByLanguageCode;
 
+    handleSubmit: (languageCode: string) => void;
     updateUserScheduleDay: (languageCode: string, dayIndex: number, scheduleDay: ScheduleDay) => void;
 }
 
 const SchedulePreferencesView = (props: SchedulePreferencesViewProps) => {
+    const classes = styleClasses();
     return (
         <div>
             {
@@ -153,6 +261,13 @@ const SchedulePreferencesView = (props: SchedulePreferencesViewProps) => {
                     </Paragraph>
                 )
             }
+            <Paragraph>
+                You can update the schedule on which you receive your newsletter, as well as customizing the content you receive in each newsletter here. When you’re done updating your preferences, click the button below to save them.
+            </Paragraph>
+            <PrimaryButton className={classes.savePreferencesButton} onClick={() => props.handleSubmit("es")}>
+                Save your preferences
+            </PrimaryButton>
+            <Divider />
             <SchedulePreferencesForm
                 languageCode="es"
                 schedule={props.userScheduleByLanguageCode["es"]}
@@ -197,20 +312,19 @@ type ScheduleDaySelectorProps = {
 }
 
 const ScheduleSelector = (props: ScheduleDaySelectorProps) => {
-    const scheduleDay  = props.scheduleForDay ? props.scheduleForDay : {
-        dayOfWeekIndex: props.dayIndex,
-        hourOfDayIndex: 0,
-        quarterHourIndex: 0,
-        contentTopics: ["art", "something"],
-        numberOfArticles: defaultNumberOfArticles,
-        isActive: true,
-    }
+    const classes = styleClasses();
+    const scheduleDay  = props.scheduleForDay ? props.scheduleForDay : makeDefaultScheduleDay(props.dayIndex);
+
+    const [ contentTopicToAdd, setContentTopicToAdd ] = useState<string>("");
 
     const handleUpdateNumberOfArticles = (event: React.ChangeEvent<HTMLInputElement>) => {
-        props.updateUserScheduleDay(props.languageCode, props.dayIndex, {
-            ...scheduleDay,
-            numberOfArticles: parseInt((event.target as HTMLInputElement).value, 10),
-        });
+        const numberOfArticles = parseInt((event.target as HTMLInputElement).value, 10);
+        if (numberOfArticles >= minimumNumberOfArticles && numberOfArticles <= maximumNumberOfArticles) {
+            props.updateUserScheduleDay(props.languageCode, props.dayIndex, {
+                ...scheduleDay,
+                numberOfArticles: numberOfArticles,
+            });
+        }
     }
     const handleUpdateIsActive = () => {
         props.updateUserScheduleDay(props.languageCode, props.dayIndex, {
@@ -219,29 +333,35 @@ const ScheduleSelector = (props: ScheduleDaySelectorProps) => {
         });
     }
 
+    const contentTopics = (scheduleDay.contentTopics || [])
     const handleRemoveContentTopic = (contentTopic: string) => {
         props.updateUserScheduleDay(props.languageCode, props.dayIndex, {
             ...scheduleDay,
-            contentTopics: scheduleDay.contentTopics.filter((ct: string) => ct !== contentTopic),
+            contentTopics: contentTopics.filter((ct: string) => ct !== contentTopic),
         });
     }
-    const handleAddContentTopic = (contentTopic: string) => {
+    const handleAddContentTopic = () => {
         props.updateUserScheduleDay(props.languageCode, props.dayIndex, {
             ...scheduleDay,
-            contentTopics: scheduleDay.contentTopics.concat(contentTopic),
+            contentTopics: contentTopics.concat(contentTopicToAdd),
         });
     }
-    const currentContentTopics = scheduleDay.contentTopics.map((contentTopic: string, idx: number) => (
-        <div key={`${props.languageCode}-${props.dayIndex}-${idx}-ct`}>
-            <Paragraph>
-                {contentTopic}
-            </Paragraph>
-            <ClearIcon onClick={handleRemoveContentTopic(contentTopic)} />
-        </div>
+    const currentContentTopics = contentTopics.map((contentTopic: string, idx: number) => (
+        <Grid container key={`${props.languageCode}-${props.dayIndex}-${idx}-ct`}>
+            <Grid item xs={9}>
+                <Paragraph>
+                    {contentTopicNamesForDisplayValue[contentTopic]}
+                </Paragraph>
+            </Grid>
+            <Grid item className={classes.removeContentTopicButtonContainer} xs={3}>
+                <ClearIcon
+                    className={classes.removeContentTopicIcon}
+                    onClick={() => handleRemoveContentTopic(contentTopic)}  />
+            </Grid>
+        </Grid>
     ));
-    console.log(currentContentTopics);
     return (
-        <Grid item xs={6} md={3}>
+        <Grid item className={classes.daySelectorContainer} xs={12} md={4}>
             <DisplayCard>
                 <Paragraph color={scheduleDay.isActive ? TypographyColor.Primary : TypographyColor.Gray}>
                     { dayNameForLanguageCode[props.languageCode][props.dayIndex] }
@@ -259,12 +379,38 @@ const ScheduleSelector = (props: ScheduleDaySelectorProps) => {
                         <div>
                             <PrimaryTextField
                                 id="number_of_articles"
+                                className={classes.numberOfArticlesSelector}
                                 defaultValue={scheduleDay.numberOfArticles}
                                 label="Number of Articles"
                                 variant="outlined"
                                 type="number"
+                                error={scheduleDay.numberOfArticles < minimumNumberOfArticles || scheduleDay.numberOfArticles > maximumNumberOfArticles}
+                                helperText={`Must select between ${minimumNumberOfArticles} and ${maximumNumberOfArticles}`}
                                 onChange={handleUpdateNumberOfArticles} />
+                            <Paragraph>
+                                Topics for this day
+                            </Paragraph>
+                            <Paragraph size={Size.Small}>
+                                If there aren’t enough articles for any of the topics below, you’ll receive articles from your preferred topics instead, or general articles if you haven’t indicated any preferred topics.
+                            </Paragraph>
                             { currentContentTopics }
+                            <FormControl className={classes.contentTopicSelect}>
+                                <InputLabel id={`${props.languageCode}-${props.dayIndex}-cts-selector-label`}>Add topic</InputLabel>
+                                <Select
+                                    labelId={`${props.languageCode}-${props.dayIndex}-cts-selector-label`}
+                                    id={`${props.languageCode}-${props.dayIndex}-cts-selector`}
+                                    value={contentTopicToAdd}
+                                    onChange={(e) => { setContentTopicToAdd(e.target.value) }}>
+                                    {
+                                        contentTopicDisplayMappings.map((displayMapping: ContentTopicDisplayMapping) => (
+                                            <MenuItem key={`${props.languageCode}-${props.dayIndex}-${displayMapping.apiValue[0]}-item`} value={displayMapping.apiValue[0]}>{displayMapping.displayText}</MenuItem>
+                                        ))
+                                    }
+                                </Select>
+                            </FormControl>
+                            <PrimaryButton onClick={handleAddContentTopic} disabled={!contentTopicToAdd}>
+                                Add Topic
+                            </PrimaryButton>
                         </div>
                     )
                 }
