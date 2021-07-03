@@ -23,6 +23,7 @@ import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
 import { PrimaryTextField } from 'common/components/TextField/TextField';
 import { PrimaryButton } from 'common/components/Button/Button';
 import { PrimaryCheckbox } from 'common/components/Checkbox/Checkbox';
+import timezones, { TimeZone } from 'common/data/timezone/timezone.ts';
 
 import { ContentHeader } from './common';
 
@@ -256,6 +257,7 @@ type SchedulePreferencesViewProps = {
 
 const SchedulePreferencesView = (props: SchedulePreferencesViewProps) => {
     const classes = styleClasses();
+    const currentTimezone = timezones.filter((t: TimeZone) => t.tzCode === props.ianaTimezone)[0] || props.ianaTimezone.replace("_", " ").split("/")[1];
     return (
         <div>
             {
@@ -269,7 +271,7 @@ const SchedulePreferencesView = (props: SchedulePreferencesViewProps) => {
                 You can update the schedule on which you receive your newsletter, as well as customizing the content you receive in each newsletter here. When you’re done updating your preferences, click the button below to save them.
             </Paragraph>
             <Paragraph size={Size.Small}>
-                Your timezone is currently set as {props.ianaTimezone.replace("_", " ").split("/")[1]}
+                Your timezone is currently set as {currentTimezone}
             </Paragraph>
             <PrimaryButton className={classes.savePreferencesButton} onClick={() => props.handleSubmit("es")}>
                 Save your preferences
