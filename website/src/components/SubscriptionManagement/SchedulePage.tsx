@@ -58,9 +58,14 @@ const styleClasses = makeStyles({
     numberOfArticlesSelector: {
         margin: '5px',
     },
+    headerSubContent: {
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
     savePreferencesButton: {
-        display: 'block',
-        margin: '10px auto',
+        margin: '10px 0',
     },
     /* Pretty sure this is about as hacky as it gets */
     removeContentTopicButtonContainer: {
@@ -257,7 +262,7 @@ type SchedulePreferencesViewProps = {
 
 const SchedulePreferencesView = (props: SchedulePreferencesViewProps) => {
     const classes = styleClasses();
-    const currentTimezone = timezones.filter((t: TimeZone) => t.tzCode === props.ianaTimezone)[0] || props.ianaTimezone.replace("_", " ").split("/")[1];
+    const currentTimezone = timezones.filter((t: TimeZone) => t.tzCode === props.ianaTimezone)[0].name || props.ianaTimezone.replace("_", " ").split("/")[1];
     return (
         <div>
             {
@@ -267,15 +272,31 @@ const SchedulePreferencesView = (props: SchedulePreferencesViewProps) => {
                     </Paragraph>
                 )
             }
-            <Paragraph>
-                You can update the schedule on which you receive your newsletter, as well as customizing the content you receive in each newsletter here. When you’re done updating your preferences, click the button below to save them.
-            </Paragraph>
-            <Paragraph size={Size.Small}>
-                Your timezone is currently set as {currentTimezone}
-            </Paragraph>
-            <PrimaryButton className={classes.savePreferencesButton} onClick={() => props.handleSubmit("es")}>
-                Save your preferences
-            </PrimaryButton>
+            <div className={classes.headerSubContent}>
+                <Paragraph>
+                    You can update the schedule on which you receive your newsletter, as well as customizing the content you receive in each newsletter here. When you’re done updating your preferences, click the button below to save them.
+                </Paragraph>
+                <Paragraph size={Size.Small}>
+                    Your timezone is currently set as {currentTimezone}
+                </Paragraph>
+                <FormControl>
+                    <InputLabel id="timezone-selector-label">Change timezone</InputLabel>
+                    <Select
+                        labelId="timezone-selector-label"
+                        id="timezone-selector"
+                        value={props.ianaTimezone}
+                        onChange={(e) => { props.updateIANATimezone(e.target.value) }}>
+                        {
+                            timezones.map((t: TimeZone, idx: number) => (
+                                <MenuItem key={`timezone-selector-${idx}`} value={t.tzCode}>{t.name}</MenuItem>
+                            ))
+                        }
+                    </Select>
+                </FormControl>
+                <PrimaryButton className={classes.savePreferencesButton} onClick={() => props.handleSubmit("es")}>
+                    Save your preferences
+                </PrimaryButton>
+            </div>
             <Divider />
             <SchedulePreferencesForm
                 languageCode="es"
