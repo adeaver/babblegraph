@@ -120,6 +120,8 @@ const SchedulePage = (props: SchedulePageProps) => {
     const [ wasUpdateNewsletterScheduleSuccessful, setWasUpdateNewsletterScheduleSuccessful ] = useState<boolean | null>(null);
     const [ isLoadingNewsletterUpdate, setIsLoadingNewsletterUpdate ] = useState<boolean>(false);
 
+    const [ ianaTimezone, setIANATimezone ] = useState<string>(Intl.DateTimeFormat().resolvedOptions().timeZone || "US/Eastern");
+
     const [ error, setError ] = useState<Error>(null);
 
     const updateUserScheduleDay = (languageCode: string, dayIndex: number, scheduleDay: ScheduleDay) => {
@@ -134,8 +136,7 @@ const SchedulePage = (props: SchedulePageProps) => {
     const handleSubmit = (languageCode: string) => {
         setIsLoadingNewsletterUpdate(true);
         addUserNewsletterSchedule({
-            // TODO: replace this
-            ianaTimezone: "US/Eastern",
+            ianaTimezone: ianaTimezone,
             languageCode: languageCode,
             userScheduleDayRequests: [...Array(7).keys()].map((dayIndex: number) => {
                 let scheduleDay = makeDefaultScheduleDay(dayIndex);
@@ -169,8 +170,7 @@ const SchedulePage = (props: SchedulePageProps) => {
             if (resp.subscriptionLevel) {
                 setSubscriptionLevel(resp.subscriptionLevel);
                 getUserNewsletterSchedule({
-                    // TODO: replace this
-                    ianaTimezone: "US/Eastern",
+                ianaTimezone: ianaTimezone,
                 },
                 (resp: GetUserNewsletterScheduleResponse) => {
                     setIsLoadingSchedule(false);
@@ -223,9 +223,11 @@ const SchedulePage = (props: SchedulePageProps) => {
                                 <LoadingSpinner />
                             ) : (
                                 <SchedulePreferencesView
+                                    ianaTimezone={ianaTimezone}
                                     subscriptionLevel={subscriptionLevel}
                                     userScheduleByLanguageCode={userScheduleByLanguageCode}
                                     handleSubmit={handleSubmit}
+                                    updateIANATimezone={setIANATimezone}
                                     updateUserScheduleDay={updateUserScheduleDay} />
                             )
                         }
@@ -243,10 +245,12 @@ const SchedulePage = (props: SchedulePageProps) => {
 }
 
 type SchedulePreferencesViewProps = {
+    ianaTimezone: string;
     subscriptionLevel: string | null;
     userScheduleByLanguageCode: ScheduleDaysByLanguageCode;
 
     handleSubmit: (languageCode: string) => void;
+    updateIANATimezone: (newIANATimezone: string) => void;
     updateUserScheduleDay: (languageCode: string, dayIndex: number, scheduleDay: ScheduleDay) => void;
 }
 
@@ -263,6 +267,9 @@ const SchedulePreferencesView = (props: SchedulePreferencesViewProps) => {
             }
             <Paragraph>
                 You can update the schedule on which you receive your newsletter, as well as customizing the content you receive in each newsletter here. When you’re done updating your preferences, click the button below to save them.
+            </Paragraph>
+            <Paragraph size={Size.Small}>
+                Your timezone is currently set as {props.ianaTimezone.replace("_", " ").split("/")[1]}
             </Paragraph>
             <PrimaryButton className={classes.savePreferencesButton} onClick={() => props.handleSubmit("es")}>
                 Save your preferences
@@ -361,7 +368,7 @@ const ScheduleSelector = (props: ScheduleDaySelectorProps) => {
         </Grid>
     ));
     return (
-        <Grid item className={classes.daySelectorContainer} xs={12} md={4}>
+        <Grid item className={classes.daySelectorContainer} xs={12} md={6} lg={4}>
             <DisplayCard>
                 <Paragraph color={scheduleDay.isActive ? TypographyColor.Primary : TypographyColor.Gray}>
                     { dayNameForLanguageCode[props.languageCode][props.dayIndex] }
