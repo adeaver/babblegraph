@@ -53,6 +53,12 @@ func RegisterRouteGroups() error {
 		},
 		AuthenticatedRoutes: []router.AuthenticatedRoute{
 			{
+				Path:    "get_user_schedule_1",
+				Handler: handleGetUserNewsletterSchedule,
+				ValidAuthorizationLevels: []useraccounts.SubscriptionLevel{
+					useraccounts.SubscriptionLevelBetaPremium,
+				},
+			}, {
 				Path:    "add_user_schedule_1",
 				Handler: handleAddUserNewsletterSchedule,
 				ValidAuthorizationLevels: []useraccounts.SubscriptionLevel{

@@ -59,14 +59,16 @@ func RegisterRouteGroup(rg RouteGroup) error {
 		}
 	}
 	for _, ar := range rg.AuthenticatedRoutes {
-		muxRoute := middleware.WithAuthorizationLevelVerification(ar.ValidAuthorizationLevels, func(userID users.UserID) func(http.ResponseWriter, *http.Request) {
-			return makeAuthenticatedMuxRouter(userID, ar.Handler)
-		})
+		// Shadow ar so that the closure below
+		// returns the right thing
+		ar := ar
 		if err := registerRoute(registerRouteInput{
 			shouldLogBody:    ar.ShouldLogBody,
 			trackEventWithID: ar.TrackEventWithID,
-			muxRoute:         muxRoute,
-			path:             fmt.Sprintf("/%s/%s/%s", apiPrefix, rg.Prefix, ar.Path),
+			muxRoute: middleware.WithAuthorizationLevelVerification(ar.ValidAuthorizationLevels, func(userID users.UserID) func(http.ResponseWriter, *http.Request) {
+				return makeAuthenticatedMuxRouter(userID, ar.Handler)
+			}),
+			path: fmt.Sprintf("/%s/%s/%s", apiPrefix, rg.Prefix, ar.Path),
 		}); err != nil {
 			return err
 		}

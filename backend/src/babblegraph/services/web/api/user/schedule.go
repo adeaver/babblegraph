@@ -58,6 +58,7 @@ func handleAddUserNewsletterSchedule(userID users.UserID, body []byte) (interfac
 		return nil
 	}); err != nil {
 		log.Println(fmt.Sprintf("Got error upserting schedule for user %s: %s", userID, err.Error()))
+		sentry.CaptureException(fmt.Errorf("Got error upserting schedule for user %s: %s", userID, err.Error()))
 		return handleAddUserNewsletterScheduleResponse{
 			Success: false,
 		}, nil
