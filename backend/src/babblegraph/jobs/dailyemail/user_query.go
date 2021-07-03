@@ -152,10 +152,12 @@ func pickTopDocuments(docsWithTopic []documentsWithTopic, genericDocuments []doc
 					documentsInEmailByURLIdentifier[u.URLIdentifier] = true
 				}
 			}
-			categorizedDocuments = append(categorizedDocuments, email_actions.CategorizedDocuments{
-				Topic:     docs.topic,
-				Documents: documents,
-			})
+			if documentCounter > 0 {
+				categorizedDocuments = append(categorizedDocuments, email_actions.CategorizedDocuments{
+					Topic:     docs.topic,
+					Documents: documents,
+				})
+			}
 		}
 	}
 	if len(documentsInEmailByURLIdentifier) < numberOfDocuments {
