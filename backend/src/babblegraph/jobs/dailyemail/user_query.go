@@ -160,7 +160,7 @@ func pickTopDocuments(docsWithTopic []documentsWithTopic, genericDocuments []doc
 	}
 	if len(documentsInEmailByURLIdentifier) < numberOfDocuments {
 		var selectedGenericDocuments []documents.Document
-		maxGenericDocuments := maxDocumentsPerEmail - len(documentsInEmailByURLIdentifier)
+		maxGenericDocuments := numberOfDocuments - len(documentsInEmailByURLIdentifier)
 		documentCounter := 0
 		for i := 0; i < len(genericDocuments) && documentCounter < maxGenericDocuments; i++ {
 			doc := genericDocuments[i].Document
