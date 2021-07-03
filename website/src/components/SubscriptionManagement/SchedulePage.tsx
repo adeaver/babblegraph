@@ -96,6 +96,8 @@ const defaultNumberOfArticles = 12;
 const minimumNumberOfArticles = 4;
 const maximumNumberOfArticles = 12;
 
+const maxContentTopicsPerDay = 6;
+
 const dayNameForLanguageCode = {
     "es": ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sabádo"],
 }
@@ -371,10 +373,12 @@ const ScheduleSelector = (props: ScheduleDaySelectorProps) => {
         });
     }
     const handleAddContentTopic = () => {
-        props.updateUserScheduleDay(props.languageCode, props.dayIndex, {
-            ...scheduleDay,
-            contentTopics: contentTopics.concat(contentTopicToAdd),
-        });
+        if (!contentTopics.some((c: string) => c === contentTopicToAdd)) {
+            props.updateUserScheduleDay(props.languageCode, props.dayIndex, {
+                ...scheduleDay,
+                contentTopics: contentTopics.concat(contentTopicToAdd),
+            });
+        }
     }
     const currentContentTopics = contentTopics.map((contentTopic: string, idx: number) => (
         <Grid container key={`${props.languageCode}-${props.dayIndex}-${idx}-ct`}>
@@ -421,7 +425,8 @@ const ScheduleSelector = (props: ScheduleDaySelectorProps) => {
                                 Topics for this day
                             </Paragraph>
                             <Paragraph size={Size.Small}>
-                                If there aren’t enough articles for any of the topics below, you’ll receive articles from your preferred topics instead, or general articles if you haven’t indicated any preferred topics.
+                                Any topics selected will show up in your newsletter for this day if there is content available for it. You can select up to 6 topics.
+                                If you select fewer than 4 topics, then random topics from your selected interests will be in the email.
                             </Paragraph>
                             { currentContentTopics }
                             <FormControl className={classes.contentTopicSelect}>
@@ -430,11 +435,14 @@ const ScheduleSelector = (props: ScheduleDaySelectorProps) => {
                                     labelId={`${props.languageCode}-${props.dayIndex}-cts-selector-label`}
                                     id={`${props.languageCode}-${props.dayIndex}-cts-selector`}
                                     value={contentTopicToAdd}
+                                    disabled={contentTopics.length >= maxContentTopicsPerDay}
+                                    helperText="Select up to 6 topics"
                                     onChange={(e) => { setContentTopicToAdd(e.target.value) }}>
                                     {
-                                        contentTopicDisplayMappings.map((displayMapping: ContentTopicDisplayMapping) => (
-                                            <MenuItem key={`${props.languageCode}-${props.dayIndex}-${displayMapping.apiValue[0]}-item`} value={displayMapping.apiValue[0]}>{displayMapping.displayText}</MenuItem>
-                                        ))
+                                        contentTopicDisplayMappings
+                                            .map((displayMapping: ContentTopicDisplayMapping) => (
+                                                <MenuItem key={`${props.languageCode}-${props.dayIndex}-${displayMapping.apiValue[0]}-item`} value={displayMapping.apiValue[0]}>{displayMapping.displayText}</MenuItem>
+                                            ))
                                     }
                                 </Select>
                             </FormControl>

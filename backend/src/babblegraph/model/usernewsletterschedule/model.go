@@ -11,6 +11,8 @@ const (
 	contentTopicDelimiter   = ";"
 	minimumNumberOfArticles = 4
 	maximumNumberOfArticles = 12
+
+	maximumNumberOfTopics = 6
 )
 
 type id string
