@@ -3,12 +3,15 @@ package dailyemail
 import (
 	email_actions "babblegraph/actions/email"
 	"babblegraph/model/email"
+	"babblegraph/model/useraccounts"
 	"babblegraph/model/usercontenttopics"
+	"babblegraph/model/usernewsletterschedule"
 	"babblegraph/model/users"
 	"babblegraph/util/database"
 	"babblegraph/util/ses"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/getsentry/sentry-go"
 	"github.com/jmoiron/sqlx"
@@ -69,11 +72,27 @@ func SendDailyEmailToUsersByEmailAddress(localSentryHub *sentry.Hub, emailClient
 func sendDailyEmailToUser(emailClient *ses.Client, user users.User) error {
 	var docs []email_actions.CategorizedDocuments
 	return database.WithTx(func(tx *sqlx.Tx) error {
+		var userScheduleForDay *usernewsletterschedule.UserNewsletterScheduleDayMetadata
+		subscriptionLevel, err := useraccounts.LookupSubscriptionLevelForUser(tx, user.ID)
+		if err != nil {
+			return err
+		}
+		if subscriptionLevel != nil && *subscriptionLevel == useraccounts.SubscriptionLevelBetaPremium {
+			var err error
+			userScheduleForDay, err = usernewsletterschedule.LookupNewsletterDayMetadataForUserAndDay(tx, user.ID, int(time.Now().UTC().Weekday()))
+			if err != nil {
+				return err
+			}
+			if userScheduleForDay != nil && !userScheduleForDay.IsActive {
+				log.Println(fmt.Sprintf("Schedule is inactive for current day for user %s. Skipping...", user.ID))
+				return nil
+			}
+		}
 		userPreferences, err := getPreferencesForUser(tx, user)
 		if err != nil {
 			return err
 		}
-		docs, err = getDocumentsForUser(tx, *userPreferences)
+		docs, err = getDocumentsForUser(tx, *userPreferences, userScheduleForDay)
 		if err != nil {
 			return err
 		}
