@@ -55,6 +55,9 @@ const styleClasses = makeStyles({
         minHeight: '100%',
         padding: '10px',
     },
+    timezoneSelector: {
+        maxWidth: '100%',
+    },
     numberOfArticlesSelector: {
         margin: '5px',
     },
@@ -281,7 +284,7 @@ const SchedulePreferencesView = (props: SchedulePreferencesViewProps) => {
                 <Paragraph size={Size.Small}>
                     Your timezone is currently set as {currentTimezone}
                 </Paragraph>
-                <FormControl>
+                <FormControl className={classes.timezoneSelector}>
                     <InputLabel id="timezone-selector-label">Change timezone</InputLabel>
                     <Select
                         labelId="timezone-selector-label"
@@ -395,7 +398,7 @@ const ScheduleSelector = (props: ScheduleDaySelectorProps) => {
         </Grid>
     ));
     return (
-        <Grid item className={classes.daySelectorContainer} xs={12} md={6} lg={4}>
+        <Grid item className={classes.daySelectorContainer} xs={12} md={6} xl={4}>
             <DisplayCard>
                 <Paragraph color={scheduleDay.isActive ? TypographyColor.Primary : TypographyColor.Gray}>
                     { dayNameForLanguageCode[props.languageCode][props.dayIndex] }

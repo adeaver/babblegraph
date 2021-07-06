@@ -142,7 +142,7 @@ const RequestResetLinkForm = (props: RequestResetLinkFormProps) => {
     };
     return (
         <Grid container className={classes.formGridContainer}>
-            <Grid item xs={12} md={10} className={classes.formGridItem}>
+            <Grid item xs={12} className={classes.formGridItem}>
                 <PrimaryTextField
                     className={classes.textField}
                     id="email"
@@ -151,7 +151,7 @@ const RequestResetLinkForm = (props: RequestResetLinkFormProps) => {
                     defaultValue={props.emailAddress}
                     onChange={handleEmailAddressChange} />
             </Grid>
-            <Grid item xs={12} md={2} className={classes.formGridItem}>
+            <Grid item xs={12} md={4} className={classes.formGridItem}>
                 <PrimaryButton onClick={props.handleSubmit} disabled={!props.canSubmit}>
                     Request a reset link
                 </PrimaryButton>
