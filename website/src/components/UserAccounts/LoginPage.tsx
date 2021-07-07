@@ -192,7 +192,7 @@ const LoginForm = (props: LoginFormProps) => {
                             defaultValue={props.password}
                             onChange={handlePasswordChange} />
                     </Grid>
-                    <Grid item xs={12} md={2} className={classes.formGridItem}>
+                    <Grid item xs={3} md={2} className={classes.formGridItem}>
                         <PrimaryButton type="submit" disabled={!props.emailAddress || !props.password}>
                             Login
                         </PrimaryButton>
