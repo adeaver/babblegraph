@@ -33,7 +33,7 @@ func (d dbMapping) ToNonDB() Mapping {
 
 type userLemmaReinforcementReminderID string
 
-type UserLemmaReinforcementRecord struct {
+type UserLemmaReinforcementSpotlightRecord struct {
 	LanguageCode      wordsmith.LanguageCode
 	UserID            users.UserID
 	LemmaID           wordsmith.LemmaID
@@ -41,7 +41,7 @@ type UserLemmaReinforcementRecord struct {
 	NumberOfTimesSent int64
 }
 
-type dbUserLemmaReinforcementRecord struct {
+type dbUserLemmaReinforcementSpotlightRecord struct {
 	ID                userLemmaReinforcementReminderID `db:"_id"`
 	LanguageCode      wordsmith.LanguageCode           `db:"language_code"`
 	UserID            users.UserID                     `db:"user_id"`
@@ -50,8 +50,8 @@ type dbUserLemmaReinforcementRecord struct {
 	NumberOfTimesSent int64                            `db:"number_of_times_sent"`
 }
 
-func (d dbUserLemmaReinforcementRecord) ToNonDB() UserLemmaReinforcementRecord {
-	return UserLemmaReinforcementRecord{
+func (d dbUserLemmaReinforcementSpotlightRecord) ToNonDB() UserLemmaReinforcementSpotlightRecord {
+	return UserLemmaReinforcementSpotlightRecord{
 		LanguageCode:      d.LanguageCode,
 		UserID:            d.UserID,
 		LemmaID:           d.LemmaID,

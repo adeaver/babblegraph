@@ -12,9 +12,9 @@ const (
 	setOrToggleMappingsForUserQuery = "INSERT INTO user_lemma_mappings (user_id, lemma_id, language_code) VALUES ($1, $2, $3) ON CONFLICT (user_id, lemma_id) DO UPDATE SET is_visible = $4, is_active = $5"
 	toggleMappingActiveStateQuery   = "UPDATE user_lemma_mappings SET is_active = $1 WHERE user_id = $2 AND lemma_id = $3"
 
-	getLemmaReinforcementRecordForUserQuery = "SELECT * FROM user_lemma_reinforcement_records WHERE user_id = $1 ORDER BY last_sent_on DESC"
-	setLemmaReinforcementRecordForUserQuery = `INSERT INTO
-        user_lemma_reinforcement_records (user_id, language_code, lemma_id, last_sent_on, number_of_times_sent)
+	getLemmaReinforcementSpolightRecordForUserQuery = "SELECT * FROM user_lemma_reinforcement_spotlight_records WHERE user_id = $1 ORDER BY last_sent_on DESC"
+	setLemmaReinforcementSpolightRecordForUserQuery = `INSERT INTO
+        user_lemma_reinforcement_spotlight_records (user_id, language_code, lemma_id, last_sent_on, number_of_times_sent)
         VALUES ($1, $2, $3, timezone('utc', now()), $4)
     ON CONFLICT (user_id, lemma_id)
     DO UPDATE SET
@@ -78,27 +78,27 @@ func ToggleMappingActiveState(tx *sqlx.Tx, userID users.UserID, lemmaID wordsmit
 	return didUpdate, nil
 }
 
-func GetLemmaReinforcementRecordsForUserOrderedBySentOn(tx *sqlx.Tx, userID users.UserID) ([]UserLemmaReinforcementRecord, error) {
-	var matches []dbUserLemmaReinforcementRecord
-	if err := tx.Select(&matches, getLemmaReinforcementRecordForUserQuery, userID); err != nil {
+func GetLemmaReinforcementRecordsForUserOrderedBySentOn(tx *sqlx.Tx, userID users.UserID) ([]UserLemmaReinforcementSpotlightRecord, error) {
+	var matches []dbUserLemmaReinforcementSpotlightRecord
+	if err := tx.Select(&matches, getLemmaReinforcementSpotlightRecordForUserQuery, userID); err != nil {
 		return nil, err
 	}
-	var out []UserLemmaReinforcementRecord
+	var out []UserLemmaReinforcementSpotlightRecord
 	for _, m := range matches {
 		out = append(out, m.ToNonDB())
 	}
 	return out, nil
 }
 
-type UpsertLemmaReinforcementRecordInput struct {
+type UpsertLemmaReinforcementSpotlightRecordInput struct {
 	UserID            users.UserID
 	LemmaID           wordsmith.LemmaID
 	LanguageCode      wordsmith.LanguageCode
 	NumberOfTimesSent int64
 }
 
-func UpsertLemmaReinforcementRecord(tx *sqlx.Tx, input UpsertLemmaReinforcementRecordInput) error {
-	if _, err := tx.Exec(setLemmaReinforcementRecordForUserQuery, input.UserID, input.LanguageCode, input.LemmaID, input.NumberOfTimesSent); err != nil {
+func UpsertLemmaReinforcementSpotlightRecord(tx *sqlx.Tx, input UpsertLemmaReinforcementSpotlightRecordInput) error {
+	if _, err := tx.Exec(setLemmaReinforcementSpotlightRecordForUserQuery, input.UserID, input.LanguageCode, input.LemmaID, input.NumberOfTimesSent); err != nil {
 		return err
 	}
 	return nil

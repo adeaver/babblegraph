@@ -18,6 +18,7 @@ import DifficultyLevelSettingPage from 'components/SubscriptionManagement/Diffic
 import UnsubscribePage from 'components/SubscriptionManagement/UnsubscribePage';
 import WordReinforcementPage from 'components/SubscriptionManagement/WordReinforcementPage';
 import SchedulePage from 'components/SubscriptionManagement/SchedulePage';
+import NewsletterPreferencesPage from 'components/SubscriptionManagement/NewsletterPreferencesPage';
 
 import LoginPage from 'components/UserAccounts/LoginPage';
 import SignupPage from 'components/UserAccounts/SignupPage';
@@ -37,6 +38,7 @@ class App extends React.Component{
                     <Route path="/manage/:token/interests" component={InterestSelectionPage} />
                     <Route path="/manage/:token/vocabulary" component={WordReinforcementPage} />
                     <Route path="/manage/:token/schedule" component={SchedulePage} />
+                    <Route path="/manage/:token/preferences" component={NewsletterPreferencesPage} />
                     <Route exact path="/manage/:token" component={SubscriptionManagementDashboardPage} />
                     <Route path="/paywall-thank-you/:token" component={PaywallReportPage} />
 

@@ -64,6 +64,12 @@ func RegisterRouteGroups() error {
 				ValidAuthorizationLevels: []useraccounts.SubscriptionLevel{
 					useraccounts.SubscriptionLevelBetaPremium,
 				},
+			}, {
+				Path:    "get_user_newsletter_preferences_1",
+				Handler: getUserNewsletterPreferences,
+				ValidAuthorizationLevels: []useraccounts.SubscriptionLevel{
+					useraccounts.SubscriptionLevelBetaPremium,
+				},
 			},
 		},
 	})

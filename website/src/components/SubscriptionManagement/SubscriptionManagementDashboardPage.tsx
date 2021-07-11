@@ -129,7 +129,7 @@ const SubscriptionManagementDashboardPage = (props: SubscriptionManagementDashbo
                             </ActionCard>
                             {
                                 subscriptionLevel && (
-                                    <ActionCard redirectURL={`/manage/${token}/schedule`} title='Newsletter schedule and preferences'>
+                                    <ActionCard redirectURL={`/manage/${token}/schedule`} title='Newsletter schedule and customization'>
                                         Select which days you receive newsletter emails from Babblegraph. You can also configure how many articles you receive in each email and what topics are in each email.
                                     </ActionCard>
                                 )
@@ -137,8 +137,15 @@ const SubscriptionManagementDashboardPage = (props: SubscriptionManagementDashbo
                             <ActionCard redirectURL={`/manage/${token}/level`} title='Set your difficulty level'>
                                 If your daily email is too hard or too easy, you can change the difficulty level here.
                             </ActionCard>
+                            {
+                                subscriptionLevel && (
+                                    <ActionCard redirectURL={`/manage/${token}/preferences`} title='Newsletter general settings'>
+                                        Adjust general settings for your newsletter, such as toggling whether or not you want to receive word tracking spotlights in your newsletters.
+                                    </ActionCard>
+                                )
+                            }
                             <ActionCard redirectURL={`/manage/${token}/unsubscribe`} title='Unsubscribe'>
-                                If you’re no longer interested in receiving daily emails, you can unsubscribe here. By unsubscribing, we won’t send you any more emails about anything.
+                                If you’re no longer interested in receiving newsletters, you can unsubscribe here. By unsubscribing, we won’t send you any more emails about anything.
                             </ActionCard>
                         </Grid>
                         {

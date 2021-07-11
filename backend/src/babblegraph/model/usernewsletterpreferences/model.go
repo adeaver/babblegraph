@@ -8,16 +8,16 @@ import (
 // TODO: move schedule into here maybe?
 
 type UserNewsletterPreferences struct {
-	UserID                          users.UserID
-	LanguageCode                    wordsmith.LanguageCode
-	ShouldIncludeLemmaReinforcement bool
+	UserID                                   users.UserID
+	LanguageCode                             wordsmith.LanguageCode
+	ShouldIncludeLemmaReinforcementSpotlight bool
 }
 
-type userLemmaReinforcementPreferencesID string
+type userLemmaReinforcementSpotlightPreferencesID string
 
-type dbUserLemmaReinforcementPreferences struct {
-	ID                              userLemmaReinforcementPreferencesID `db:"_id"`
-	LanguageCode                    wordsmith.LanguageCode              `db:"language_code"`
-	UserID                          users.UserID                        `db:"user_id"`
-	ShouldIncludeLemmaReinforcement bool                                `db:"should_include_lemma_reinforcement"`
+type dbUserLemmaReinforcementSpotlightPreferences struct {
+	ID                                       userLemmaReinforcementSpotlightPreferencesID `db:"_id"`
+	LanguageCode                             wordsmith.LanguageCode                       `db:"language_code"`
+	UserID                                   users.UserID                                 `db:"user_id"`
+	ShouldIncludeLemmaReinforcementSpotlight bool                                         `db:"should_include_lemma_reinforcement_spotlight"`
 }
