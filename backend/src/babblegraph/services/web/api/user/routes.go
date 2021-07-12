@@ -44,6 +44,9 @@ func RegisterRouteGroups() error {
 				Path:    "add_user_lemma_for_token_1",
 				Handler: handleAddUserLemmasForToken,
 			}, {
+				Path:    "remove_user_lemma_for_token_1",
+				Handler: removeUserLemmaForToken,
+			}, {
 				Path:    "update_user_lemma_active_state_for_token_1",
 				Handler: handleUpdateUserLemmaActiveStateForToken,
 			}, {
