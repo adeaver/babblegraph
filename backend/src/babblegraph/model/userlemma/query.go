@@ -80,7 +80,7 @@ func ToggleMappingActiveState(tx *sqlx.Tx, userID users.UserID, lemmaID wordsmit
 
 func GetLemmaReinforcementRecordsForUserOrderedBySentOn(tx *sqlx.Tx, userID users.UserID) ([]UserLemmaReinforcementSpotlightRecord, error) {
 	var matches []dbUserLemmaReinforcementSpotlightRecord
-	if err := tx.Select(&matches, getLemmaReinforcementSpotlightRecordForUserQuery, userID); err != nil {
+	if err := tx.Select(&matches, getLemmaReinforcementSpolightRecordForUserQuery, userID); err != nil {
 		return nil, err
 	}
 	var out []UserLemmaReinforcementSpotlightRecord
@@ -98,7 +98,7 @@ type UpsertLemmaReinforcementSpotlightRecordInput struct {
 }
 
 func UpsertLemmaReinforcementSpotlightRecord(tx *sqlx.Tx, input UpsertLemmaReinforcementSpotlightRecordInput) error {
-	if _, err := tx.Exec(setLemmaReinforcementSpotlightRecordForUserQuery, input.UserID, input.LanguageCode, input.LemmaID, input.NumberOfTimesSent); err != nil {
+	if _, err := tx.Exec(setLemmaReinforcementSpolightRecordForUserQuery, input.UserID, input.LanguageCode, input.LemmaID, input.NumberOfTimesSent); err != nil {
 		return err
 	}
 	return nil

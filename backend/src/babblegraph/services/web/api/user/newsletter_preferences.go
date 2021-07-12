@@ -58,3 +58,46 @@ func getUserNewsletterPreferences(userID users.UserID, body []byte) (interface{}
 		},
 	}, nil
 }
+
+type updateUserNewsletterPreferencesRequest struct {
+	LanguageCode                string                    `json:"language_code"`
+	EmailAddress                string                    `json:"email_address"`
+	SubscriptionManagementToken string                    `json:"subscription_management_token"`
+	Preferences                 userNewsletterPreferences `json:"preferences"`
+}
+
+type updateUserNewsletterPreferencesResponse struct {
+	LanguageCode wordsmith.LanguageCode `json:"language_code"`
+	Success      bool                   `json:"success"`
+}
+
+func updateUserNewsletterPreferences(userID users.UserID, body []byte) (interface{}, error) {
+	var req updateUserNewsletterPreferencesRequest
+	if err := json.Unmarshal(body, &req); err != nil {
+		return nil, err
+	}
+	tokenUserID, err := parseSubscriptionManagementToken(req.SubscriptionManagementToken, ptr.String(req.EmailAddress))
+	switch {
+	case err != nil:
+		return nil, err
+	case *tokenUserID != userID:
+		return nil, fmt.Errorf("invalid token")
+	}
+	languageCode, err := wordsmith.GetLanguageCodeFromString(req.LanguageCode)
+	if err != nil {
+		return nil, err
+	}
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		return usernewsletterpreferences.UpdateUserNewsletterPreferences(tx, usernewsletterpreferences.UpdateUserNewsletterPreferencesInput{
+			UserID:                              userID,
+			LanguageCode:                        *languageCode,
+			IsLemmaReinforcementSpotlightActive: req.Preferences.IsLemmaReinforcementSpotlightActive,
+		})
+	}); err != nil {
+		return nil, err
+	}
+	return updateUserNewsletterPreferencesResponse{
+		LanguageCode: *languageCode,
+		Success:      true,
+	}, nil
+}

@@ -10,7 +10,12 @@ import (
 
 const (
 	getLemmaReinforcementSpotlightPreferencesQuery    = "SELECT * FROM user_lemma_reinforcement_spotlight_preferences WHERE user_id = $1 AND language_code = $2"
-	updateLemmaReinforcementSpotlightPreferencesQuery = "INSERT INTO user_lemma_reinforcement_spotlight_preferences (user_id, language_code, should_include_lemma_reinforcement_spotlight) VALUES ($1, $2, $3) ON CONFLICT (user_id, language_code) SET should_include_lemma_reinforcement_spotlight = $3"
+	updateLemmaReinforcementSpotlightPreferencesQuery = `INSERT INTO
+        user_lemma_reinforcement_spotlight_preferences (user_id, language_code, should_include_lemma_reinforcement_spotlight)
+    VALUES ($1, $2, $3)
+    ON CONFLICT (user_id, language_code)
+    DO UPDATE SET
+        should_include_lemma_reinforcement_spotlight = $3`
 )
 
 func GetUserNewsletterPrefrencesForLanguage(tx *sqlx.Tx, userID users.UserID, languageCode wordsmith.LanguageCode) (*UserNewsletterPreferences, error) {
