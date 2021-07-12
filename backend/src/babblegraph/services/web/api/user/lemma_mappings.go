@@ -139,3 +139,47 @@ func handleUpdateUserLemmaActiveStateForToken(body []byte) (interface{}, error) 
 		DidUpdate: didUpdate,
 	}, nil
 }
+
+type removeUserLemmaForTokenRequest struct {
+	Token   string            `json:"token"`
+	LemmaID wordsmith.LemmaID `json:"lemma_id"`
+}
+
+type removeUserLemmaForTokenResponse struct {
+	LemmaID   wordsmith.LemmaID `json:"lemma_id"`
+	DidDelete bool              `json:"did_delete"`
+}
+
+func removeUserLemmaForToken(body []byte) (interface{}, error) {
+	var req removeUserLemmaForTokenRequest
+	if err := json.Unmarshal(body, &req); err != nil {
+		return nil, err
+	}
+	userID, err := routetoken.ValidateTokenAndGetUserID(req.Token, routes.WordReinforcementKey)
+	if err != nil {
+		return nil, err
+	}
+	var languageCode wordsmith.LanguageCode
+	if err := wordsmith.WithWordsmithTx(func(tx *sqlx.Tx) error {
+		lemma, err := wordsmith.GetLemmaByID(tx, req.LemmaID)
+		if err != nil {
+			return err
+		}
+		languageCode = lemma.Language
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	var didDelete bool
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		var err error
+		didDelete, err = userlemma.RemoveMappingForUser(tx, *userID, req.LemmaID, languageCode)
+		return err
+	}); err != nil {
+		return nil, err
+	}
+	return removeUserLemmaForTokenResponse{
+		LemmaID:   req.LemmaID,
+		DidDelete: didDelete,
+	}, nil
+}
