@@ -8,6 +8,7 @@ import Divider from '@material-ui/core/Divider';
 import ArrowForwardIcon from '@material-ui/icons/ArrowForward';
 
 import Link, { LinkTarget } from 'common/components/Link/Link';
+import Color from 'common/styles/colors';
 import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
 import Page from 'common/components/Page/Page';
 import Paragraph, { Size } from 'common/typography/Paragraph';
@@ -44,12 +45,23 @@ const styleClasses = makeStyles({
     gridComponent: {
         marginTop: '15px',
     },
+    premiumTagText: {
+        color: Color.White,
+        background: Color.Primary,
+        borderRadius: '5px',
+        padding: '0 5px',
+    },
+    premiumTag: {
+        alignItems: 'center',
+        display: 'flex',
+    }
 });
 
 type ActionCardProps = {
     title: string;
     redirectURL: string;
     children: string;
+    isPremiumFeature?: boolean;
 }
 
 const ActionCard = (props: ActionCardProps) => {
@@ -59,7 +71,16 @@ const ActionCard = (props: ActionCardProps) => {
         <Grid className={classes.gridComponent} item xs={12} md={6}>
             <Card onClick={() => { history.push(props.redirectURL) }} className={classes.actionCard} variant='outlined'>
                 <Grid container>
-                    <Grid item xs={11}>
+                    {
+                        props.isPremiumFeature && (
+                            <Grid item xs={12} sm={2} className={classes.premiumTag}>
+                                <Paragraph className={classes.premiumTagText}>
+                                    Premium
+                                </Paragraph>
+                            </Grid>
+                        )
+                    }
+                    <Grid item xs={11} sm={props.isPremiumFeature ? 9 : 11}>
                         <Paragraph size={Size.Large} color={TypographyColor.Primary} align={Alignment.Left}>{props.title}</Paragraph>
                     </Grid>
                     <Grid className={classes.headerArrow} item xs={1}>
@@ -129,7 +150,10 @@ const SubscriptionManagementDashboardPage = (props: SubscriptionManagementDashbo
                             </ActionCard>
                             {
                                 subscriptionLevel && (
-                                    <ActionCard redirectURL={`/manage/${token}/schedule`} title='Newsletter schedule and customization'>
+                                    <ActionCard
+                                        redirectURL={`/manage/${token}/schedule`}
+                                        title='Newsletter schedule and customization'
+                                        isPremiumFeature>
                                         Select which days you receive newsletter emails from Babblegraph. You can also configure how many articles you receive in each email and what topics are in each email.
                                     </ActionCard>
                                 )
@@ -139,7 +163,10 @@ const SubscriptionManagementDashboardPage = (props: SubscriptionManagementDashbo
                             </ActionCard>
                             {
                                 subscriptionLevel && (
-                                    <ActionCard redirectURL={`/manage/${token}/preferences`} title='Newsletter general settings'>
+                                    <ActionCard
+                                        redirectURL={`/manage/${token}/preferences`}
+                                        title='Newsletter general settings'
+                                        isPremiumFeature>
                                         Adjust general settings for your newsletter, such as toggling whether or not you want to receive word tracking spotlights in your newsletters.
                                     </ActionCard>
                                 )
