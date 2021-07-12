@@ -227,7 +227,7 @@ const SchedulePage = (props: SchedulePageProps) => {
                 <Grid item xs={12} md={6}>
                     <DisplayCard>
                         <ContentHeader
-                            title="Newsletter Schedule and Preferences"
+                            title="Newsletter Schedule and Customization"
                             token={token} />
                         {
                             isLoading ? (

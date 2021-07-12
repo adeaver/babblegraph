@@ -1,6 +1,6 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
-CREATE TABLE IF NOT EXISTS user_lemma_reinforcement_records(
+CREATE TABLE IF NOT EXISTS user_lemma_reinforcement_spotlight_records(
     _id uuid DEFAULT uuid_generate_v4 (),
     user_id uuid NOT NULL REFERENCES users(_id),
     lemma_id TEXT NOT NULL,
@@ -11,4 +11,4 @@ CREATE TABLE IF NOT EXISTS user_lemma_reinforcement_records(
     PRIMARY KEY (_id)
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS user_lemma_reinforcement_records_user_lemma ON user_lemma_reinforcement_records(user_id, lemma_id);
+CREATE UNIQUE INDEX IF NOT EXISTS user_lemma_reinforcement_spotlight_records_user_lemma ON user_lemma_reinforcement_spotlight_records(user_id, lemma_id);
