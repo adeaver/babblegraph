@@ -34,7 +34,7 @@ type dailyEmailTemplate struct {
 
 type dailyEmailLemmaReinforcementSpotlight struct {
 	LemmaText string
-	Link      dailyEmailLink
+	Document  dailyEmailLink
 }
 
 type dailyEmailCategory struct {
