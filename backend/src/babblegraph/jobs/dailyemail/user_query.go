@@ -10,6 +10,7 @@ import (
 	"babblegraph/util/ptr"
 	"babblegraph/util/urlparser"
 	"babblegraph/wordsmith"
+	"log"
 	"math/rand"
 	"sort"
 	"time"
@@ -31,7 +32,7 @@ func getSpotlightDocumentForUser(tx *sqlx.Tx, userInfo userEmailInfo, userSchedu
 	}
 
 	for _, spotlightLemma := range potentialSpotlightLemmas {
-
+		log.Println(spotlightLemma)
 	}
 	return nil, nil
 }
@@ -126,17 +127,16 @@ func queryDocsForUser(userInfo userEmailInfo, userScheduleForDay *usernewsletter
 		return nil, nil, err
 	}
 
-	docQueryBuilder := documents.NewDocumentsQueryBuilderForLanguage(userInfo.Languages[0])
-	readingLevelLowerBound := ptr.Int64(userInfo.ReadingLevel.LowerBound)
-	readingLevelUpperBound := ptr.Int64(userInfo.ReadingLevel.UpperBound)
+	dailyEmailDocQueryBuilder := documents.NewDailyEmailDocumentsQueryBuilder()
+	dailyEmailDocQueryBuilder.ContainingLemmas(trackingLemmas)
 
-	docQueryBuilder.WithValidDomains(allowableDomains)
-	docQueryBuilder.NotContainingDocuments(userInfo.SentDocuments)
-	docQueryBuilder.ForVersionRange(documents.Version3.Ptr(), documents.Version6.Ptr())
-	docQueryBuilder.ForReadingLevelRange(readingLevelLowerBound, readingLevelUpperBound)
-	docQueryBuilder.ContainingLemmas(trackingLemmas)
-
-	genericDocuments, err := docQueryBuilder.ExecuteQuery()
+	genericDocuments, err := documents.ExecuteDocumentQuery(dailyEmailDocQueryBuilder, documents.ExecuteDocumentQueryInput{
+		LanguageCode:        userInfo.Languages[0],
+		ValidDomains:        allowableDomains,
+		ExcludedDocumentIDs: userInfo.SentDocuments,
+		MinimumReadingLevel: ptr.Int64(userInfo.ReadingLevel.LowerBound),
+		MaximumReadingLevel: ptr.Int64(userInfo.ReadingLevel.UpperBound),
+	})
 	if err != nil {
 		return nil, nil, err
 	}
@@ -168,8 +168,15 @@ func queryDocsForUser(userInfo userEmailInfo, userScheduleForDay *usernewsletter
 		// This is a bit of a hack.
 		// We iteratre through the topics and clobber the topic
 		// And rerun the query.
-		docQueryBuilder.ForTopic(topic.Ptr())
-		documents, err := docQueryBuilder.ExecuteQuery()
+		dailyEmailDocQueryBuilder.ForTopic(topic.Ptr())
+		documents, err := documents.ExecuteDocumentQuery(dailyEmailDocQueryBuilder, documents.ExecuteDocumentQueryInput{
+			LanguageCode:        userInfo.Languages[0],
+			ValidDomains:        allowableDomains,
+			ExcludedDocumentIDs: userInfo.SentDocuments,
+			MinimumReadingLevel: ptr.Int64(userInfo.ReadingLevel.LowerBound),
+			MaximumReadingLevel: ptr.Int64(userInfo.ReadingLevel.UpperBound),
+		})
+
 		if err != nil {
 			return nil, nil, err
 		}
