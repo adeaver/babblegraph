@@ -5,6 +5,7 @@ import (
 	"babblegraph/model/contenttopics"
 	"babblegraph/model/documents"
 	"babblegraph/model/domains"
+	"babblegraph/model/userlemma"
 	"babblegraph/model/usernewsletterschedule"
 	"babblegraph/util/ptr"
 	"babblegraph/util/urlparser"
@@ -19,7 +20,60 @@ import (
 const (
 	defaultNumberOfArticlesPerEmail = 12
 	defaultNumberOfTopicsPerEmail   = 4
+
+	minimumDaysSinceLastSpotlight = 3
 )
+
+func getSpotlightDocumentForUser(tx *sqlx.Tx, userInfo userEmailInfo, userScheduleForDay *usernewsletterschedule.UserNewsletterScheduleDayMetadata) (*documents.DocumentWithScore, error) {
+	potentialSpotlightLemmas, err := getPotentialSpotlightLemmasForUser(tx, userInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, spotlightLemma := range potentialSpotlightLemmas {
+
+	}
+	return nil, nil
+}
+
+func getPotentialSpotlightLemmasForUser(tx *sqlx.Tx, userInfo userEmailInfo) ([]wordsmith.LemmaID, error) {
+	/*
+	   Select all spotlighted words for a user ordered by the date that they were sent.
+	   Select all active lemmas from a user's tracking list
+	   Collect a list that is ordered by:
+	       - First group: has never been sent
+	       - Second group: has been sent, ordered by number of days since last sent (at least 3 days ago)
+	*/
+	lemmaReinforcementSpotlightRecords, err := userlemma.GetLemmaReinforcementRecordsForUserOrderedBySentOn(tx, userInfo.UserID)
+	if err != nil {
+		return nil, err
+	}
+	lemmaSpotlightRecordSentOnTimeByID := make(map[wordsmith.LemmaID]time.Time)
+	for _, spotlightRecord := range lemmaReinforcementSpotlightRecords {
+		lemmaSpotlightRecordSentOnTimeByID[spotlightRecord.LemmaID] = spotlightRecord.LastSentOn
+	}
+	now := time.Now()
+	var lemmasNotSent, sentLemmas []wordsmith.LemmaID
+	for _, lemmaMapping := range userInfo.TrackingLemmas {
+		if !lemmaMapping.IsActive {
+			continue
+		}
+		lastSent, ok := lemmaSpotlightRecordSentOnTimeByID[lemmaMapping.LemmaID]
+		if !ok {
+			lemmasNotSent = append(lemmasNotSent, lemmaMapping.LemmaID)
+		} else {
+			if !now.Add(-1 * minimumDaysSinceLastSpotlight * 24 * time.Hour).Before(lastSent) {
+				sentLemmas = append(sentLemmas, lemmaMapping.LemmaID)
+			}
+		}
+	}
+	sort.Slice(sentLemmas, func(i, j int) bool {
+		iSentOn, _ := lemmaSpotlightRecordSentOnTimeByID[sentLemmas[i]]
+		jSentOn, _ := lemmaSpotlightRecordSentOnTimeByID[sentLemmas[j]]
+		return iSentOn.Before(jSentOn)
+	})
+	return append(lemmasNotSent, sentLemmas...), nil
+}
 
 func getDocumentsForUser(tx *sqlx.Tx, userInfo userEmailInfo, userScheduleForDay *usernewsletterschedule.UserNewsletterScheduleDayMetadata) ([]email_actions.CategorizedDocuments, error) {
 	docs, genericDocs, err := queryDocsForUser(userInfo, userScheduleForDay)
