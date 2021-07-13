@@ -7,6 +7,7 @@ import (
 	"babblegraph/model/routes"
 	"babblegraph/model/useraccounts"
 	"babblegraph/model/userdocuments"
+	"babblegraph/model/userlemma"
 	"babblegraph/model/users"
 	"babblegraph/util/deref"
 	"babblegraph/util/ptr"
@@ -26,9 +27,16 @@ const dailyEmailTemplateFilename = "daily_email_template.html"
 
 type dailyEmailTemplate struct {
 	email.BaseEmailTemplate
-	Categories        []dailyEmailCategory
-	SetTopicsLink     *string
-	ReinforcementLink string
+	LemmaReinforcementSpotlight *dailyEmailLemmaReinforcementSpotlight
+	Categories                  []dailyEmailCategory
+	SetTopicsLink               *string
+	ReinforcementLink           string
+}
+
+type dailyEmailLemmaReinforcementSpotlight struct {
+	LemmaText       string
+	Document        dailyEmailLink
+	PreferencesLink string
 }
 
 type dailyEmailCategory struct {
@@ -49,9 +57,15 @@ type CategorizedDocuments struct {
 	Documents []documents.Document
 }
 
+type LemmaReinforcementSpotlight struct {
+	Lemma    wordsmith.Lemma
+	Document documents.Document
+}
+
 type DailyEmailInput struct {
-	CategorizedDocuments []CategorizedDocuments
-	HasSetTopics         bool
+	LemmaReinforcementSpotlight *LemmaReinforcementSpotlight
+	CategorizedDocuments        []CategorizedDocuments
+	HasSetTopics                bool
 }
 
 func SendDailyEmailForDocuments(tx *sqlx.Tx, cl *ses.Client, recipient email.Recipient, input DailyEmailInput) error {
@@ -126,11 +140,29 @@ func createDailyEmailTemplate(tx *sqlx.Tx, emailRecordID email.ID, recipient ema
 			return nil, err
 		}
 	}
+	var reinforcementSpotlight *dailyEmailLemmaReinforcementSpotlight
+	if input.LemmaReinforcementSpotlight != nil {
+		reinforcementSpotlight = &dailyEmailLemmaReinforcementSpotlight{
+			LemmaText: input.LemmaReinforcementSpotlight.Lemma.LemmaText,
+			Document: createLinksForDocuments(tx, recipient.UserID, emailRecordID, []documents.Document{
+				input.LemmaReinforcementSpotlight.Document,
+			})[0],
+			PreferencesLink: routes.MakeLoginLinkWithNewsletterPreferencesRedirect(),
+		}
+		if err := userlemma.UpsertLemmaReinforcementSpotlightRecord(tx, userlemma.UpsertLemmaReinforcementSpotlightRecordInput{
+			UserID:       recipient.UserID,
+			LemmaID:      input.LemmaReinforcementSpotlight.Lemma.ID,
+			LanguageCode: input.LemmaReinforcementSpotlight.Lemma.Language,
+		}); err != nil {
+			return nil, err
+		}
+	}
 	return &dailyEmailTemplate{
-		BaseEmailTemplate: *baseTemplate,
-		Categories:        categories,
-		SetTopicsLink:     setTopicsLink,
-		ReinforcementLink: *reinforcementLink,
+		BaseEmailTemplate:           *baseTemplate,
+		LemmaReinforcementSpotlight: reinforcementSpotlight,
+		Categories:                  categories,
+		SetTopicsLink:               setTopicsLink,
+		ReinforcementLink:           *reinforcementLink,
 	}, nil
 }
 

@@ -145,6 +145,36 @@
                           </tbody>
                         </table>
                         {{ end }}
+                        {{ if .LemmaReinforcementSpotlight}}
+                        <table border="0" cellpadding="0" cellspacing="0" style="border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt; width: 100%; box-sizing: border-box; border: solid 3px #A663CC; border-radius: 5px; padding: 10px; margin: 10px 0;">
+                          <tbody>
+                            <tr>
+                              <td align="center" style="font-family: sans-serif; font-size: 14px; vertical-align: top; padding-bottom: 15px;">
+                                <table border="0" cellpadding="0" cellspacing="0" style="border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt; width: auto;">
+                                  <tbody>
+                                    <tr>
+                                      <td style="font-family: sans-serif; font-size: 14px; vertical-align: top; text-align: center;">
+                                        <h2 style="color: #A663CC; cursor: pointer; text-decoration: none; font-size: 18px; font-weight: bold; margin: 0; padding: 12px 25px; text-transform: capitalize;">
+                                            Spotlight: {{ .LemmaReinforcementSpotlight.LemmaText }}
+                                        </h2>
+                                        {{if .LemmaReinforcementSpotlight.Document.ImageURL}}
+                                            <a href="{{.LemmaReinforcementSpotlight.Document.URL}}" target="_blank" style="display: inline-block; cursor: pointer; text-decoration: none; margin: 0;">
+                                                <img src="{{.LemmaReinforcementSpotlight.Document.ImageURL}}" alt="" width="100%" height="auto" />
+                                            </a>
+                                            {{end}}
+                                        <a href="{{.LemmaReinforcementSpotlight.Document.URL}}" target="_blank" style="display: inline-block; color: #A663CC; cursor: pointer; text-decoration: none; font-size: 14px; font-weight: bold; margin: 0; padding: 12px 25px; text-transform: capitalize;">{{if .LemmaReinforcementSpotlight.Document.Title}}{{.LemmaReinforcementSpotlight.Document.Title}}{{else}}{{.LemmaReinforcementSpotlight.Document.URL}}{{end}}</a>
+                                        {{if .LemmaReinforcementSpotlight.Document.Description}}<p style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; Margin-bottom: 15px;">{{.LemmaReinforcementSpotlight.Document.Description}}</p>{{end}}
+                                        <a href="{{.LemmaReinforcementSpotlight.Document.PaywallReportURL}}" target="_blank" style="display: inline-block; color: #20A4F3; cursor: pointer; text-decoration: none; font-size: 14px; font-weight: normal; margin: 0; padding: 12px 25px; text-transform: capitalize;">Unable to access this article without paying? Click here to report it.</a>
+                                        <a href="{{.LemmaReinforcementSpotlight.PreferencesLink}}" target="_blank" style="display: inline-block; color: #A663CC; cursor: pointer; text-decoration: none; font-size: 14px; font-weight: normal; margin: 0; padding: 12px 25px; text-transform: capitalize;">Turn Spotlight Off</a>
+                                      </td>
+                                    </tr>
+                                  </tbody>
+                                </table>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                        {{ end}}
                         <table border="0" cellpadding="0" cellspacing="0" style="border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt; width: 100%; box-sizing: border-box;">
                           <tbody>
                             {{range $category := .Categories}}
