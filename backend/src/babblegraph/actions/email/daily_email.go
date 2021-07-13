@@ -7,6 +7,7 @@ import (
 	"babblegraph/model/routes"
 	"babblegraph/model/useraccounts"
 	"babblegraph/model/userdocuments"
+	"babblegraph/model/userlemma"
 	"babblegraph/model/users"
 	"babblegraph/util/deref"
 	"babblegraph/util/ptr"
@@ -33,8 +34,9 @@ type dailyEmailTemplate struct {
 }
 
 type dailyEmailLemmaReinforcementSpotlight struct {
-	LemmaText string
-	Document  dailyEmailLink
+	LemmaText       string
+	Document        dailyEmailLink
+	PreferencesLink string
 }
 
 type dailyEmailCategory struct {
@@ -142,9 +144,17 @@ func createDailyEmailTemplate(tx *sqlx.Tx, emailRecordID email.ID, recipient ema
 	if input.LemmaReinforcementSpotlight != nil {
 		reinforcementSpotlight = &dailyEmailLemmaReinforcementSpotlight{
 			LemmaText: input.LemmaReinforcementSpotlight.Lemma.LemmaText,
-			Link: createLinksForDocuments(tx, recipient.UserID, emailRecordID, []documents.Document{
+			Document: createLinksForDocuments(tx, recipient.UserID, emailRecordID, []documents.Document{
 				input.LemmaReinforcementSpotlight.Document,
 			})[0],
+			PreferencesLink: routes.MakeLoginLinkWithNewsletterPreferencesRedirect(),
+		}
+		if err := userlemma.UpsertLemmaReinforcementSpotlightRecord(tx, userlemma.UpsertLemmaReinforcementSpotlightRecordInput{
+			UserID:       recipient.UserID,
+			LemmaID:      input.LemmaReinforcementSpotlight.Lemma.ID,
+			LanguageCode: input.LemmaReinforcementSpotlight.Lemma.Language,
+		}); err != nil {
+			return nil, err
 		}
 	}
 	return &dailyEmailTemplate{

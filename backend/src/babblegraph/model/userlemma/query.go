@@ -15,12 +15,12 @@ const (
 	getLemmaReinforcementSpolightRecordForUserQuery = "SELECT * FROM user_lemma_reinforcement_spotlight_records WHERE user_id = $1 ORDER BY last_sent_on DESC"
 	setLemmaReinforcementSpolightRecordForUserQuery = `INSERT INTO
         user_lemma_reinforcement_spotlight_records (user_id, language_code, lemma_id, last_sent_on, number_of_times_sent)
-        VALUES ($1, $2, $3, timezone('utc', now()), $4)
+        VALUES ($1, $2, $3, timezone('utc', now()), 1)
     ON CONFLICT (user_id, lemma_id)
     DO UPDATE SET
         language_code=$2,
         last_sent_on=timezone('utc', now()),
-        number_of_times_sent=$4`
+        number_of_times_sent=number_of_times_sent+1`
 )
 
 func GetVisibleMappingsForUser(tx *sqlx.Tx, userID users.UserID) ([]Mapping, error) {
@@ -91,14 +91,13 @@ func GetLemmaReinforcementRecordsForUserOrderedBySentOn(tx *sqlx.Tx, userID user
 }
 
 type UpsertLemmaReinforcementSpotlightRecordInput struct {
-	UserID            users.UserID
-	LemmaID           wordsmith.LemmaID
-	LanguageCode      wordsmith.LanguageCode
-	NumberOfTimesSent int64
+	UserID       users.UserID
+	LemmaID      wordsmith.LemmaID
+	LanguageCode wordsmith.LanguageCode
 }
 
 func UpsertLemmaReinforcementSpotlightRecord(tx *sqlx.Tx, input UpsertLemmaReinforcementSpotlightRecordInput) error {
-	if _, err := tx.Exec(setLemmaReinforcementSpolightRecordForUserQuery, input.UserID, input.LanguageCode, input.LemmaID, input.NumberOfTimesSent); err != nil {
+	if _, err := tx.Exec(setLemmaReinforcementSpolightRecordForUserQuery, input.UserID, input.LanguageCode, input.LemmaID); err != nil {
 		return err
 	}
 	return nil

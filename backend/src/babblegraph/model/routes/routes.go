@@ -31,6 +31,14 @@ func MakeSetTopicsLink(userID users.UserID) (*string, error) {
 	return ptr.String(fmt.Sprintf("%s/interests", *managementLink)), nil
 }
 
+func MakeNewsletterPreferencesLink(userID users.UserID) (*string, error) {
+	managementLink, err := MakeSubscriptionManagementRouteForUserID(userID)
+	if err != nil {
+		return nil, err
+	}
+	return ptr.String(fmt.Sprintf("%s/preferences", *managementLink)), nil
+}
+
 func MakeUnsubscribeRouteForUserID(userID users.UserID) (*string, error) {
 	token, err := encrypt.GetToken(encrypt.TokenPair{
 		Key:   UnsubscribeRouteEncryptionKey.Str(),

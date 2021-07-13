@@ -14,6 +14,7 @@ const (
 	LoginRedirectKeySubscriptionManagement LoginRedirectKey = "sbmgmt"
 	LoginRedirectKeyVocabulary             LoginRedirectKey = "vb"
 	LoginRedirectKeyContentTopics          LoginRedirectKey = "cts"
+	LoginRedirectKeyNewsletterPreferences  LoginRedirectKey = "npf"
 
 	LoginRedirectKeyDefault = LoginRedirectKeySubscriptionManagement
 )
@@ -30,6 +31,8 @@ func GetLoginRedirectKeyOrDefault(loginKey string) LoginRedirectKey {
 		return LoginRedirectKeyVocabulary
 	case LoginRedirectKeyContentTopics.Str():
 		return LoginRedirectKeyContentTopics
+	case LoginRedirectKeyNewsletterPreferences.Str():
+		return LoginRedirectKeyNewsletterPreferences
 	default:
 		return LoginRedirectKeyDefault
 	}
@@ -43,6 +46,8 @@ func GetLoginRedirectRouteForKeyAndUser(loginRedirectKey LoginRedirectKey, userI
 		return MakeWordReinforcementLink(userID)
 	case LoginRedirectKeyContentTopics:
 		return MakeSetTopicsLink(userID)
+	case LoginRedirectKeyNewsletterPreferences:
+		return MakeNewsletterPreferencesLink(userID)
 	default:
 		return nil, fmt.Errorf("unimplemented")
 	}
@@ -54,6 +59,10 @@ func MakeLoginLinkWithContentTopicsRedirect() string {
 
 func MakeLoginLinkWithReinforcementRedirect() string {
 	return makeLoginLinkForLoginRedirectKey(LoginRedirectKeyVocabulary)
+}
+
+func MakeLoginLinkWithNewsletterPreferencesRedirect() string {
+	return makeLoginLinkForLoginRedirectKey(LoginRedirectKeyNewsletterPreferences)
 }
 
 func makeLoginLinkForLoginRedirectKey(key LoginRedirectKey) string {
