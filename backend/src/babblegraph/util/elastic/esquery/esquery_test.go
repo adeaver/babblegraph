@@ -127,3 +127,15 @@ func TestQueryWithoutSort(t *testing.T) {
 		t.Errorf("Error on testing query without sort: expected %s, but got %s", expectedBody, string(jsonBytes))
 	}
 }
+
+func TestMatchPhraseQuery(t *testing.T) {
+	testQuery := MatchPhrase("text", "abc 123")
+	expected := `{"match_phrase":{"text":"abc 123"}}`
+	out, err := json.Marshal(testQuery)
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+	if string(out) != expected {
+		t.Errorf("Expected %s, got %s", expected, string(out))
+	}
+}

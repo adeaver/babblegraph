@@ -26,9 +26,15 @@ const dailyEmailTemplateFilename = "daily_email_template.html"
 
 type dailyEmailTemplate struct {
 	email.BaseEmailTemplate
-	Categories        []dailyEmailCategory
-	SetTopicsLink     *string
-	ReinforcementLink string
+	LemmaReinforcementSpotlight *dailyEmailLemmaReinforcementSpotlight
+	Categories                  []dailyEmailCategory
+	SetTopicsLink               *string
+	ReinforcementLink           string
+}
+
+type dailyEmailLemmaReinforcementSpotlight struct {
+	LemmaText string
+	Link      dailyEmailLink
 }
 
 type dailyEmailCategory struct {
@@ -49,9 +55,15 @@ type CategorizedDocuments struct {
 	Documents []documents.Document
 }
 
+type LemmaReinforcementSpotlight struct {
+	Lemma    wordsmith.Lemma
+	Document documents.Document
+}
+
 type DailyEmailInput struct {
-	CategorizedDocuments []CategorizedDocuments
-	HasSetTopics         bool
+	LemmaReinforcementSpotlight *LemmaReinforcementSpotlight
+	CategorizedDocuments        []CategorizedDocuments
+	HasSetTopics                bool
 }
 
 func SendDailyEmailForDocuments(tx *sqlx.Tx, cl *ses.Client, recipient email.Recipient, input DailyEmailInput) error {
@@ -126,11 +138,21 @@ func createDailyEmailTemplate(tx *sqlx.Tx, emailRecordID email.ID, recipient ema
 			return nil, err
 		}
 	}
+	var reinforcementSpotlight *dailyEmailLemmaReinforcementSpotlight
+	if input.LemmaReinforcementSpotlight != nil {
+		reinforcementSpotlight = &dailyEmailLemmaReinforcementSpotlight{
+			LemmaText: input.LemmaReinforcementSpotlight.Lemma.LemmaText,
+			Link: createLinksForDocuments(tx, recipient.UserID, emailRecordID, []documents.Document{
+				input.LemmaReinforcementSpotlight.Document,
+			})[0],
+		}
+	}
 	return &dailyEmailTemplate{
-		BaseEmailTemplate: *baseTemplate,
-		Categories:        categories,
-		SetTopicsLink:     setTopicsLink,
-		ReinforcementLink: *reinforcementLink,
+		BaseEmailTemplate:           *baseTemplate,
+		LemmaReinforcementSpotlight: reinforcementSpotlight,
+		Categories:                  categories,
+		SetTopicsLink:               setTopicsLink,
+		ReinforcementLink:           *reinforcementLink,
 	}, nil
 }
 

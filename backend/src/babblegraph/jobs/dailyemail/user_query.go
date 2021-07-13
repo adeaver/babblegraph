@@ -7,12 +7,15 @@ import (
 	"babblegraph/model/domains"
 	"babblegraph/model/userlemma"
 	"babblegraph/model/usernewsletterschedule"
+	"babblegraph/util/deref"
 	"babblegraph/util/ptr"
 	"babblegraph/util/urlparser"
 	"babblegraph/wordsmith"
+	"fmt"
 	"log"
 	"math/rand"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -25,16 +28,53 @@ const (
 	minimumDaysSinceLastSpotlight = 3
 )
 
-func getSpotlightDocumentForUser(tx *sqlx.Tx, userInfo userEmailInfo, userScheduleForDay *usernewsletterschedule.UserNewsletterScheduleDayMetadata) (*documents.DocumentWithScore, error) {
-	potentialSpotlightLemmas, err := getPotentialSpotlightLemmasForUser(tx, userInfo)
-	if err != nil {
-		return nil, err
-	}
+type getSpotlightDocumentForUserInput struct {
+	userInfo         userEmailInfo
+	documentsInEmail []email_actions.CategorizedDocuments
 
-	for _, spotlightLemma := range potentialSpotlightLemmas {
-		log.Println(spotlightLemma)
+	// In the future, this should be used to boost the query
+	userScheduleForDay *usernewsletterschedule.UserNewsletterScheduleDayMetadata
+}
+
+func getSpotlightDocumentForUser(tx *sqlx.Tx, input getSpotlightDocumentForUserInput) (*documents.DocumentWithScore, *wordsmith.LemmaID, error) {
+	potentialSpotlightLemmas, err := getPotentialSpotlightLemmasForUser(tx, input.userInfo)
+	if err != nil {
+		return nil, nil, err
 	}
-	return nil, nil
+	allowableDomains, err := getAllowedDomains(input.userInfo)
+	if err != nil {
+		return nil, nil, err
+	}
+	var documentIDsFromEmail []documents.DocumentID
+	for _, categorizedDocuments := range input.documentsInEmail {
+		for _, docs := range categorizedDocuments.Documents {
+			documentIDsFromEmail = append(documentIDsFromEmail, docs.ID)
+		}
+	}
+	for _, spotlightLemma := range potentialSpotlightLemmas {
+		spotlightQueryBuilder := documents.NewLemmaSpotlightQueryBuilder(spotlightLemma)
+		spotlightQueryBuilder.AddTopics(input.userInfo.Topics)
+		documents, err := documents.ExecuteDocumentQuery(spotlightQueryBuilder, documents.ExecuteDocumentQueryInput{
+			LanguageCode:        input.userInfo.Languages[0],
+			ValidDomains:        allowableDomains,
+			ExcludedDocumentIDs: append(input.userInfo.SentDocuments, documentIDsFromEmail...),
+			MinimumReadingLevel: ptr.Int64(input.userInfo.ReadingLevel.LowerBound),
+			MaximumReadingLevel: ptr.Int64(input.userInfo.ReadingLevel.UpperBound),
+		})
+		if err != nil {
+			log.Println(fmt.Sprintf("Error fetching spotlight document for user ID %s: %s", input.userInfo.UserID, err.Error()))
+		}
+		// Now we validate that a document definitely contains the lemma
+		for _, d := range documents {
+			description := deref.String(d.Document.LemmatizedDescription, "")
+			for _, lemmaID := range strings.Split(description, " ") {
+				if lemmaID == string(spotlightLemma) {
+					return &d, &spotlightLemma, nil
+				}
+			}
+		}
+	}
+	return nil, nil, nil
 }
 
 func getPotentialSpotlightLemmasForUser(tx *sqlx.Tx, userInfo userEmailInfo) ([]wordsmith.LemmaID, error) {
@@ -93,7 +133,11 @@ type documentsWithTopic struct {
 	documents []documents.DocumentWithScore
 }
 
-func getAllowedDomains(userDomainCounts map[string]int64) ([]string, error) {
+func getAllowedDomains(userInfo userEmailInfo) ([]string, error) {
+	userDomainCounts := make(map[string]int64)
+	for _, domainCount := range userInfo.UserDomainCounts {
+		userDomainCounts[domainCount.Domain] = domainCount.Count
+	}
 	var out []string
 	for _, d := range domains.GetDomains() {
 		countForDomain, ok := userDomainCounts[d]
@@ -118,11 +162,7 @@ func queryDocsForUser(userInfo userEmailInfo, userScheduleForDay *usernewsletter
 			trackingLemmas = append(trackingLemmas, lemmaMapping.LemmaID)
 		}
 	}
-	userDomainCounts := make(map[string]int64)
-	for _, domainCount := range userInfo.UserDomainCounts {
-		userDomainCounts[domainCount.Domain] = domainCount.Count
-	}
-	allowableDomains, err := getAllowedDomains(userDomainCounts)
+	allowableDomains, err := getAllowedDomains(userInfo)
 	if err != nil {
 		return nil, nil, err
 	}

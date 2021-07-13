@@ -14,13 +14,14 @@ import (
 type queryName string
 
 const (
-	queryNameMatch  queryName = "match"
-	queryNameBool   queryName = "bool"
-	queryNameRange  queryName = "range"
-	queryNameTerms  queryName = "terms"
-	queryNameTerm   queryName = "term"
-	queryNameIDs    queryName = "ids"
-	queryNameScript queryName = "script"
+	queryNameMatch       queryName = "match"
+	queryNameMatchPhrase queryName = "match_phrase"
+	queryNameBool        queryName = "bool"
+	queryNameRange       queryName = "range"
+	queryNameTerms       queryName = "terms"
+	queryNameTerm        queryName = "term"
+	queryNameIDs         queryName = "ids"
+	queryNameScript      queryName = "script"
 )
 
 func (q queryName) Str() string {
