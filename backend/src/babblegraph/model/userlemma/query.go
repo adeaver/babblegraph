@@ -20,7 +20,7 @@ const (
     DO UPDATE SET
         language_code=$2,
         last_sent_on=timezone('utc', now()),
-        number_of_times_sent=number_of_times_sent+1`
+        number_of_times_sent=user_lemma_reinforcement_spotlight_records.number_of_times_sent+1`
 )
 
 func GetVisibleMappingsForUser(tx *sqlx.Tx, userID users.UserID) ([]Mapping, error) {
