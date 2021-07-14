@@ -3,6 +3,7 @@ package email
 import (
 	"babblegraph/model/contenttopics"
 	"babblegraph/model/documents"
+	"babblegraph/model/domains"
 	"babblegraph/model/email"
 	"babblegraph/model/routes"
 	"babblegraph/model/useraccounts"
@@ -31,6 +32,7 @@ type dailyEmailTemplate struct {
 	Categories                  []dailyEmailCategory
 	SetTopicsLink               *string
 	ReinforcementLink           string
+	SubscriptionCallToAction    *subscriptionCallToAction
 }
 
 type dailyEmailLemmaReinforcementSpotlight struct {
@@ -38,6 +40,20 @@ type dailyEmailLemmaReinforcementSpotlight struct {
 	Document        dailyEmailLink
 	PreferencesLink string
 }
+
+type subscriptionCallToAction struct {
+	Title           string
+	Description     string
+	ImageURL        string
+	CallToActionURL string
+}
+
+const (
+	callToActionTitle        = "¡Apoye a Babblegraph y reciba funciones exclusivas!"
+	callToActionDescription  = "Haga clic aquí para aprender más sobre las funciones exclusivas que están disponibles actualmente para los suscriptores, así como para los que lo apoyan por única vez en la página de Buy Me a Coffee de Babblegraph."
+	callToActionResourceName = "call-to-action-image-violet.png"
+	callToActionURL          = "https://www.buymeacoffee.com/babblegraph"
+)
 
 type dailyEmailCategory struct {
 	CategoryName *string
@@ -50,6 +66,12 @@ type dailyEmailLink struct {
 	Description      *string
 	URL              string
 	PaywallReportURL string
+	Domain           *dailyEmailDomain
+}
+
+type dailyEmailDomain struct {
+	FlagAsset  string
+	DomainName string
 }
 
 type CategorizedDocuments struct {
@@ -119,6 +141,19 @@ func createDailyEmailTemplate(tx *sqlx.Tx, emailRecordID email.ID, recipient ema
 	if err != nil {
 		return nil, err
 	}
+	var subscriptionCTA *subscriptionCallToAction
+	subscriptionLevel, err := useraccounts.LookupSubscriptionLevelForUser(tx, recipient.UserID)
+	if err != nil {
+		return nil, err
+	}
+	if subscriptionLevel == nil {
+		subscriptionCTA = &subscriptionCallToAction{
+			Title:           callToActionTitle,
+			Description:     callToActionDescription,
+			ImageURL:        routes.GetStaticAssetURLForResourceName(callToActionResourceName),
+			CallToActionURL: callToActionURL,
+		}
+	}
 	categories := createEmailCategories(tx, recipient.UserID, emailRecordID, input.CategorizedDocuments)
 	var setTopicsLink *string
 	if !input.HasSetTopics {
@@ -163,6 +198,7 @@ func createDailyEmailTemplate(tx *sqlx.Tx, emailRecordID email.ID, recipient ema
 		Categories:                  categories,
 		SetTopicsLink:               setTopicsLink,
 		ReinforcementLink:           *reinforcementLink,
+		SubscriptionCallToAction:    subscriptionCTA,
 	}, nil
 }
 
@@ -208,6 +244,11 @@ func createLinksForDocuments(tx *sqlx.Tx, userID users.UserID, emailRecordID ema
 		if isNotEmpty(doc.Metadata.Description) {
 			description = doc.Metadata.Description
 		}
+		domain, err := domains.GetDomainMetadata(doc.Domain)
+		if err != nil {
+			log.Println(err.Error())
+			continue
+		}
 		userDocumentID, err := userdocuments.InsertDocumentForUserAndReturnID(tx, userID, emailRecordID, doc)
 		if err != nil {
 			log.Println(err.Error())
@@ -229,6 +270,10 @@ func createLinksForDocuments(tx *sqlx.Tx, userID users.UserID, emailRecordID ema
 			Description:      description,
 			URL:              *link,
 			PaywallReportURL: *paywallReportLink,
+			Domain: &dailyEmailDomain{
+				DomainName: string(domain.Domain),
+				FlagAsset:  routes.GetFlagAssetForCountryCode(domain.Country),
+			},
 		})
 	}
 	return links
