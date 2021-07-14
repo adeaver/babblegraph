@@ -31,6 +31,7 @@ type dailyEmailTemplate struct {
 	Categories                  []dailyEmailCategory
 	SetTopicsLink               *string
 	ReinforcementLink           string
+	SubscriptionCallToAction    *subscriptionCallToAction
 }
 
 type dailyEmailLemmaReinforcementSpotlight struct {
@@ -38,6 +39,20 @@ type dailyEmailLemmaReinforcementSpotlight struct {
 	Document        dailyEmailLink
 	PreferencesLink string
 }
+
+type subscriptionCallToAction struct {
+	Title           string
+	Description     string
+	ImageURL        string
+	CallToActionURL string
+}
+
+const (
+	callToActionTitle        = "¡Apoye a Babblegraph y reciba funciones exclusivas!"
+	callToActionDescription  = "Haga clic aquí para aprender más sobre las funciones exclusivas que están disponibles actualmente para los suscriptores, así como para los que lo apoyan por única vez en la página de Buy Me a Coffee de Babblegraph."
+	callToActionResourceName = "call-to-action-image.png"
+	callToActionURL          = "https://www.buymeacoffee.com/babblegraph"
+)
 
 type dailyEmailCategory struct {
 	CategoryName *string
@@ -119,6 +134,19 @@ func createDailyEmailTemplate(tx *sqlx.Tx, emailRecordID email.ID, recipient ema
 	if err != nil {
 		return nil, err
 	}
+	var subscriptionCTA *subscriptionCallToAction
+	subscriptionLevel, err := useraccounts.LookupSubscriptionLevelForUser(tx, recipient.UserID)
+	if err != nil {
+		return nil, err
+	}
+	if subscriptionLevel == nil {
+		subscriptionCTA = &subscriptionCallToAction{
+			Title:           callToActionTitle,
+			Description:     callToActionDescription,
+			ImageURL:        routes.GetStaticAssetURLForResourceName(callToActionResourceName),
+			CallToActionURL: callToActionURL,
+		}
+	}
 	categories := createEmailCategories(tx, recipient.UserID, emailRecordID, input.CategorizedDocuments)
 	var setTopicsLink *string
 	if !input.HasSetTopics {
@@ -163,6 +191,7 @@ func createDailyEmailTemplate(tx *sqlx.Tx, emailRecordID email.ID, recipient ema
 		Categories:                  categories,
 		SetTopicsLink:               setTopicsLink,
 		ReinforcementLink:           *reinforcementLink,
+		SubscriptionCallToAction:    subscriptionCTA,
 	}, nil
 }
 
