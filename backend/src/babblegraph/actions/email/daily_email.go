@@ -3,6 +3,7 @@ package email
 import (
 	"babblegraph/model/contenttopics"
 	"babblegraph/model/documents"
+	"babblegraph/model/domains"
 	"babblegraph/model/email"
 	"babblegraph/model/routes"
 	"babblegraph/model/useraccounts"
@@ -50,7 +51,7 @@ type subscriptionCallToAction struct {
 const (
 	callToActionTitle        = "¡Apoye a Babblegraph y reciba funciones exclusivas!"
 	callToActionDescription  = "Haga clic aquí para aprender más sobre las funciones exclusivas que están disponibles actualmente para los suscriptores, así como para los que lo apoyan por única vez en la página de Buy Me a Coffee de Babblegraph."
-	callToActionResourceName = "call-to-action-image.png"
+	callToActionResourceName = "call-to-action-image-violet.png"
 	callToActionURL          = "https://www.buymeacoffee.com/babblegraph"
 )
 
@@ -65,6 +66,12 @@ type dailyEmailLink struct {
 	Description      *string
 	URL              string
 	PaywallReportURL string
+	Domain           *dailyEmailDomain
+}
+
+type dailyEmailDomain struct {
+	FlagAsset  string
+	DomainName string
 }
 
 type CategorizedDocuments struct {
@@ -237,6 +244,11 @@ func createLinksForDocuments(tx *sqlx.Tx, userID users.UserID, emailRecordID ema
 		if isNotEmpty(doc.Metadata.Description) {
 			description = doc.Metadata.Description
 		}
+		domain, err := domains.GetDomainMetadata(doc.Domain)
+		if err != nil {
+			log.Println(err.Error())
+			continue
+		}
 		userDocumentID, err := userdocuments.InsertDocumentForUserAndReturnID(tx, userID, emailRecordID, doc)
 		if err != nil {
 			log.Println(err.Error())
@@ -258,6 +270,10 @@ func createLinksForDocuments(tx *sqlx.Tx, userID users.UserID, emailRecordID ema
 			Description:      description,
 			URL:              *link,
 			PaywallReportURL: *paywallReportLink,
+			Domain: &dailyEmailDomain{
+				DomainName: string(domain.Domain),
+				FlagAsset:  routes.GetFlagAssetForCountryCode(domain.Country),
+			},
 		})
 	}
 	return links
