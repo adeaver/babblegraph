@@ -44,6 +44,9 @@ func RegisterRouteGroups() error {
 				Path:    "add_user_lemma_for_token_1",
 				Handler: handleAddUserLemmasForToken,
 			}, {
+				Path:    "remove_user_lemma_for_token_1",
+				Handler: removeUserLemmaForToken,
+			}, {
 				Path:    "update_user_lemma_active_state_for_token_1",
 				Handler: handleUpdateUserLemmaActiveStateForToken,
 			}, {
@@ -61,6 +64,18 @@ func RegisterRouteGroups() error {
 			}, {
 				Path:    "add_user_schedule_1",
 				Handler: handleAddUserNewsletterSchedule,
+				ValidAuthorizationLevels: []useraccounts.SubscriptionLevel{
+					useraccounts.SubscriptionLevelBetaPremium,
+				},
+			}, {
+				Path:    "get_user_newsletter_preferences_1",
+				Handler: getUserNewsletterPreferences,
+				ValidAuthorizationLevels: []useraccounts.SubscriptionLevel{
+					useraccounts.SubscriptionLevelBetaPremium,
+				},
+			}, {
+				Path:    "update_user_newsletter_preferences_1",
+				Handler: updateUserNewsletterPreferences,
 				ValidAuthorizationLevels: []useraccounts.SubscriptionLevel{
 					useraccounts.SubscriptionLevelBetaPremium,
 				},

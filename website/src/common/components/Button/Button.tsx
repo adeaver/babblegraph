@@ -12,3 +12,23 @@ export const PrimaryButton = withStyles({
         },
     },
 })(Button);
+
+export const WarningButton = withStyles({
+    root: {
+        color: Color.White,
+        backgroundColor: Color.Warning,
+        '&:hover': {
+            backgroundColor: Color.Warning,
+        },
+    },
+})(Button);
+
+export const ConfirmationButton = withStyles({
+    root: {
+        color: Color.White,
+        backgroundColor: Color.Confirmation,
+        '&:hover': {
+            backgroundColor: Color.Confirmation,
+        },
+    },
+})(Button);

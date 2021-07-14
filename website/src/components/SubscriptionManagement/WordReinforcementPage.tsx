@@ -13,7 +13,11 @@ import Color from 'common/styles/colors';
 import { Heading1, Heading3 } from 'common/typography/Heading';
 import Paragraph from 'common/typography/Paragraph';
 import { Alignment, TypographyColor } from 'common/typography/common';
-import { PrimaryButton } from 'common/components/Button/Button';
+import {
+    PrimaryButton,
+    WarningButton,
+    ConfirmationButton,
+} from 'common/components/Button/Button';
 import { PrimaryTextField } from 'common/components/TextField/TextField';
 import { PrimarySwitch } from 'common/components/Switch/Switch';
 import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
@@ -31,6 +35,8 @@ import {
     getUserLemmasForToken,
     updateUserLemmaActiveStateForToken,
     UpdateUserLemmaActiveStateForTokenResponse,
+    removeUserLemmaForToken,
+    RemoveUserLemmaForTokenResponse,
 } from 'api/user/userlemma';
 import {
     Lemma,
@@ -81,6 +87,9 @@ const styleClasses = makeStyles({
     },
     definitionParagraph: {
         margin: '0',
+    },
+    deleteConfirmationButton: {
+        marginRight: '5px',
     },
 });
 
@@ -189,6 +198,28 @@ const WordReinforcementPage = (props: WordReinforcementPageProps) => {
             });
         });
     }
+    const deleteLemma = (id: string) => {
+        setIsLoadingLemmas(true);
+        removeUserLemmaForToken({
+            lemmaId: id,
+            token: token,
+        },
+        (resp: RemoveUserLemmaForTokenResponse) => {
+            setIsLoadingLemmas(false);
+            resp.didDelete && setUserLemmas(
+                Object.keys(userLemmas)
+                    .filter((i: string) => i !== id)
+                    .reduce((acc: UserLemmasMap, i: string) => ({
+                        ...acc,
+                        [i]: userLemmas[i],
+                    }), {})
+                );
+        },
+        (err: Error) => {
+            setIsLoadingLemmas(false);
+            setAddUserLemmaError(err);
+        });
+    }
 
     useEffect(() => {
         getUserLemmasForToken({
@@ -251,6 +282,7 @@ const WordReinforcementPage = (props: WordReinforcementPageProps) => {
                     <UserLemmaDisplay
                         userLemmas={userLemmas}
                         loadingActiveStateUpdateLemmas={activeStateLoadingLemmas}
+                        handleDeleteLemma={deleteLemma}
                         handleToggleLemma={toggleLemma} />
                 </Grid>
             </div>
@@ -417,6 +449,7 @@ type UserLemmaDisplayProps = {
     userLemmas: UserLemmasMap;
     loadingActiveStateUpdateLemmas: ActiveStateUpdateLoadingLemmasMap;
 
+    handleDeleteLemma: (id: string) => void;
     handleToggleLemma: (id: string, currentActiveState: boolean) => void;
 }
 
@@ -427,6 +460,7 @@ const UserLemmaDisplay = (props: UserLemmaDisplayProps) => {
             lemma={lemmaMapping.lemma}
             isActive={lemmaMapping.isActive}
             isLoading={!!props.loadingActiveStateUpdateLemmas[lemmaMapping.lemma.id]}
+            handleDeleteLemma={props.handleDeleteLemma}
             handleToggleLemma={props.handleToggleLemma} />
     ));
 
@@ -449,14 +483,20 @@ type UserLemmaDisplayItemProps = {
     isActive: boolean;
     isLoading: boolean;
 
+    handleDeleteLemma: (id: string) => void;
     handleToggleLemma: (id: string, currentActiveState: boolean) => void;
 }
 
 const UserLemmaDisplayItem = (props: UserLemmaDisplayItemProps) => {
     const classes = styleClasses();
 
+    const [ shouldShowDeleteConfirmation, setShouldShowDeleteConfirmation ] = useState<boolean>(false);
+
     const handleToggleLemma = () => {
         props.handleToggleLemma(props.lemma.id, props.isActive);
+    }
+    const handleDelete = () => {
+        props.handleDeleteLemma(props.lemma.id);
     }
     const definitionText = (props.lemma.definitions || []).map((d: Definition) => (
         <Paragraph className={classes.definitionParagraph} align={Alignment.Left}>
@@ -472,6 +512,22 @@ const UserLemmaDisplayItem = (props: UserLemmaDisplayItemProps) => {
                 <Paragraph align={Alignment.Left}>
                     { !!definitionText ? definitionText : 'No definition available' }
                 </Paragraph>
+                {
+                    !shouldShowDeleteConfirmation ? (
+                        <WarningButton onClick={() => {setShouldShowDeleteConfirmation(true)}}>
+                            Remove from List
+                        </WarningButton>
+                    ) : (
+                        <div>
+                            <ConfirmationButton className={classes.deleteConfirmationButton} onClick={handleDelete}>
+                                Delete from List
+                            </ConfirmationButton>
+                            <WarningButton onClick={() => {setShouldShowDeleteConfirmation(false)}}>
+                                Cancel
+                            </WarningButton>
+                        </div>
+                    )
+                }
             </Grid>
             <Grid className={classes.buttonContainer} item xs={2}>
                 {

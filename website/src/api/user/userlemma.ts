@@ -72,3 +72,26 @@ export function updateUserLemmaActiveStateForToken(
         onError,
     );
 }
+
+export type RemoveUserLemmaForTokenRequest = {
+    token: string;
+    lemmaId: string;
+}
+
+export type RemoveUserLemmaForTokenResponse = {
+    lemmaId: string;
+    didDelete: boolean;
+}
+
+export function removeUserLemmaForToken(
+    req: RemoveUserLemmaForTokenRequest,
+    onSuccess: (resp: RemoveUserLemmaForTokenResponse) => void,
+    onError: (err: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<RemoveUserLemmaForTokenRequest, RemoveUserLemmaForTokenResponse>(
+        '/api/user/remove_user_lemma_for_token_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}

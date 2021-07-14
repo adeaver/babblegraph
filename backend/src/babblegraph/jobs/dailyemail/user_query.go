@@ -5,12 +5,17 @@ import (
 	"babblegraph/model/contenttopics"
 	"babblegraph/model/documents"
 	"babblegraph/model/domains"
+	"babblegraph/model/userlemma"
 	"babblegraph/model/usernewsletterschedule"
+	"babblegraph/util/deref"
 	"babblegraph/util/ptr"
 	"babblegraph/util/urlparser"
 	"babblegraph/wordsmith"
+	"fmt"
+	"log"
 	"math/rand"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -19,7 +24,97 @@ import (
 const (
 	defaultNumberOfArticlesPerEmail = 12
 	defaultNumberOfTopicsPerEmail   = 4
+
+	minimumDaysSinceLastSpotlight = 3
 )
+
+type getSpotlightDocumentForUserInput struct {
+	userInfo         userEmailInfo
+	documentsInEmail []email_actions.CategorizedDocuments
+
+	// In the future, this should be used to boost the query
+	userScheduleForDay *usernewsletterschedule.UserNewsletterScheduleDayMetadata
+}
+
+func getSpotlightDocumentForUser(tx *sqlx.Tx, input getSpotlightDocumentForUserInput) (*documents.DocumentWithScore, *wordsmith.LemmaID, error) {
+	potentialSpotlightLemmas, err := getPotentialSpotlightLemmasForUser(tx, input.userInfo)
+	if err != nil {
+		return nil, nil, err
+	}
+	allowableDomains, err := getAllowedDomains(input.userInfo)
+	if err != nil {
+		return nil, nil, err
+	}
+	var documentIDsFromEmail []documents.DocumentID
+	for _, categorizedDocuments := range input.documentsInEmail {
+		for _, docs := range categorizedDocuments.Documents {
+			documentIDsFromEmail = append(documentIDsFromEmail, docs.ID)
+		}
+	}
+	for _, spotlightLemma := range potentialSpotlightLemmas {
+		spotlightQueryBuilder := documents.NewLemmaSpotlightQueryBuilder(spotlightLemma)
+		spotlightQueryBuilder.AddTopics(input.userInfo.Topics)
+		documents, err := documents.ExecuteDocumentQuery(spotlightQueryBuilder, documents.ExecuteDocumentQueryInput{
+			LanguageCode:        input.userInfo.Languages[0],
+			ValidDomains:        allowableDomains,
+			ExcludedDocumentIDs: append(input.userInfo.SentDocuments, documentIDsFromEmail...),
+			MinimumReadingLevel: ptr.Int64(input.userInfo.ReadingLevel.LowerBound),
+			MaximumReadingLevel: ptr.Int64(input.userInfo.ReadingLevel.UpperBound),
+		})
+		if err != nil {
+			log.Println(fmt.Sprintf("Error fetching spotlight document for user ID %s: %s", input.userInfo.UserID, err.Error()))
+		}
+		// Now we validate that a document definitely contains the lemma
+		for _, d := range documents {
+			description := deref.String(d.Document.LemmatizedDescription, "")
+			for _, lemmaID := range strings.Split(description, " ") {
+				if lemmaID == string(spotlightLemma) {
+					return &d, &spotlightLemma, nil
+				}
+			}
+		}
+	}
+	return nil, nil, nil
+}
+
+func getPotentialSpotlightLemmasForUser(tx *sqlx.Tx, userInfo userEmailInfo) ([]wordsmith.LemmaID, error) {
+	/*
+	   Select all spotlighted words for a user ordered by the date that they were sent.
+	   Select all active lemmas from a user's tracking list
+	   Collect a list that is ordered by:
+	       - First group: has never been sent
+	       - Second group: has been sent, ordered by number of days since last sent (at least 3 days ago)
+	*/
+	lemmaReinforcementSpotlightRecords, err := userlemma.GetLemmaReinforcementRecordsForUserOrderedBySentOn(tx, userInfo.UserID)
+	if err != nil {
+		return nil, err
+	}
+	lemmaSpotlightRecordSentOnTimeByID := make(map[wordsmith.LemmaID]time.Time)
+	for _, spotlightRecord := range lemmaReinforcementSpotlightRecords {
+		lemmaSpotlightRecordSentOnTimeByID[spotlightRecord.LemmaID] = spotlightRecord.LastSentOn
+	}
+	now := time.Now()
+	var lemmasNotSent, sentLemmas []wordsmith.LemmaID
+	for _, lemmaMapping := range userInfo.TrackingLemmas {
+		if !lemmaMapping.IsActive {
+			continue
+		}
+		lastSent, ok := lemmaSpotlightRecordSentOnTimeByID[lemmaMapping.LemmaID]
+		if !ok {
+			lemmasNotSent = append(lemmasNotSent, lemmaMapping.LemmaID)
+		} else {
+			if !now.Add(-1 * minimumDaysSinceLastSpotlight * 24 * time.Hour).Before(lastSent) {
+				sentLemmas = append(sentLemmas, lemmaMapping.LemmaID)
+			}
+		}
+	}
+	sort.Slice(sentLemmas, func(i, j int) bool {
+		iSentOn, _ := lemmaSpotlightRecordSentOnTimeByID[sentLemmas[i]]
+		jSentOn, _ := lemmaSpotlightRecordSentOnTimeByID[sentLemmas[j]]
+		return iSentOn.Before(jSentOn)
+	})
+	return append(lemmasNotSent, sentLemmas...), nil
+}
 
 func getDocumentsForUser(tx *sqlx.Tx, userInfo userEmailInfo, userScheduleForDay *usernewsletterschedule.UserNewsletterScheduleDayMetadata) ([]email_actions.CategorizedDocuments, error) {
 	docs, genericDocs, err := queryDocsForUser(userInfo, userScheduleForDay)
@@ -38,7 +133,11 @@ type documentsWithTopic struct {
 	documents []documents.DocumentWithScore
 }
 
-func getAllowedDomains(userDomainCounts map[string]int64) ([]string, error) {
+func getAllowedDomains(userInfo userEmailInfo) ([]string, error) {
+	userDomainCounts := make(map[string]int64)
+	for _, domainCount := range userInfo.UserDomainCounts {
+		userDomainCounts[domainCount.Domain] = domainCount.Count
+	}
 	var out []string
 	for _, d := range domains.GetDomains() {
 		countForDomain, ok := userDomainCounts[d]
@@ -63,26 +162,21 @@ func queryDocsForUser(userInfo userEmailInfo, userScheduleForDay *usernewsletter
 			trackingLemmas = append(trackingLemmas, lemmaMapping.LemmaID)
 		}
 	}
-	userDomainCounts := make(map[string]int64)
-	for _, domainCount := range userInfo.UserDomainCounts {
-		userDomainCounts[domainCount.Domain] = domainCount.Count
-	}
-	allowableDomains, err := getAllowedDomains(userDomainCounts)
+	allowableDomains, err := getAllowedDomains(userInfo)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	docQueryBuilder := documents.NewDocumentsQueryBuilderForLanguage(userInfo.Languages[0])
-	readingLevelLowerBound := ptr.Int64(userInfo.ReadingLevel.LowerBound)
-	readingLevelUpperBound := ptr.Int64(userInfo.ReadingLevel.UpperBound)
+	dailyEmailDocQueryBuilder := documents.NewDailyEmailDocumentsQueryBuilder()
+	dailyEmailDocQueryBuilder.ContainingLemmas(trackingLemmas)
 
-	docQueryBuilder.WithValidDomains(allowableDomains)
-	docQueryBuilder.NotContainingDocuments(userInfo.SentDocuments)
-	docQueryBuilder.ForVersionRange(documents.Version3.Ptr(), documents.Version6.Ptr())
-	docQueryBuilder.ForReadingLevelRange(readingLevelLowerBound, readingLevelUpperBound)
-	docQueryBuilder.ContainingLemmas(trackingLemmas)
-
-	genericDocuments, err := docQueryBuilder.ExecuteQuery()
+	genericDocuments, err := documents.ExecuteDocumentQuery(dailyEmailDocQueryBuilder, documents.ExecuteDocumentQueryInput{
+		LanguageCode:        userInfo.Languages[0],
+		ValidDomains:        allowableDomains,
+		ExcludedDocumentIDs: userInfo.SentDocuments,
+		MinimumReadingLevel: ptr.Int64(userInfo.ReadingLevel.LowerBound),
+		MaximumReadingLevel: ptr.Int64(userInfo.ReadingLevel.UpperBound),
+	})
 	if err != nil {
 		return nil, nil, err
 	}
@@ -114,8 +208,15 @@ func queryDocsForUser(userInfo userEmailInfo, userScheduleForDay *usernewsletter
 		// This is a bit of a hack.
 		// We iteratre through the topics and clobber the topic
 		// And rerun the query.
-		docQueryBuilder.ForTopic(topic.Ptr())
-		documents, err := docQueryBuilder.ExecuteQuery()
+		dailyEmailDocQueryBuilder.ForTopic(topic.Ptr())
+		documents, err := documents.ExecuteDocumentQuery(dailyEmailDocQueryBuilder, documents.ExecuteDocumentQueryInput{
+			LanguageCode:        userInfo.Languages[0],
+			ValidDomains:        allowableDomains,
+			ExcludedDocumentIDs: userInfo.SentDocuments,
+			MinimumReadingLevel: ptr.Int64(userInfo.ReadingLevel.LowerBound),
+			MaximumReadingLevel: ptr.Int64(userInfo.ReadingLevel.UpperBound),
+		})
+
 		if err != nil {
 			return nil, nil, err
 		}

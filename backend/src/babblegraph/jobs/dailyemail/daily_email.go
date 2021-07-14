@@ -5,10 +5,12 @@ import (
 	"babblegraph/model/email"
 	"babblegraph/model/useraccounts"
 	"babblegraph/model/usercontenttopics"
+	"babblegraph/model/usernewsletterpreferences"
 	"babblegraph/model/usernewsletterschedule"
 	"babblegraph/model/users"
 	"babblegraph/util/database"
 	"babblegraph/util/ses"
+	"babblegraph/wordsmith"
 	"fmt"
 	"log"
 	"time"
@@ -73,6 +75,7 @@ func sendDailyEmailToUser(emailClient *ses.Client, user users.User) error {
 	var docs []email_actions.CategorizedDocuments
 	return database.WithTx(func(tx *sqlx.Tx) error {
 		var userScheduleForDay *usernewsletterschedule.UserNewsletterScheduleDayMetadata
+		var newsletterOptions *usernewsletterpreferences.UserNewsletterPreferences
 		subscriptionLevel, err := useraccounts.LookupSubscriptionLevelForUser(tx, user.ID)
 		if err != nil {
 			return err
@@ -87,6 +90,11 @@ func sendDailyEmailToUser(emailClient *ses.Client, user users.User) error {
 				log.Println(fmt.Sprintf("Schedule is inactive for current day for user %s. Skipping...", user.ID))
 				return nil
 			}
+			// TODO(multiple-languages): don't hardcode spanish here
+			newsletterOptions, err = usernewsletterpreferences.GetUserNewsletterPrefrencesForLanguage(tx, user.ID, wordsmith.LanguageCodeSpanish)
+			if err != nil {
+				return err
+			}
 		}
 		userPreferences, err := getPreferencesForUser(tx, user)
 		if err != nil {
@@ -99,6 +107,34 @@ func sendDailyEmailToUser(emailClient *ses.Client, user users.User) error {
 		if len(docs) == 0 {
 			return fmt.Errorf("No documents for user %s", user.EmailAddress)
 		}
+		var reinforcementSpotlight *email_actions.LemmaReinforcementSpotlight
+		if newsletterOptions != nil && newsletterOptions.ShouldIncludeLemmaReinforcementSpotlight {
+			spotlightDocument, spotlightLemmaID, err := getSpotlightDocumentForUser(tx, getSpotlightDocumentForUserInput{
+				userInfo:           *userPreferences,
+				documentsInEmail:   docs,
+				userScheduleForDay: userScheduleForDay,
+			})
+			switch {
+			case err != nil:
+				sentry.CaptureException(fmt.Errorf("Error getting spotlight lemma for user %s: %s", user.ID, err.Error()))
+			case spotlightDocument == nil || spotlightLemmaID == nil:
+				log.Println(fmt.Sprintf("No spotlight for email for user %s", user.ID))
+			default:
+				var lemma *wordsmith.Lemma
+				if err := wordsmith.WithWordsmithTx(func(tx *sqlx.Tx) error {
+					var err error
+					lemma, err = wordsmith.GetLemmaByID(tx, *spotlightLemmaID)
+					return err
+				}); err != nil {
+					sentry.CaptureException(fmt.Errorf("Error getting spotlight lemma for user %s: %s", user.ID, err.Error()))
+				} else {
+					reinforcementSpotlight = &email_actions.LemmaReinforcementSpotlight{
+						Lemma:    *lemma,
+						Document: spotlightDocument.Document,
+					}
+				}
+			}
+		}
 		recipient := email.Recipient{
 			UserID:       user.ID,
 			EmailAddress: user.EmailAddress,
@@ -108,8 +144,9 @@ func sendDailyEmailToUser(emailClient *ses.Client, user users.User) error {
 			return err
 		}
 		return email_actions.SendDailyEmailForDocuments(tx, emailClient, recipient, email_actions.DailyEmailInput{
-			CategorizedDocuments: docs,
-			HasSetTopics:         len(contentTopics) != 0,
+			LemmaReinforcementSpotlight: reinforcementSpotlight,
+			CategorizedDocuments:        docs,
+			HasSetTopics:                len(contentTopics) != 0,
 		})
 	})
 }
