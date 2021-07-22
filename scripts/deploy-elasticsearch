@@ -1,0 +1,22 @@
+#!/bin/bash
+set -euo pipefail
+
+echo "Building..."
+docker build \
+    -f deploy/elasticsearch/Dockerfile \
+    -t babblegraph.com/elasticsearch:$(git rev-parse --short HEAD) \
+    ./deploy/elasticsearch
+
+echo "Removing old container..."
+docker stop babblegraph_elasticsearch && docker rm babblegraph_elasticsearch && true
+
+echo "Running new container..."
+docker run -d -v $(pwd)/deploy/elasticsearch/data:/var/data/elasticsearch \
+    -v $(pwd)/deploy/elasticsearch/log:/var/log/elasticsearch \
+    -v $(pwd)/deploy/elasticsearch/lib:/var/lib/elasticsearch \
+    -v $(pwd)/deploy/elasticsearch/scripts:/elasticsearch/scripts \
+    --env-file ./env/elasticsearch.env \
+    --restart unless-stopped \
+    --name babblegraph_elasticsearch \
+    -p 9200:9200 \
+    babblegraph.com/elasticsearch:$(git rev-parse --short HEAD)

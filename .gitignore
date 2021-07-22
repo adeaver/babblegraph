@@ -28,6 +28,9 @@ deploy/main-db/backups/**
 deploy/wordsmith/data/**
 deploy/worker/log
 deploy/worker/logrotate-state
+deploy/elasticsearch/data/**
+deploy/elasticsearch/log/**
+deploy/elasticsearch/lib/**
 
 # Other
 env/**
