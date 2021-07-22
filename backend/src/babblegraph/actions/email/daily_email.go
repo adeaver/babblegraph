@@ -141,19 +141,6 @@ func createDailyEmailTemplate(tx *sqlx.Tx, emailRecordID email.ID, recipient ema
 	if err != nil {
 		return nil, err
 	}
-	var subscriptionCTA *subscriptionCallToAction
-	subscriptionLevel, err := useraccounts.LookupSubscriptionLevelForUser(tx, recipient.UserID)
-	if err != nil {
-		return nil, err
-	}
-	if subscriptionLevel == nil {
-		subscriptionCTA = &subscriptionCallToAction{
-			Title:           callToActionTitle,
-			Description:     callToActionDescription,
-			ImageURL:        routes.GetStaticAssetURLForResourceName(callToActionResourceName),
-			CallToActionURL: callToActionURL,
-		}
-	}
 	categories := createEmailCategories(tx, recipient.UserID, emailRecordID, input.CategorizedDocuments)
 	var setTopicsLink *string
 	if !input.HasSetTopics {
@@ -198,7 +185,6 @@ func createDailyEmailTemplate(tx *sqlx.Tx, emailRecordID email.ID, recipient ema
 		Categories:                  categories,
 		SetTopicsLink:               setTopicsLink,
 		ReinforcementLink:           *reinforcementLink,
-		SubscriptionCallToAction:    subscriptionCTA,
 	}, nil
 }
 
