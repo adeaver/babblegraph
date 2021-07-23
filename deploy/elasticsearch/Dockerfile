@@ -20,9 +20,9 @@ RUN mkdir -p /var/lib/elasticsearch /var/data/elasticsearch /var/log/elasticsear
 # Install Java 8
 RUN add-apt-repository -y ppa:openjdk-r/ppa
 RUN apt-get update && \
-    apt-get install -y openjdk-8-jdk && \
+    apt-get install -y openjdk-11-jdk && \
     apt-get clean
-ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64/
+ENV JAVA_HOME /usr/lib/jvm/java-11-openjdk-amd64/
 ENV PATH $PATH:$JAVA_HOME/bin
 ENV CLASSPATH $JAVA_HOME/lib/tools.jar
 ENV MANPATH $JAVA_HOME/man
