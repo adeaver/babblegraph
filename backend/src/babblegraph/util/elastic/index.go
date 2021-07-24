@@ -38,10 +38,17 @@ func CreateIndex(index Index, settings *CreateIndexSettings) error {
 	res, err := createIndexRequest.Do(context.Background(), esClient)
 	if err != nil {
 		log.Println(fmt.Sprintf("Caught error creating: %s", err.Error()))
-		return err
+		return nil
 	}
 	defer res.Body.Close()
 	log.Println(res)
+	migrationRes, err := createIndexRequest.Do(context.Background(), migrationClient)
+	if err != nil {
+		handleMigrationError(fmt.Errorf("Caught error creating index for migration stack: %s", err.Error()))
+		return nil
+	}
+	defer migrationRes.Body.Close()
+	log.Println(migrationRes)
 	return nil
 }
 
@@ -69,5 +76,22 @@ func IndexDocument(index Index, document interface{}) error {
 	}
 	defer res.Body.Close()
 	log.Println(res)
+	indexRequest = esapi.IndexRequest{
+		Index:      index.GetName(),
+		Body:       strings.NewReader(string(documentAsJSON)),
+		DocumentID: *docID,
+		Refresh:    "true",
+	}
+	migrationRes, err := indexRequest.Do(context.Background(), migrationClient)
+	if err != nil {
+		handleMigrationError(fmt.Errorf("Caught error indexing for migration stack: %s", err.Error()))
+		return nil
+	}
+	defer migrationRes.Body.Close()
+	if migrationRes.StatusCode >= 300 {
+		handleMigrationError(fmt.Errorf("Got status code %d for migration: %+v", migrationRes.StatusCode, migrationRes))
+		return nil
+	}
+	log.Println(migrationRes)
 	return nil
 }

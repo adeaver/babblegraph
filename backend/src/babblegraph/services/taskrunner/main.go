@@ -19,7 +19,7 @@ func main() {
 	if err := setupDatabases(); err != nil {
 		log.Fatal(err.Error())
 	}
-	taskName := flag.String("task", "none", "Name of task to run [daily-email, privacy-policy, email-for-addresses, create-user, expire-user]")
+	taskName := flag.String("task", "none", "Name of task to run [daily-email, privacy-policy, email-for-addresses, create-user, expire-user, create-elastic-indexes]")
 	userEmail := flag.String("user-email", "none", "Email address of user to create")
 	flag.Parse()
 	if taskName == nil {
@@ -72,6 +72,10 @@ func main() {
 		}
 	case "privacy-policy":
 		tasks.SendPrivacyPolicyUpdate()
+	case "create-elastic-indexes":
+		if err := tasks.CreateElasticIndexes(); err != nil {
+			log.Fatal(err.Error())
+		}
 	default:
 		log.Fatal(fmt.Sprintf("Invalid task specified %s", *taskName))
 	}

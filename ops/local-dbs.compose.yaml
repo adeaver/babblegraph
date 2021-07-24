@@ -22,15 +22,14 @@ services:
     ports:
       - 5433:5432
   es01:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.9.2
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.9.3
     environment:
       - node.name=es01
-      - cluster.name=babblegraph-es-cluster
-      - discovery.seed_hosts=es02
-      - cluster.initial_master_nodes=es01,es02
+      - cluster.name=babblegraph-es-cluster-1
+      - discovery.type=single-node
       - bootstrap.memory_lock=true
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-      - XPACK_SECURITY_ENABLED="true"
+      - "ES_JAVA_OPTS=-Xms256m -Xmx256m"
+      - xpack.security.enabled=true
       - ELASTIC_PASSWORD=babblegraph-dev
     ulimits:
       memlock:
@@ -41,19 +40,20 @@ services:
     ports:
         - 9200:9200
   es02:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.9.2
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.9.3
     environment:
       - node.name=es02
-      - cluster.name=babblegraph-es-cluster
-      - discovery.seed_hosts=es01
-      - cluster.initial_master_nodes=es01,es02
+      - cluster.name=babblegraph-es-cluster-migration
+      - discovery.type=single-node
       - bootstrap.memory_lock=true
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-      - XPACK_SECURITY_ENABLED="true"
-      - ELASTIC_PASSWORD=babblegraph-dev
+      - "ES_JAVA_OPTS=-Xms256m -Xmx256m"
+      - xpack.security.enabled=true
+      - ELASTIC_PASSWORD=babblegraph-migration-dev
     volumes:
         - ./elasticsearch/data02:/usr/share/elasticsearch/data
     ulimits:
       memlock:
         soft: -1
         hard: -1
+    ports:
+        - 9201:9200

@@ -16,6 +16,10 @@ func (e Environment) Str() string {
 	return string(e)
 }
 
+func (e Environment) Ptr() *Environment {
+	return &e
+}
+
 func mustEnvironmentFromString(s string) Environment {
 	switch s {
 	case "prod":
@@ -24,7 +28,7 @@ func mustEnvironmentFromString(s string) Environment {
 		return EnvironmentStage
 	case "local":
 		return EnvironmentLocal
-	case "local-no-email":
+	case "local-no-emails":
 		return EnvironmentLocalNoEmail
 	case "local-test-emails":
 		return EnvironmentLocalTestEmail

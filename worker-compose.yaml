@@ -20,10 +20,12 @@ services:
       - WORDSMITH_DB_NAME=wordsmith
       - ES_HOSTS=http://host.docker.internal:9200
       - ES_PASSWORD=babblegraph-dev
+      - ES_MIGRATION_HOSTS=http://host.docker.internal:9201
+      - ES_MIGRATION_PASSWORD=babblegraph-migration-dev
       - EMAIL_ADDRESS=$BABBLEGRAPH_EMAIL_ADDRESS
       - AWS_SES_ACCESS_KEY=$BABBLEGRAPH_SES_ACCESS_KEY
       - AWS_SES_SECRET_KEY=$BABBLEGRAPH_SES_ACCESS_SECRET
       - SENTRY_DSN=$BABBLEGRAPH_WORKER_SENTRY_DSN
       - AES_KEY=ryDMLNhwEqPBHMgu6YOsCZ0ihx4WgvqE
-      - ENV=local-test-emails
+      - ENV=local-no-emails
     command: go run /usr/local/go/src/babblegraph/services/worker/main.go
