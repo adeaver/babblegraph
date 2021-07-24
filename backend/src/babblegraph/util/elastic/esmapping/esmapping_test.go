@@ -15,7 +15,7 @@ func TestMakeTextMapping(t *testing.T) {
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
-	expected := `{"document_name":{"type":"text","analyzer":"my-cool-analyzer","enabled":true}}`
+	expected := `{"document_name":{"analyzer":"my-cool-analyzer","enabled":true,"type":"text"}}`
 	if expected != string(mappingBytes) {
 		t.Errorf("Expected text mapping %s but got %s", expected, string(mappingBytes))
 	}
@@ -34,7 +34,7 @@ func TestMakeObjectMapping(t *testing.T) {
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
-	expected := `{"document":{"type":"object","properties":{"name":{"type":"text"},"author":{"type":"object","properties":{"name":{"type":"text","analyzer":"my-cool-analyzer"}}}}}}`
+	expected := `{"document":{"properties":{"author":{"properties":{"name":{"analyzer":"my-cool-analyzer","type":"text"}},"type":"object"},"name":{"type":"text"}},"type":"object"}}`
 	if expected != string(mappingBytes) {
 		t.Errorf("Expected text mapping %s but got %s", expected, string(mappingBytes))
 	}
@@ -48,7 +48,7 @@ func TestMappingWithFields(t *testing.T) {
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
-	expected := `{"document_name":{"type":"text","fields":{"keyword":{"type":"text"}}}}`
+	expected := `{"document_name":{"fields":{"keyword":{"type":"text"}},"type":"text"}}`
 	if expected != string(mappingBytes) {
 		t.Errorf("Expected text mapping %s but got %s", expected, string(mappingBytes))
 	}
