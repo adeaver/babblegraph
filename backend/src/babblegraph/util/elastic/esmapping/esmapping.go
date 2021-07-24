@@ -17,7 +17,6 @@ type mappingBody struct {
 }
 
 // TODO: add the following options:
-// - fields
 // - index_options
 // - index_prefixes
 // - similarity
@@ -39,6 +38,9 @@ type MappingOptions struct {
 	// This should be created by a mapping object
 	Properties *Mapping `json:"properties,omitempty"`
 
+	// This should be created using the MappingWithFields function
+	Fields *Mapping `json:"fields,omitempty"`
+
 	// The following fields are possible options, but generally
 	// should be avoided. Any code using these fields should be
 	// thoroughly commented.
@@ -56,8 +58,12 @@ type MappingOptions struct {
 type mappingType string
 
 const (
-	mappingTypeObject mappingType = "object"
-	mappingTypeText   mappingType = "text"
+	mappingTypeObject  mappingType = "object"
+	mappingTypeText    mappingType = "text"
+	mappingTypeBoolean mappingType = "boolean"
+	mappingTypeKeyword mappingType = "keyword"
+	mappingTypeLong    mappingType = "long"
+	mappingTypeDate    mappingType = "date"
 )
 
 func (m mappingType) Ptr() *mappingType {
@@ -77,12 +83,40 @@ type Unit string
 type MetricType string
 
 func makeMapping(fieldName string, mType mappingType, options MappingOptions) Mapping {
+	body := mappingBody{
+		MappingOptions: options,
+		Type:           mType,
+	}
 	return Mapping(map[string]mappingBody{
-		fieldName: mappingBody{
-			MappingOptions: options,
-			Type:           mType,
-		},
+		fieldName: body,
 	})
+}
+
+func MappingWithFields(m Mapping, fields []Mapping) Mapping {
+	flattenedFields, err := flattenMappings(fields)
+	if err != nil {
+		panic(fmt.Errorf("Error making mapping with fields for mapping %+v: %s", m, err.Error()))
+	}
+	for fieldName, mappingBody := range m {
+		options := mappingBody.MappingOptions
+		options.Fields = flattenedFields
+		return makeMapping(fieldName, mappingBody.Type, options)
+	}
+	panic(fmt.Errorf("Unreachable statement while creating mapping with fields"))
+}
+
+func flattenMappings(mappings []Mapping) (*Mapping, error) {
+	properties := make(map[string]mappingBody)
+	for _, m := range mappings {
+		for fieldName, mBody := range m {
+			if _, ok := properties[fieldName]; ok {
+				return nil, fmt.Errorf("duplicate field name %s in mapping request", fieldName)
+			}
+			properties[fieldName] = mBody
+		}
+	}
+	m := Mapping(properties)
+	return &m, nil
 }
 
 type updateMappingsRequestBody struct {
@@ -90,24 +124,22 @@ type updateMappingsRequestBody struct {
 }
 
 func UpdateMapping(index elastic.Index, mappings []Mapping) error {
-	body := updateMappingsRequestBody{
-		Properties: make(map[string]mappingBody),
+	properties, err := flattenMappings(mappings)
+	if err != nil {
+		return err
 	}
-	for _, m := range mappings {
-		for fieldName, mBody := range m {
-			if _, ok := body.Properties[fieldName]; ok {
-				return fmt.Errorf("duplicate field name %s in mapping request", fieldName)
-			}
-			body.Properties[fieldName] = mBody
-		}
+	body := updateMappingsRequestBody{
+		Properties: *properties,
 	}
 	bodyBytes, err := json.Marshal(body)
 	if err != nil {
 		return err
 	}
-	updateMappingsRequest := esapi.IndicesPutMappingRequest{
+	return elastic.RunUpdateMappingsRequest(esapi.IndicesPutMappingRequest{
 		Index: []string{index.GetName()},
 		Body:  strings.NewReader(string(bodyBytes)),
-	}
-	return elastic.RunUpdateMappingsRequest(updateMappingsRequest)
+	}, esapi.IndicesPutMappingRequest{
+		Index: []string{index.GetName()},
+		Body:  strings.NewReader(string(bodyBytes)),
+	})
 }

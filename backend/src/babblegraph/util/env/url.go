@@ -16,6 +16,10 @@ func (e Environment) Str() string {
 	return string(e)
 }
 
+func (e Environment) Ptr() *Environment {
+	return &e
+}
+
 func mustEnvironmentFromString(s string) Environment {
 	switch s {
 	case "prod":

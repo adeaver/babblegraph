@@ -2,12 +2,14 @@ package elastic
 
 import (
 	"babblegraph/util/env"
+	"log"
 	"net"
 	"net/http"
 	"strings"
 	"time"
 
 	elasticsearch "github.com/elastic/go-elasticsearch/v7"
+	"github.com/getsentry/sentry-go"
 )
 
 const (
@@ -23,12 +25,15 @@ const (
 var (
 	esClient        *elasticsearch.Client
 	migrationClient *elasticsearch.Client
+
+	currentEnvironmentName *env.Environment
 )
 
 func InitializeElasticsearchClientForEnvironment() error {
 	if esClient != nil {
 		panic("elasticsearch client is already initialized")
 	}
+	currentEnvironmentName = env.MustEnvironmentName().Ptr()
 	cfg := elasticsearch.Config{
 		Addresses: getAddressesForEnvironment(elasticsearchHostsKey),
 		Username:  env.GetEnvironmentVariableOrDefault(elasticsearchUsernameKey, "elastic"),
@@ -70,6 +75,18 @@ func InitializeElasticsearchClientForEnvironment() error {
 	}
 	migrationClient, err = elasticsearch.NewClient(migrationConfig)
 	return err
+}
+
+func handleMigrationError(err error) {
+	switch *currentEnvironmentName {
+	case env.EnvironmentProd,
+		env.EnvironmentStage:
+		sentry.CaptureException(err)
+	case env.EnvironmentLocal,
+		env.EnvironmentLocalNoEmail,
+		env.EnvironmentLocalTestEmail:
+		log.Println(err.Error())
+	}
 }
 
 func getAddressesForEnvironment(hostsKey string) []string {

@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/elastic/go-elasticsearch/esapi"
-	"github.com/getsentry/sentry-go"
 )
 
 type Index interface {
@@ -45,7 +44,7 @@ func CreateIndex(index Index, settings *CreateIndexSettings) error {
 	log.Println(res)
 	migrationRes, err := createIndexRequest.Do(context.Background(), migrationClient)
 	if err != nil {
-		sentry.CaptureException(fmt.Errorf("Caught error creating index for migration stack: %s", err.Error()))
+		handleMigrationError(fmt.Errorf("Caught error creating index for migration stack: %s", err.Error()))
 		return nil
 	}
 	defer migrationRes.Body.Close()
@@ -85,12 +84,12 @@ func IndexDocument(index Index, document interface{}) error {
 	}
 	migrationRes, err := indexRequest.Do(context.Background(), migrationClient)
 	if err != nil {
-		sentry.CaptureException(fmt.Errorf("Caught error indexing for migration stack: %s", err.Error()))
+		handleMigrationError(fmt.Errorf("Caught error indexing for migration stack: %s", err.Error()))
 		return nil
 	}
 	defer migrationRes.Body.Close()
 	if migrationRes.StatusCode >= 300 {
-		sentry.CaptureException(fmt.Errorf("Got status code %d for migration: %+v", migrationRes.StatusCode, migrationRes))
+		handleMigrationError(fmt.Errorf("Got status code %d for migration: %+v", migrationRes.StatusCode, migrationRes))
 		return nil
 	}
 	log.Println(migrationRes)

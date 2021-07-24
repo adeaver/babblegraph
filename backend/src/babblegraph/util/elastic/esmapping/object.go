@@ -3,17 +3,11 @@ package esmapping
 import "fmt"
 
 func MakeObjectMapping(objectName string, properties []Mapping) Mapping {
-	objectProperties := make(map[string]mappingBody)
-	for _, m := range properties {
-		for fieldName, body := range m {
-			if _, ok := objectProperties[fieldName]; ok {
-				panic(fmt.Errorf("Object with field name %s has duplicate mapping defined for %s", objectName, fieldName))
-			}
-			objectProperties[fieldName] = body
-		}
+	objectProperties, err := flattenMappings(properties)
+	if err != nil {
+		panic(fmt.Errorf("Error making object mapping %s: %s", objectName, err.Error()))
 	}
-	asMapping := Mapping(objectProperties)
 	return makeMapping(objectName, mappingTypeObject, MappingOptions{
-		Properties: &asMapping,
+		Properties: objectProperties,
 	})
 }

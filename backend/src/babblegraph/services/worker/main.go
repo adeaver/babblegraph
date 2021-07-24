@@ -90,6 +90,9 @@ func setupDatabases() error {
 	if err := elastic.InitializeElasticsearchClientForEnvironment(); err != nil {
 		return fmt.Errorf("Error setting up elasticsearch: %s", err.Error())
 	}
+	if err := documents.CreateDocumentMappings(); err != nil {
+		return fmt.Errorf("Error setting up documents: %s", err.Error())
+	}
 	return nil
 }
 

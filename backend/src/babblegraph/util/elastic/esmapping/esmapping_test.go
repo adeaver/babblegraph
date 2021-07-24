@@ -39,3 +39,17 @@ func TestMakeObjectMapping(t *testing.T) {
 		t.Errorf("Expected text mapping %s but got %s", expected, string(mappingBytes))
 	}
 }
+
+func TestMappingWithFields(t *testing.T) {
+	withFields := MappingWithFields(MakeTextMapping("document_name", MappingOptions{}), []Mapping{
+		MakeTextMapping("keyword", MappingOptions{}),
+	})
+	mappingBytes, err := json.Marshal(withFields)
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+	expected := `{"document_name":{"type":"text","fields":{"keyword":{"type":"text"}}}}`
+	if expected != string(mappingBytes) {
+		t.Errorf("Expected text mapping %s but got %s", expected, string(mappingBytes))
+	}
+}
