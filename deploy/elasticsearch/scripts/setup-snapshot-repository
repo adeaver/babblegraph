@@ -1,0 +1,2 @@
+#!/bin/bash
+curl -X PUT -k -H "Content-Type: application/json" -d @snapshot-request.json http://localhost:9200/_snapshot/prod_babblegraph_data_backups

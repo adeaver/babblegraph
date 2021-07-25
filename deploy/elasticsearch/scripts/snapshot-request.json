@@ -1,0 +1,6 @@
+{
+    "type": "s3",
+    "settings": {
+        "bucket": "prod-spaces-1/es-prod-backups"
+    }
+}
