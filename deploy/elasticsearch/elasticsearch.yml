@@ -88,3 +88,6 @@ discovery.type: single-node
 #
 #action.destructive_requires_name: true
 xpack.security.enabled: true
+
+# Plugin repository
+s3.client.default.endpoint: https://nyc3.digitaloceanspaces.com

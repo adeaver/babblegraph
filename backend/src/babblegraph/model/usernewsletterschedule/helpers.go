@@ -39,10 +39,10 @@ func GetClosetSendTimeInUTC(dayIndex int, ianaTimezoneString string) (_dayIndexU
 	// We need to figure out when that is.
 	requestTimeInOriginalTimezone = time.Date(requestTimeInOriginalTimezone.Year(), requestTimeInOriginalTimezone.Month(), requestTimeInOriginalTimezone.Day(), hourOfTargetSend, 0, 0, 0, requestTimezone)
 	// Now we want to convert that time to the timezone that the send job uses (in our case Eastern Standard)
-	requestDayIndexAsEmailSendJobTimezone := requestTimeInOriginalTimezone.In(emailSendJobTimezone).Day()
+	requestDayInSendJobTimezone := requestTimeInOriginalTimezone.In(emailSendJobTimezone)
 	// We want to figure out if a day before or a day after would be closer to 10am in the client's timezone.
 	// To accomplish this, we construct a date object with 10am in our send job timezone
-	requestDayInSendJobTimezone := time.Date(requestTimeInOriginalTimezone.Year(), requestTimeInOriginalTimezone.Month(), requestDayIndexAsEmailSendJobTimezone, hourOfTargetSend, 0, 0, 0, emailSendJobTimezone)
+	requestDayInSendJobTimezone = time.Date(requestDayInSendJobTimezone.Year(), requestDayInSendJobTimezone.Month(), requestDayInSendJobTimezone.Day(), hourOfTargetSend, 0, 0, 0, emailSendJobTimezone)
 	// Now we calculate the difference between that and the client's timezone.
 	// If it's greater than 12 hours, then we'll want to send on another day
 	differenceBetweenSendJobTimeAndRequestTime := getAbsoluteTimeDifferenceInMilliseconds(requestDayInSendJobTimezone, requestTimeInOriginalTimezone)
