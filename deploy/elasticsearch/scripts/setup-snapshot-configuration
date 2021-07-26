@@ -1,7 +1,25 @@
 #!/bin/bash
-echo "Installing plugin"
-docker exec -it babblegraph_elasticsearch elasticsearch/bin/elasticsearch-plugin install repository-s3
+set -euo pipefail
 
-echo "Setting up repostiory"
-docker exec -it babblegraph_elasticsearch /bin/bash -c "echo $AWS_ACCESS_KEY_ID | /elasticsearch/bin/elasticsearch-keystore add --stdin s3.client.default.access_key"
-docker exec -it babblegraph_elasticsearch /bin/bash -c "echo $AWS_SECRET_ACCESS_KEY | /elasticsearch/bin/elasticsearch-keystore add --stdin s3.client.default.secret_key"
+CONTAINER_NAME=babblegraph_elasticsearch_s3_setup
+
+echo "Building..."
+docker build \
+    --network=host \
+    -f deploy/elasticsearch/Dockerfile \
+    -t babblegraph.com/elasticsearch:$(git rev-parse --short HEAD) \
+    ./deploy/elasticsearch
+
+echo "Removing old container..."
+docker stop $CONTAINER_NAME && docker rm $CONTAINER_NAME && true
+
+echo "Running new container..."
+docker run -it --network host -v $(pwd)/deploy/elasticsearch/data:/usr/share/elasticsearch/data \
+    -v $(pwd)/deploy/elasticsearch/log:/usr/share/elasticsearch/log \
+    -v $(pwd)/deploy/elasticsearch/lib:/usr/share/elasticsearch/lib \
+    -v $(pwd)/deploy/elasticsearch/scripts:/elasticsearch/scripts \
+    --env-file ./env/elasticsearch.env \
+    --name $CONTAINER_NAME \
+    babblegraph.com/elasticsearch:$(git rev-parse --short HEAD) \
+    /elasticsearch/scripts/setup-s3-repository
+     

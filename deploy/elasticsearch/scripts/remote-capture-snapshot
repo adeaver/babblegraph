@@ -1,3 +1,3 @@
 #!/bin/bash
-FILE_NAME="prod_babblegraph_data_$(date +"%Y_%m_%d_%I_%M_%p")"
-curl -X PUT -k -H "Content-Type: application/json" http://localhost:9200/_snapshot/prod_babblegraph_data_backups/$FILE_NAME
+FILE_NAME="prod_babblegraph_data_$(date +"%Y_%m_%d_%H_%M")"
+curl -X PUT --user $ES_USERNAME:$ES_PASSWORD -k -H "Content-Type: application/json" http://localhost:9200/_snapshot/prod_babblegraph_data_snapshots/$FILE_NAME

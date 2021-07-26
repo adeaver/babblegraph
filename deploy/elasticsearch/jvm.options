@@ -58,7 +58,7 @@
 
 # specify an alternative path for heap dumps; ensure the directory exists and
 # has sufficient space
--XX:HeapDumpPath=/var/lib/elasticsearch
+-XX:HeapDumpPath=/usr/share/elasticsearch/lib
 
 # specify an alternative path for JVM fatal error logs
 -XX:ErrorFile=logs/hs_err_pid%p.log

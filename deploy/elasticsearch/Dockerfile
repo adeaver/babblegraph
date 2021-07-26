@@ -15,7 +15,6 @@ RUN wget https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-${ES
 RUN shasum -a 512 -c elasticsearch-${ES_VERSION}-linux-x86_64.tar.gz.sha512
 RUN mkdir elasticsearch && \
     tar -xzf elasticsearch-${ES_VERSION}-linux-x86_64.tar.gz -C elasticsearch --strip-components 1
-RUN mkdir -p /var/lib/elasticsearch /var/data/elasticsearch /var/log/elasticsearch
 
 # Install Java 8
 RUN add-apt-repository -y ppa:openjdk-r/ppa
@@ -33,11 +32,20 @@ ENV SERVICE_USER elasticsearch
 RUN groupadd $SERVICE_USER && useradd -m -g $SERVICE_USER -l $SERVICE_USER
 
 # Move configuration files and work out permissions
+RUN mkdir -p /usr/share/elasticsearch/lib /usr/share/elasticsearch/data/ /usr/share/elasticsearch/log
+RUN chmod 777 -R /usr/share/elasticsearch/
+
 COPY --chown=$SERVICE_USER:$SERVICE_USER elasticsearch.yml elasticsearch/config/elasticsearch.yml
 COPY --chown=$SERVICE_USER:$SERVICE_USER jvm.options elasticsearch/config/jvm.options
 RUN chown -R $SERVICE_USER:$SERVICE_USER /elasticsearch
-RUN chown $SERVICE_USER:$SERVICE_USER /var/lib/elasticsearch /var/data/elasticsearch /var/log/elasticsearch
 
 USER $SERVICE_USER
+WORKDIR /elasticsearch
+
+RUN wget https://artifacts.elastic.co/downloads/elasticsearch-plugins/repository-s3/repository-s3-${ES_VERSION}.zip
+RUN wget https://artifacts.elastic.co/downloads/elasticsearch-plugins/repository-s3/repository-s3-${ES_VERSION}.zip.sha512
+RUN shasum -a 512 -c repository-s3-${ES_VERSION}.zip.sha512
+
+RUN yes | HOST_IP=0.0.0.0 /elasticsearch/bin/elasticsearch-plugin install file:/elasticsearch/repository-s3-${ES_VERSION}.zip
 
 CMD ["/elasticsearch/bin/elasticsearch"]

@@ -31,8 +31,8 @@ node.name: ${HOSTNAME}
 # Path to directory where to store the data (separate multiple locations by comma):
 
 path:
-  data: /var/data/elasticsearch
-  logs: /var/log/elasticsearch
+  data: /usr/share/elasticsearch/data
+  logs: /usr/share/elasticsearch/log
 
 # ----------------------------------- Memory -----------------------------------
 #
