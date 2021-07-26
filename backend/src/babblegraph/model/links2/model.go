@@ -44,7 +44,11 @@ const (
 	// Fixes some bugs with Paywall Detection
 	FetchVersion6 FetchVersion = 6
 
-	CurrentFetchVersion FetchVersion = FetchVersion6
+	// Version 7 Updates:
+	// Added new elasticsearch instance, slowly reindexing everything
+	FetchVersion7 FetchVersion = 7
+
+	CurrentFetchVersion FetchVersion = FetchVersion7
 )
 
 type dbLink struct {
