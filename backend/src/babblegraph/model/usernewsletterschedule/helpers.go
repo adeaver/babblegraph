@@ -59,6 +59,7 @@ func GetClosetSendTimeInUTC(dayIndex int, ianaTimezoneString string) (_dayIndexU
 			currentLowestDifferenceTime = adjustedEmailSendJobTime
 		}
 	}
+	log.Println(currentLowestDifferenceTime)
 	lowestDifferenceTimeInUTC := currentLowestDifferenceTime.UTC()
 	utcDayIndex := int(lowestDifferenceTimeInUTC.Weekday())
 	utcHourIndex := lowestDifferenceTimeInUTC.Hour()
