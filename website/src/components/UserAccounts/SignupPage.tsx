@@ -159,10 +159,10 @@ const SignupForm = (props: SignupFormProps) => {
     return (
         <div>
             <Heading1 color={TypographyColor.Primary}>
-                Sign up for Babblegraph Account
+                First step, sign up for a Babblegraph account
             </Heading1>
             <Paragraph>
-                To access Babblegraph Premium features, you’ll need to start by signing up for an account.
+                Why do you need to sign up for an account to access Babblegraph Premium? Security is a big concern when dealing with payment information. Accounts are more secure than managing your Babblegraph subscription.
             </Paragraph>
             {
                 !!props.errorMessage && (
@@ -189,23 +189,36 @@ const SignupForm = (props: SignupFormProps) => {
                     <PrimaryTextField
                         className={classes.textField}
                         id="email"
-                        label="Email Address"
+                        label="Confirm Your Email Address"
                         variant="outlined"
                         defaultValue={props.emailAddress}
                         onChange={handleEmailAddressChange} />
                     <Paragraph align={Alignment.Left}>
                         Password Requirements:
                         <ul>
-                            <li>At least 8 characters</li>
-                            <li>No more than 32 characters</li>
-                            <li>Must include 3 of the following:
+                            <PasswordConstraint isConstraintMet={props.password && props.password.length > 8}>
+                                At least 8 characters
+                            </PasswordConstraint>
+                            <PasswordConstraint isConstraintMet={props.password && props.password.length < 32} >
+                                No more than 32 characters
+                            </PasswordConstraint>
+                            <PasswordConstraint isConstraintMet={false}>
+                                At least three of the following:
+                            </PasswordConstraint>
                                 <ul>
-                                    <li>Upper Case Latin Letter (A-Z)</li>
-                                    <li>Lower Case Latin Letter (a-z)</li>
-                                    <li>Number (0-9)</li>
-                                    <li>Special Character (such as !@#$%^&*)</li>
+                                    <PasswordConstraint isConstraintMet={props.password && !!props.password.match(/[a-z]/)}>
+                                        Lower Case Latin Letter (a-z)
+                                    </PasswordConstraint>
+                                    <PasswordConstraint isConstraintMet={props.password && !!props.password.match(/[A-Z]/)}>
+                                        Upper Case Latin Letter (A-Z)
+                                    </PasswordConstraint>
+                                    <PasswordConstraint isConstraintMet={props.password && !!props.password.match(/[0-9]/)}>
+                                        Number (0-9)
+                                    </PasswordConstraint>
+                                    <PasswordConstraint isConstraintMet={props.password && !props.password.match(/[0-9a-zA-Z]/)}>
+                                        Special Character (such as !@#$%^&*)
+                                    </PasswordConstraint>
                                 </ul>
-                            </li>
                         </ul>
                     </Paragraph>
                     <PrimaryTextField
@@ -237,6 +250,23 @@ const SignupForm = (props: SignupFormProps) => {
             </Grid>
         </div>
     );
+}
+
+type PasswordConstraintProps = {
+    isConstraintMet: boolean;
+    children: string | JSX.Element;
+}
+
+const PasswordConstraint = (props: PasswordConstraintProps) => {
+    return (
+        <li>
+            <Paragraph
+                color={props.isConstraintMet ? TypographyColor.Confirmation : TypographyColor.Gray}
+                align={Alignment.Left}>
+                {props.children}
+            </Paragraph>
+        </li>
+    )
 }
 
 export default SignupPage;

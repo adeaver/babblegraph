@@ -81,10 +81,7 @@ func MakeWordReinforcementLink(userID users.UserID) (*string, error) {
 }
 
 func MakeUserCreationLink(userID users.UserID) (*string, error) {
-	token, err := encrypt.GetToken(encrypt.TokenPair{
-		Key:   CreateUserKey.Str(),
-		Value: userID,
-	})
+	token, err := MakeCreateUserToken(userID)
 	if err != nil {
 		return nil, err
 	}

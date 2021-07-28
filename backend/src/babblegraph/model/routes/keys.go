@@ -38,23 +38,22 @@ func (r RouteEncryptionKey) Str() string {
 }
 
 func MakeWordReinforcementToken(userID users.UserID) (*string, error) {
-	token, err := encrypt.GetToken(encrypt.TokenPair{
+	return encrypt.GetToken(encrypt.TokenPair{
 		Key:   WordReinforcementKey.Str(),
 		Value: userID,
 	})
-	if err != nil {
-		return nil, err
-	}
-	return token, nil
 }
 
 func MakeSubscriptionManagementToken(userID users.UserID) (*string, error) {
-	token, err := encrypt.GetToken(encrypt.TokenPair{
+	return encrypt.GetToken(encrypt.TokenPair{
 		Key:   SubscriptionManagementRouteEncryptionKey.Str(),
 		Value: userID,
 	})
-	if err != nil {
-		return nil, err
-	}
-	return token, nil
+}
+
+func MakeCreateUserToken(userID users.UserID) (*string, error) {
+	return encrypt.GetToken(encrypt.TokenPair{
+		Key:   CreateUserKey.Str(),
+		Value: userID,
+	})
 }
