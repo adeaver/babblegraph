@@ -48,6 +48,9 @@ const PremiumInformationPanel = (props: PremiumInformationPanelProps) => {
                     description="Want fewer articles in your newsletter? Want guarantee that you’ll see a certain topic in every email? Premium Subscribers can do just that with the newsletter customization tool!"
                     icon={<BallotIcon className={classes.featureIcon} />} />
             </List>
+            <Heading3 color={TypographyColor.Primary}>
+                $3/month
+            </Heading3>
             <Heading3>
                 The best part is that you can try it for free for 14 days!
             </Heading3>
