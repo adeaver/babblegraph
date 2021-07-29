@@ -59,6 +59,7 @@ func RegisterRouteGroups() error {
 				Path:    "get_user_schedule_1",
 				Handler: handleGetUserNewsletterSchedule,
 				ValidAuthorizationLevels: []useraccounts.SubscriptionLevel{
+					useraccounts.SubscriptionLevelPremium,
 					useraccounts.SubscriptionLevelBetaPremium,
 				},
 			}, {
@@ -66,18 +67,21 @@ func RegisterRouteGroups() error {
 				Handler: handleAddUserNewsletterSchedule,
 				ValidAuthorizationLevels: []useraccounts.SubscriptionLevel{
 					useraccounts.SubscriptionLevelBetaPremium,
+					useraccounts.SubscriptionLevelPremium,
 				},
 			}, {
 				Path:    "get_user_newsletter_preferences_1",
 				Handler: getUserNewsletterPreferences,
 				ValidAuthorizationLevels: []useraccounts.SubscriptionLevel{
 					useraccounts.SubscriptionLevelBetaPremium,
+					useraccounts.SubscriptionLevelPremium,
 				},
 			}, {
 				Path:    "update_user_newsletter_preferences_1",
 				Handler: updateUserNewsletterPreferences,
 				ValidAuthorizationLevels: []useraccounts.SubscriptionLevel{
 					useraccounts.SubscriptionLevelBetaPremium,
+					useraccounts.SubscriptionLevelPremium,
 				},
 			},
 		},

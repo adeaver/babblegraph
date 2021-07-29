@@ -1,6 +1,7 @@
 package router
 
 import (
+	"babblegraph/externalapis/bgstripe"
 	"babblegraph/model/routes"
 	"babblegraph/model/useraccounts"
 	"babblegraph/model/users"
@@ -23,12 +24,20 @@ import (
 
 func registerUserAccountsRoutes() {
 	a.prefixes["useraccounts"] = true
+
 	a.r.HandleFunc("/api/useraccounts/login_user_1", middleware.WithoutBodyLogger(loginUser))
 	a.routeNames["/api/useraccounts/login_user_1"] = true
+
 	a.r.HandleFunc("/api/useraccounts/create_user_1", middleware.WithoutBodyLogger(createUser))
 	a.routeNames["/api/useraccounts/create_user_1"] = true
+
+	// Need to include route to remove subscription
+	a.r.HandleFunc("/api/useraccounts/create_user_subscription_1", middleware.WithoutBodyLogger(createUserSubscription))
+	a.routeNames["/api/useraccounts/create_user_subscription_1"] = true
+
 	a.r.HandleFunc("/api/useraccounts/reset_password_1", middleware.WithoutBodyLogger(resetPassword))
 	a.routeNames["/api/useraccounts/reset_password_1"] = true
+
 	a.r.HandleFunc("/api/useraccounts/get_user_profile_1", middleware.WithoutBodyLogger(getUserProfile))
 	a.routeNames["/api/useraccounts/get_user_profile_1"] = true
 }
@@ -193,15 +202,11 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 			cErr = createUserErrorAlreadyExists.Ptr()
 			return fmt.Errorf("user already has account")
 		}
-		subscriptionLevel, err := useraccounts.LookupSubscriptionLevelForUser(tx, *userID)
-		switch {
-		case err != nil:
+		if err := useraccounts.CreateUserPasswordForUser(tx, *userID, req.Password); err != nil {
 			return err
-		case subscriptionLevel == nil:
-			cErr = createUserErrorNoSubscription.Ptr()
-			return fmt.Errorf("no subscription found for user")
 		}
-		return useraccounts.CreateUserPasswordForUser(tx, *userID, req.Password)
+		_, err = bgstripe.CreateCustomerForUser(tx, *userID)
+		return err
 	}); err != nil {
 		log.Println(fmt.Sprintf("Error signing up user %s: %s", formattedEmailAddress, err.Error()))
 		if cErr != nil {
@@ -441,5 +446,58 @@ func resetPassword(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSONResponse(w, resetPasswordResponse{
 		ManagementToken: token,
+	})
+}
+
+type createUserSubscriptionRequest struct {
+	SubscriptionCreationToken string `json:"subscription_creation_token"`
+	IsYearlySubscription      bool   `json:"is_yearly_subscription"`
+}
+
+type createUserSubscriptionResponse struct {
+	StripeSubscriptionID bgstripe.SubscriptionID `json:"stripe_subscription_id"`
+	StripeClientSecret   string                  `json:"stripe_client_secret"`
+}
+
+func createUserSubscription(w http.ResponseWriter, r *http.Request) {
+	middleware.WithAuthorizationCheck(w, r, middleware.WithAuthorizationCheckInput{
+		HandleFoundUser: func(userID users.UserID, subscriptionLevel *useraccounts.SubscriptionLevel, w http.ResponseWriter, r *http.Request) {
+			body, err := ioutil.ReadAll(r.Body)
+			if err != nil {
+				writeErrorJSONResponse(w, errorResponse{
+					Message: "Request is not valid",
+				})
+				return
+			}
+			var req *createUserSubscriptionRequest
+			if err := json.Unmarshal(body, &req); err != nil {
+				writeErrorJSONResponse(w, errorResponse{
+					Message: "Request is not valid",
+				})
+				return
+			}
+			var stripeSubscriptionID *bgstripe.SubscriptionID
+			var stripeCustomerSecret *string
+			if err := database.WithTx(func(tx *sqlx.Tx) error {
+				err := useraccounts.AddSubscriptionLevelForUser(tx, userID, useraccounts.SubscriptionLevelPremium)
+				if err != nil {
+					return err
+				}
+				stripeSubscriptionID, stripeCustomerSecret, err = bgstripe.CreateStripeCustomerSubscriptionForUser(tx, userID, req.IsYearlySubscription)
+				return err
+			}); err != nil {
+				writeErrorJSONResponse(w, errorResponse{
+					Message: "Request is not valid",
+				})
+				return
+			}
+			writeJSONResponse(w, createUserSubscriptionResponse{
+				StripeSubscriptionID: *stripeSubscriptionID,
+				StripeClientSecret:   *stripeCustomerSecret,
+			})
+		},
+		HandleNoUserFound:                middleware.HandleUnauthorizedRequest,
+		HandleInvalidAuthenticationToken: middleware.HandleUnauthorizedRequest,
+		HandleError:                      middleware.HandleAuthorizationError,
 	})
 }
