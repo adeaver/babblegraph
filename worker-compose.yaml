@@ -26,6 +26,7 @@ services:
       - AWS_SES_ACCESS_KEY=$BABBLEGRAPH_SES_ACCESS_KEY
       - AWS_SES_SECRET_KEY=$BABBLEGRAPH_SES_ACCESS_SECRET
       - SENTRY_DSN=$BABBLEGRAPH_WORKER_SENTRY_DSN
+      - STRIPE_KEY=$BABBLEGRAPH_STRIPE_KEY
       - AES_KEY=ryDMLNhwEqPBHMgu6YOsCZ0ihx4WgvqE
       - ENV=local-no-emails
     command: go run /usr/local/go/src/babblegraph/services/worker/main.go

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"babblegraph/externalapis/bgstripe"
 	"babblegraph/services/web/api/language"
 	"babblegraph/services/web/api/ses"
 	"babblegraph/services/web/api/token"
@@ -33,6 +34,7 @@ func main() {
 	}); err != nil {
 		log.Fatal(err.Error())
 	}
+	bgstripe.InitStripe()
 	defer sentry.Flush(2 * time.Second)
 	if err := registerAPI(r); err != nil {
 		log.Fatal(err.Error())

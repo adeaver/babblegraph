@@ -30,6 +30,7 @@ type SubscriptionLevel string
 
 const (
 	SubscriptionLevelBetaPremium SubscriptionLevel = "Beta-Premium"
+	SubscriptionLevelPremium     SubscriptionLevel = "Premium"
 )
 
 func (s SubscriptionLevel) Ptr() *SubscriptionLevel {
