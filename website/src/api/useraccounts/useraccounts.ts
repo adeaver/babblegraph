@@ -36,7 +36,7 @@ export type CreateUserRequest = {
 }
 
 export type CreateUserResponse = {
-    managementToken: string | null;
+    checkoutToken: string | null;
     createUserError: CreateUserError | null;
 }
 
@@ -77,6 +77,29 @@ export function getUserProfile(
 ) {
     makePostRequestWithStandardEncoding<GetUserProfileRequest, GetUserProfileResponse>(
         '/api/useraccounts/get_user_profile_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}
+
+export type CreateUserSubscriptionRequest = {
+    subscriptionCreationToken: string;
+    isYearlySubscription: boolean;
+}
+
+export type CreateUserSubscriptionResponse = {
+    stripeSubscriptionID: string;
+    stripeClientSecret: string;
+}
+
+export function createUserSubscription(
+    req: CreateUserSubscriptionRequest,
+    onSuccess: (resp: CreateUserSubscriptionResponse) => void,
+    onError: (e: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<CreateUserSubscriptionRequest, CreateUserSubscriptionResponse>(
+        '/api/useraccounts/create_user_subscription_1',
         req,
         onSuccess,
         onError,

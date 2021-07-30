@@ -21,6 +21,10 @@ import {
     GetCreateUserTokenResponse
 } from 'api/token/createUserToken';
 import {
+    getPremiumCheckoutToken,
+    GetPremiumCheckoutTokenResponse
+} from 'api/token/premiumCheckoutToken';
+import {
     getUserProfile,
     GetUserProfileResponse
 } from 'api/useraccounts/useraccounts';
@@ -48,6 +52,9 @@ const PremiumInformationPage = (props: PremiumInformationPageProps) => {
     const [ isLoadingCreateUserToken, setIsLoadingCreateUserToken ] = useState<boolean>(true);
     const [ createUserToken, setCreateUserToken ] = useState<string | null>(null);
 
+    const [ isLoadingPremiumCheckoutToken, setIsLoadingPremiumCheckoutToken ] = useState<boolean>(true);
+    const [ premiumCheckoutToken, setPremiumCheckoutToken ] = useState<string | null>(null);
+
     const [ error, setError ] = useState<Error>(null);
 
     useEffect(() => {
@@ -62,18 +69,36 @@ const PremiumInformationPage = (props: PremiumInformationPageProps) => {
             setHasSubscription(hasSubscription);
             if (hasAccount && hasSubscription) {
                 // If a user is already subscribed, then don't load
-                // the create user token
+                // the create user token or the premium checkout token
                 setIsLoadingCreateUserToken(false);
+                setIsLoadingPremiumCheckoutToken(false);
             } else if (hasAccount && !hasSubscription) {
                 // If a user has an account, but is not subscribed, then they
                 // were previously subscribed. They need a separate call to action.
-                // We should not load the create user token
+                // We should not load the create user token, but we need to load the premium checkout token
                 setIsLoadingCreateUserToken(false);
+                // There are two options here:
+                // 1) User has previously had a subscription. In which case, we need to reactivate.
+                // 2) User has made an account but not paid.
+                getPremiumCheckoutToken({
+                    token: token,
+                },
+                (resp: GetPremiumCheckoutTokenResponse) => {
+                    setIsLoadingPremiumCheckoutToken(false);
+                    setPremiumCheckoutToken(resp.token);
+                },
+                (err: Error) => {
+                    setIsLoadingPremiumCheckoutToken(false);
+                    setError(err);
+                });
             } else if (!hasAccount && hasSubscription) {
                 // This should be impossible
+                setIsLoadingCreateUserToken(false);
+                setIsLoadingPremiumCheckoutToken(false);
                 setError(new Error("invalid state"));
             } else {
                 // Load the create user token
+                setIsLoadingPremiumCheckoutToken(false);
                 getCreateUserToken({
                     token: token,
                 },
@@ -95,7 +120,7 @@ const PremiumInformationPage = (props: PremiumInformationPageProps) => {
 
     const classes = styleClasses();
     const history = useHistory();
-    const isLoading = isLoadingUserProfile || isLoadingCreateUserToken;
+    const isLoading = isLoadingUserProfile || isLoadingCreateUserToken || isLoadingPremiumCheckoutToken;
     let body;
     if (isLoading) {
         body = <LoadingSpinner />
@@ -113,10 +138,11 @@ const PremiumInformationPage = (props: PremiumInformationPageProps) => {
                     You already have a Babblegraph Premium Subscription.
                 </Paragraph>
             );
-        } else if (hasAccount && !hasSubscription) {
+        } else if (hasAccount && !hasSubscription && premiumCheckoutToken) {
             // TODO: This needs to go somewhere
             callToAction = (
                 <PrimaryButton
+                    onClick={() => history.push(`/checkout/${premiumCheckoutToken}`)}
                     className={classes.callToActionButton}
                     size="large">
                     Renew your Babblegraph Premium Subscription

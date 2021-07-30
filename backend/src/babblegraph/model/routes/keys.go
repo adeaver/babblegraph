@@ -14,8 +14,9 @@ const (
 	UserVerificationKey                      RouteEncryptionKey = "user-verification"
 	WordReinforcementKey                     RouteEncryptionKey = "word-reinforcement"
 
-	CreateUserKey     RouteEncryptionKey = "create-user"
-	ForgotPasswordKey RouteEncryptionKey = "forgot-password"
+	PremiumSubscriptionCheckoutKey RouteEncryptionKey = "premium-subscription-checkout"
+	CreateUserKey                  RouteEncryptionKey = "create-user"
+	ForgotPasswordKey              RouteEncryptionKey = "forgot-password"
 
 	ArticleLinkKeyForUserDocumentID   RouteEncryptionKey = "article-link-user-document"
 	PaywallReportKeyForUserDocumentID RouteEncryptionKey = "paywall-report-user-document"
@@ -54,6 +55,13 @@ func MakeSubscriptionManagementToken(userID users.UserID) (*string, error) {
 func MakeCreateUserToken(userID users.UserID) (*string, error) {
 	return encrypt.GetToken(encrypt.TokenPair{
 		Key:   CreateUserKey.Str(),
+		Value: userID,
+	})
+}
+
+func MakePremiumSubscriptionCheckoutToken(userID users.UserID) (*string, error) {
+	return encrypt.GetToken(encrypt.TokenPair{
+		Key:   PremiumSubscriptionCheckoutKey.Str(),
 		Value: userID,
 	})
 }

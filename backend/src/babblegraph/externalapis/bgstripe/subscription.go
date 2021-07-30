@@ -9,8 +9,8 @@ import (
 
 	"github.com/getsentry/sentry-go"
 	"github.com/jmoiron/sqlx"
-	"github.com/stripe/stripe-go"
-	"github.com/stripe/stripe-go/sub"
+	"github.com/stripe/stripe-go/v72"
+	"github.com/stripe/stripe-go/v72/sub"
 )
 
 const (
@@ -20,17 +20,18 @@ const (
 )
 
 func CreateStripeCustomerSubscriptionForUser(tx *sqlx.Tx, userID users.UserID, isYearlySubscription bool) (*SubscriptionID, *string, error) {
+	stripe.Key = env.MustEnvironmentVariable("STRIPE_KEY")
 	stripeCustomer, err := getStripeCustomerForUserID(tx, userID)
 	if err != nil {
 		return nil, nil, err
 	}
+	subscriptionPriceLineItem := stripe.SubscriptionItemsParams{
+		Price: stripe.String(getPriceIDForEnvironmentAndPaymentType(isYearlySubscription)),
+	}
+	// TODO: query the database to see if they're eligible for a free trial
 	subscriptionParams := &stripe.SubscriptionParams{
-		Customer: stripe.String(string(stripeCustomer.StripeCustomerID)),
-		Items: []*stripe.SubscriptionItemsParams{
-			{
-				Price: stripe.String(getPriceIDForEnvironmentAndPaymentType(isYearlySubscription)),
-			},
-		},
+		Customer:        stripe.String(string(stripeCustomer.StripeCustomerID)),
+		Items:           []*stripe.SubscriptionItemsParams{&subscriptionPriceLineItem},
 		TrialPeriodDays: stripe.Int64(defaultSubscriptionTrialLength),
 		PaymentBehavior: stripe.String("default_incomplete"),
 	}
@@ -41,15 +42,15 @@ func CreateStripeCustomerSubscriptionForUser(tx *sqlx.Tx, userID users.UserID, i
 	}
 	if _, err := tx.Exec(insertStripeSubscriptionForUserQuery, userID, stripeSubscription.ID); err != nil {
 		log.Println("Attempting to rollback stripe subscription")
-		if _, sErr := sub.Cancel(stripeSubscription.ID, &stripe.SubscriptionParams{}); sErr != nil {
+		if _, sErr := sub.Cancel(stripeSubscription.ID, &stripe.SubscriptionCancelParams{}); sErr != nil {
 			formattedSErr := fmt.Errorf("Error rolling back stripe subscription %s for user %s because of %s. Original error: %s", stripeSubscription.ID, userID, sErr.Error(), err.Error())
-			log.Println(formattedSErr)
+			log.Println(formattedSErr.Error())
 			sentry.CaptureException(formattedSErr)
 		}
 		return nil, nil, err
 	}
 	asSubscriptionID := SubscriptionID(stripeSubscription.ID)
-	return &asSubscriptionID, ptr.String(stripeSubscription.LatestInvoice.PaymentIntent.ClientSecret), nil
+	return &asSubscriptionID, ptr.String(stripeSubscription.PendingSetupIntent.ClientSecret), nil
 }
 
 func getPriceIDForEnvironmentAndPaymentType(isYearlySubscription bool) string {

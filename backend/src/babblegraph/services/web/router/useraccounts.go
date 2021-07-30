@@ -139,7 +139,7 @@ type createUserRequest struct {
 }
 
 type createUserResponse struct {
-	ManagementToken *string          `json:"management_token"`
+	CheckoutToken   *string          `json:"checkout_token"`
 	CreateUserError *createUserError `json:"create_user_error"`
 }
 
@@ -220,21 +220,23 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	token, err := routes.MakeSubscriptionManagementToken(*userID)
+	token, err := routes.MakePremiumSubscriptionCheckoutToken(*userID)
 	if err != nil {
+		log.Println("Error here")
 		writeErrorJSONResponse(w, errorResponse{
 			Message: "Request is not valid",
 		})
 		return
 	}
 	if err := middleware.AssignAuthToken(w, *userID); err != nil {
+		log.Println("Error here 2")
 		writeErrorJSONResponse(w, errorResponse{
 			Message: "Request is not valid",
 		})
 		return
 	}
 	writeJSONResponse(w, createUserResponse{
-		ManagementToken: token,
+		CheckoutToken: token,
 	})
 }
 
@@ -464,6 +466,7 @@ func createUserSubscription(w http.ResponseWriter, r *http.Request) {
 		HandleFoundUser: func(userID users.UserID, subscriptionLevel *useraccounts.SubscriptionLevel, w http.ResponseWriter, r *http.Request) {
 			body, err := ioutil.ReadAll(r.Body)
 			if err != nil {
+				log.Println("Failed to read body from request")
 				writeErrorJSONResponse(w, errorResponse{
 					Message: "Request is not valid",
 				})
@@ -471,6 +474,7 @@ func createUserSubscription(w http.ResponseWriter, r *http.Request) {
 			}
 			var req *createUserSubscriptionRequest
 			if err := json.Unmarshal(body, &req); err != nil {
+				log.Println("Failed to unmarshal json")
 				writeErrorJSONResponse(w, errorResponse{
 					Message: "Request is not valid",
 				})
@@ -486,11 +490,13 @@ func createUserSubscription(w http.ResponseWriter, r *http.Request) {
 				stripeSubscriptionID, stripeCustomerSecret, err = bgstripe.CreateStripeCustomerSubscriptionForUser(tx, userID, req.IsYearlySubscription)
 				return err
 			}); err != nil {
+				log.Println(fmt.Sprintf("Failed to create subscription with error: %s", err.Error()))
 				writeErrorJSONResponse(w, errorResponse{
 					Message: "Request is not valid",
 				})
 				return
 			}
+			log.Println("Successfully created subscription")
 			writeJSONResponse(w, createUserSubscriptionResponse{
 				StripeSubscriptionID: *stripeSubscriptionID,
 				StripeClientSecret:   *stripeCustomerSecret,

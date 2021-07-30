@@ -20,6 +20,9 @@ func RegisterRouteGroups() error {
 			}, {
 				Path:    "get_create_user_token_1",
 				Handler: handleGetCreateUserToken,
+			}, {
+				Path:    "get_premium_checkout_token_1",
+				Handler: handleGetPremiumCheckoutToken,
 			},
 		},
 	})
@@ -101,5 +104,30 @@ func handleGetCreateUserToken(body []byte) (interface{}, error) {
 	return getCreateUserTokenResponse{
 		Token: *newToken,
 	}, nil
+}
 
+type getPremiumCheckoutTokenRequest struct {
+	Token string `json:"token"`
+}
+
+type getPremiumCheckoutTokenResponse struct {
+	Token string `json:"token"`
+}
+
+func handleGetPremiumCheckoutToken(body []byte) (interface{}, error) {
+	var req getPremiumCheckoutTokenRequest
+	if err := json.Unmarshal(body, &req); err != nil {
+		return nil, err
+	}
+	userID, err := routetoken.ValidateTokenAndGetUserID(req.Token, routes.SubscriptionManagementRouteEncryptionKey)
+	if err != nil {
+		return nil, err
+	}
+	newToken, err := routes.MakePremiumSubscriptionCheckoutToken(*userID)
+	if err != nil {
+		return nil, err
+	}
+	return getPremiumCheckoutTokenResponse{
+		Token: *newToken,
+	}, nil
 }

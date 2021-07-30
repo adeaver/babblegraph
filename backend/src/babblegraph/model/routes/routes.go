@@ -88,6 +88,14 @@ func MakeUserCreationLink(userID users.UserID) (*string, error) {
 	return ptr.String(env.GetAbsoluteURLForEnvironment(fmt.Sprintf("signup/%s", *token))), nil
 }
 
+func MakePremiumSubscriptionCheckoutLink(userID users.UserID) (*string, error) {
+	token, err := MakePremiumSubscriptionCheckoutToken(userID)
+	if err != nil {
+		return nil, err
+	}
+	return ptr.String(env.GetAbsoluteURLForEnvironment(fmt.Sprintf("checkout/%s", *token))), nil
+}
+
 func MakeArticleLink(userDocumentID userdocuments.UserDocumentID) (*string, error) {
 	token, err := encrypt.GetToken(encrypt.TokenPair{
 		Key:   ArticleLinkKeyForUserDocumentID.Str(),
