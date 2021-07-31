@@ -4,7 +4,6 @@ import (
 	"babblegraph/model/routes"
 	"babblegraph/model/useraccounts"
 	"babblegraph/model/users"
-	"babblegraph/services/web/initialdata"
 	"babblegraph/services/web/middleware"
 	"babblegraph/util/env"
 	"fmt"
@@ -31,8 +30,8 @@ func HandleLoginPage(staticFileDirName string) func(w http.ResponseWriter, r *ht
 				}
 				http.Redirect(w, r, *redirectURL, http.StatusTemporaryRedirect)
 			},
-			HandleNoUserFound:                HandleServeIndexPage(staticFileDirName, initialdata.InitialFrontendDataOptions{}),
-			HandleInvalidAuthenticationToken: HandleServeIndexPage(staticFileDirName, initialdata.InitialFrontendDataOptions{}),
+			HandleNoUserFound:                HandleServeIndexPage(staticFileDirName),
+			HandleInvalidAuthenticationToken: HandleServeIndexPage(staticFileDirName),
 			HandleError:                      middleware.HandleAuthorizationError,
 		})
 	}

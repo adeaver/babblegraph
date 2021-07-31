@@ -15,15 +15,15 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func HandleServeIndexPage(staticFileDirName string, indexPageOptions initialdata.InitialFrontendDataOptions) func(w http.ResponseWriter, r *http.Request) {
+func HandleServeIndexPage(staticFileDirName string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		middleware.LogRequestWithoutBody(r)
 		handleUTMParameters(w, r)
-		serveIndexTemplate(fmt.Sprintf("%s/index.html", staticFileDirName), indexPageOptions, w, r)
+		serveIndexTemplate(fmt.Sprintf("%s/index.html", staticFileDirName), w, r)
 	}
 }
 
-func serveIndexTemplate(templateFileName string, indexPageOptions initialdata.InitialFrontendDataOptions, w http.ResponseWriter, r *http.Request) {
+func serveIndexTemplate(templateFileName string, w http.ResponseWriter, r *http.Request) {
 	var err error
 	defer func() {
 		if err != nil {
@@ -43,7 +43,7 @@ func serveIndexTemplate(templateFileName string, indexPageOptions initialdata.In
 		http.Error(w, http.StatusText(500), 500)
 		return
 	}
-	initialData, err := initialdata.GetInitialFrontendData(r, indexPageOptions)
+	initialData, err := initialdata.GetInitialFrontendData(r)
 	if err != nil {
 		http.Error(w, http.StatusText(500), 500)
 		return
