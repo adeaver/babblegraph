@@ -89,7 +89,7 @@ export type CreateUserSubscriptionRequest = {
 }
 
 export type CreateUserSubscriptionResponse = {
-    stripeSubscriptionID: string;
+    stripeSubscriptionId: string;
     stripeClientSecret: string;
 }
 

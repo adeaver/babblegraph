@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { RouteComponentProps, useHistory } from 'react-router-dom';
 
+import {
+    Elements,
+    CardElement,
+    ElementsConsumer,
+} from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
+
 import { makeStyles } from '@material-ui/core/styles';
 import FormControl from '@material-ui/core/FormControl';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
@@ -34,6 +41,9 @@ const styleClasses = makeStyles({
     },
 })
 
+declare const window: any;
+const stripePromise = loadStripe(window.initialData["stripe_public_key"]);
+
 type Params = {
     token: string
 }
@@ -58,7 +68,7 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
         },
         (resp: CreateUserSubscriptionResponse) => {
             setIsLoadingCreateSubscription(false);
-            setStripeSubscriptionID(resp.stripeSubscriptionID);
+            setStripeSubscriptionID(resp.stripeSubscriptionId);
             setStripeClientSecret(resp.stripeClientSecret);
         },
         (err: Error) => {
@@ -70,6 +80,8 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
     const classes = styleClasses();
     const isLoading = isLoadingCreateSubscription;
     let body;
+    console.log(stripeClientSecret);
+    console.log(stripeSubscriptionID);
     if (isLoading) {
         body = <LoadingSpinner />;
     } else if (!!error) {
@@ -78,8 +90,18 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
                 Something went wrong processing your request. You have not been charged. Try again later, or reach out to hello@babblegraph.com
             </Heading3>
         );
-    } else if (!!stripeClientSecret && !!stripeSubscriptionID) {
-        // Stripe elements
+    } else if (stripeClientSecret != null && !!stripeSubscriptionID) {
+        body = (
+            // Unclear why, but Elements doesn't think it has children
+            // @ts-ignore
+            <Elements stripe={stripePromise}>
+                <InjectedSubscriptionCheckoutFormProps
+                    stripeClientSecret={stripeClientSecret}
+                    stripeSubscriptionID={stripeSubscriptionID}
+                    handleSuccessfulPayment={() => console.log("successful")}
+                    handlePaymentError={(msg: string) => console.log(msg)} />
+            </Elements>
+        );
     } else {
         body = (
             <SubscriptionSelector
@@ -151,6 +173,83 @@ const SubscriptionSelector = (props: SubscriptionSelectorProps) => {
                 </Grid>
             </Grid>
         </div>
+    );
+}
+
+type StripeResult = {
+    error?: StripeError | null;
+    setupIntent?: any; // TODO(fill this in?)
+}
+
+type StripeError = {
+    type: string;
+    code: string;
+    decline_code: string;
+    message: string;
+    param: string;
+    payment_intent: string;
+}
+
+type InjectedSubscriptionCheckoutFormProps = {
+    stripeClientSecret: string;
+    stripeSubscriptionID: string;
+
+    handleSuccessfulPayment: () => void;
+    handlePaymentError: (msg: string) => void;
+}
+
+const InjectedSubscriptionCheckoutFormProps = (props: InjectedSubscriptionCheckoutFormProps) => (
+    <ElementsConsumer>
+        {({stripe, elements}) => (
+            <SubscriptionCheckoutForm stripe={stripe} elements={elements} {...props} />
+        )}
+    </ElementsConsumer>
+);
+
+type SubscriptionCheckoutFormProps = InjectedSubscriptionCheckoutFormProps & {
+    stripe: any;
+    elements: any;
+}
+
+
+const SubscriptionCheckoutForm = (props: SubscriptionCheckoutFormProps) => {
+    const [ isPaymentConfirmationLoading, setIsPaymentConfirmationLoading ] = useState<boolean>(false);
+
+    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        setIsPaymentConfirmationLoading(true);
+        const cardElement = props.elements.getElement(CardElement);
+        console.log(cardElement);
+        props.stripe.confirmCardSetup(props.stripeClientSecret, {
+            payment_method: {
+                card: cardElement,
+            }
+        }).then((result: StripeResult) => {
+            setIsPaymentConfirmationLoading(false);
+            if (!!result.error) {
+                props.handlePaymentError(result.error.message);
+            } else if (!!result.setupIntent && result.setupIntent.status === "succeeded") {
+                props.handleSuccessfulPayment();
+            } else {
+                props.handlePaymentError(result.setupIntent.status);
+            }
+        }).catch((err: Error) => {
+            console.log(err);
+            props.handlePaymentError(err.message);
+        });
+    }
+
+    return (
+        <form onSubmit={handleSubmit} noValidate autoComplete="off">
+            <CardElement />
+            {
+                isPaymentConfirmationLoading ? (
+                    <LoadingSpinner />
+                ) : (
+                    <PrimaryButton type="submit">Pay</PrimaryButton>
+                )
+            }
+        </form>
     );
 }
 

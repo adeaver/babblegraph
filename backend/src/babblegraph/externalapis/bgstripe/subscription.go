@@ -36,6 +36,7 @@ func CreateStripeCustomerSubscriptionForUser(tx *sqlx.Tx, userID users.UserID, i
 		PaymentBehavior: stripe.String("default_incomplete"),
 	}
 	subscriptionParams.AddExpand("latest_invoice.payment_intent")
+	subscriptionParams.AddExpand("pending_setup_intent")
 	stripeSubscription, err := sub.New(subscriptionParams)
 	if err != nil {
 		return nil, nil, err
@@ -49,6 +50,8 @@ func CreateStripeCustomerSubscriptionForUser(tx *sqlx.Tx, userID users.UserID, i
 		}
 		return nil, nil, err
 	}
+	log.Println(fmt.Sprintf("%+v", stripeSubscription))
+	log.Println(fmt.Sprintf("%+v", stripeSubscription.PendingSetupIntent))
 	asSubscriptionID := SubscriptionID(stripeSubscription.ID)
 	return &asSubscriptionID, ptr.String(stripeSubscription.PendingSetupIntent.ClientSecret), nil
 }
