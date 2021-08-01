@@ -15,10 +15,14 @@ import FormControl from '@material-ui/core/FormControl';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Grid from '@material-ui/core/Grid';
 import RadioGroup from '@material-ui/core/RadioGroup';
+import VerifiedUserIcon from '@material-ui/icons/VerifiedUser';
+import Snackbar from '@material-ui/core/Snackbar';
 
+import Alert from 'common/components/Alert/Alert';
 import Color from 'common/styles/colors';
 import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
 import { Heading1, Heading3 } from 'common/typography/Heading';
+import Paragraph from 'common/typography/Paragraph';
 import { Alignment, TypographyColor } from 'common/typography/common';
 import Page from 'common/components/Page/Page';
 import DisplayCard from 'common/components/DisplayCard/DisplayCard';
@@ -47,6 +51,12 @@ const styleClasses = makeStyles({
         width: "100%",
         margin: "10px 0",
     },
+    checkIcon: {
+        color: Color.Confirmation,
+        display: 'block',
+        margin: '0 auto',
+        fontSize: '48px',
+    }
 })
 
 const stripeElementsOptions = {
@@ -86,6 +96,8 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
     const [ error, setError ] = useState<Error>(null);
 
     const [ isPaymentConfirmationLoading, setIsPaymentConfirmationLoading ] = useState<boolean>(false);
+    const [ wasPaymentSuccessful, setWasPaymentSuccessful ] = useState<boolean>(false);
+    const [ paymentError, setPaymentError ] = useState<string | null>(null);
 
     const handleSubmit = () => {
         setIsLoadingCreateSubscription(true);
@@ -107,7 +119,19 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
 
     const classes = styleClasses();
     let body;
-    if (!!error) {
+    if (wasPaymentSuccessful) {
+        body = (
+            <div>
+                <VerifiedUserIcon className={classes.checkIcon} />
+                <Heading1 color={TypographyColor.Primary}>
+                    Your payment method was successfully setup.
+                </Heading1>
+                <Paragraph>
+                    You will be automatically charged at the end of your trial! You will get an email before you’re charged.
+                </Paragraph>
+            </div>
+        );
+    } else if (!!error) {
         body = (
             <Heading3 color={TypographyColor.Primary}>
                 Something went wrong processing your request. You have not been charged. Try again later, or reach out to hello@babblegraph.com
@@ -136,8 +160,9 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
                                 stripeSubscriptionID={stripeSubscriptionID}
                                 isPaymentConfirmationLoading={isPaymentConfirmationLoading}
                                 setIsPaymentConfirmationLoading={setIsPaymentConfirmationLoading}
-                                handleSuccessfulPayment={() => console.log("successful")}
-                                handlePaymentError={(msg: string) => console.log(msg)} />
+                                handleSuccessfulPayment={() => setWasPaymentSuccessful(true)}
+                                handlePaymentError={setPaymentError}
+                                handleGenericRequestError={setError} />
                         </Elements>
                     )
                 }
@@ -157,6 +182,13 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
                     <DisplayCard>
                         { body }
                     </DisplayCard>
+                    {
+                        !!paymentError && (
+                            <Snackbar open={!!paymentError} autoHideDuration={6000} onClose={setPaymentError(null)}>
+                                <Alert severity="error">{paymentError}</Alert>
+                            </Snackbar>
+                        )
+                    }
                 </Grid>
             </Grid>
         </Page>
@@ -249,6 +281,7 @@ type InjectedSubscriptionCheckoutFormProps = {
     setIsPaymentConfirmationLoading: (isLoading: boolean) => void;
     handleSuccessfulPayment: () => void;
     handlePaymentError: (msg: string) => void;
+    handleGenericRequestError: (err: Error) => void;
 }
 
 const InjectedSubscriptionCheckoutFormProps = (props: InjectedSubscriptionCheckoutFormProps) => (
@@ -280,6 +313,7 @@ const SubscriptionCheckoutForm = (props: SubscriptionCheckoutFormProps) => {
         e.preventDefault();
         props.setIsPaymentConfirmationLoading(true);
         const cardElement = props.elements.getElement(CardNumberElement);
+        // TODO: handle case in which this isn't a setup card
         props.stripe.confirmCardSetup(props.stripeClientSecret, {
             payment_method: {
                 card: cardElement,
@@ -297,8 +331,7 @@ const SubscriptionCheckoutForm = (props: SubscriptionCheckoutFormProps) => {
                 props.handlePaymentError(result.setupIntent.status);
             }
         }).catch((err: Error) => {
-            console.log(err);
-            props.handlePaymentError(err.message);
+            props.handleGenericRequestError(err)
         });
     }
 
