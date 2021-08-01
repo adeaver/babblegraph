@@ -18,7 +18,9 @@ CREATE TABLE IF NOT EXISTS bgstripe_subscription(
     last_modified_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()),
     babblegraph_user_id uuid NOT NULL REFERENCES users(_id),
     stripe_subscription_id TEXT NOT NULL,
-    is_active BOOLEAN NOT NULL DEFAULT false,
+    payment_state INTEGER NOT NULL,
+    stripe_product_id TEXT NOT NULL,
+    stripe_client_secret TEXT NOT NULL,
 
     PRIMARY KEY (_id)
 );

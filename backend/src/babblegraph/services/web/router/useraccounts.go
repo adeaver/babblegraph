@@ -31,9 +31,8 @@ func registerUserAccountsRoutes() {
 	a.r.HandleFunc("/api/useraccounts/create_user_1", middleware.WithoutBodyLogger(createUser))
 	a.routeNames["/api/useraccounts/create_user_1"] = true
 
-	// Need to include route to remove subscription
-	a.r.HandleFunc("/api/useraccounts/create_user_subscription_1", middleware.WithoutBodyLogger(createUserSubscription))
-	a.routeNames["/api/useraccounts/create_user_subscription_1"] = true
+	a.r.HandleFunc("/api/useraccounts/get_or_create_user_subscription_1", middleware.WithoutBodyLogger(getOrCreateUserSubscription))
+	a.routeNames["/api/useraccounts/get_or_create_user_subscription_1"] = true
 
 	a.r.HandleFunc("/api/useraccounts/reset_password_1", middleware.WithoutBodyLogger(resetPassword))
 	a.routeNames["/api/useraccounts/reset_password_1"] = true
