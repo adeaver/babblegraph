@@ -46,6 +46,9 @@ func GetOrCreateUnpaidStripeCustomerSubscriptionForUser(tx *sqlx.Tx, userID user
 		// Heuristics here => if there's already an unpaid subscription with the
 		// same product ID, then we should use that. Otherwise, we need to create a new
 		// one. We also need to figure out the amount of trial days that a user has left.
+		if subscription.PaymentState == PaymentStateActive {
+			return nil, fmt.Errorf("User %s already has an active subscription", userID)
+		}
 		daysSinceTrialForSubscription := int64(math.Abs(now.Sub(subscription.CreatedAt).Hours() / 24.0))
 		if daysSinceTrialForSubscription > daysSinceOldestTrialPeriod {
 			daysSinceOldestTrialPeriod = daysSinceTrialForSubscription
@@ -60,10 +63,10 @@ func GetOrCreateUnpaidStripeCustomerSubscriptionForUser(tx *sqlx.Tx, userID user
 					ClientSecret:   subscription.StripeClientSecret,
 					PaymentState:   subscription.PaymentState,
 				}, nil
-			case PaymentStateActive,
-				PaymentStateErrored:
+			case PaymentStateActive:
 				return nil, fmt.Errorf("Invalid state for creating a new subscription")
-			case PaymentStateTerminated:
+			case PaymentStateTerminated,
+				PaymentStateErrored:
 				// no-op
 			default:
 				return nil, fmt.Errorf("Unrecognized payment state: %d", subscription.PaymentState)

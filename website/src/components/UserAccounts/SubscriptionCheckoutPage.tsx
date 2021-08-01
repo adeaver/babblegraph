@@ -23,8 +23,8 @@ import { PrimaryRadio } from 'common/components/Radio/Radio';
 import { PrimaryButton } from 'common/components/Button/Button';
 
 import {
-    createUserSubscription,
-    CreateUserSubscriptionResponse
+    getOrCreateUserSubscription,
+    GetOrCreateUserSubscriptionResponse
 } from 'api/useraccounts/useraccounts';
 
 const styleClasses = makeStyles({
@@ -57,19 +57,21 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
 
     const [ stripeSubscriptionID, setStripeSubscriptionID ] = useState<string | null>(null);
     const [ stripeClientSecret, setStripeClientSecret ] = useState<string | null>(null);
+    const [ stripePaymentState, setStripePaymentState ] = useState<number | null>(null);
     const [ isLoadingCreateSubscription, setIsLoadingCreateSubscription ] = useState<boolean>(false);
     const [ error, setError ] = useState<Error>(null);
 
     const handleSubmit = () => {
         setIsLoadingCreateSubscription(true);
-        createUserSubscription({
+        getOrCreateUserSubscription({
             subscriptionCreationToken: token,
             isYearlySubscription: subscriptionType === "yearly",
         },
-        (resp: CreateUserSubscriptionResponse) => {
+        (resp: GetOrCreateUserSubscriptionResponse) => {
             setIsLoadingCreateSubscription(false);
             setStripeSubscriptionID(resp.stripeSubscriptionId);
             setStripeClientSecret(resp.stripeClientSecret);
+            setStripePaymentState(resp.stripePaymentState);
         },
         (err: Error) => {
             setIsLoadingCreateSubscription(false);
@@ -80,8 +82,6 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
     const classes = styleClasses();
     const isLoading = isLoadingCreateSubscription;
     let body;
-    console.log(stripeClientSecret);
-    console.log(stripeSubscriptionID);
     if (isLoading) {
         body = <LoadingSpinner />;
     } else if (!!error) {
@@ -219,7 +219,6 @@ const SubscriptionCheckoutForm = (props: SubscriptionCheckoutFormProps) => {
         e.preventDefault();
         setIsPaymentConfirmationLoading(true);
         const cardElement = props.elements.getElement(CardElement);
-        console.log(cardElement);
         props.stripe.confirmCardSetup(props.stripeClientSecret, {
             payment_method: {
                 card: cardElement,
@@ -234,7 +233,6 @@ const SubscriptionCheckoutForm = (props: SubscriptionCheckoutFormProps) => {
                 props.handlePaymentError(result.setupIntent.status);
             }
         }).catch((err: Error) => {
-            console.log(err);
             props.handlePaymentError(err.message);
         });
     }

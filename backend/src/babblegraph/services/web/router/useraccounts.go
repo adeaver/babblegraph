@@ -450,17 +450,18 @@ func resetPassword(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-type createUserSubscriptionRequest struct {
+type getOrCreateUserSubscriptionRequest struct {
 	SubscriptionCreationToken string `json:"subscription_creation_token"`
 	IsYearlySubscription      bool   `json:"is_yearly_subscription"`
 }
 
-type createUserSubscriptionResponse struct {
+type getOrCreateUserSubscriptionResponse struct {
 	StripeSubscriptionID bgstripe.SubscriptionID `json:"stripe_subscription_id"`
 	StripeClientSecret   string                  `json:"stripe_client_secret"`
+	StripePaymentState   bgstripe.PaymentState   `json:"stripe_payment_state"`
 }
 
-func createUserSubscription(w http.ResponseWriter, r *http.Request) {
+func getOrCreateUserSubscription(w http.ResponseWriter, r *http.Request) {
 	middleware.WithAuthorizationCheck(w, r, middleware.WithAuthorizationCheckInput{
 		HandleFoundUser: func(userID users.UserID, subscriptionLevel *useraccounts.SubscriptionLevel, w http.ResponseWriter, r *http.Request) {
 			body, err := ioutil.ReadAll(r.Body)
@@ -479,14 +480,11 @@ func createUserSubscription(w http.ResponseWriter, r *http.Request) {
 				})
 				return
 			}
-			var stripeSubscriptionID *bgstripe.SubscriptionID
-			var stripeCustomerSecret *string
+			var stripeSubscriptionOutput *bgstripe.StripeCustomerSubscriptionOutput
 			if err := database.WithTx(func(tx *sqlx.Tx) error {
-				err := useraccounts.AddSubscriptionLevelForUser(tx, userID, useraccounts.SubscriptionLevelPremium)
-				if err != nil {
-					return err
-				}
-				stripeSubscriptionID, stripeCustomerSecret, err = bgstripe.CreateStripeCustomerSubscriptionForUser(tx, userID, req.IsYearlySubscription)
+				var err error
+				// This method also creates the user subscription if applicable
+				stripeSubscriptionOutput, err = bgstripe.GetOrCreateUnpaidStripeCustomerSubscriptionForUser(tx, userID, req.IsYearlySubscription)
 				return err
 			}); err != nil {
 				log.Println(fmt.Sprintf("Failed to create subscription with error: %s", err.Error()))
@@ -497,8 +495,9 @@ func createUserSubscription(w http.ResponseWriter, r *http.Request) {
 			}
 			log.Println("Successfully created subscription")
 			writeJSONResponse(w, createUserSubscriptionResponse{
-				StripeSubscriptionID: *stripeSubscriptionID,
-				StripeClientSecret:   *stripeCustomerSecret,
+				StripeSubscriptionID: stripeSubscriptionOutput.SubscriptionID,
+				StripeClientSecret:   stripeSubscriptionOutput.ClientSecret,
+				StripePaymentState:   stripeSubscriptionOutput.PaymentState,
 			})
 		},
 		HandleNoUserFound:                middleware.HandleUnauthorizedRequest,

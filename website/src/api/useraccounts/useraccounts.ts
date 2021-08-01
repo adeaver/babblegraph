@@ -83,23 +83,24 @@ export function getUserProfile(
     );
 }
 
-export type CreateUserSubscriptionRequest = {
+export type GetOrCreateUserSubscriptionRequest = {
     subscriptionCreationToken: string;
     isYearlySubscription: boolean;
 }
 
-export type CreateUserSubscriptionResponse = {
+export type GetOrCreateUserSubscriptionResponse = {
     stripeSubscriptionId: string;
     stripeClientSecret: string;
+    stripePaymentState: number;
 }
 
-export function createUserSubscription(
-    req: CreateUserSubscriptionRequest,
-    onSuccess: (resp: CreateUserSubscriptionResponse) => void,
+export function getOrCreateUserSubscription(
+    req: GetOrCreateUserSubscriptionRequest,
+    onSuccess: (resp: GetOrCreateUserSubscriptionResponse) => void,
     onError: (e: Error) => void,
 ) {
-    makePostRequestWithStandardEncoding<CreateUserSubscriptionRequest, CreateUserSubscriptionResponse>(
-        '/api/useraccounts/create_user_subscription_1',
+    makePostRequestWithStandardEncoding<GetOrCreateUserSubscriptionRequest, GetOrCreateUserSubscriptionResponse>(
+        '/api/useraccounts/get_or_create_user_subscription_1',
         req,
         onSuccess,
         onError,
