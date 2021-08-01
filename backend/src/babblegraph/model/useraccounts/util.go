@@ -5,7 +5,6 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
-	"log"
 	"unicode"
 
 	"golang.org/x/crypto/bcrypt"
@@ -23,7 +22,6 @@ func generatePasswordSalt() (*string, error) {
 
 func generatePasswordHash(password, salt string) (*string, error) {
 	saltedPassword := makeSaltedPassword(password, salt)
-	log.Println(saltedPassword)
 	hash, err := bcrypt.GenerateFromPassword(saltedPassword, bcrypt.DefaultCost)
 	if err != nil {
 		return nil, err

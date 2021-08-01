@@ -86,8 +86,8 @@ const SignupPage = (props: SignupPageProps) => {
         },
         (resp: CreateUserResponse) => {
             setIsLoading(false);
-            if (!!resp.managementToken) {
-                history.push(`/manage/${resp.managementToken}`);
+            if (!!resp.checkoutToken) {
+                history.push(`/checkout/${resp.checkoutToken}`);
             } else if (!!resp.createUserError) {
                 setErrorMessage(createUserErrorMessages[resp.createUserError] || createUserErrorMessages["default"]);
             } else {

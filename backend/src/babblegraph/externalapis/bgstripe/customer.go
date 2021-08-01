@@ -2,21 +2,23 @@ package bgstripe
 
 import (
 	"babblegraph/model/users"
+	"babblegraph/util/env"
 	"fmt"
 	"log"
 
 	"github.com/getsentry/sentry-go"
 	"github.com/jmoiron/sqlx"
-	"github.com/stripe/stripe-go"
-	"github.com/stripe/stripe-go/customer"
+	"github.com/stripe/stripe-go/v72"
+	"github.com/stripe/stripe-go/v72/customer"
 )
 
 const (
-	getStripeCustomerForUserQuery = "SELECT * FROM bgstripe_customer WHERE user_id = $1"
+	getStripeCustomerForUserQuery = "SELECT * FROM bgstripe_customer WHERE babblegraph_user_id = $1"
 	createCustomerForUserQuery    = "INSERT INTO bgstripe_customer (babblegraph_user_id, stripe_customer_id) VALUES ($1, $2)"
 )
 
 func CreateCustomerForUser(tx *sqlx.Tx, userID users.UserID) (*CustomerID, error) {
+	stripe.Key = env.MustEnvironmentVariable("STRIPE_KEY")
 	user, err := users.GetUser(tx, userID)
 	switch {
 	case err != nil:
@@ -32,7 +34,7 @@ func CreateCustomerForUser(tx *sqlx.Tx, userID users.UserID) (*CustomerID, error
 		return nil, err
 	}
 	if _, err := tx.Exec(createCustomerForUserQuery, userID, stripeCustomer.ID); err != nil {
-		log.Println("Attempting to roll back customer: %s", stripeCustomer.ID)
+		log.Println(fmt.Sprintf("Attempting to roll back customer: %s", stripeCustomer.ID))
 		if _, sErr := customer.Del(stripeCustomer.ID, &stripe.CustomerParams{}); sErr != nil {
 			formattedSErr := fmt.Errorf("Error rolling back customer ID %s in Stripe, for user %s: %s. Original error: %s", stripeCustomer.ID, userID, sErr, err)
 			log.Println(formattedSErr.Error())
