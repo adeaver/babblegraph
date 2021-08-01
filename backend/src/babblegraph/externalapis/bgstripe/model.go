@@ -34,7 +34,7 @@ type dbStripeSubscription struct {
 	LastModifiedAt       time.Time                  `db:"last_modified_at"`
 	BabblegraphUserID    users.UserID               `db:"babblegraph_user_id"`
 	PaymentState         PaymentState               `db:"payment_state"`
-	StripeSubscriptionID SubscriptionID             `db:"subscription_id"`
+	StripeSubscriptionID SubscriptionID             `db:"stripe_subscription_id"`
 	StripeProductID      StripeProductID            `db:"stripe_product_id"`
 	StripeClientSecret   string                     `db:"stripe_client_secret"`
 }

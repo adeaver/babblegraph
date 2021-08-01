@@ -472,7 +472,7 @@ func getOrCreateUserSubscription(w http.ResponseWriter, r *http.Request) {
 				})
 				return
 			}
-			var req *createUserSubscriptionRequest
+			var req *getOrCreateUserSubscriptionRequest
 			if err := json.Unmarshal(body, &req); err != nil {
 				log.Println("Failed to unmarshal json")
 				writeErrorJSONResponse(w, errorResponse{
@@ -494,7 +494,7 @@ func getOrCreateUserSubscription(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			log.Println("Successfully created subscription")
-			writeJSONResponse(w, createUserSubscriptionResponse{
+			writeJSONResponse(w, getOrCreateUserSubscriptionResponse{
 				StripeSubscriptionID: stripeSubscriptionOutput.SubscriptionID,
 				StripeClientSecret:   stripeSubscriptionOutput.ClientSecret,
 				StripePaymentState:   stripeSubscriptionOutput.PaymentState,
