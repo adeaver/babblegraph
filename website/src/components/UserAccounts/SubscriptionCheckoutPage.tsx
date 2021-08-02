@@ -36,8 +36,6 @@ import {
     GetOrCreateUserSubscriptionResponse,
     getUserNonTerminatedStripeSubscription,
     GetUserNonTerminatedStripeSubscriptionResponse,
-    DeleteStripeSubscriptionForUserResponse,
-    deleteStripeSubscriptionForUser
 } from 'api/stripe/subscription';
 
 const styleClasses = makeStyles({
