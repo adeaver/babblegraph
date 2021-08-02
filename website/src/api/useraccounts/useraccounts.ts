@@ -83,30 +83,6 @@ export function getUserProfile(
     );
 }
 
-export type GetOrCreateUserSubscriptionRequest = {
-    subscriptionCreationToken: string;
-    isYearlySubscription: boolean;
-}
-
-export type GetOrCreateUserSubscriptionResponse = {
-    stripeSubscriptionId: string;
-    stripeClientSecret: string;
-    stripePaymentState: number;
-}
-
-export function getOrCreateUserSubscription(
-    req: GetOrCreateUserSubscriptionRequest,
-    onSuccess: (resp: GetOrCreateUserSubscriptionResponse) => void,
-    onError: (e: Error) => void,
-) {
-    makePostRequestWithStandardEncoding<GetOrCreateUserSubscriptionRequest, GetOrCreateUserSubscriptionResponse>(
-        '/api/useraccounts/get_or_create_user_subscription_1',
-        req,
-        onSuccess,
-        onError,
-    );
-}
-
 export enum ResetPasswordError {
     InvalidToken = 'invalid-token',
     TokenExpired = 'token-expired',
@@ -139,3 +115,4 @@ export function resetPassword(
         onError,
     );
 }
+

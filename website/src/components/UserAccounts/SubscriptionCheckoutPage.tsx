@@ -33,8 +33,10 @@ import StripeInput from 'common/util/stripe/StripeInput';
 
 import {
     getOrCreateUserSubscription,
-    GetOrCreateUserSubscriptionResponse
-} from 'api/useraccounts/useraccounts';
+    GetOrCreateUserSubscriptionResponse,
+    getUserNonTerminatedStripeSubscription,
+    GetUserNonTerminatedStripeSubscriptionResponse,
+} from 'api/stripe/subscription';
 
 const styleClasses = makeStyles({
     subscriptionSelector: {
@@ -91,6 +93,8 @@ type SubscriptionCheckoutPageProps = RouteComponentProps<Params>
 const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
     const { token } = props.match.params;
 
+    const [ isLoadingUserSubscription, setIsLoadingUserSubscription ] = useState<boolean>(true);
+
     const [ subscriptionType, setSubscriptionType ] = useState<string>("monthly");
 
     const [ stripeSubscriptionID, setStripeSubscriptionID ] = useState<string | null>(null);
@@ -102,6 +106,24 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
     const [ isPaymentConfirmationLoading, setIsPaymentConfirmationLoading ] = useState<boolean>(false);
     const [ wasPaymentSuccessful, setWasPaymentSuccessful ] = useState<boolean>(false);
     const [ paymentError, setPaymentError ] = useState<string | null>(null);
+
+    useEffect(() => {
+        getUserNonTerminatedStripeSubscription({
+            subscriptionCreationToken: token,
+        },
+        (resp: GetUserNonTerminatedStripeSubscriptionResponse) => {
+            setIsLoadingUserSubscription(false);
+            console.log(resp);
+            resp.stripeSubscriptionId != null && setStripeSubscriptionID(resp.stripeSubscriptionId);
+            resp.stripeClientSecret != null && setStripeClientSecret(resp.stripeClientSecret);
+            resp.stripePaymentState != null && setStripePaymentState(resp.stripePaymentState);
+            !!resp.isYearlySubscription && setSubscriptionType("yearly");
+        },
+        (err: Error) => {
+            setIsLoadingUserSubscription(false);
+            setError(err);
+        });
+    }, []);
 
     const handleSubmit = () => {
         setIsLoadingCreateSubscription(true);
@@ -121,9 +143,12 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
         });
     }
 
+    const isLoading = isLoadingUserSubscription;
     const classes = styleClasses();
     let body;
-    if (wasPaymentSuccessful) {
+    if (isLoading) {
+        body = <LoadingSpinner />;
+    } else if (wasPaymentSuccessful) {
         body = (
             <div>
                 <VerifiedUserIcon className={classes.checkIcon} />
@@ -143,6 +168,8 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
         );
     } else {
         const shouldShowCheckoutForm = stripeClientSecret != null && !!stripeSubscriptionID;
+        console.log(stripeSubscriptionID);
+        console.log(stripeClientSecret);
         body = (
             <div>
                 <SubscriptionSelector

@@ -19,14 +19,16 @@ import (
 const (
 	defaultSubscriptionTrialLength = 14
 
-	getStripeSubscriptionsForUserQuery   = "SELECT * FROM bgstripe_subscription WHERE babblegraph_user_id = $1"
-	insertStripeSubscriptionForUserQuery = "INSERT INTO bgstripe_subscription (babblegraph_user_id, stripe_subscription_id, payment_state, stripe_client_secret, stripe_product_id) VALUES ($1, $2, $3, $4, $5)"
+	getStripeSubscriptionsForUserQuery        = "SELECT * FROM bgstripe_subscription WHERE babblegraph_user_id = $1"
+	insertStripeSubscriptionForUserQuery      = "INSERT INTO bgstripe_subscription (babblegraph_user_id, stripe_subscription_id, payment_state, stripe_client_secret, stripe_product_id) VALUES ($1, $2, $3, $4, $5)"
+	updateStripeSubscriptionPaymentStateQuery = "UPDATE bgstripe_subscription SET payment_state = $1 WHERE babblegraph_user_id = $2 AND stripe_subscription_id = $3"
 )
 
 type StripeCustomerSubscriptionOutput struct {
-	ClientSecret   string
-	SubscriptionID SubscriptionID
-	PaymentState   PaymentState
+	ClientSecret         string
+	SubscriptionID       SubscriptionID
+	PaymentState         PaymentState
+	IsYearlySubscription bool
 }
 
 func GetOrCreateUnpaidStripeCustomerSubscriptionForUser(tx *sqlx.Tx, userID users.UserID, isYearlySubscription bool) (*StripeCustomerSubscriptionOutput, error) {
@@ -53,24 +55,26 @@ func GetOrCreateUnpaidStripeCustomerSubscriptionForUser(tx *sqlx.Tx, userID user
 		if daysSinceTrialForSubscription > daysSinceOldestTrialPeriod {
 			daysSinceOldestTrialPeriod = daysSinceTrialForSubscription
 		}
-		if subscription.StripeProductID == stripeProductID {
-			switch subscription.PaymentState {
-			case PaymentStateCreatedUnpaid,
-				PaymentStateActiveNoPaymentMethod:
-				// These are unpaid subscriptions with the same product ID. We should return this.
-				return &StripeCustomerSubscriptionOutput{
-					SubscriptionID: subscription.StripeSubscriptionID,
-					ClientSecret:   subscription.StripeClientSecret,
-					PaymentState:   subscription.PaymentState,
-				}, nil
-			case PaymentStateActive:
-				return nil, fmt.Errorf("Invalid state for creating a new subscription")
-			case PaymentStateTerminated,
-				PaymentStateErrored:
-				// no-op
-			default:
-				return nil, fmt.Errorf("Unrecognized payment state: %d", subscription.PaymentState)
+		switch subscription.PaymentState {
+		case PaymentStateCreatedUnpaid,
+			PaymentStateActiveNoPaymentMethod:
+			// These are unpaid subscriptions with the same product ID. We should return this.
+			if subscription.StripeProductID != stripeProductID {
+				return nil, fmt.Errorf("User %s already has product, but with different ID", userID)
 			}
+			return &StripeCustomerSubscriptionOutput{
+				SubscriptionID:       subscription.StripeSubscriptionID,
+				ClientSecret:         subscription.StripeClientSecret,
+				PaymentState:         subscription.PaymentState,
+				IsYearlySubscription: isYearlySubscription,
+			}, nil
+		case PaymentStateActive:
+			return nil, fmt.Errorf("Invalid state for creating a new subscription")
+		case PaymentStateTerminated,
+			PaymentStateErrored:
+			// no-op
+		default:
+			return nil, fmt.Errorf("Unrecognized payment state: %d", subscription.PaymentState)
 		}
 	}
 	// Trials are automatically considered active
@@ -131,10 +135,51 @@ func GetOrCreateUnpaidStripeCustomerSubscriptionForUser(tx *sqlx.Tx, userID user
 		return nil, err
 	}
 	return &StripeCustomerSubscriptionOutput{
-		SubscriptionID: SubscriptionID(stripeSubscription.ID),
-		ClientSecret:   *clientSecret,
-		PaymentState:   newPaymentState,
+		SubscriptionID:       SubscriptionID(stripeSubscription.ID),
+		ClientSecret:         *clientSecret,
+		PaymentState:         newPaymentState,
+		IsYearlySubscription: isYearlySubscription,
 	}, nil
+}
+
+func LookupNonterminatedStripeSubscriptionForUser(tx *sqlx.Tx, userID users.UserID) (*StripeCustomerSubscriptionOutput, error) {
+	stripeSubscriptionsForUser, err := lookupStripeSubscriptionsForUser(tx, userID)
+	if err != nil {
+		return nil, err
+	}
+	for _, subscription := range stripeSubscriptionsForUser {
+		if subscription.PaymentState != PaymentStateTerminated {
+			isYearlySubscription, err := isStripeProductIDYearly(subscription.StripeProductID)
+			if err != nil {
+				return nil, err
+			}
+			return &StripeCustomerSubscriptionOutput{
+				SubscriptionID:       subscription.StripeSubscriptionID,
+				ClientSecret:         subscription.StripeClientSecret,
+				PaymentState:         subscription.PaymentState,
+				IsYearlySubscription: *isYearlySubscription,
+			}, nil
+		}
+	}
+	return nil, nil
+}
+
+func CancelStripeSubscription(tx *sqlx.Tx, userID users.UserID, stripeSubscriptionID SubscriptionID) (bool, error) {
+	res, err := tx.Exec(updateStripeSubscriptionPaymentStateQuery, PaymentStateTerminated, userID, stripeSubscriptionID)
+	if err != nil {
+		return false, err
+	}
+	numRows, err := res.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+	if numRows <= 0 {
+		return false, nil
+	}
+	if _, err := sub.Cancel(string(stripeSubscriptionID), &stripe.SubscriptionCancelParams{}); err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 func lookupStripeSubscriptionsForUser(tx *sqlx.Tx, userID users.UserID) ([]dbStripeSubscription, error) {
@@ -163,5 +208,18 @@ func getPriceIDForEnvironmentAndPaymentType(isYearlySubscription bool) StripePro
 		return StripeProductIDMonthlySubscriptionTest
 	default:
 		panic(fmt.Sprintf("unsupported environment: %s", currentEnv))
+	}
+}
+
+func isStripeProductIDYearly(stripeProductID StripeProductID) (*bool, error) {
+	switch stripeProductID {
+	case StripeProductIDYearlySubscriptionTest,
+		StripeProductIDYearlySubscriptionProd:
+		return ptr.Bool(true), nil
+	case StripeProductIDMonthlySubscriptionTest,
+		StripeProductIDMonthlySubscriptionProd:
+		return ptr.Bool(false), nil
+	default:
+		return nil, fmt.Errorf("Unrecognized product ID %s", stripeProductID)
 	}
 }

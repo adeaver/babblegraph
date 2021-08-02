@@ -3,6 +3,7 @@ package main
 import (
 	"babblegraph/services/web/api/language"
 	"babblegraph/services/web/api/ses"
+	"babblegraph/services/web/api/stripe"
 	"babblegraph/services/web/api/token"
 	"babblegraph/services/web/api/user"
 	utm_routes "babblegraph/services/web/api/utm"
@@ -69,6 +70,9 @@ func registerAPI(r *mux.Router) error {
 		return err
 	}
 	if err := token.RegisterRouteGroups(); err != nil {
+		return err
+	}
+	if err := stripe.RegisterRouteGroups(); err != nil {
 		return err
 	}
 	return nil

@@ -90,14 +90,21 @@ func WithAuthorizationLevelVerification(validAuthorizationLevels []useraccounts.
 		WithAuthorizationCheck(w, r, WithAuthorizationCheckInput{
 			HandleFoundUser: func(userID users.UserID, subscriptionLevel *useraccounts.SubscriptionLevel, w http.ResponseWriter, r *http.Request) {
 				// Users can have accounts without having a valid subscription
-				if subscriptionLevel == nil {
+				switch {
+				case len(validAuthorizationLevels) == 0:
+					// If a route has no valid authorization levels, then any authenticated request can access them
+					fn(userID)(w, r)
+					return
+				case subscriptionLevel == nil:
+					// If the route does have authentication and the subscription is inactive, then we need to deny the request
 					w.WriteHeader(http.StatusUnauthorized)
 					return
-				}
-				for _, validSubscriptionLevel := range validAuthorizationLevels {
-					if *subscriptionLevel == validSubscriptionLevel {
-						fn(userID)(w, r)
-						return
+				default:
+					for _, validSubscriptionLevel := range validAuthorizationLevels {
+						if *subscriptionLevel == validSubscriptionLevel {
+							fn(userID)(w, r)
+							return
+						}
 					}
 				}
 				w.WriteHeader(http.StatusUnauthorized)

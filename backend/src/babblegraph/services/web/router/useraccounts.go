@@ -31,9 +31,6 @@ func registerUserAccountsRoutes() {
 	a.r.HandleFunc("/api/useraccounts/create_user_1", middleware.WithoutBodyLogger(createUser))
 	a.routeNames["/api/useraccounts/create_user_1"] = true
 
-	a.r.HandleFunc("/api/useraccounts/get_or_create_user_subscription_1", middleware.WithoutBodyLogger(getOrCreateUserSubscription))
-	a.routeNames["/api/useraccounts/get_or_create_user_subscription_1"] = true
-
 	a.r.HandleFunc("/api/useraccounts/reset_password_1", middleware.WithoutBodyLogger(resetPassword))
 	a.routeNames["/api/useraccounts/reset_password_1"] = true
 
@@ -447,61 +444,5 @@ func resetPassword(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSONResponse(w, resetPasswordResponse{
 		ManagementToken: token,
-	})
-}
-
-type getOrCreateUserSubscriptionRequest struct {
-	SubscriptionCreationToken string `json:"subscription_creation_token"`
-	IsYearlySubscription      bool   `json:"is_yearly_subscription"`
-}
-
-type getOrCreateUserSubscriptionResponse struct {
-	StripeSubscriptionID bgstripe.SubscriptionID `json:"stripe_subscription_id"`
-	StripeClientSecret   string                  `json:"stripe_client_secret"`
-	StripePaymentState   bgstripe.PaymentState   `json:"stripe_payment_state"`
-}
-
-func getOrCreateUserSubscription(w http.ResponseWriter, r *http.Request) {
-	middleware.WithAuthorizationCheck(w, r, middleware.WithAuthorizationCheckInput{
-		HandleFoundUser: func(userID users.UserID, subscriptionLevel *useraccounts.SubscriptionLevel, w http.ResponseWriter, r *http.Request) {
-			body, err := ioutil.ReadAll(r.Body)
-			if err != nil {
-				log.Println("Failed to read body from request")
-				writeErrorJSONResponse(w, errorResponse{
-					Message: "Request is not valid",
-				})
-				return
-			}
-			var req *getOrCreateUserSubscriptionRequest
-			if err := json.Unmarshal(body, &req); err != nil {
-				log.Println("Failed to unmarshal json")
-				writeErrorJSONResponse(w, errorResponse{
-					Message: "Request is not valid",
-				})
-				return
-			}
-			var stripeSubscriptionOutput *bgstripe.StripeCustomerSubscriptionOutput
-			if err := database.WithTx(func(tx *sqlx.Tx) error {
-				var err error
-				// This method also creates the user subscription if applicable
-				stripeSubscriptionOutput, err = bgstripe.GetOrCreateUnpaidStripeCustomerSubscriptionForUser(tx, userID, req.IsYearlySubscription)
-				return err
-			}); err != nil {
-				log.Println(fmt.Sprintf("Failed to create subscription with error: %s", err.Error()))
-				writeErrorJSONResponse(w, errorResponse{
-					Message: "Request is not valid",
-				})
-				return
-			}
-			log.Println("Successfully created subscription")
-			writeJSONResponse(w, getOrCreateUserSubscriptionResponse{
-				StripeSubscriptionID: stripeSubscriptionOutput.SubscriptionID,
-				StripeClientSecret:   stripeSubscriptionOutput.ClientSecret,
-				StripePaymentState:   stripeSubscriptionOutput.PaymentState,
-			})
-		},
-		HandleNoUserFound:                middleware.HandleUnauthorizedRequest,
-		HandleInvalidAuthenticationToken: middleware.HandleUnauthorizedRequest,
-		HandleError:                      middleware.HandleAuthorizationError,
 	})
 }
