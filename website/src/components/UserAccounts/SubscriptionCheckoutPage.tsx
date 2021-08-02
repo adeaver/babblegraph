@@ -29,6 +29,7 @@ import DisplayCard from 'common/components/DisplayCard/DisplayCard';
 import { PrimaryRadio } from 'common/components/Radio/Radio';
 import { PrimaryButton } from 'common/components/Button/Button';
 import { PrimaryTextField } from 'common/components/TextField/TextField';
+import StripeInput from 'common/util/stripe/StripeInput';
 
 import {
     getOrCreateUserSubscription,
@@ -50,6 +51,9 @@ const styleClasses = makeStyles({
     checkoutFormObject: {
         width: "100%",
         margin: "10px 0",
+        paddingLeft: "5px",
+        paddingRight: "5px",
+        boxSizing: "border-box",
     },
     checkIcon: {
         color: Color.Confirmation,
@@ -141,15 +145,12 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
         const shouldShowCheckoutForm = stripeClientSecret != null && !!stripeSubscriptionID;
         body = (
             <div>
-                {
-                    !isPaymentConfirmationLoading && (
-                        <SubscriptionSelector
-                            subscriptionType={subscriptionType}
-                            isCheckoutFormVisible={shouldShowCheckoutForm}
-                            handleUpdateSubscriptionType={setSubscriptionType}
-                            handleSubmit={handleSubmit} />
-                    )
-                }
+                <SubscriptionSelector
+                    subscriptionType={subscriptionType}
+                    isCheckoutFormVisible={shouldShowCheckoutForm}
+                    isPaymentConfirmationLoading={isPaymentConfirmationLoading}
+                    handleUpdateSubscriptionType={setSubscriptionType}
+                    handleSubmit={handleSubmit} />
                 {
                     shouldShowCheckoutForm && (
                         // Unclear why, but Elements doesn't think it has children
@@ -167,7 +168,7 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
                     )
                 }
                 {
-                    isLoadingCreateSubscription && <LoadingSpinner />
+                    (isLoadingCreateSubscription || isPaymentConfirmationLoading) && <LoadingSpinner />
                 }
             </div>
         );
@@ -182,13 +183,9 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
                     <DisplayCard>
                         { body }
                     </DisplayCard>
-                    {
-                        !!paymentError && (
-                            <Snackbar open={!!paymentError} autoHideDuration={6000} onClose={setPaymentError(null)}>
-                                <Alert severity="error">{paymentError}</Alert>
-                            </Snackbar>
-                        )
-                    }
+                    <Snackbar open={paymentError != null} autoHideDuration={6000} onClose={() => setPaymentError(null)}>
+                        <Alert severity="error">{paymentError}</Alert>
+                    </Snackbar>
                 </Grid>
             </Grid>
         </Page>
@@ -198,6 +195,7 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
 type SubscriptionSelectorProps = {
     subscriptionType: string;
     isCheckoutFormVisible: boolean;
+    isPaymentConfirmationLoading: boolean;
 
     handleUpdateSubscriptionType: (string) => void;
     handleSubmit: () => void;
@@ -242,12 +240,14 @@ const SubscriptionSelector = (props: SubscriptionSelectorProps) => {
                         !props.isCheckoutFormVisible ? (
                             <PrimaryButton
                                 className={classes.checkoutFormObject}
+                                disabled={props.isPaymentConfirmationLoading}
                                 onClick={props.handleSubmit}>
                                 Confirm Selection
                             </PrimaryButton>
                         ) : (
                             <PrimaryButton
                                 className={classes.checkoutFormObject}
+                                disabled={props.isPaymentConfirmationLoading}
                                 onClick={props.handleSubmit}>
                                 Update Subscription Selection
                             </PrimaryButton>
@@ -330,6 +330,7 @@ const SubscriptionCheckoutForm = (props: SubscriptionCheckoutFormProps) => {
             } else {
                 props.handlePaymentError(result.setupIntent.status);
             }
+            console.log(result);
         }).catch((err: Error) => {
             props.handleGenericRequestError(err)
         });
@@ -347,8 +348,12 @@ const SubscriptionCheckoutForm = (props: SubscriptionCheckoutFormProps) => {
                         className={classes.checkoutFormObject}
                         id="cardholder-name"
                         label="Cardholder Name"
+                        variant="outlined"
                         defaultValue={cardholderName}
-                        onChange={handleCardholderNameChange} />
+                        onChange={handleCardholderNameChange}
+                        disabled={props.isPaymentConfirmationLoading}
+                        required
+                        fullWidth />
                 </Grid>
                 <Grid item xs={false} md={3}>
                     &nbsp;
@@ -357,9 +362,22 @@ const SubscriptionCheckoutForm = (props: SubscriptionCheckoutFormProps) => {
                     &nbsp;
                 </Grid>
                 <Grid item xs={12} md={6}>
-                    <CardNumberElement
+                    <PrimaryTextField
                         className={classes.checkoutFormObject}
-                        options={stripeElementsOptions} />
+                        id="credit-card-number"
+                        label="Credit Card Number"
+                        variant="outlined"
+                        InputLabelProps={{ shrink: true }}
+                        InputProps={{
+                            inputComponent: StripeInput,
+                            inputProps: {
+                                component: CardNumberElement
+                            },
+                        }}
+                        disabled={props.isPaymentConfirmationLoading}
+                        required
+                        fullWidth />
+
                 </Grid>
                 <Grid item xs={false} md={3}>
                     &nbsp;
@@ -368,14 +386,40 @@ const SubscriptionCheckoutForm = (props: SubscriptionCheckoutFormProps) => {
                     &nbsp;
                 </Grid>
                 <Grid item xs={6} md={3}>
-                    <CardExpiryElement
+                    <PrimaryTextField
                         className={classes.checkoutFormObject}
-                        options={stripeElementsOptions} />
+                        id="credit-card-expiration"
+                        label="Expiration Date"
+                        variant="outlined"
+                        InputLabelProps={{ shrink: true }}
+                        InputProps={{
+                            inputComponent: StripeInput,
+                            inputProps: {
+                                component: CardExpiryElement
+                            },
+                        }}
+                        disabled={props.isPaymentConfirmationLoading}
+                        required
+                        fullWidth />
+
                 </Grid>
                 <Grid item xs={6} md={3}>
-                    <CardCvcElement
+                    <PrimaryTextField
                         className={classes.checkoutFormObject}
-                        options={stripeElementsOptions} />
+                        id="credit-card-cvc"
+                        label="CVC"
+                        variant="outlined"
+                        InputLabelProps={{ shrink: true }}
+                        InputProps={{
+                            inputComponent: StripeInput,
+                            inputProps: {
+                                component: CardCvcElement
+                            },
+                        }}
+                        disabled={props.isPaymentConfirmationLoading}
+                        required
+                        fullWidth />
+
                 </Grid>
                 <Grid item xs={false} md={3}>
                     &nbsp;
@@ -388,8 +432,13 @@ const SubscriptionCheckoutForm = (props: SubscriptionCheckoutFormProps) => {
                         id="zip"
                         className={classes.checkoutFormObject}
                         label="Postal Code"
+                        variant="outlined"
                         defaultValue={postalCode}
-                        onChange={handlePostalCodeChange} />
+                        onChange={handlePostalCodeChange}
+                        disabled={props.isPaymentConfirmationLoading}
+                        required
+                        fullWidth />
+
                 </Grid>
                 <Grid item xs={false} md={3}>
                     &nbsp;
