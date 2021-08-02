@@ -25,4 +25,4 @@ CREATE TABLE IF NOT EXISTS bgstripe_subscription(
     PRIMARY KEY (_id)
 );
 
-CREATE INDEX IF NOT EXISTS bgstripe_subscription_babblegraph_user ON bgstripe_subscription(babblegraph_user_id);
+CREATE UNIQUE INDEX IF NOT EXISTS bgstripe_subscription_babblegraph_user ON bgstripe_subscription(babblegraph_user_id) WHERE payment_state != 4;
