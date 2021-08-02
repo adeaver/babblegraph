@@ -32,58 +32,22 @@ type StripeCustomerSubscriptionOutput struct {
 	IsYearlySubscription bool
 }
 
-func GetOrCreateUnpaidStripeCustomerSubscriptionForUser(tx *sqlx.Tx, userID users.UserID, isYearlySubscription bool) (*StripeCustomerSubscriptionOutput, error) {
+func CreateUnpaidStripeCustomerSubscriptionForUser(tx *sqlx.Tx, userID users.UserID, isYearlySubscription bool) (*StripeCustomerSubscriptionOutput, error) {
 	stripe.Key = env.MustEnvironmentVariable("STRIPE_KEY")
 	stripeCustomer, err := getStripeCustomerForUserID(tx, userID)
 	if err != nil {
 		return nil, err
 	}
-	stripeSubscriptions, err := lookupStripeSubscriptionsForUser(tx, userID)
+	stripeProductID := getPriceIDForEnvironmentAndPaymentType(isYearlySubscription)
+	// Trials are automatically considered active
+	newPaymentState := PaymentStateTrialNoPaymentMethod
+	trialPeriodDays, err := getNumberOfDaysOfTrial(tx, userID)
 	if err != nil {
 		return nil, err
 	}
-	var daysSinceOldestTrialPeriod int64 = 0
-	now := time.Now()
-	stripeProductID := getPriceIDForEnvironmentAndPaymentType(isYearlySubscription)
-	for _, subscription := range stripeSubscriptions {
-		// Heuristics here => if there's already an unpaid subscription with the
-		// same product ID, then we should use that. Otherwise, we need to create a new
-		// one. We also need to figure out the amount of trial days that a user has left.
-		if subscription.PaymentState == PaymentStateActive {
-			return nil, fmt.Errorf("User %s already has an active subscription", userID)
-		}
-		daysSinceTrialForSubscription := int64(math.Abs(now.Sub(subscription.CreatedAt).Hours() / 24.0))
-		if daysSinceTrialForSubscription > daysSinceOldestTrialPeriod {
-			daysSinceOldestTrialPeriod = daysSinceTrialForSubscription
-		}
-		switch subscription.PaymentState {
-		case PaymentStateCreatedUnpaid,
-			PaymentStateActiveNoPaymentMethod:
-			// These are unpaid subscriptions with the same product ID. We should return this.
-			if subscription.StripeProductID != stripeProductID {
-				return nil, fmt.Errorf("User %s already has product, but with different ID", userID)
-			}
-			return &StripeCustomerSubscriptionOutput{
-				SubscriptionID:       subscription.StripeSubscriptionID,
-				ClientSecret:         subscription.StripeClientSecret,
-				PaymentState:         subscription.PaymentState,
-				IsYearlySubscription: isYearlySubscription,
-			}, nil
-		case PaymentStateActive:
-			return nil, fmt.Errorf("Invalid state for creating a new subscription")
-		case PaymentStateTerminated,
-			PaymentStateErrored:
-			// no-op
-		default:
-			return nil, fmt.Errorf("Unrecognized payment state: %d", subscription.PaymentState)
-		}
-	}
-	// Trials are automatically considered active
-	newPaymentState := PaymentStateActiveNoPaymentMethod
-	trialPeriodDays := defaultSubscriptionTrialLength - daysSinceOldestTrialPeriod
-	if trialPeriodDays <= 0 {
+	if *trialPeriodDays <= 0 {
 		newPaymentState = PaymentStateCreatedUnpaid
-		trialPeriodDays = 0
+		trialPeriodDays = ptr.Int64(0)
 	}
 	subscriptionPriceLineItem := stripe.SubscriptionItemsParams{
 		Price: stripe.String(stripeProductID.Str()),
@@ -94,12 +58,12 @@ func GetOrCreateUnpaidStripeCustomerSubscriptionForUser(tx *sqlx.Tx, userID user
 		PaymentBehavior: stripe.String("default_incomplete"),
 	}
 	switch newPaymentState {
-	case PaymentStateActiveNoPaymentMethod:
+	case PaymentStateTrialNoPaymentMethod:
 		// Create a trial
 		if err := useraccounts.AddSubscriptionLevelForUser(tx, userID, useraccounts.SubscriptionLevelPremium); err != nil {
 			return nil, err
 		}
-		subscriptionParams.TrialPeriodDays = stripe.Int64(trialPeriodDays)
+		subscriptionParams.TrialPeriodDays = stripe.Int64(*trialPeriodDays)
 		subscriptionParams.AddExpand("pending_setup_intent")
 	case PaymentStateCreatedUnpaid:
 		// Create a subscription without a trial
@@ -113,7 +77,7 @@ func GetOrCreateUnpaidStripeCustomerSubscriptionForUser(tx *sqlx.Tx, userID user
 	}
 	var clientSecret *string
 	switch newPaymentState {
-	case PaymentStateActiveNoPaymentMethod:
+	case PaymentStateTrialNoPaymentMethod:
 		if stripeSubscription.PendingSetupIntent == nil {
 			return nil, fmt.Errorf("Expected pending setup to be nonnil")
 		}
@@ -143,26 +107,31 @@ func GetOrCreateUnpaidStripeCustomerSubscriptionForUser(tx *sqlx.Tx, userID user
 	}, nil
 }
 
-func LookupNonterminatedStripeSubscriptionForUser(tx *sqlx.Tx, userID users.UserID) (*StripeCustomerSubscriptionOutput, error) {
+func LookupNonterminatedStripeSubscriptionForUser(tx *sqlx.Tx, userID users.UserID) (*StripeCustomerSubscriptionOutput, bool, error) {
 	stripeSubscriptionsForUser, err := lookupStripeSubscriptionsForUser(tx, userID)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
+	numberOfTrialDays, err := getNumberOfDaysOfTrial(tx, userID)
+	if err != nil {
+		return nil, false, err
+	}
+	isEligibleForTrial := *numberOfTrialDays > 0
 	for _, subscription := range stripeSubscriptionsForUser {
 		if subscription.PaymentState != PaymentStateTerminated {
 			isYearlySubscription, err := isStripeProductIDYearly(subscription.StripeProductID)
 			if err != nil {
-				return nil, err
+				return nil, false, err
 			}
 			return &StripeCustomerSubscriptionOutput{
 				SubscriptionID:       subscription.StripeSubscriptionID,
 				ClientSecret:         subscription.StripeClientSecret,
 				PaymentState:         subscription.PaymentState,
 				IsYearlySubscription: *isYearlySubscription,
-			}, nil
+			}, isEligibleForTrial, nil
 		}
 	}
-	return nil, nil
+	return nil, isEligibleForTrial, nil
 }
 
 func CancelStripeSubscription(tx *sqlx.Tx, userID users.UserID, stripeSubscriptionID SubscriptionID) (bool, error) {
@@ -177,6 +146,9 @@ func CancelStripeSubscription(tx *sqlx.Tx, userID users.UserID, stripeSubscripti
 	}
 	if numRows <= 0 {
 		return false, nil
+	}
+	if err := useraccounts.ExpireSubscriptionForUser(tx, userID); err != nil {
+		return false, err
 	}
 	if _, err := sub.Cancel(string(stripeSubscriptionID), &stripe.SubscriptionCancelParams{}); err != nil {
 		return false, err
@@ -256,4 +228,20 @@ func isStripeProductIDYearly(stripeProductID StripeProductID) (*bool, error) {
 	default:
 		return nil, fmt.Errorf("Unrecognized product ID %s", stripeProductID)
 	}
+}
+
+func getNumberOfDaysOfTrial(tx *sqlx.Tx, userID users.UserID) (*int64, error) {
+	stripeSubscriptions, err := lookupStripeSubscriptionsForUser(tx, userID)
+	if err != nil {
+		return nil, err
+	}
+	var daysSinceOldestTrialPeriod int64 = 0
+	now := time.Now()
+	for _, subscription := range stripeSubscriptions {
+		daysSinceTrialForSubscription := int64(math.Abs(now.Sub(subscription.CreatedAt).Hours() / 24.0))
+		if daysSinceTrialForSubscription > daysSinceOldestTrialPeriod {
+			daysSinceOldestTrialPeriod = daysSinceTrialForSubscription
+		}
+	}
+	return ptr.Int64(defaultSubscriptionTrialLength - daysSinceOldestTrialPeriod), nil
 }

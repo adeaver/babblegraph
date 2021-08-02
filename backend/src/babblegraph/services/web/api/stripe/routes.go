@@ -9,8 +9,8 @@ func RegisterRouteGroups() error {
 		Prefix: "stripe",
 		AuthenticatedRoutes: []router.AuthenticatedRoute{
 			{
-				Path:    "get_or_create_user_subscription_1",
-				Handler: getOrCreateUserSubscription,
+				Path:    "create_user_subscription_1",
+				Handler: createUserSubscription,
 			}, {
 				Path:    "get_user_nonterm_stripe_subscription_1",
 				Handler: getUserNonTerminatedStripeSubscription,

@@ -63,14 +63,19 @@ const (
 	// This happens when a user has started a free trial but
 	// has not added a payment method - this user technically has an
 	// active subscription
-	PaymentStateActiveNoPaymentMethod PaymentState = 1
+	PaymentStateTrialNoPaymentMethod PaymentState = 1
+
+	// This happens when a user has started a free trial and
+	// has added a payment method. However, the payment could still fail.
+	// This user has an active subscription
+	PaymentStateTrialPaymentMethodAdded PaymentState = 2
 
 	// This is a normal subscription or trial with an active payment method
-	PaymentStateActive PaymentState = 2
+	PaymentStateActive PaymentState = 3
 
 	// This is a subscription that has any error with its payment
-	PaymentStateErrored PaymentState = 3
+	PaymentStateErrored PaymentState = 4
 
 	// This subscription has ended
-	PaymentStateTerminated PaymentState = 4
+	PaymentStateTerminated PaymentState = 5
 )
