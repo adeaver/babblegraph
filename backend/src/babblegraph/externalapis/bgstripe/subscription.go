@@ -22,6 +22,7 @@ const (
 	getStripeSubscriptionsForUserQuery        = "SELECT * FROM bgstripe_subscription WHERE babblegraph_user_id = $1"
 	insertStripeSubscriptionForUserQuery      = "INSERT INTO bgstripe_subscription (babblegraph_user_id, stripe_subscription_id, payment_state, stripe_client_secret, stripe_product_id) VALUES ($1, $2, $3, $4, $5)"
 	updateStripeSubscriptionPaymentStateQuery = "UPDATE bgstripe_subscription SET payment_state = $1 WHERE babblegraph_user_id = $2 AND stripe_subscription_id = $3"
+	updateStripeSubscriptionProductID         = "UPDATE bgstripe_subscription SET stripe_product_id = $1 WHERE babblegraph_user_id = $2 AND stripe_subscription_id = $3"
 )
 
 type StripeCustomerSubscriptionOutput struct {
@@ -165,6 +166,7 @@ func LookupNonterminatedStripeSubscriptionForUser(tx *sqlx.Tx, userID users.User
 }
 
 func CancelStripeSubscription(tx *sqlx.Tx, userID users.UserID, stripeSubscriptionID SubscriptionID) (bool, error) {
+	stripe.Key = env.MustEnvironmentVariable("STRIPE_KEY")
 	res, err := tx.Exec(updateStripeSubscriptionPaymentStateQuery, PaymentStateTerminated, userID, stripeSubscriptionID)
 	if err != nil {
 		return false, err
@@ -177,6 +179,38 @@ func CancelStripeSubscription(tx *sqlx.Tx, userID users.UserID, stripeSubscripti
 		return false, nil
 	}
 	if _, err := sub.Cancel(string(stripeSubscriptionID), &stripe.SubscriptionCancelParams{}); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func UpdateStripeSubscriptionChargeFrequency(tx *sqlx.Tx, userID users.UserID, stripeSubscriptionID SubscriptionID, isYearlySubscription bool) (bool, error) {
+	stripe.Key = env.MustEnvironmentVariable("STRIPE_KEY")
+	stripeProductID := getPriceIDForEnvironmentAndPaymentType(isYearlySubscription)
+	res, err := tx.Exec(updateStripeSubscriptionProductID, stripeProductID, userID, stripeSubscriptionID)
+	if err != nil {
+		return false, err
+	}
+	numRows, err := res.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+	if numRows <= 0 {
+		return false, nil
+	}
+	subscription, err := sub.Get(string(stripeSubscriptionID), nil)
+	if err != nil {
+		return false, nil
+	}
+	subscriptionParams := &stripe.SubscriptionParams{
+		Items: []*stripe.SubscriptionItemsParams{
+			{
+				ID:    stripe.String(subscription.Items.Data[0].ID),
+				Price: stripe.String(stripeProductID.Str()),
+			},
+		},
+	}
+	if _, err := sub.Update(string(stripeSubscriptionID), subscriptionParams); err != nil {
 		return false, err
 	}
 	return true, nil

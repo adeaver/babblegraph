@@ -36,6 +36,8 @@ import {
     GetOrCreateUserSubscriptionResponse,
     getUserNonTerminatedStripeSubscription,
     GetUserNonTerminatedStripeSubscriptionResponse,
+    UpdateStripeSubscriptionFrequencyForUserResponse,
+    updateStripeSubscriptionFrequencyForUser,
 } from 'api/stripe/subscription';
 
 const styleClasses = makeStyles({
@@ -95,6 +97,7 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
 
     const [ isLoadingUserSubscription, setIsLoadingUserSubscription ] = useState<boolean>(true);
 
+    const [ isLoadingUpdateSubscription, setIsLoadingUpdateSubscription ] = useState<boolean>(false);
     const [ subscriptionType, setSubscriptionType ] = useState<string>("monthly");
 
     const [ stripeSubscriptionID, setStripeSubscriptionID ] = useState<string | null>(null);
@@ -113,7 +116,6 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
         },
         (resp: GetUserNonTerminatedStripeSubscriptionResponse) => {
             setIsLoadingUserSubscription(false);
-            console.log(resp);
             resp.stripeSubscriptionId != null && setStripeSubscriptionID(resp.stripeSubscriptionId);
             resp.stripeClientSecret != null && setStripeClientSecret(resp.stripeClientSecret);
             resp.stripePaymentState != null && setStripePaymentState(resp.stripePaymentState);
@@ -125,6 +127,20 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
         });
     }, []);
 
+    const handleUpdateSubscription = () => {
+        setIsLoadingUpdateSubscription(true);
+        updateStripeSubscriptionFrequencyForUser({
+            isYearlySubscription: subscriptionType === "yearly",
+            stripeSubscriptionId: stripeSubscriptionID,
+        },
+        (resp: UpdateStripeSubscriptionFrequencyForUserResponse)  => {
+            setIsLoadingUpdateSubscription(false);
+        },
+        (err: Error) => {
+            setIsLoadingUpdateSubscription(false);
+            setError(err);
+        });
+    }
     const handleSubmit = () => {
         setIsLoadingCreateSubscription(true);
         getOrCreateUserSubscription({
@@ -143,10 +159,11 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
         });
     }
 
-    const isLoading = isLoadingUserSubscription;
+    const isPageLoading = isLoadingUserSubscription;
+    const isSelectorLoading = isLoadingCreateSubscription || isPaymentConfirmationLoading || isLoadingUpdateSubscription;
     const classes = styleClasses();
     let body;
-    if (isLoading) {
+    if (isPageLoading) {
         body = <LoadingSpinner />;
     } else if (wasPaymentSuccessful) {
         body = (
@@ -167,16 +184,16 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
             </Heading3>
         );
     } else {
-        const shouldShowCheckoutForm = stripeClientSecret != null && !!stripeSubscriptionID;
-        console.log(stripeSubscriptionID);
-        console.log(stripeClientSecret);
+        const shouldShowCheckoutForm = stripeClientSecret != null && !!stripeSubscriptionID && !isLoadingUpdateSubscription;
         body = (
             <div>
                 <SubscriptionSelector
                     subscriptionType={subscriptionType}
-                    isCheckoutFormVisible={shouldShowCheckoutForm}
                     isPaymentConfirmationLoading={isPaymentConfirmationLoading}
+                    isLoadingUpdateSubscription={isLoadingUpdateSubscription}
+                    isCheckoutFormVisible={shouldShowCheckoutForm}
                     handleUpdateSubscriptionType={setSubscriptionType}
+                    handleUpdateSubscription={handleUpdateSubscription}
                     handleSubmit={handleSubmit} />
                 {
                     shouldShowCheckoutForm && (
@@ -195,7 +212,7 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
                     )
                 }
                 {
-                    (isLoadingCreateSubscription || isPaymentConfirmationLoading) && <LoadingSpinner />
+                    isSelectorLoading && <LoadingSpinner />
                 }
             </div>
         );
@@ -223,7 +240,9 @@ type SubscriptionSelectorProps = {
     subscriptionType: string;
     isCheckoutFormVisible: boolean;
     isPaymentConfirmationLoading: boolean;
+    isLoadingUpdateSubscription: boolean;
 
+    handleUpdateSubscription: () => void;
     handleUpdateSubscriptionType: (string) => void;
     handleSubmit: () => void;
 }
@@ -250,10 +269,10 @@ const SubscriptionSelector = (props: SubscriptionSelectorProps) => {
                             &nbsp;
                         </Grid>
                         <Grid item className={classes.subscriptionOption} xs={12} md={3}>
-                            <FormControlLabel value="monthly" control={<PrimaryRadio disabled={props.isCheckoutFormVisible} />} label="Monthly ($3/month)" />
+                            <FormControlLabel value="monthly" control={<PrimaryRadio />} label="Monthly ($3/month)" />
                         </Grid>
                         <Grid item className={classes.subscriptionOption} xs={12} md={3}>
-                            <FormControlLabel value="yearly" control={<PrimaryRadio disabled={props.isCheckoutFormVisible} />} label="Yearly ($34/year)" />
+                            <FormControlLabel value="yearly" control={<PrimaryRadio />} label="Yearly ($34/year)" />
                         </Grid>
                     </Grid>
                 </RadioGroup>
@@ -267,15 +286,15 @@ const SubscriptionSelector = (props: SubscriptionSelectorProps) => {
                         !props.isCheckoutFormVisible ? (
                             <PrimaryButton
                                 className={classes.checkoutFormObject}
-                                disabled={props.isPaymentConfirmationLoading}
+                                disabled={props.isPaymentConfirmationLoading || props.isLoadingUpdateSubscription}
                                 onClick={props.handleSubmit}>
                                 Confirm Selection
                             </PrimaryButton>
                         ) : (
                             <PrimaryButton
                                 className={classes.checkoutFormObject}
-                                disabled={props.isPaymentConfirmationLoading}
-                                onClick={props.handleSubmit}>
+                                disabled={props.isPaymentConfirmationLoading || props.isLoadingUpdateSubscription}
+                                onClick={props.handleUpdateSubscription}>
                                 Update Subscription Selection
                             </PrimaryButton>
                         )
