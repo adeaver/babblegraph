@@ -48,8 +48,31 @@ export function getUserNonTerminatedStripeSubscription(
     );
 }
 
+export type UpdateStripeSubscriptionFrequencyForUserRequest = {
+    stripeSubscriptionId: string;
+    isYearlySubscription: boolean;
+}
+
+export type UpdateStripeSubscriptionFrequencyForUserResponse = {
+    success: boolean;
+}
+
+export function updateStripeSubscriptionFrequencyForUser(
+    req: UpdateStripeSubscriptionFrequencyForUserRequest,
+    onSuccess: (resp: UpdateStripeSubscriptionFrequencyForUserResponse) => void,
+    onError: (e: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<UpdateStripeSubscriptionFrequencyForUserRequest, UpdateStripeSubscriptionFrequencyForUserResponse>(
+        '/api/stripe/update_stripe_subscription_for_user_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}
+
+
 export type DeleteStripeSubscriptionForUserRequest = {
-    stripeSubscriptionID: string;
+    stripeSubscriptionId: string;
 }
 
 export type DeleteStripeSubscriptionForUserResponse = {

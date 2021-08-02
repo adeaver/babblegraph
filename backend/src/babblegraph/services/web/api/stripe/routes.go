@@ -17,6 +17,9 @@ func RegisterRouteGroups() error {
 			}, {
 				Path:    "delete_stripe_subscription_for_user_1",
 				Handler: deleteStripeSubscriptionForUser,
+			}, {
+				Path:    "update_stripe_subscription_for_user_1",
+				Handler: updateStripeSubscriptionFrequencyForUser,
 			},
 		},
 	})

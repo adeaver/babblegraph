@@ -97,3 +97,30 @@ func deleteStripeSubscriptionForUser(userID users.UserID, body []byte) (interfac
 		Success: success,
 	}, nil
 }
+
+type updateStripeSubscriptionFrequencyForUserRequest struct {
+	StripeSubscriptionID bgstripe.SubscriptionID `json:"stripe_subscription_id"`
+	IsYearlySubscription bool                    `json:"is_yearly_subscription"`
+}
+
+type updateStripeSubscriptionFrequencyForUserResponse struct {
+	Success bool `json:"success"`
+}
+
+func updateStripeSubscriptionFrequencyForUser(userID users.UserID, body []byte) (interface{}, error) {
+	var req updateStripeSubscriptionFrequencyForUserRequest
+	if err := json.Unmarshal(body, &req); err != nil {
+		return nil, err
+	}
+	var success bool
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		var err error
+		success, err = bgstripe.UpdateStripeSubscriptionChargeFrequency(tx, userID, req.StripeSubscriptionID, req.IsYearlySubscription)
+		return err
+	}); err != nil {
+		return nil, err
+	}
+	return updateStripeSubscriptionFrequencyForUserResponse{
+		Success: success,
+	}, nil
+}
