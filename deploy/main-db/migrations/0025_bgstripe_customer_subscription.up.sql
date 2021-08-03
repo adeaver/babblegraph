@@ -20,7 +20,6 @@ CREATE TABLE IF NOT EXISTS bgstripe_subscription(
     stripe_subscription_id TEXT NOT NULL,
     payment_state INTEGER NOT NULL,
     stripe_product_id TEXT NOT NULL,
-    stripe_client_secret TEXT NOT NULL,
 
     PRIMARY KEY (_id)
 );

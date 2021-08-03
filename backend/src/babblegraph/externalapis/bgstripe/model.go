@@ -36,7 +36,6 @@ type dbStripeSubscription struct {
 	PaymentState         PaymentState               `db:"payment_state"`
 	StripeSubscriptionID SubscriptionID             `db:"stripe_subscription_id"`
 	StripeProductID      StripeProductID            `db:"stripe_product_id"`
-	StripeClientSecret   string                     `db:"stripe_client_secret"`
 }
 
 type StripeProductID string

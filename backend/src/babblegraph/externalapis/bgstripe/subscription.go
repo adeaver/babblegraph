@@ -20,7 +20,7 @@ const (
 	defaultSubscriptionTrialLength = 14
 
 	getStripeSubscriptionsForUserQuery        = "SELECT * FROM bgstripe_subscription WHERE babblegraph_user_id = $1"
-	insertStripeSubscriptionForUserQuery      = "INSERT INTO bgstripe_subscription (babblegraph_user_id, stripe_subscription_id, payment_state, stripe_client_secret, stripe_product_id) VALUES ($1, $2, $3, $4, $5)"
+	insertStripeSubscriptionForUserQuery      = "INSERT INTO bgstripe_subscription (babblegraph_user_id, stripe_subscription_id, payment_state, stripe_product_id) VALUES ($1, $2, $3, $4)"
 	updateStripeSubscriptionPaymentStateQuery = "UPDATE bgstripe_subscription SET payment_state = $1 WHERE babblegraph_user_id = $2 AND stripe_subscription_id = $3"
 	updateStripeSubscriptionProductID         = "UPDATE bgstripe_subscription SET stripe_product_id = $1 WHERE babblegraph_user_id = $2 AND stripe_subscription_id = $3"
 )
@@ -90,7 +90,7 @@ func CreateUnpaidStripeCustomerSubscriptionForUser(tx *sqlx.Tx, userID users.Use
 	default:
 		return nil, fmt.Errorf("Invalid payment state: %d", newPaymentState)
 	}
-	if _, err := tx.Exec(insertStripeSubscriptionForUserQuery, userID, stripeSubscription.ID, newPaymentState, *clientSecret, stripeProductID); err != nil {
+	if _, err := tx.Exec(insertStripeSubscriptionForUserQuery, userID, stripeSubscription.ID, newPaymentState, stripeProductID); err != nil {
 		log.Println("Attempting to rollback stripe subscription")
 		if _, sErr := sub.Cancel(stripeSubscription.ID, &stripe.SubscriptionCancelParams{}); sErr != nil {
 			formattedSErr := fmt.Errorf("Error rolling back stripe subscription %s for user %s because of %s. Original error: %s", stripeSubscription.ID, userID, sErr.Error(), err.Error())
@@ -108,6 +108,7 @@ func CreateUnpaidStripeCustomerSubscriptionForUser(tx *sqlx.Tx, userID users.Use
 }
 
 func LookupNonterminatedStripeSubscriptionForUser(tx *sqlx.Tx, userID users.UserID) (*StripeCustomerSubscriptionOutput, bool, error) {
+	stripe.Key = env.MustEnvironmentVariable("STRIPE_KEY")
 	stripeSubscriptionsForUser, err := lookupStripeSubscriptionsForUser(tx, userID)
 	if err != nil {
 		return nil, false, err
@@ -123,9 +124,32 @@ func LookupNonterminatedStripeSubscriptionForUser(tx *sqlx.Tx, userID users.User
 			if err != nil {
 				return nil, false, err
 			}
+			subscriptionParams := &stripe.SubscriptionParams{}
+			var clientSecret string
+			switch subscription.PaymentState {
+			case PaymentStateTrialNoPaymentMethod:
+				subscriptionParams.AddExpand("pending_setup_intent")
+				stripeSubscription, err := sub.Get(string(subscription.StripeSubscriptionID), subscriptionParams)
+				if err != nil {
+					return nil, false, err
+				}
+				if stripeSubscription.PendingSetupIntent != nil {
+					clientSecret = stripeSubscription.PendingSetupIntent.ClientSecret
+				}
+			case PaymentStateCreatedUnpaid:
+				subscriptionParams.AddExpand("latest_invoice.payment_intent")
+				stripeSubscription, err := sub.Get(string(subscription.StripeSubscriptionID), subscriptionParams)
+				if err != nil {
+					return nil, false, err
+				}
+				if stripeSubscription.LatestInvoice != nil && stripeSubscription.LatestInvoice.PaymentIntent != nil {
+					clientSecret = stripeSubscription.LatestInvoice.PaymentIntent.ClientSecret
+				}
+			default:
+			}
 			return &StripeCustomerSubscriptionOutput{
 				SubscriptionID:       subscription.StripeSubscriptionID,
-				ClientSecret:         subscription.StripeClientSecret,
+				ClientSecret:         clientSecret,
 				PaymentState:         subscription.PaymentState,
 				IsYearlySubscription: *isYearlySubscription,
 			}, isEligibleForTrial, nil
@@ -172,7 +196,7 @@ func UpdateStripeSubscriptionChargeFrequency(tx *sqlx.Tx, userID users.UserID, s
 	}
 	subscription, err := sub.Get(string(stripeSubscriptionID), nil)
 	if err != nil {
-		return false, nil
+		return false, err
 	}
 	subscriptionParams := &stripe.SubscriptionParams{
 		Items: []*stripe.SubscriptionItemsParams{
