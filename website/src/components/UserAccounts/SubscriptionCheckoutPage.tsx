@@ -68,24 +68,13 @@ const styleClasses = makeStyles({
     }
 })
 
-const stripeElementsOptions = {
-    style: {
-        base: {
-            fontSize: '16px',
-            fontFamily: "'Roboto', sans-serif",
-            color: Color.TextGray,
-            '::placeholder': {
-                color: Color.TextGray
-            }
-        },
-        invalid: {
-            color: Color.Warning,
-        },
-    }
-}
-
 declare const window: any;
 const stripePromise = loadStripe(window.initialData["stripe_public_key"]);
+
+enum PaymentType {
+    Setup = 'setup',
+    Payment = 'payment',
+}
 
 type Params = {
     token: string
@@ -109,7 +98,7 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
     const [ error, setError ] = useState<Error>(null);
 
     const [ isPaymentConfirmationLoading, setIsPaymentConfirmationLoading ] = useState<boolean>(false);
-    const [ wasPaymentSuccessful, setWasPaymentSuccessful ] = useState<boolean>(false);
+    const [ successType, setSuccessType ] = useState<PaymentType | null>(null);
     const [ paymentError, setPaymentError ] = useState<string | null>(null);
 
     useEffect(() => {
@@ -182,15 +171,25 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
                 </Paragraph>
             </div>
         );
-    } else if (wasPaymentSuccessful) {
+    } else if (!!successType) {
+        const headerMessage = successType === PaymentType.Setup ? (
+            "Your payment method was successfully setup."
+        ) : (
+            "Your payment was successful!"
+        );
+        const bodyMessage = successType === PaymentType.Setup ? (
+            "You will be automatically charged at the end of your trial! You will get an email before you’re charged."
+        ) : (
+            "Your subscription is currently processing. Your premium subscription will become active in the next 10 minutes. You’ll receive an email when it's active!"
+        )
         body = (
             <div>
                 <VerifiedUserIcon className={classes.checkIcon} />
                 <Heading1 color={TypographyColor.Primary}>
-                    Your payment method was successfully setup.
+                    { headerMessage }
                 </Heading1>
                 <Paragraph>
-                    You will be automatically charged at the end of your trial! You will get an email before you’re charged.
+                    { bodyMessage }
                 </Paragraph>
             </div>
         );
@@ -224,7 +223,7 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
                                 isPaymentConfirmationLoading={isPaymentConfirmationLoading}
                                 setIsPaymentConfirmationLoading={setIsPaymentConfirmationLoading}
                                 paymentState={stripePaymentState!}
-                                handleSuccessfulPayment={() => setWasPaymentSuccessful(true)}
+                                handleSuccessfulPayment={setSuccessType}
                                 handlePaymentError={setPaymentError}
                                 handleGenericRequestError={setError} />
                         </Elements>
@@ -343,6 +342,11 @@ const SubscriptionSelector = (props: SubscriptionSelectorProps) => {
     );
 }
 
+type StripePaymentIntentResult = {
+    error?: StripeError | null;
+    paymentIntent?: any;
+}
+
 type StripeSetupIntentResult = {
     error?: StripeError | null;
     setupIntent?: any; // TODO(fill this in?)
@@ -364,7 +368,7 @@ type InjectedSubscriptionCheckoutFormProps = {
     isPaymentConfirmationLoading: boolean;
 
     setIsPaymentConfirmationLoading: (isLoading: boolean) => void;
-    handleSuccessfulPayment: () => void;
+    handleSuccessfulPayment: (paymentType: PaymentType) => void;
     handlePaymentError: (msg: string) => void;
     handleGenericRequestError: (err: Error) => void;
 }
@@ -404,6 +408,9 @@ const SubscriptionCheckoutForm = (props: SubscriptionCheckoutFormProps) => {
                     card: cardElement,
                     billing_details: {
                         name: cardholderName,
+                        address: {
+                            postal_code: postalCode,
+                        },
                     }
                 }
             }).then((result: StripeSetupIntentResult) => {
@@ -411,7 +418,7 @@ const SubscriptionCheckoutForm = (props: SubscriptionCheckoutFormProps) => {
                 if (!!result.error) {
                     props.handlePaymentError(result.error.message);
                 } else if (!!result.setupIntent && result.setupIntent.status === "succeeded") {
-                    props.handleSuccessfulPayment();
+                    props.handleSuccessfulPayment(PaymentType.Setup);
                 } else {
                     props.handlePaymentError("There was an error setting up your card");
                 }
@@ -419,7 +426,28 @@ const SubscriptionCheckoutForm = (props: SubscriptionCheckoutFormProps) => {
                 props.handleGenericRequestError(err)
             });
         } else if (props.paymentState === PaymentState.CreatedUnpaid) {
-
+            props.stripe.confirmCardPayment(props.stripeClientSecret, {
+                payment_method: {
+                    card: cardElement,
+                    billing_details: {
+                        name: cardholderName,
+                        address: {
+                            postal_code: postalCode,
+                        },
+                    }
+                }
+            }).then((result: StripePaymentIntentResult) => {
+                props.setIsPaymentConfirmationLoading(false);
+                if (!!result.error) {
+                    props.handlePaymentError(result.error.message);
+                } else if (!!result.paymentIntent && result.paymentIntent.status === "succeeded") {
+                    props.handleSuccessfulPayment(PaymentType.Payment);
+                } else {
+                    props.handlePaymentError("There was an error completing your payment");
+                }
+            }).catch((err: Error) => {
+                props.handleGenericRequestError(err)
+            });
         } else {
             props.handlePaymentError("There was a problem adding a payment method to your subscription");
         }
