@@ -1,23 +1,32 @@
 import { makePostRequestWithStandardEncoding } from 'api/bgfetch/bgfetch';
 
-export type GetOrCreateUserSubscriptionRequest = {
+export enum PaymentState {
+    CreatedUnpaid = 0,
+    TrialNoPaymentMethod = 1,
+    TrialPaymentMethodAdded = 2,
+    Active = 3,
+    Errored = 4,
+    Terminated = 5,
+}
+
+export type CreateUserSubscriptionRequest = {
     subscriptionCreationToken: string;
     isYearlySubscription: boolean;
 }
 
-export type GetOrCreateUserSubscriptionResponse = {
+export type CreateUserSubscriptionResponse = {
     stripeSubscriptionId: string;
     stripeClientSecret: string;
-    stripePaymentState: number;
+    stripePaymentState: PaymentState;
 }
 
-export function getOrCreateUserSubscription(
-    req: GetOrCreateUserSubscriptionRequest,
-    onSuccess: (resp: GetOrCreateUserSubscriptionResponse) => void,
+export function createUserSubscription(
+    req: CreateUserSubscriptionRequest,
+    onSuccess: (resp: CreateUserSubscriptionResponse) => void,
     onError: (e: Error) => void,
 ) {
-    makePostRequestWithStandardEncoding<GetOrCreateUserSubscriptionRequest, GetOrCreateUserSubscriptionResponse>(
-        '/api/stripe/get_or_create_user_subscription_1',
+    makePostRequestWithStandardEncoding<CreateUserSubscriptionRequest, CreateUserSubscriptionResponse>(
+        '/api/stripe/create_user_subscription_1',
         req,
         onSuccess,
         onError,
@@ -32,7 +41,8 @@ export type GetUserNonTerminatedStripeSubscriptionResponse = {
     isYearlySubscription: boolean | undefined;
     stripeSubscriptionId: string | undefined;
     stripeClientSecret: string | undefined;
-    stripePaymentState: number | undefined;
+    stripePaymentState: PaymentState | undefined;
+    isEligibleForTrial: boolean;
 }
 
 export function getUserNonTerminatedStripeSubscription(

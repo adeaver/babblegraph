@@ -9,19 +9,19 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type getOrCreateUserSubscriptionRequest struct {
+type createUserSubscriptionRequest struct {
 	SubscriptionCreationToken string `json:"subscription_creation_token"`
 	IsYearlySubscription      bool   `json:"is_yearly_subscription"`
 }
 
-type getOrCreateUserSubscriptionResponse struct {
+type createUserSubscriptionResponse struct {
 	StripeSubscriptionID bgstripe.SubscriptionID `json:"stripe_subscription_id"`
 	StripeClientSecret   string                  `json:"stripe_client_secret"`
 	StripePaymentState   bgstripe.PaymentState   `json:"stripe_payment_state"`
 }
 
-func getOrCreateUserSubscription(userID users.UserID, body []byte) (interface{}, error) {
-	var req *getOrCreateUserSubscriptionRequest
+func createUserSubscription(userID users.UserID, body []byte) (interface{}, error) {
+	var req createUserSubscriptionRequest
 	if err := json.Unmarshal(body, &req); err != nil {
 		return nil, err
 	}
@@ -29,12 +29,12 @@ func getOrCreateUserSubscription(userID users.UserID, body []byte) (interface{},
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		var err error
 		// This method also creates the user subscription if applicable
-		stripeSubscriptionOutput, err = bgstripe.GetOrCreateUnpaidStripeCustomerSubscriptionForUser(tx, userID, req.IsYearlySubscription)
+		stripeSubscriptionOutput, err = bgstripe.CreateUnpaidStripeCustomerSubscriptionForUser(tx, userID, req.IsYearlySubscription)
 		return err
 	}); err != nil {
 		return nil, err
 	}
-	return getOrCreateUserSubscriptionResponse{
+	return createUserSubscriptionResponse{
 		StripeSubscriptionID: stripeSubscriptionOutput.SubscriptionID,
 		StripeClientSecret:   stripeSubscriptionOutput.ClientSecret,
 		StripePaymentState:   stripeSubscriptionOutput.PaymentState,
@@ -46,6 +46,7 @@ type getUserNonTerminatedStripeSubscriptionRequest struct {
 }
 
 type getUserNonTerminatedStripeSubscriptionResponse struct {
+	IsEligibleForTrial   bool                     `json:"is_eligible_for_trial"`
 	IsYearlySubscription *bool                    `json:"is_yearly_subscription,omitempty"`
 	StripeSubscriptionID *bgstripe.SubscriptionID `json:"stripe_subscription_id,omitempty"`
 	StripeClientSecret   *string                  `json:"stripe_client_secret,omitempty"`
@@ -54,21 +55,25 @@ type getUserNonTerminatedStripeSubscriptionResponse struct {
 
 func getUserNonTerminatedStripeSubscription(userID users.UserID, body []byte) (interface{}, error) {
 	var stripeSubscriptionOutput *bgstripe.StripeCustomerSubscriptionOutput
+	var isEligibleForTrial bool
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		var err error
-		stripeSubscriptionOutput, err = bgstripe.LookupNonterminatedStripeSubscriptionForUser(tx, userID)
+		stripeSubscriptionOutput, isEligibleForTrial, err = bgstripe.LookupNonterminatedStripeSubscriptionForUser(tx, userID)
 		return err
 	}); err != nil {
 		return nil, err
 	}
 	if stripeSubscriptionOutput == nil {
-		return getUserNonTerminatedStripeSubscriptionResponse{}, nil
+		return getUserNonTerminatedStripeSubscriptionResponse{
+			IsEligibleForTrial: isEligibleForTrial,
+		}, nil
 	}
 	return getUserNonTerminatedStripeSubscriptionResponse{
 		StripeSubscriptionID: &stripeSubscriptionOutput.SubscriptionID,
 		StripeClientSecret:   &stripeSubscriptionOutput.ClientSecret,
 		StripePaymentState:   &stripeSubscriptionOutput.PaymentState,
 		IsYearlySubscription: &stripeSubscriptionOutput.IsYearlySubscription,
+		IsEligibleForTrial:   isEligibleForTrial,
 	}, nil
 }
 

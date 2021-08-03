@@ -22,7 +22,7 @@ import Alert from 'common/components/Alert/Alert';
 import Color from 'common/styles/colors';
 import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
 import { Heading1, Heading3 } from 'common/typography/Heading';
-import Paragraph from 'common/typography/Paragraph';
+import Paragraph, { Size } from 'common/typography/Paragraph';
 import { Alignment, TypographyColor } from 'common/typography/common';
 import Page from 'common/components/Page/Page';
 import DisplayCard from 'common/components/DisplayCard/DisplayCard';
@@ -32,8 +32,9 @@ import { PrimaryTextField } from 'common/components/TextField/TextField';
 import StripeInput from 'common/util/stripe/StripeInput';
 
 import {
-    getOrCreateUserSubscription,
-    GetOrCreateUserSubscriptionResponse,
+    PaymentState,
+    createUserSubscription,
+    CreateUserSubscriptionResponse,
     getUserNonTerminatedStripeSubscription,
     GetUserNonTerminatedStripeSubscriptionResponse,
     UpdateStripeSubscriptionFrequencyForUserResponse,
@@ -67,24 +68,13 @@ const styleClasses = makeStyles({
     }
 })
 
-const stripeElementsOptions = {
-    style: {
-        base: {
-            fontSize: '16px',
-            fontFamily: "'Roboto', sans-serif",
-            color: Color.TextGray,
-            '::placeholder': {
-                color: Color.TextGray
-            }
-        },
-        invalid: {
-            color: Color.Warning,
-        },
-    }
-}
-
 declare const window: any;
 const stripePromise = loadStripe(window.initialData["stripe_public_key"]);
+
+enum PaymentType {
+    Setup = 'setup',
+    Payment = 'payment',
+}
 
 type Params = {
     token: string
@@ -100,14 +90,15 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
     const [ isLoadingUpdateSubscription, setIsLoadingUpdateSubscription ] = useState<boolean>(false);
     const [ subscriptionType, setSubscriptionType ] = useState<string>("monthly");
 
+    const [ isEligibleForTrial, setIsEligibleForTrial ] = useState<boolean>(false);
     const [ stripeSubscriptionID, setStripeSubscriptionID ] = useState<string | null>(null);
     const [ stripeClientSecret, setStripeClientSecret ] = useState<string | null>(null);
-    const [ stripePaymentState, setStripePaymentState ] = useState<number | null>(null);
+    const [ stripePaymentState, setStripePaymentState ] = useState<PaymentState | null>(null);
     const [ isLoadingCreateSubscription, setIsLoadingCreateSubscription ] = useState<boolean>(false);
     const [ error, setError ] = useState<Error>(null);
 
     const [ isPaymentConfirmationLoading, setIsPaymentConfirmationLoading ] = useState<boolean>(false);
-    const [ wasPaymentSuccessful, setWasPaymentSuccessful ] = useState<boolean>(false);
+    const [ successType, setSuccessType ] = useState<PaymentType | null>(null);
     const [ paymentError, setPaymentError ] = useState<string | null>(null);
 
     useEffect(() => {
@@ -120,6 +111,7 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
             resp.stripeClientSecret != null && setStripeClientSecret(resp.stripeClientSecret);
             resp.stripePaymentState != null && setStripePaymentState(resp.stripePaymentState);
             !!resp.isYearlySubscription && setSubscriptionType("yearly");
+            setIsEligibleForTrial(resp.isEligibleForTrial);
         },
         (err: Error) => {
             setIsLoadingUserSubscription(false);
@@ -143,11 +135,11 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
     }
     const handleSubmit = () => {
         setIsLoadingCreateSubscription(true);
-        getOrCreateUserSubscription({
+        createUserSubscription({
             subscriptionCreationToken: token,
             isYearlySubscription: subscriptionType === "yearly",
         },
-        (resp: GetOrCreateUserSubscriptionResponse) => {
+        (resp: CreateUserSubscriptionResponse) => {
             setIsLoadingCreateSubscription(false);
             setStripeSubscriptionID(resp.stripeSubscriptionId);
             setStripeClientSecret(resp.stripeClientSecret);
@@ -159,21 +151,45 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
         });
     }
 
+    const isCorrectPaymentState = stripePaymentState == null ||
+        stripePaymentState === PaymentState.CreatedUnpaid || stripePaymentState === PaymentState.TrialNoPaymentMethod;
     const isPageLoading = isLoadingUserSubscription;
     const isSelectorLoading = isLoadingCreateSubscription || isPaymentConfirmationLoading || isLoadingUpdateSubscription;
     const classes = styleClasses();
     let body;
     if (isPageLoading) {
         body = <LoadingSpinner />;
-    } else if (wasPaymentSuccessful) {
+    } else if (!isCorrectPaymentState) {
         body = (
             <div>
                 <VerifiedUserIcon className={classes.checkIcon} />
                 <Heading1 color={TypographyColor.Primary}>
-                    Your payment method was successfully setup.
+                    Your subscription was already setup!
                 </Heading1>
                 <Paragraph>
-                    You will be automatically charged at the end of your trial! You will get an email before you’re charged.
+                    If you need to modify it, you can go to the subscription settings page! Thanks again for subscribing to Babblegraph.
+                </Paragraph>
+            </div>
+        );
+    } else if (!!successType) {
+        const headerMessage = successType === PaymentType.Setup ? (
+            "Your payment method was successfully setup."
+        ) : (
+            "Your payment was successful!"
+        );
+        const bodyMessage = successType === PaymentType.Setup ? (
+            "You will be automatically charged at the end of your trial! You will get an email before you’re charged."
+        ) : (
+            "Your subscription is currently processing. Your premium subscription will become active in the next 10 minutes. You’ll receive an email when it's active!"
+        )
+        body = (
+            <div>
+                <VerifiedUserIcon className={classes.checkIcon} />
+                <Heading1 color={TypographyColor.Primary}>
+                    { headerMessage }
+                </Heading1>
+                <Paragraph>
+                    { bodyMessage }
                 </Paragraph>
             </div>
         );
@@ -192,6 +208,7 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
                     isPaymentConfirmationLoading={isPaymentConfirmationLoading}
                     isLoadingUpdateSubscription={isLoadingUpdateSubscription}
                     isCheckoutFormVisible={shouldShowCheckoutForm}
+                    isEligibleForTrial={isEligibleForTrial}
                     handleUpdateSubscriptionType={setSubscriptionType}
                     handleUpdateSubscription={handleUpdateSubscription}
                     handleSubmit={handleSubmit} />
@@ -205,7 +222,8 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
                                 stripeSubscriptionID={stripeSubscriptionID}
                                 isPaymentConfirmationLoading={isPaymentConfirmationLoading}
                                 setIsPaymentConfirmationLoading={setIsPaymentConfirmationLoading}
-                                handleSuccessfulPayment={() => setWasPaymentSuccessful(true)}
+                                paymentState={stripePaymentState!}
+                                handleSuccessfulPayment={setSuccessType}
                                 handlePaymentError={setPaymentError}
                                 handleGenericRequestError={setError} />
                         </Elements>
@@ -241,6 +259,7 @@ type SubscriptionSelectorProps = {
     isCheckoutFormVisible: boolean;
     isPaymentConfirmationLoading: boolean;
     isLoadingUpdateSubscription: boolean;
+    isEligibleForTrial: boolean;
 
     handleUpdateSubscription: () => void;
     handleUpdateSubscriptionType: (string) => void;
@@ -261,6 +280,17 @@ const SubscriptionSelector = (props: SubscriptionSelectorProps) => {
             <Heading3>
                 Choose your subscription
             </Heading3>
+            {
+                props.isEligibleForTrial ? (
+                    <Paragraph color={TypographyColor.Confirmation}>
+                        You are eligible for the free trial of Babblegraph Premium
+                    </Paragraph>
+                ) : (
+                    <Paragraph color={TypographyColor.Warning}>
+                        According to our records, you are not eligible for the 14 day free trial of Babblegraph Premium. If you believe this is an error, reach out via email at hello@babblegraph.com
+                    </Paragraph>
+                )
+            }
             <FormControl className={classes.subscriptionSelector} component="fieldset">
                 <RadioGroup aria-label="subscription-type" name="subscription-type1" value={props.subscriptionType} onChange={handleRadioFormChange}>
                     <Grid container
@@ -277,6 +307,13 @@ const SubscriptionSelector = (props: SubscriptionSelectorProps) => {
                     </Grid>
                 </RadioGroup>
             </FormControl>
+            {
+                (props.isEligibleForTrial && !props.isCheckoutFormVisible) && (
+                    <Paragraph size={Size.Small}>
+                        You can change this later!
+                    </Paragraph>
+                )
+            }
             <Grid container>
                 <Grid item xs={false} md={3}>
                     &nbsp;
@@ -288,7 +325,7 @@ const SubscriptionSelector = (props: SubscriptionSelectorProps) => {
                                 className={classes.checkoutFormObject}
                                 disabled={props.isPaymentConfirmationLoading || props.isLoadingUpdateSubscription}
                                 onClick={props.handleSubmit}>
-                                Confirm Selection
+                                { props.isEligibleForTrial ? "Confirm and start your trial" : "Confirm your selection" }
                             </PrimaryButton>
                         ) : (
                             <PrimaryButton
@@ -305,7 +342,12 @@ const SubscriptionSelector = (props: SubscriptionSelectorProps) => {
     );
 }
 
-type StripeResult = {
+type StripePaymentIntentResult = {
+    error?: StripeError | null;
+    paymentIntent?: any;
+}
+
+type StripeSetupIntentResult = {
     error?: StripeError | null;
     setupIntent?: any; // TODO(fill this in?)
 }
@@ -322,10 +364,11 @@ type StripeError = {
 type InjectedSubscriptionCheckoutFormProps = {
     stripeClientSecret: string;
     stripeSubscriptionID: string;
+    paymentState: PaymentState;
     isPaymentConfirmationLoading: boolean;
 
     setIsPaymentConfirmationLoading: (isLoading: boolean) => void;
-    handleSuccessfulPayment: () => void;
+    handleSuccessfulPayment: (paymentType: PaymentType) => void;
     handlePaymentError: (msg: string) => void;
     handleGenericRequestError: (err: Error) => void;
 }
@@ -359,32 +402,90 @@ const SubscriptionCheckoutForm = (props: SubscriptionCheckoutFormProps) => {
         e.preventDefault();
         props.setIsPaymentConfirmationLoading(true);
         const cardElement = props.elements.getElement(CardNumberElement);
-        // TODO: handle case in which this isn't a setup card
-        props.stripe.confirmCardSetup(props.stripeClientSecret, {
-            payment_method: {
-                card: cardElement,
-                billing_details: {
-                    name: cardholderName,
+        if (props.paymentState === PaymentState.TrialNoPaymentMethod) {
+            props.stripe.confirmCardSetup(props.stripeClientSecret, {
+                payment_method: {
+                    card: cardElement,
+                    billing_details: {
+                        name: cardholderName,
+                        address: {
+                            postal_code: postalCode,
+                        },
+                    }
                 }
-            }
-        }).then((result: StripeResult) => {
-            props.setIsPaymentConfirmationLoading(false);
-            if (!!result.error) {
-                props.handlePaymentError(result.error.message);
-            } else if (!!result.setupIntent && result.setupIntent.status === "succeeded") {
-                props.handleSuccessfulPayment();
-            } else {
-                props.handlePaymentError(result.setupIntent.status);
-            }
-            console.log(result);
-        }).catch((err: Error) => {
-            props.handleGenericRequestError(err)
-        });
+            }).then((result: StripeSetupIntentResult) => {
+                props.setIsPaymentConfirmationLoading(false);
+                if (!!result.error) {
+                    props.handlePaymentError(result.error.message);
+                } else if (!!result.setupIntent && result.setupIntent.status === "succeeded") {
+                    props.handleSuccessfulPayment(PaymentType.Setup);
+                } else {
+                    props.handlePaymentError("There was an error setting up your card");
+                }
+            }).catch((err: Error) => {
+                props.handleGenericRequestError(err)
+            });
+        } else if (props.paymentState === PaymentState.CreatedUnpaid) {
+            props.stripe.confirmCardPayment(props.stripeClientSecret, {
+                payment_method: {
+                    card: cardElement,
+                    billing_details: {
+                        name: cardholderName,
+                        address: {
+                            postal_code: postalCode,
+                        },
+                    }
+                }
+            }).then((result: StripePaymentIntentResult) => {
+                props.setIsPaymentConfirmationLoading(false);
+                if (!!result.error) {
+                    props.handlePaymentError(result.error.message);
+                } else if (!!result.paymentIntent && result.paymentIntent.status === "succeeded") {
+                    props.handleSuccessfulPayment(PaymentType.Payment);
+                } else {
+                    props.handlePaymentError("There was an error completing your payment");
+                }
+            }).catch((err: Error) => {
+                props.handleGenericRequestError(err)
+            });
+        } else {
+            props.handlePaymentError("There was a problem adding a payment method to your subscription");
+        }
     }
+
+    let checkoutHeader = null;
+    if (props.paymentState === PaymentState.CreatedUnpaid) {
+        checkoutHeader = "Checkout to start your premium subscription";
+    } else if (props.paymentState === PaymentState.TrialNoPaymentMethod) {
+        checkoutHeader = "Add a payment method to your subscription";
+    }
+    const showSubtitle = props.paymentState === PaymentState.TrialNoPaymentMethod;
 
     const classes = styleClasses();
     return (
         <form onSubmit={handleSubmit} noValidate autoComplete="off">
+            {
+                !!checkoutHeader && (
+                    <Heading3 color={TypographyColor.Primary}>
+                        {checkoutHeader}
+                    </Heading3>
+                )
+            }
+            {
+                showSubtitle && (
+                    <div>
+                        <Paragraph size={Size.Small}>
+                            Your trial is already started and you can add a payment method later.
+                        </Paragraph>
+                        <Paragraph size={Size.Small}>
+                            However, if you have not added a payment method at the end of the trial period, you will lose premium benefits!
+                        </Paragraph>
+                        <Paragraph size={Size.Small}>
+                            You won’t be charged until the end of your trial period.
+                        </Paragraph>
+                    </div>
+                )
+            }
             <Grid container>
                 <Grid item xs={false} md={3}>
                     &nbsp;
