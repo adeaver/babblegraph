@@ -7,6 +7,12 @@ import (
 func RegisterRouteGroups() error {
 	return router.RegisterRouteGroup(router.RouteGroup{
 		Prefix: "stripe",
+		Routes: []router.Route{
+			{
+				Path:    "handle_stripe_event_1",
+				Handler: handleStripeWebhook,
+			},
+		},
 		AuthenticatedRoutes: []router.AuthenticatedRoute{
 			{
 				Path:    "create_user_subscription_1",
