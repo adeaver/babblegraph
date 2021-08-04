@@ -4,9 +4,12 @@ import (
 	"babblegraph/services/web/router"
 )
 
+const routeGroupPrefix = "stripe"
+
 func RegisterRouteGroups() error {
-	return router.RegisterRouteGroup(router.RouteGroup{
-		Prefix: "stripe",
+	if err := router.RegisterRouteGroup(router.RouteGroup{
+		Prefix: routeGroupPrefix,
+		Routes: []router.Route{},
 		AuthenticatedRoutes: []router.AuthenticatedRoute{
 			{
 				Path:    "create_user_subscription_1",
@@ -22,5 +25,8 @@ func RegisterRouteGroups() error {
 				Handler: updateStripeSubscriptionFrequencyForUser,
 			},
 		},
-	})
+	}); err != nil {
+		return err
+	}
+	return router.RegisterRouteWithoutWrapper(routeGroupPrefix, "handle_stripe_event_1", handleStripeWebhook)
 }

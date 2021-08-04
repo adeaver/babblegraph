@@ -2,41 +2,6 @@ package env
 
 import "fmt"
 
-type Environment string
-
-const (
-	EnvironmentProd           Environment = "prod"
-	EnvironmentStage          Environment = "stage"
-	EnvironmentLocal          Environment = "local"
-	EnvironmentLocalNoEmail   Environment = "local-no-emails"
-	EnvironmentLocalTestEmail Environment = "local-test-emails"
-)
-
-func (e Environment) Str() string {
-	return string(e)
-}
-
-func (e Environment) Ptr() *Environment {
-	return &e
-}
-
-func mustEnvironmentFromString(s string) Environment {
-	switch s {
-	case "prod":
-		return EnvironmentProd
-	case "stage":
-		return EnvironmentStage
-	case "local":
-		return EnvironmentLocal
-	case "local-no-emails":
-		return EnvironmentLocalNoEmail
-	case "local-test-emails":
-		return EnvironmentLocalTestEmail
-	default:
-		panic(fmt.Sprintf("Unrecognized environment: %s", s))
-	}
-}
-
 func GetAbsoluteURLForEnvironment(path string) string {
 	environment := mustEnvironmentFromString(GetEnvironmentVariableOrDefault("ENV", EnvironmentProd.Str()))
 	switch environment {

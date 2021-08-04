@@ -2,9 +2,11 @@ package stripe
 
 import (
 	"babblegraph/externalapis/bgstripe"
+	"babblegraph/model/useraccounts"
 	"babblegraph/model/users"
 	"babblegraph/util/database"
 	"encoding/json"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -28,7 +30,15 @@ func createUserSubscription(userID users.UserID, body []byte) (interface{}, erro
 	var stripeSubscriptionOutput *bgstripe.StripeCustomerSubscriptionOutput
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		var err error
-		// This method also creates the user subscription if applicable
+		if err := useraccounts.AddSubscriptionLevelForUser(tx, useraccounts.AddSubscriptionLevelForUserInput{
+			UserID:            userID,
+			SubscriptionLevel: useraccounts.SubscriptionLevelPremium,
+			ShouldStartActive: false,
+			// Create an expired subscription, the webhook will update this
+			ExpirationTime: time.Now().Add(-10 * 24 * time.Hour),
+		}); err != nil {
+			return err
+		}
 		stripeSubscriptionOutput, err = bgstripe.CreateUnpaidStripeCustomerSubscriptionForUser(tx, userID, req.IsYearlySubscription)
 		return err
 	}); err != nil {

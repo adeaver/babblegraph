@@ -76,6 +76,22 @@ func RegisterRouteGroup(rg RouteGroup) error {
 	return nil
 }
 
+// This method is like way discouraged
+func RegisterRouteWithoutWrapper(routeGroupPrefix string, path string, handler func(http.ResponseWriter, *http.Request)) error {
+	_, ok := a.prefixes[routeGroupPrefix]
+	if !ok {
+		return fmt.Errorf("No valid route group prefix")
+	}
+	routePath := fmt.Sprintf("/%s/%s/%s", apiPrefix, routeGroupPrefix, path)
+	if err := registerRoute(registerRouteInput{
+		muxRoute: handler,
+		path:     routePath,
+	}); err != nil {
+		return err
+	}
+	return nil
+}
+
 type registerRouteInput struct {
 	shouldLogBody    bool
 	trackEventWithID *string
