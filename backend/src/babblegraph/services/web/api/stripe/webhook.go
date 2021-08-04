@@ -3,6 +3,7 @@ package stripe
 import (
 	"babblegraph/externalapis/bgstripe"
 	"babblegraph/model/useraccounts"
+	"babblegraph/model/useraccountsnotifications"
 	"babblegraph/util/database"
 	"babblegraph/util/env"
 	"encoding/json"
@@ -72,20 +73,29 @@ func handleStripeWebhook(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}
-	case "invoice.payment_failed":
+	case "invoice.payment_failed",
+		"invoice.payment_action_required":
 		// Alert user
 		var invoice stripe.Invoice
 		if err := json.Unmarshal(event.Data.Raw, &invoice); err != nil {
 			handleWebhookError(w, "invoice event", err)
 			return
 		}
-	case "invoice.payment_action_required":
-		// Alert user that there is action required on their part, setup expiration to occur within 2 days if unseen
-		var invoice stripe.Invoice
-		if err := json.Unmarshal(event.Data.Raw, &invoice); err != nil {
-			handleWebhookError(w, "invoice event", err)
+		stripeSubscriptionID := bgstripe.SubscriptionID(invoice.Subscription.ID)
+		var enqueuedNotificationRequest bool
+		if err := database.WithTx(func(tx *sqlx.Tx) error {
+			userID, err := bgstripe.LookupBabblegraphUserIDForStripeSubscriptionID(tx, stripeSubscriptionID)
+			if err != nil {
+				return err
+			}
+			holdUntilTime := time.Now().Add(5 * time.Minute)
+			enqueuedNotificationRequest, err = useraccountsnotifications.EnqueueNotificationRequest(tx, *userID, useraccountsnotifications.NotificationTypePaymentError, holdUntilTime)
+			return err
+		}); err != nil {
+			handleWebhookError(w, "invoice failure notification", err)
 			return
 		}
+		log.Println(fmt.Sprintf("Did enqueue message for subscription %s: %t", stripeSubscriptionID, enqueuedNotificationRequest))
 	case "customer.subscription.trial_will_end":
 		// Alert user that trial subscription will be ending
 		var subscription stripe.Subscription
@@ -93,6 +103,21 @@ func handleStripeWebhook(w http.ResponseWriter, r *http.Request) {
 			handleWebhookError(w, "subscription event", err)
 			return
 		}
+		stripeSubscriptionID := bgstripe.SubscriptionID(subscription.ID)
+		var enqueuedNotificationRequest bool
+		if err := database.WithTx(func(tx *sqlx.Tx) error {
+			userID, err := bgstripe.LookupBabblegraphUserIDForStripeSubscriptionID(tx, stripeSubscriptionID)
+			if err != nil {
+				return err
+			}
+			holdUntilTime := time.Now().Add(30 * time.Minute)
+			enqueuedNotificationRequest, err = useraccountsnotifications.EnqueueNotificationRequest(tx, *userID, useraccountsnotifications.NotificationTypeTrialEndingSoon, holdUntilTime)
+			return err
+		}); err != nil {
+			handleWebhookError(w, "invoice failure notification", err)
+			return
+		}
+		log.Println(fmt.Sprintf("Did enqueue message for subscription %s: %t", stripeSubscriptionID, enqueuedNotificationRequest))
 	case "customer.subscription.updated":
 		// Handle state change
 		var subscription stripe.Subscription
@@ -101,6 +126,7 @@ func handleStripeWebhook(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if err := database.WithTx(func(tx *sqlx.Tx) error {
+			// TODO: If moving from stage 0 to 3, then we need to send an email alerting them that their subscription is active
 			return bgstripe.HandleStripeSubscriptionStatusUpdate(tx, bgstripe.SubscriptionID(subscription.ID), subscription.Status)
 		}); err != nil {
 			handleWebhookError(w, "subscription update", err)
@@ -114,6 +140,7 @@ func handleStripeWebhook(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		stripeSubscriptionID := bgstripe.SubscriptionID(subscription.ID)
+		var enqueuedNotificationRequest bool
 		if err := database.WithTx(func(tx *sqlx.Tx) error {
 			userID, err := bgstripe.LookupBabblegraphUserIDForStripeSubscriptionID(tx, stripeSubscriptionID)
 			if err != nil {
@@ -122,11 +149,17 @@ func handleStripeWebhook(w http.ResponseWriter, r *http.Request) {
 			if err := useraccounts.ExpireSubscriptionForUser(tx, *userID); err != nil {
 				return err
 			}
+			holdUntilTime := time.Now().Add(5 * time.Minute)
+			enqueuedNotificationRequest, err = useraccountsnotifications.EnqueueNotificationRequest(tx, *userID, useraccountsnotifications.NotificationTypePremiumSubscriptionCanceled, holdUntilTime)
+			if err != nil {
+				return err
+			}
 			return bgstripe.HandleStripeSubscriptionStatusUpdate(tx, stripeSubscriptionID, stripe.SubscriptionStatusCanceled)
 		}); err != nil {
-			handleWebhookError(w, "subscription update", err)
+			handleWebhookError(w, "subscription deleted", err)
 			return
 		}
+		log.Println(fmt.Sprintf("Did enqueue message for subscription %s: %t", stripeSubscriptionID, enqueuedNotificationRequest))
 	}
 	w.WriteHeader(http.StatusOK)
 }
