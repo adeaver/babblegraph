@@ -19,10 +19,18 @@ import (
 const (
 	defaultSubscriptionTrialLength = 14
 
-	getStripeSubscriptionsForUserQuery        = "SELECT * FROM bgstripe_subscription WHERE babblegraph_user_id = $1"
-	insertStripeSubscriptionForUserQuery      = "INSERT INTO bgstripe_subscription (babblegraph_user_id, stripe_subscription_id, payment_state, stripe_product_id) VALUES ($1, $2, $3, $4)"
-	updateStripeSubscriptionPaymentStateQuery = "UPDATE bgstripe_subscription SET payment_state = $1 WHERE babblegraph_user_id = $2 AND stripe_subscription_id = $3"
-	updateStripeSubscriptionProductID         = "UPDATE bgstripe_subscription SET stripe_product_id = $1 WHERE babblegraph_user_id = $2 AND stripe_subscription_id = $3"
+	getStripeSubscriptionQuery         = "SELECT * FROM bgstripe_subscription WHERE stripe_subscription_id = $1"
+	getStripeSubscriptionsForUserQuery = "SELECT * FROM bgstripe_subscription WHERE babblegraph_user_id = $1"
+
+	insertStripeSubscriptionForUserQuery = "INSERT INTO bgstripe_subscription (babblegraph_user_id, stripe_subscription_id, payment_state, stripe_product_id) VALUES ($1, $2, $3, $4)"
+
+	// The logical distinction between these two is the that second one is for use with trusted
+	// sources where we don't need to verify that a subscription belongs to a user. The first is
+	// for untrusted sources  (i.e. the frontend)
+	updateStripeSubscriptionPaymentStateQuery       = "UPDATE bgstripe_subscription SET payment_state = $1 WHERE babblegraph_user_id = $2 AND stripe_subscription_id = $3"
+	updateStripeSubscriptionPaymentStateNoUserQuery = "UPDATE bgstripe_subscription SET payment_state = $1 WHERE stripe_subscription_id = $2"
+
+	updateStripeSubscriptionProductID = "UPDATE bgstripe_subscription SET stripe_product_id = $1 WHERE babblegraph_user_id = $2 AND stripe_subscription_id = $3"
 )
 
 type StripeCustomerSubscriptionOutput struct {
@@ -60,9 +68,6 @@ func CreateUnpaidStripeCustomerSubscriptionForUser(tx *sqlx.Tx, userID users.Use
 	switch newPaymentState {
 	case PaymentStateTrialNoPaymentMethod:
 		// Create a trial
-		if err := useraccounts.AddSubscriptionLevelForUser(tx, userID, useraccounts.SubscriptionLevelPremium); err != nil {
-			return nil, err
-		}
 		subscriptionParams.TrialPeriodDays = stripe.Int64(*trialPeriodDays)
 		subscriptionParams.AddExpand("pending_setup_intent")
 	case PaymentStateCreatedUnpaid:
@@ -158,6 +163,34 @@ func LookupNonterminatedStripeSubscriptionForUser(tx *sqlx.Tx, userID users.User
 	return nil, isEligibleForTrial, nil
 }
 
+func HandleStripeSubscriptionStatusUpdate(tx *sqlx.Tx, stripeSubscriptionID SubscriptionID, newStatus stripe.SubscriptionStatus) error {
+	subscription, err := lookupStripeSubscriptionByID(tx, stripeSubscriptionID)
+	switch {
+	case err != nil:
+		return err
+	case subscription == nil:
+		return nil
+	}
+	switch newStatus {
+	case stripe.SubscriptionStatusActive:
+		if _, err := tx.Exec(updateStripeSubscriptionPaymentStateNoUserQuery, PaymentStateActive, stripeSubscriptionID); err != nil {
+			return err
+		}
+	case stripe.SubscriptionStatusIncomplete,
+		stripe.SubscriptionStatusIncompleteExpired,
+		stripe.SubscriptionStatusCanceled:
+		if _, err := tx.Exec(updateStripeSubscriptionPaymentStateNoUserQuery, PaymentStateTerminated, stripeSubscriptionID); err != nil {
+			return err
+		}
+	case stripe.SubscriptionStatusPastDue,
+		stripe.SubscriptionStatusUnpaid,
+		stripe.SubscriptionStatusTrialing,
+		stripe.SubscriptionStatusAll:
+		// no-op
+	}
+	return nil
+}
+
 func CancelStripeSubscription(tx *sqlx.Tx, userID users.UserID, stripeSubscriptionID SubscriptionID) (bool, error) {
 	stripe.Key = env.MustEnvironmentVariable("STRIPE_KEY")
 	res, err := tx.Exec(updateStripeSubscriptionPaymentStateQuery, PaymentStateTerminated, userID, stripeSubscriptionID)
@@ -218,6 +251,33 @@ func lookupStripeSubscriptionsForUser(tx *sqlx.Tx, userID users.UserID) ([]dbStr
 		return nil, err
 	}
 	return matches, nil
+}
+
+func LookupBabblegraphUserIDForStripeSubscriptionID(tx *sqlx.Tx, subscriptionID SubscriptionID) (*users.UserID, error) {
+	subscription, err := lookupStripeSubscriptionByID(tx, subscriptionID)
+	if err != nil {
+		return nil, err
+	}
+	if subscription == nil {
+		return nil, nil
+	}
+	return &subscription.BabblegraphUserID, nil
+}
+
+func lookupStripeSubscriptionByID(tx *sqlx.Tx, subscriptionID SubscriptionID) (*dbStripeSubscription, error) {
+	var matches []dbStripeSubscription
+	if err := tx.Select(&matches, getStripeSubscriptionQuery, subscriptionID); err != nil {
+		return nil, err
+	}
+	switch {
+	case len(matches) == 0:
+		return nil, nil
+	case len(matches) == 1:
+		m := matches[0]
+		return &m, nil
+	default:
+		return nil, fmt.Errorf("Expected one subscription, but got %d", len(matches))
+	}
 }
 
 func getPriceIDForEnvironmentAndPaymentType(isYearlySubscription bool) StripeProductID {

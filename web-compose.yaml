@@ -35,6 +35,7 @@ services:
       - ENV=local-no-emails
       - STRIPE_KEY=$BABBLEGRAPH_STRIPE_KEY
       - STRIPE_PUBLIC_KEY=$BABBLEGRAPH_STRIPE_PUBLIC_KEY
+      - STRIPE_WEBHOOK_SECRET=$BABBLEGRAPH_STRIPE_WEBHOOK_SECRET
     command: go run /usr/local/go/src/babblegraph/services/web/main.go
   frontend:
     build:
