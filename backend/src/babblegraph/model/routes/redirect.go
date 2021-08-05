@@ -16,6 +16,7 @@ const (
 	LoginRedirectKeyContentTopics          LoginRedirectKey = "cts"
 	LoginRedirectKeyNewsletterPreferences  LoginRedirectKey = "npf"
 	LoginRedirectKeyCheckoutPage           LoginRedirectKey = "premco"
+	LoginRedirectKeyPaymentSettings        LoginRedirectKey = "pymtst"
 
 	LoginRedirectKeyDefault = LoginRedirectKeySubscriptionManagement
 )
@@ -36,6 +37,8 @@ func GetLoginRedirectKeyOrDefault(loginKey string) LoginRedirectKey {
 		return LoginRedirectKeyNewsletterPreferences
 	case LoginRedirectKeyCheckoutPage.Str():
 		return LoginRedirectKeyCheckoutPage
+	case LoginRedirectKeyPaymentSettings.Str():
+		return LoginRedirectKeyPaymentSettings
 	default:
 		return LoginRedirectKeyDefault
 	}
@@ -53,6 +56,8 @@ func GetLoginRedirectRouteForKeyAndUser(loginRedirectKey LoginRedirectKey, userI
 		return MakeNewsletterPreferencesLink(userID)
 	case LoginRedirectKeyCheckoutPage:
 		return MakePremiumSubscriptionCheckoutLink(userID)
+	case LoginRedirectKeyPaymentSettings:
+		return MakePaymentSettingsRouteForUserID(userID)
 	default:
 		return nil, fmt.Errorf("unimplemented")
 	}
@@ -72,6 +77,10 @@ func MakeLoginLinkWithNewsletterPreferencesRedirect() string {
 
 func MakeLoginLinkWithPremiumSubscriptionCheckoutRedirect() string {
 	return makeLoginLinkForLoginRedirectKey(LoginRedirectKeyCheckoutPage)
+}
+
+func MakeLoginLinkWithPaymentSettingsRedirectKey() string {
+	return makeLoginLinkForLoginRedirectKey(LoginRedirectKeyPaymentSettings)
 }
 
 func makeLoginLinkForLoginRedirectKey(key LoginRedirectKey) string {

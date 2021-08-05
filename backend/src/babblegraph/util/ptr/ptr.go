@@ -18,6 +18,10 @@ func Time(t time.Time) *time.Time {
 	return &t
 }
 
+func Duration(d time.Duration) *time.Duration {
+	return &d
+}
+
 func Bool(b bool) *bool {
 	return &b
 }
