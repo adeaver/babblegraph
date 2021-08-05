@@ -29,8 +29,10 @@ func StartScheduler(linkProcessor *linkprocessing.LinkProcessor, errs chan error
 		c.AddFunc("30 12 * * *", makeUserFeedbackJob(errs))
 		c.AddFunc("*/1 * * * *", makeVerificationJob(errs))
 		c.AddFunc("*/3 * * * *", makeForgotPasswordJob(errs))
+		c.AddFunc("*/5 * * * *", makeUserAccountNotificationsJob(errs))
 	case "local-test-emails",
 		"local":
+		c.AddFunc("*/1 * * * *", makeUserAccountNotificationsJob(errs))
 		c.AddFunc("*/1 * * * *", makeVerificationJob(errs))
 		c.AddFunc("*/1 * * * *", makeForgotPasswordJob(errs))
 		c.AddFunc("*/5 * * * *", makeArchiveForgotPasswordAttemptsJob(errs))
@@ -203,6 +205,35 @@ func makeArchiveForgotPasswordAttemptsJob(errs chan error) func() {
 		}()
 		log.Println("Starting forgot password archive job...")
 		if err := handleArchiveForgotPasswordAttempts(); err != nil {
+			localHub.CaptureException(err)
+			errs <- err
+		}
+	}
+}
+
+func makeUserAccountNotificationsJob(errs chan error) func() {
+	return func() {
+		today := time.Now()
+		localHub := sentry.CurrentHub().Clone()
+		localHub.ConfigureScope(func(scope *sentry.Scope) {
+			scope.SetTag("user-accounts-notifications-job", fmt.Sprintf("user-accounts-notifications-job-%s-%d-%d-%d-%d", today.Month().String(), today.Day(), today.Year(), today.Hour(), today.Minute()))
+		})
+		defer func() {
+			if x := recover(); x != nil {
+				_, fn, line, _ := runtime.Caller(1)
+				err := fmt.Errorf("User Accounts Notifications Panic: %s: %d: %v\n%s", fn, line, x, string(debug.Stack()))
+				localHub.CaptureException(err)
+				errs <- err
+			}
+		}()
+		log.Println("Starting user accounts notifications job...")
+		emailClient := ses.NewClient(ses.NewClientInput{
+			AWSAccessKey:       env.MustEnvironmentVariable("AWS_SES_ACCESS_KEY"),
+			AWSSecretAccessKey: env.MustEnvironmentVariable("AWS_SES_SECRET_KEY"),
+			AWSRegion:          "us-east-1",
+			FromAddress:        env.MustEnvironmentVariable("EMAIL_ADDRESS"),
+		})
+		if err := handlePendingUserAccountNotificatioRequests(localHub, emailClient); err != nil {
 			localHub.CaptureException(err)
 			errs <- err
 		}
