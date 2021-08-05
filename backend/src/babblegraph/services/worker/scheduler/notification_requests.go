@@ -39,9 +39,9 @@ func handlePendingUserAccountNotificatioRequests(localSentryHub *sentry.Hub, ema
 			case useraccountsnotifications.NotificationTypeTrialEndingSoon:
 				return handleTrialEndingSoonNotification(tx, emailClient, *user, req)
 			case useraccountsnotifications.NotificationTypeAccountCreated:
-				// Send account creation notificaiton
+				return handleAccountCreationNotification(tx, emailClient, *user)
 			case useraccountsnotifications.NotificationTypePaymentError:
-				// Send payment error notification
+				return handlePaymentFailureNotification(tx, emailClient, *user)
 			case useraccountsnotifications.NotificationTypePremiumSubscriptionCanceled:
 				return handlePremiumSubscriptionCanceledNotification(tx, emailClient, *user)
 			default:
@@ -143,7 +143,7 @@ func handleTrialEndingSoonNotification(tx *sqlx.Tx, cl *ses.Client, user users.U
 
 func handlePremiumSubscriptionCanceledNotification(tx *sqlx.Tx, cl *ses.Client, user users.User) error {
 	emailInput := &email_actions.SendGenericEmailWithOptionalActionForRecipientInput{
-		EmailType: email.EmailTypeTrialEndingSoon,
+		EmailType: email.EmailTypePremiumSubscriptionCanceled,
 		Recipient: email.Recipient{
 			UserID:       user.ID,
 			EmailAddress: user.EmailAddress,
@@ -159,6 +159,61 @@ func handlePremiumSubscriptionCanceledNotification(tx *sqlx.Tx, cl *ses.Client, 
 		},
 		AfterParagraphs: []string{
 			"If you think that you received this email by mistake or if you have any other questions or concerns, then just reply to this email.",
+		},
+	}
+	if _, err := email_actions.SendGenericEmailWithOptionalActionForRecipient(tx, cl, *emailInput); err != nil {
+		return err
+	}
+	return nil
+}
+
+func handlePaymentFailureNotification(tx *sqlx.Tx, cl *ses.Client, user users.User) error {
+	paymentSettingsLink := routes.MakeLoginLinkWithPaymentSettingsRedirectKey()
+	emailInput := &email_actions.SendGenericEmailWithOptionalActionForRecipientInput{
+		EmailType: email.EmailTypePaymentFailureNotification,
+		Recipient: email.Recipient{
+			UserID:       user.ID,
+			EmailAddress: user.EmailAddress,
+		},
+		Subject:       "ACTION REQUIRED: Payment Failed",
+		EmailTitle:    "ACTION REQUIRED: Payment Failed",
+		PreheaderText: "A recent payment attempt failed.",
+		BeforeParagraphs: []string{
+			"Hello!",
+			"There was a failure to charge the default payment method on your account.",
+			"Double check to make sure that your payment information is correct with the link below, as well as making sure with your financial institution that the transaction is allowed!",
+			"We will automatically retry with your current payment method. Sometimes, these payment failures happen and get resolved on their own.",
+			"If it keeps failing, you will lose access to Babblegraph Premium",
+		},
+		GenericEmailAction: &email_actions.GenericEmailAction{
+			Link:       paymentSettingsLink,
+			ButtonText: "Check your payment settings",
+		},
+		AfterParagraphs: []string{
+			"If you have any questions or need any help, just reply to this email!",
+		},
+	}
+	if _, err := email_actions.SendGenericEmailWithOptionalActionForRecipient(tx, cl, *emailInput); err != nil {
+		return err
+	}
+	return nil
+}
+
+func handleAccountCreationNotification(tx *sqlx.Tx, cl *ses.Client, user users.User) error {
+	emailInput := &email_actions.SendGenericEmailWithOptionalActionForRecipientInput{
+		EmailType: email.EmailTypeAccountCreationNotification,
+		Recipient: email.Recipient{
+			UserID:       user.ID,
+			EmailAddress: user.EmailAddress,
+		},
+		Subject:       "Account Creation Confirmation",
+		EmailTitle:    "Account Creation Confirmation",
+		PreheaderText: "Your account was successfully created",
+		BeforeParagraphs: []string{
+			"Hello!",
+			"This email is to let you know that your Babblegraph account was successfully created.",
+			"If you did not initiate this, please respond to this email!",
+			"If you did initiate this, then no further action is required on your part.",
 		},
 	}
 	if _, err := email_actions.SendGenericEmailWithOptionalActionForRecipient(tx, cl, *emailInput); err != nil {

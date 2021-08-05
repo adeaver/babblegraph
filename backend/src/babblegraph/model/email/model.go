@@ -34,6 +34,8 @@ const (
 	EmailTypeTrialEndingSoonActionRequired EmailType = "trial-ending-soon-action-required"
 	EmailTypeTrialEndingSoon               EmailType = "trial-ending-soon"
 	EmailTypePremiumSubscriptionCanceled   EmailType = "premium-subscription-canceled"
+	EmailTypePaymentFailureNotification    EmailType = "payment-failure-notification"
+	EmailTypeAccountCreationNotification   EmailType = "account-creation-notification"
 )
 
 type Recipient struct {
