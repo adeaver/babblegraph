@@ -171,6 +171,15 @@ const SubscriptionManagementDashboardPage = (props: SubscriptionManagementDashbo
                                     </ActionCard>
                                 )
                             }
+                            {
+                                subscriptionLevel && (
+                                    <ActionCard
+                                        redirectURL={`/manage/${token}/payment-settings`}
+                                        title='Subscription and Payment Settings'>
+                                        Need to update your preferred payment method or cancel your subscription? Click here!
+                                    </ActionCard>
+                                )
+                            }
                             <ActionCard redirectURL={`/manage/${token}/unsubscribe`} title='Unsubscribe'>
                                 If you’re no longer interested in receiving newsletters, you can unsubscribe here. By unsubscribing, we won’t send you any more emails about anything.
                             </ActionCard>
