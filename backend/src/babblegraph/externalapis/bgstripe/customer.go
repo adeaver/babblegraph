@@ -14,7 +14,8 @@ import (
 
 const (
 	getStripeCustomerForUserQuery = "SELECT * FROM bgstripe_customer WHERE babblegraph_user_id = $1"
-	createCustomerForUserQuery    = "INSERT INTO bgstripe_customer (babblegraph_user_id, stripe_customer_id) VALUES ($1, $2)"
+	createCustomerForUserQuery    = "INSERT INTO bgstripe_customer (babblegraph_user_id, stripe_customer_id) VALUES ($1, $2) ON CONFLICT DO NOTHING"
+	setDefaultPaymentMethodID     = "UPDATE bgstripe_customer SET default_payment_method_id = $1 WHERE stripe_customer_id = $2"
 )
 
 func CreateCustomerForUser(tx *sqlx.Tx, userID users.UserID) (*CustomerID, error) {
@@ -44,6 +45,25 @@ func CreateCustomerForUser(tx *sqlx.Tx, userID users.UserID) (*CustomerID, error
 	}
 	asCustomerID := CustomerID(stripeCustomer.ID)
 	return &asCustomerID, nil
+}
+
+func SetDefaultPaymentMethodForCustomer(tx *sqlx.Tx, customerID CustomerID, paymentMethodID PaymentMethodID) error {
+	if _, err := tx.Exec(setDefaultPaymentMethodID, paymentMethodID, customerID); err != nil {
+		return err
+	}
+	return nil
+}
+
+func GetStripeCustomerForUserID(tx *sqlx.Tx, userID users.UserID) (*StripeCustomer, error) {
+	customer, err := getStripeCustomerForUserID(tx, userID)
+	if err != nil {
+		return nil, err
+	}
+	return &StripeCustomer{
+		BabblegraphUserID:    customer.BabblegraphUserID,
+		CustomerID:           customer.StripeCustomerID,
+		DefaultPaymentMethod: customer.DefaultPaymentMethodID,
+	}, nil
 }
 
 func getStripeCustomerForUserID(tx *sqlx.Tx, userID users.UserID) (*dbStripeCustomer, error) {
