@@ -11,7 +11,7 @@ services:
       - babblegraph_web_default
   proxy:
     image: nginx:mainline-alpine
-    restart: unless-stopped
+    restart: always 
     ports:
       - "80:80"
       - "443:443"
