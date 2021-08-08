@@ -14,7 +14,10 @@ import { TypographyColor } from 'common/typography/common';
 
 import {
     getSetupIntentForUser,
-    GetSetupIntentForUserResponse
+    GetSetupIntentForUserResponse,
+
+    insertNewPaymentMethodForUser,
+    InsertNewPaymentMethodForUserResponse,
 } from 'api/stripe/payment_method';
 
 declare const window: any;
@@ -99,8 +102,17 @@ const AddPaymentMethodFormAction = (props: AddPaymentMethodFormActionProps) => {
             }
         }).then((result: StripeSetupIntentResult) => {
             if (!!result.setupIntent && result.setupIntent.status === "succeeded") {
-                // TODO: Send request to Babblegraph API for payment method
-                props.handleSuccess("");
+                insertNewPaymentMethodForUser({
+                    stripePaymentMethodId: result.setupIntent.payment_method,
+                },
+                (resp: InsertNewPaymentMethodForUserResponse) => {
+                    handleIsLoadingStripeRequest(false);
+                    props.handleSuccess(resp.paymentMethod.stripePaymentMethodId);
+                },
+                (err: Error) => {
+                    handleIsLoadingStripeRequest(false);
+                    props.handleError(err)
+                });
             } else if (!!result.error) {
                 handleIsLoadingStripeRequest(false);
                 props.handleFailure(result.error.message);

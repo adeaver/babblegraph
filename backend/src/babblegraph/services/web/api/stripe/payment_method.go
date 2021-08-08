@@ -4,6 +4,7 @@ import (
 	"babblegraph/externalapis/bgstripe"
 	"babblegraph/model/users"
 	"babblegraph/util/database"
+	"encoding/json"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -27,5 +28,31 @@ func getSetupIntentForUser(userID users.UserID, body []byte) (interface{}, error
 	return getSetupIntentForUserResponse{
 		SetupIntentID: addPaymentMethodCreds.SetupIntentID,
 		ClientSecret:  addPaymentMethodCreds.ClientSecret,
+	}, nil
+}
+
+type insertNewPaymentMethodForUserRequest struct {
+	StripePaymentMethodID bgstripe.PaymentMethodID `json:"stripe_payment_method_id"`
+}
+
+type insertNewPaymentMethodForUserResponse struct {
+	PaymentMethod bgstripe.PaymentMethod `json:"payment_method"`
+}
+
+func insertNewPaymentMethodForUser(userID users.UserID, body []byte) (interface{}, error) {
+	var req insertNewPaymentMethodForUserRequest
+	if err := json.Unmarshal(body, &req); err != nil {
+		return nil, err
+	}
+	var paymentMethod *bgstripe.PaymentMethod
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		var err error
+		paymentMethod, err = bgstripe.FindStripePaymentMethodAndInsert(tx, userID, req.StripePaymentMethodID)
+		return err
+	}); err != nil {
+		return nil, err
+	}
+	return insertNewPaymentMethodForUserResponse{
+		PaymentMethod: *paymentMethod,
 	}, nil
 }
