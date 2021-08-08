@@ -31,7 +31,6 @@ func GetAddPaymentMethodCredentialsForUser(tx *sqlx.Tx, userID users.UserID) (*A
 		return nil, err
 	}
 	params := &stripe.SetupIntentParams{
-		Confirm:  ptr.Bool(true),
 		Customer: stripe.String(string(customer.StripeCustomerID)),
 		PaymentMethodTypes: []*string{
 			stripe.String("card"),
@@ -57,19 +56,19 @@ func FindStripePaymentMethodAndInsert(tx *sqlx.Tx, userID users.UserID, stripePa
 	if err := InsertPaymentMethod(tx, userID, paymentMethod); err != nil {
 		return nil, err
 	}
-	paymentMethod, err := LookupPaymentMethod(tx, stripePaymentMethodID)
+	bgPaymentMethod, err := LookupPaymentMethod(tx, stripePaymentMethodID)
 	switch {
 	case err != nil:
 		return nil, err
-	case paymentMethod == nil:
+	case bgPaymentMethod == nil:
 		return nil, fmt.Errorf("No payment method found")
 	default:
-		return paymentMethod, nil
+		return bgPaymentMethod, nil
 	}
 
 }
 
-func InsertPaymentMethod(tx *sqlx.Tx, userID users.UserID, paymentMethod stripe.PaymentMethod) error {
+func InsertPaymentMethod(tx *sqlx.Tx, userID users.UserID, paymentMethod *stripe.PaymentMethod) error {
 	if paymentMethod.Card == nil {
 		return nil
 	}
@@ -105,7 +104,7 @@ func LookupPaymentMethod(tx *sqlx.Tx, paymentMethodID PaymentMethodID) (*Payment
 			LastFourDigits:        m.LastFourDigits,
 			ExpirationMonth:       m.ExpirationMonth,
 			ExpirationYear:        m.ExpirationYear,
-			IsDefault:             customer.DefaultPaymentMethodID == nil && *customer.DefaultPaymentMethodID == m.StripePaymentMethodID,
+			IsDefault:             customer.DefaultPaymentMethodID != nil && *customer.DefaultPaymentMethodID == m.StripePaymentMethodID,
 		}, nil
 	default:
 		return nil, fmt.Errorf("Expected at most 1 match, but got %d", len(matches))
