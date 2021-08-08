@@ -2,9 +2,12 @@ package bgstripe
 
 import (
 	"babblegraph/model/users"
+	"babblegraph/util/env"
+	"babblegraph/util/ptr"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/stripe/stripe-go/v72"
+	"github.com/stripe/stripe-go/v72/setupintent"
 )
 
 const (
@@ -12,6 +15,35 @@ const (
 
 	getPaymentMethodForUserQuery = "SELECT * FROM bgstripe_payment_method WHERE babblegraph_user_id = $1"
 )
+
+type AddPaymentMethodCredentials struct {
+	ClientSecret  string
+	SetupIntentID string
+}
+
+func GetAddPaymentMethodCredentialsForUser(tx *sqlx.Tx, userID users.UserID) (*AddPaymentMethodCredentials, error) {
+	stripe.Key = env.MustEnvironmentVariable("STRIPE_KEY")
+	customer, err := getStripeCustomerForUserID(tx, userID)
+	if err != nil {
+		return nil, err
+	}
+	params := &stripe.SetupIntentParams{
+		Confirm:  ptr.Bool(true),
+		Customer: stripe.String(string(customer.StripeCustomerID)),
+		PaymentMethodTypes: []*string{
+			stripe.String("card"),
+		},
+		Usage: ptr.String("off_session"),
+	}
+	si, err := setupintent.New(params)
+	if err != nil {
+		return nil, err
+	}
+	return &AddPaymentMethodCredentials{
+		ClientSecret:  si.ClientSecret,
+		SetupIntentID: si.ID,
+	}, nil
+}
 
 func InsertPaymentMethod(tx *sqlx.Tx, userID users.UserID, paymentMethod stripe.PaymentMethod) error {
 	if paymentMethod.Card == nil {

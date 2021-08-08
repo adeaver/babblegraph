@@ -23,6 +23,9 @@ func RegisterRouteGroups() error {
 			}, {
 				Path:    "update_stripe_subscription_for_user_1",
 				Handler: updateStripeSubscriptionFrequencyForUser,
+			}, {
+				Path:    "get_setup_intent_for_user_1",
+				Handler: getSetupIntentForUser,
 			},
 		},
 	}); err != nil {

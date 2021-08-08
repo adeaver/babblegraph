@@ -7,20 +7,25 @@ import {
 } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 
+import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
 import { GenericCardForm, StripeError } from 'common/components/Stripe/common';
 import { Heading3 } from 'common/typography/Heading';
 import { TypographyColor } from 'common/typography/common';
 
+import {
+    getSetupIntentForUser,
+    GetSetupIntentForUserResponse
+} from 'api/stripe/payment_method';
+
 declare const window: any;
 
 type AddPaymentMethodFormProps = {
-    customerID: string;
-    isDefault?: boolean;
-
     handleIsStripeRequestLoading: (isLoading: boolean) => void;
     handleSuccess: (paymentMethodID: string) => void;
     handleFailure: (displayableErrorMessage: string) => void;
     handleError: (err: Error) => void;
+
+    isDefault?: boolean;
 }
 
 const AddPaymentMethodForm = (props: AddPaymentMethodFormProps) => {
@@ -56,18 +61,33 @@ const AddPaymentMethodFormAction = (props: AddPaymentMethodFormActionProps) => {
     const [ isLoadingStripeRequest, setIsLoadingStripeRequest ] = useState<boolean>(false);
     const [ isLoadingComponent, setIsLoadingComponent ] = useState<boolean>(true);
 
+    const [ clientSecret, setClientSecret ] = useState<string | null>(null);
+    const [ setupIntentID, setSetupIntentID ] = useState<string | null>(null);
+    const [ error, setError ] = useState<Error>(null);
+
     const handleIsLoadingStripeRequest = (isLoading: boolean) => {
         setIsLoadingStripeRequest(isLoading);
         props.handleIsStripeRequestLoading(isLoading);
     }
 
     useEffect(() => {
-        // TODO: Create Setup Intent
+        getSetupIntentForUser(
+            {},
+            (resp: GetSetupIntentForUserResponse) => {
+                setIsLoadingComponent(false);
+                setClientSecret(resp.clientSecret);
+                setSetupIntentID(resp.setupIntentId);
+            },
+            (err: Error) => {
+                setIsLoadingComponent(false);
+                setError(err);
+            }
+        );
     }, []);
 
     const handleSubmit = (cardElement: typeof CardElement, cardholderName: string, postalCode: string) => {
         handleIsLoadingStripeRequest(true);
-        props.stripe.confirmCardSetup("", {
+        props.stripe.confirmCardSetup(clientSecret, {
             payment_method: {
                 card: cardElement,
                 billing_details: {
@@ -92,15 +112,25 @@ const AddPaymentMethodFormAction = (props: AddPaymentMethodFormActionProps) => {
             props.handleError(err)
         });
     }
-    return (
-        <div>
-            <GenericCardForm
-                actionTitle="Add a payment method"
-                elements={props.elements}
-                isLoading={isLoadingStripeRequest}
-                handleSubmit={handleSubmit} />
-        </div>
-    );
+    if (isLoadingComponent) {
+        return <LoadingSpinner />;
+    } else if (!!clientSecret && !!setupIntentID) {
+        return (
+            <div>
+                <GenericCardForm
+                    actionTitle="Add a payment method"
+                    elements={props.elements}
+                    isLoading={isLoadingStripeRequest}
+                    handleSubmit={handleSubmit} />
+            </div>
+        );
+    } else {
+        return (
+            <Heading3 color={TypographyColor.Primary}>
+                Something went wrong preparing the payment.
+            </Heading3>
+        );
+    }
 }
 
 export default AddPaymentMethodForm;

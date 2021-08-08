@@ -83,6 +83,7 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
 
     const [ isEligibleForTrial, setIsEligibleForTrial ] = useState<boolean>(false);
     const [ stripeSubscriptionID, setStripeSubscriptionID ] = useState<string | null>(null);
+    const [ stripeClientSecret, setStripeClientSecret ] = useState<string | null>(null);
     const [ stripePaymentState, setStripePaymentState ] = useState<PaymentState | null>(null);
     const [ isLoadingCreateSubscription, setIsLoadingCreateSubscription ] = useState<boolean>(false);
     const [ error, setError ] = useState<Error>(null);
@@ -99,6 +100,7 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
             setIsLoadingUserSubscription(false);
             resp.stripeSubscriptionId != null && setStripeSubscriptionID(resp.stripeSubscriptionId);
             resp.stripePaymentState != null && setStripePaymentState(resp.stripePaymentState);
+            resp.stripeClientSecret != null && setStripeClientSecret(resp.stripeClientSecret);
             !!resp.isYearlySubscription && setSubscriptionType("yearly");
             setIsEligibleForTrial(resp.isEligibleForTrial);
         },
@@ -211,7 +213,6 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
                                 handleError={setError} />
                         ) : (
                             <AddPaymentMethodForm
-                                customerID=""
                                 handleIsStripeRequestLoading={setIsPaymentConfirmationLoading}
                                 handleSuccess={(paymentMethodID: string) => setSuccessType(PaymentType.Setup)}
                                 handleFailure={setPaymentError}
