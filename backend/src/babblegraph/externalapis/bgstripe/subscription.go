@@ -213,6 +213,13 @@ func CancelStripeSubscription(tx *sqlx.Tx, userID users.UserID, stripeSubscripti
 	return true, nil
 }
 
+func UpdatePaymentStateForSubscription(tx *sqlx.Tx, userID users.UserID, stripeSubscriptionID SubscriptionID, newPaymentState PaymentState) error {
+	if _, err := tx.Exec(updateStripeSubscriptionPaymentStateQuery, newPaymentState, userID, stripeSubscriptionID); err != nil {
+		return err
+	}
+	return nil
+}
+
 func UpdateStripeSubscriptionChargeFrequency(tx *sqlx.Tx, userID users.UserID, stripeSubscriptionID SubscriptionID, isYearlySubscription bool) (bool, error) {
 	stripe.Key = env.MustEnvironmentVariable("STRIPE_KEY")
 	stripeProductID := getPriceIDForEnvironmentAndPaymentType(isYearlySubscription)
