@@ -29,6 +29,9 @@ func RegisterRouteGroups() error {
 			}, {
 				Path:    "insert_payment_method_for_user_1",
 				Handler: insertNewPaymentMethodForUser,
+			}, {
+				Path:    "set_default_payment_method_for_user_1",
+				Handler: setDefaultPaymentMethodForUser,
 			},
 		},
 	}); err != nil {

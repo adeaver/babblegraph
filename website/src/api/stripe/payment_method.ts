@@ -49,3 +49,22 @@ export function insertNewPaymentMethodForUser(
         onError,
     );
 }
+
+export type SetDefaultPaymentMethodForUserRequest = {
+    stripePaymentMethodId: string;
+}
+
+export type SetDefaultPaymentMethodForUserResponse = {}
+
+export function setDefaultPaymentMethodForUser(
+    req: SetDefaultPaymentMethodForUserRequest,
+    onSuccess: (resp: SetDefaultPaymentMethodForUserResponse) => void,
+    onError: (err: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<SetDefaultPaymentMethodForUserRequest, SetDefaultPaymentMethodForUserResponse>(
+        '/api/stripe/set_default_payment_method_for_user_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}

@@ -3,6 +3,7 @@ package bgstripe
 import (
 	"babblegraph/model/users"
 	"babblegraph/util/env"
+	"babblegraph/util/ptr"
 	"fmt"
 	"log"
 
@@ -49,7 +50,16 @@ func CreateCustomerForUser(tx *sqlx.Tx, userID users.UserID) (*CustomerID, error
 }
 
 func SetDefaultPaymentMethodForCustomer(tx *sqlx.Tx, customerID CustomerID, paymentMethodID PaymentMethodID) error {
+	stripe.Key = env.MustEnvironmentVariable("STRIPE_KEY")
 	if _, err := tx.Exec(setDefaultPaymentMethodID, paymentMethodID, customerID); err != nil {
+		return err
+	}
+	params := &stripe.CustomerParams{
+		InvoiceSettings: &stripe.CustomerInvoiceSettingsParams{
+			DefaultPaymentMethod: ptr.String(string(paymentMethodID)),
+		},
+	}
+	if _, err := customer.Update(string(customerID), params); err != nil {
 		return err
 	}
 	return nil

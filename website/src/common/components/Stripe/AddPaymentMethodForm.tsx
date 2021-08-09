@@ -15,7 +15,8 @@ import { TypographyColor } from 'common/typography/common';
 import {
     getSetupIntentForUser,
     GetSetupIntentForUserResponse,
-
+    setDefaultPaymentMethodForUser,
+    SetDefaultPaymentMethodForUserResponse,
     insertNewPaymentMethodForUser,
     InsertNewPaymentMethodForUserResponse,
 } from 'api/stripe/payment_method';
@@ -106,8 +107,23 @@ const AddPaymentMethodFormAction = (props: AddPaymentMethodFormActionProps) => {
                     stripePaymentMethodId: result.setupIntent.payment_method,
                 },
                 (resp: InsertNewPaymentMethodForUserResponse) => {
-                    handleIsLoadingStripeRequest(false);
-                    props.handleSuccess(resp.paymentMethod.stripePaymentMethodId);
+                    const createdPaymentMethodID = resp.paymentMethod.stripePaymentMethodId;
+                    if (props.isDefault) {
+                        setDefaultPaymentMethodForUser({
+                            stripePaymentMethodId: createdPaymentMethodID,
+                        },
+                        (resp: SetDefaultPaymentMethodForUserResponse) => {
+                            handleIsLoadingStripeRequest(false);
+                            props.handleSuccess(createdPaymentMethodID);
+                        },
+                        (err: Error) => {
+                            handleIsLoadingStripeRequest(false);
+                            props.handleSuccess(createdPaymentMethodID);
+                        });
+                    } else {
+                        handleIsLoadingStripeRequest(false);
+                        props.handleSuccess(createdPaymentMethodID);
+                    }
                 },
                 (err: Error) => {
                     handleIsLoadingStripeRequest(false);

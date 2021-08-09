@@ -216,7 +216,8 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
                                 handleIsStripeRequestLoading={setIsPaymentConfirmationLoading}
                                 handleSuccess={(paymentMethodID: string) => setSuccessType(PaymentType.Setup)}
                                 handleFailure={setPaymentError}
-                                handleError={setError} />
+                                handleError={setError}
+                                isDefault />
                         )
                     )
                 }
