@@ -35,17 +35,51 @@ func handleStripeWebhook(w http.ResponseWriter, r *http.Request) {
 	}
 	switch event.Type {
 	case "payment_method.attached":
-		// Add Payment Method, Update Subscription State
 		var paymentMethod stripe.PaymentMethod
 		if err := json.Unmarshal(event.Data.Raw, &paymentMethod); err != nil {
 			handleWebhookError(w, "payment method event", err)
 			return
 		}
+		if paymentMethod.Customer == nil {
+			handleWebhookError(w, "inserting payment method", fmt.Errorf("No customer for payment method"))
+			return
+		}
+		customerID := bgstripe.CustomerID(paymentMethod.Customer.ID)
+		if err := database.WithTx(func(tx *sqlx.Tx) error {
+			userID, err := bgstripe.GetUserIDForStripeCustomerID(tx, customerID)
+			if err != nil {
+				return err
+			}
+			if err := bgstripe.InsertPaymentMethod(tx, *userID, &paymentMethod); err != nil {
+				return err
+			}
+			stripeSubscription, _, err := bgstripe.LookupNonterminatedStripeSubscriptionForUser(tx, *userID)
+			if err != nil {
+				return err
+			}
+			if stripeSubscription != nil && stripeSubscription.PaymentState == bgstripe.PaymentStateTrialNoPaymentMethod {
+				if err := bgstripe.UpdatePaymentStateForSubscription(tx, *userID, stripeSubscription.SubscriptionID, bgstripe.PaymentStateTrialPaymentMethodAdded); err != nil {
+					return err
+				}
+			}
+			return nil
+		}); err != nil {
+			handleWebhookError(w, "capturing payment method event", err)
+			return
+		}
 	case "payment_method.detached":
-		// Remove payment method, update subscription state.
 		var paymentMethod stripe.PaymentMethod
 		if err := json.Unmarshal(event.Data.Raw, &paymentMethod); err != nil {
 			handleWebhookError(w, "payment method event", err)
+			return
+		}
+		if err := database.WithTx(func(tx *sqlx.Tx) error {
+			if err := bgstripe.RemovePaymentMethod(tx, bgstripe.PaymentMethodID(paymentMethod.ID)); err != nil {
+				return err
+			}
+			return nil
+		}); err != nil {
+			handleWebhookError(w, "capturing payment method event", err)
 			return
 		}
 	case "invoice.paid":

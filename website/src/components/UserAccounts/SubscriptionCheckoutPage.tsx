@@ -1,14 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { RouteComponentProps, useHistory } from 'react-router-dom';
 
-import {
-    Elements,
-    CardNumberElement,
-    CardExpiryElement,
-    CardCvcElement,
-    ElementsConsumer,
-} from "@stripe/react-stripe-js";
-import { loadStripe } from "@stripe/stripe-js";
+import AddPaymentMethodForm from 'common/components/Stripe/AddPaymentMethodForm';
+import CollectPaymentForm from 'common/components/Stripe/CollectPaymentForm';
 
 import { makeStyles } from '@material-ui/core/styles';
 import FormControl from '@material-ui/core/FormControl';
@@ -53,6 +47,12 @@ const styleClasses = makeStyles({
         display: "flex",
         justifyContent: "center",
     },
+    checkIcon: {
+        color: Color.Confirmation,
+        display: 'block',
+        margin: '0 auto',
+        fontSize: '48px',
+    },
     checkoutFormObject: {
         width: "100%",
         margin: "10px 0",
@@ -60,16 +60,7 @@ const styleClasses = makeStyles({
         paddingRight: "5px",
         boxSizing: "border-box",
     },
-    checkIcon: {
-        color: Color.Confirmation,
-        display: 'block',
-        margin: '0 auto',
-        fontSize: '48px',
-    }
 })
-
-declare const window: any;
-const stripePromise = loadStripe(window.initialData["stripe_public_key"]);
 
 enum PaymentType {
     Setup = 'setup',
@@ -108,8 +99,8 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
         (resp: GetUserNonTerminatedStripeSubscriptionResponse) => {
             setIsLoadingUserSubscription(false);
             resp.stripeSubscriptionId != null && setStripeSubscriptionID(resp.stripeSubscriptionId);
-            resp.stripeClientSecret != null && setStripeClientSecret(resp.stripeClientSecret);
             resp.stripePaymentState != null && setStripePaymentState(resp.stripePaymentState);
+            resp.stripeClientSecret != null && setStripeClientSecret(resp.stripeClientSecret);
             !!resp.isYearlySubscription && setSubscriptionType("yearly");
             setIsEligibleForTrial(resp.isEligibleForTrial);
         },
@@ -142,7 +133,6 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
         (resp: CreateUserSubscriptionResponse) => {
             setIsLoadingCreateSubscription(false);
             setStripeSubscriptionID(resp.stripeSubscriptionId);
-            setStripeClientSecret(resp.stripeClientSecret);
             setStripePaymentState(resp.stripePaymentState);
         },
         (err: Error) => {
@@ -200,7 +190,7 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
             </Heading3>
         );
     } else {
-        const shouldShowCheckoutForm = stripeClientSecret != null && !!stripeSubscriptionID && !isLoadingUpdateSubscription;
+        const shouldShowCheckoutForm = !!stripeSubscriptionID && !isLoadingUpdateSubscription;
         body = (
             <div>
                 <SubscriptionSelector
@@ -214,19 +204,21 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
                     handleSubmit={handleSubmit} />
                 {
                     shouldShowCheckoutForm && (
-                        // Unclear why, but Elements doesn't think it has children
-                        // @ts-ignore
-                        <Elements stripe={stripePromise}>
-                            <InjectedSubscriptionCheckoutFormProps
-                                stripeClientSecret={stripeClientSecret}
-                                stripeSubscriptionID={stripeSubscriptionID}
-                                isPaymentConfirmationLoading={isPaymentConfirmationLoading}
-                                setIsPaymentConfirmationLoading={setIsPaymentConfirmationLoading}
-                                paymentState={stripePaymentState!}
-                                handleSuccessfulPayment={setSuccessType}
-                                handlePaymentError={setPaymentError}
-                                handleGenericRequestError={setError} />
-                        </Elements>
+                        stripePaymentState === PaymentState.CreatedUnpaid ? (
+                            <CollectPaymentForm
+                                subscriptionID={stripeSubscriptionID}
+                                handleIsStripeRequestLoading={setIsPaymentConfirmationLoading}
+                                handleSuccess={() => setSuccessType(PaymentType.Payment)}
+                                handleFailure={setPaymentError}
+                                handleError={setError} />
+                        ) : (
+                            <AddPaymentMethodForm
+                                handleIsStripeRequestLoading={setIsPaymentConfirmationLoading}
+                                handleSuccess={(paymentMethodID: string) => setSuccessType(PaymentType.Setup)}
+                                handleFailure={setPaymentError}
+                                handleError={setError}
+                                isDefault />
+                        )
                     )
                 }
                 {
@@ -339,270 +331,6 @@ const SubscriptionSelector = (props: SubscriptionSelectorProps) => {
                 </Grid>
             </Grid>
         </div>
-    );
-}
-
-type StripePaymentIntentResult = {
-    error?: StripeError | null;
-    paymentIntent?: any;
-}
-
-type StripeSetupIntentResult = {
-    error?: StripeError | null;
-    setupIntent?: any; // TODO(fill this in?)
-}
-
-type StripeError = {
-    type: string;
-    code: string;
-    decline_code: string;
-    message: string;
-    param: string;
-    payment_intent: string;
-}
-
-type InjectedSubscriptionCheckoutFormProps = {
-    stripeClientSecret: string;
-    stripeSubscriptionID: string;
-    paymentState: PaymentState;
-    isPaymentConfirmationLoading: boolean;
-
-    setIsPaymentConfirmationLoading: (isLoading: boolean) => void;
-    handleSuccessfulPayment: (paymentType: PaymentType) => void;
-    handlePaymentError: (msg: string) => void;
-    handleGenericRequestError: (err: Error) => void;
-}
-
-const InjectedSubscriptionCheckoutFormProps = (props: InjectedSubscriptionCheckoutFormProps) => (
-    <ElementsConsumer>
-        {({stripe, elements}) => (
-            <SubscriptionCheckoutForm stripe={stripe} elements={elements} {...props} />
-        )}
-    </ElementsConsumer>
-);
-
-type SubscriptionCheckoutFormProps = InjectedSubscriptionCheckoutFormProps & {
-    stripe: any;
-    elements: any;
-}
-
-
-const SubscriptionCheckoutForm = (props: SubscriptionCheckoutFormProps) => {
-    const [ cardholderName, setCardholderName ] = useState<string>("");
-    const [ postalCode, setPostalCode ] = useState<string>("");
-
-    const handleCardholderNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setCardholderName((event.target as HTMLInputElement).value);
-    }
-    const handlePostalCodeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setPostalCode((event.target as HTMLInputElement).value);
-    }
-
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        props.setIsPaymentConfirmationLoading(true);
-        const cardElement = props.elements.getElement(CardNumberElement);
-        if (props.paymentState === PaymentState.TrialNoPaymentMethod) {
-            props.stripe.confirmCardSetup(props.stripeClientSecret, {
-                payment_method: {
-                    card: cardElement,
-                    billing_details: {
-                        name: cardholderName,
-                        address: {
-                            postal_code: postalCode,
-                        },
-                    }
-                }
-            }).then((result: StripeSetupIntentResult) => {
-                props.setIsPaymentConfirmationLoading(false);
-                if (!!result.error) {
-                    props.handlePaymentError(result.error.message);
-                } else if (!!result.setupIntent && result.setupIntent.status === "succeeded") {
-                    props.handleSuccessfulPayment(PaymentType.Setup);
-                } else {
-                    props.handlePaymentError("There was an error setting up your card");
-                }
-            }).catch((err: Error) => {
-                props.handleGenericRequestError(err)
-            });
-        } else if (props.paymentState === PaymentState.CreatedUnpaid) {
-            props.stripe.confirmCardPayment(props.stripeClientSecret, {
-                payment_method: {
-                    card: cardElement,
-                    billing_details: {
-                        name: cardholderName,
-                        address: {
-                            postal_code: postalCode,
-                        },
-                    }
-                }
-            }).then((result: StripePaymentIntentResult) => {
-                props.setIsPaymentConfirmationLoading(false);
-                if (!!result.error) {
-                    props.handlePaymentError(result.error.message);
-                } else if (!!result.paymentIntent && result.paymentIntent.status === "succeeded") {
-                    props.handleSuccessfulPayment(PaymentType.Payment);
-                } else {
-                    props.handlePaymentError("There was an error completing your payment");
-                }
-            }).catch((err: Error) => {
-                props.handleGenericRequestError(err)
-            });
-        } else {
-            props.handlePaymentError("There was a problem adding a payment method to your subscription");
-        }
-    }
-
-    let checkoutHeader = null;
-    if (props.paymentState === PaymentState.CreatedUnpaid) {
-        checkoutHeader = "Checkout to start your premium subscription";
-    } else if (props.paymentState === PaymentState.TrialNoPaymentMethod) {
-        checkoutHeader = "Add a payment method to your subscription";
-    }
-    const showSubtitle = props.paymentState === PaymentState.TrialNoPaymentMethod;
-
-    const classes = styleClasses();
-    return (
-        <form onSubmit={handleSubmit} noValidate autoComplete="off">
-            {
-                !!checkoutHeader && (
-                    <Heading3 color={TypographyColor.Primary}>
-                        {checkoutHeader}
-                    </Heading3>
-                )
-            }
-            {
-                showSubtitle && (
-                    <div>
-                        <Paragraph size={Size.Small}>
-                            Your trial is already started and you can add a payment method later.
-                        </Paragraph>
-                        <Paragraph size={Size.Small}>
-                            However, if you have not added a payment method at the end of the trial period, you will lose premium benefits!
-                        </Paragraph>
-                        <Paragraph size={Size.Small}>
-                            You won’t be charged until the end of your trial period.
-                        </Paragraph>
-                    </div>
-                )
-            }
-            <Grid container>
-                <Grid item xs={false} md={3}>
-                    &nbsp;
-                </Grid>
-                <Grid item xs={12} md={6}>
-                    <PrimaryTextField
-                        className={classes.checkoutFormObject}
-                        id="cardholder-name"
-                        label="Cardholder Name"
-                        variant="outlined"
-                        defaultValue={cardholderName}
-                        onChange={handleCardholderNameChange}
-                        disabled={props.isPaymentConfirmationLoading}
-                        required
-                        fullWidth />
-                </Grid>
-                <Grid item xs={false} md={3}>
-                    &nbsp;
-                </Grid>
-                <Grid item xs={false} md={3}>
-                    &nbsp;
-                </Grid>
-                <Grid item xs={12} md={6}>
-                    <PrimaryTextField
-                        className={classes.checkoutFormObject}
-                        id="credit-card-number"
-                        label="Credit Card Number"
-                        variant="outlined"
-                        InputLabelProps={{ shrink: true }}
-                        InputProps={{
-                            inputComponent: StripeInput,
-                            inputProps: {
-                                component: CardNumberElement
-                            },
-                        }}
-                        disabled={props.isPaymentConfirmationLoading}
-                        required
-                        fullWidth />
-
-                </Grid>
-                <Grid item xs={false} md={3}>
-                    &nbsp;
-                </Grid>
-                <Grid item xs={false} md={3}>
-                    &nbsp;
-                </Grid>
-                <Grid item xs={6} md={3}>
-                    <PrimaryTextField
-                        className={classes.checkoutFormObject}
-                        id="credit-card-expiration"
-                        label="Expiration Date"
-                        variant="outlined"
-                        InputLabelProps={{ shrink: true }}
-                        InputProps={{
-                            inputComponent: StripeInput,
-                            inputProps: {
-                                component: CardExpiryElement
-                            },
-                        }}
-                        disabled={props.isPaymentConfirmationLoading}
-                        required
-                        fullWidth />
-
-                </Grid>
-                <Grid item xs={6} md={3}>
-                    <PrimaryTextField
-                        className={classes.checkoutFormObject}
-                        id="credit-card-cvc"
-                        label="CVC"
-                        variant="outlined"
-                        InputLabelProps={{ shrink: true }}
-                        InputProps={{
-                            inputComponent: StripeInput,
-                            inputProps: {
-                                component: CardCvcElement
-                            },
-                        }}
-                        disabled={props.isPaymentConfirmationLoading}
-                        required
-                        fullWidth />
-
-                </Grid>
-                <Grid item xs={false} md={3}>
-                    &nbsp;
-                </Grid>
-                <Grid item xs={false} md={3}>
-                    &nbsp;
-                </Grid>
-                <Grid item xs={12} md={6}>
-                    <PrimaryTextField
-                        id="zip"
-                        className={classes.checkoutFormObject}
-                        label="Postal Code"
-                        variant="outlined"
-                        defaultValue={postalCode}
-                        onChange={handlePostalCodeChange}
-                        disabled={props.isPaymentConfirmationLoading}
-                        required
-                        fullWidth />
-
-                </Grid>
-                <Grid item xs={false} md={3}>
-                    &nbsp;
-                </Grid>
-                <Grid item xs={false} md={3}>
-                    &nbsp;
-                </Grid>
-                <Grid item xs={12} md={6}>
-                    <PrimaryButton
-                        type="submit"
-                        className={classes.checkoutFormObject}
-                        disabled={!postalCode || !cardholderName || props.isPaymentConfirmationLoading}>
-                        Pay
-                    </PrimaryButton>
-                </Grid>
-            </Grid>
-        </form>
     );
 }
 

@@ -3,6 +3,7 @@ package bgstripe
 import (
 	"babblegraph/model/users"
 	"babblegraph/util/env"
+	"babblegraph/util/ptr"
 	"fmt"
 	"log"
 
@@ -14,7 +15,9 @@ import (
 
 const (
 	getStripeCustomerForUserQuery = "SELECT * FROM bgstripe_customer WHERE babblegraph_user_id = $1"
-	createCustomerForUserQuery    = "INSERT INTO bgstripe_customer (babblegraph_user_id, stripe_customer_id) VALUES ($1, $2)"
+	getStripeCustomerByIDQuery    = "SELECT * FROM bgstripe_customer WHERE stripe_customer_id = $1"
+	createCustomerForUserQuery    = "INSERT INTO bgstripe_customer (babblegraph_user_id, stripe_customer_id) VALUES ($1, $2) ON CONFLICT DO NOTHING"
+	setDefaultPaymentMethodID     = "UPDATE bgstripe_customer SET default_payment_method = $1 WHERE stripe_customer_id = $2"
 )
 
 func CreateCustomerForUser(tx *sqlx.Tx, userID users.UserID) (*CustomerID, error) {
@@ -44,6 +47,50 @@ func CreateCustomerForUser(tx *sqlx.Tx, userID users.UserID) (*CustomerID, error
 	}
 	asCustomerID := CustomerID(stripeCustomer.ID)
 	return &asCustomerID, nil
+}
+
+func SetDefaultPaymentMethodForCustomer(tx *sqlx.Tx, customerID CustomerID, paymentMethodID PaymentMethodID) error {
+	stripe.Key = env.MustEnvironmentVariable("STRIPE_KEY")
+	if _, err := tx.Exec(setDefaultPaymentMethodID, paymentMethodID, customerID); err != nil {
+		return err
+	}
+	params := &stripe.CustomerParams{
+		InvoiceSettings: &stripe.CustomerInvoiceSettingsParams{
+			DefaultPaymentMethod: ptr.String(string(paymentMethodID)),
+		},
+	}
+	if _, err := customer.Update(string(customerID), params); err != nil {
+		return err
+	}
+	return nil
+}
+
+func GetStripeCustomerForUserID(tx *sqlx.Tx, userID users.UserID) (*StripeCustomer, error) {
+	customer, err := getStripeCustomerForUserID(tx, userID)
+	if err != nil {
+		return nil, err
+	}
+	return &StripeCustomer{
+		BabblegraphUserID:    customer.BabblegraphUserID,
+		CustomerID:           customer.StripeCustomerID,
+		DefaultPaymentMethod: customer.DefaultPaymentMethodID,
+	}, nil
+}
+
+func GetUserIDForStripeCustomerID(tx *sqlx.Tx, stripeCustomerID CustomerID) (*users.UserID, error) {
+	var matches []dbStripeCustomer
+	if err := tx.Select(&matches, getStripeCustomerByIDQuery, stripeCustomerID); err != nil {
+		return nil, err
+	}
+	switch {
+	case len(matches) == 0:
+		return nil, fmt.Errorf("no matches found for ID: %s", stripeCustomerID)
+	case len(matches) == 1:
+		userID := matches[0].BabblegraphUserID
+		return &userID, nil
+	default:
+		return nil, fmt.Errorf("expected 1 stripe customer match for customer ID %s, but got %d", stripeCustomerID, len(matches))
+	}
 }
 
 func getStripeCustomerForUserID(tx *sqlx.Tx, userID users.UserID) (*dbStripeCustomer, error) {

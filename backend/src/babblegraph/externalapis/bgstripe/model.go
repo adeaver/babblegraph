@@ -10,18 +10,18 @@ type CustomerID string
 type StripeCustomer struct {
 	BabblegraphUserID    users.UserID
 	CustomerID           CustomerID
-	ActiveSubscriptionID *SubscriptionID
-	OtherSubscriptionID  []SubscriptionID
+	DefaultPaymentMethod *PaymentMethodID
 }
 
 type customerRelationshipID string
 
 type dbStripeCustomer struct {
-	ID                customerRelationshipID `db:"_id"`
-	CreatedAt         time.Time              `db:"created_at"`
-	LastModifiedAt    time.Time              `db:"last_modified_at"`
-	BabblegraphUserID users.UserID           `db:"babblegraph_user_id"`
-	StripeCustomerID  CustomerID             `db:"stripe_customer_id"`
+	ID                     customerRelationshipID `db:"_id"`
+	CreatedAt              time.Time              `db:"created_at"`
+	LastModifiedAt         time.Time              `db:"last_modified_at"`
+	BabblegraphUserID      users.UserID           `db:"babblegraph_user_id"`
+	StripeCustomerID       CustomerID             `db:"stripe_customer_id"`
+	DefaultPaymentMethodID *PaymentMethodID       `db:"default_payment_method"`
 }
 
 type subscriptionRelationshipID string
@@ -78,3 +78,28 @@ const (
 	// This subscription has ended
 	PaymentStateTerminated PaymentState = 5
 )
+
+type paymentMethodRelationshipID string
+
+type PaymentMethodID string
+
+type dbStripePaymentMethod struct {
+	ID                    paymentMethodRelationshipID `db:"_id"`
+	CreatedAt             time.Time                   `db:"created_at"`
+	LastModifiedAt        time.Time                   `db:"last_modified_at"`
+	BabblegraphUserID     users.UserID                `db:"babblegraph_user_id"`
+	StripePaymentMethodID PaymentMethodID             `db:"stripe_payment_method_id"`
+	CardType              string                      `db:"card_type"`
+	LastFourDigits        string                      `db:"last_four_digits"`
+	ExpirationMonth       string                      `db:"expiration_month"`
+	ExpirationYear        string                      `db:"expiration_year"`
+}
+
+type PaymentMethod struct {
+	StripePaymentMethodID PaymentMethodID `json:"stripe_payment_method_id"`
+	CardType              string          `json:"card_type"`
+	LastFourDigits        string          `json:"last_four_digits"`
+	ExpirationMonth       string          `json:"expiration_month"`
+	ExpirationYear        string          `json:"expiration_year"`
+	IsDefault             bool            `json:"is_default"`
+}

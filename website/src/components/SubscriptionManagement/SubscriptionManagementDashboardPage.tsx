@@ -26,6 +26,12 @@ type Params = {
 }
 
 const styleClasses = makeStyles({
+    premiumBanner: {
+        borderRadius: '5px',
+        backgroundColor: Color.Primary,
+        cursor: 'pointer',
+        padding: '0',
+    },
     loginInfoContainer: {
         marginTop: '45px',
         display: 'inline-block',
@@ -133,6 +139,7 @@ const SubscriptionManagementDashboardPage = (props: SubscriptionManagementDashbo
         });
     }, []);
 
+    const history = useHistory();
     const isLoading = isReinforcementTokenLoading || isUserProfileLoading;
     return (
         <Page>
@@ -142,6 +149,15 @@ const SubscriptionManagementDashboardPage = (props: SubscriptionManagementDashbo
                 ) : (
                     <div>
                         <Grid container spacing={2}>
+                            {
+                                !subscriptionLevel && (
+                                    <Grid className={classes.premiumBanner} item xs={12} onClick={() => history.push(`/manage/${token}/premium`)}>
+                                        <Paragraph color={TypographyColor.White}>
+                                            Check out Babblegraph Premium
+                                        </Paragraph>
+                                    </Grid>
+                                )
+                            }
                             <ActionCard redirectURL={`/manage/${token}/interests`} title='Manage Your Interests'>
                                 Select some topics you’re interested in reading more about or deselect some topics you’d like to read about less. This is a great way to make sure that the content you get is fun and engaging.
                             </ActionCard>
@@ -168,6 +184,15 @@ const SubscriptionManagementDashboardPage = (props: SubscriptionManagementDashbo
                                         title='Newsletter general settings'
                                         isPremiumFeature>
                                         Adjust general settings for your newsletter, such as toggling whether or not you want to receive word tracking spotlights in your newsletters.
+                                    </ActionCard>
+                                )
+                            }
+                            {
+                                subscriptionLevel && (
+                                    <ActionCard
+                                        redirectURL={`/manage/${token}/payment-settings`}
+                                        title='Subscription and Payment Settings'>
+                                        Need to update your preferred payment method or cancel your subscription? Click here!
                                     </ActionCard>
                                 )
                             }
