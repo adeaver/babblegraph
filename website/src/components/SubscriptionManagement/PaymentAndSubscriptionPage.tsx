@@ -40,7 +40,7 @@ const styleClasses = makeStyles({
     },
     addPaymentFormButtonContainer: {
         width: '100%',
-        padding: '10px 0',
+        margin: '10px 0',
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',

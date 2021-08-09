@@ -12,7 +12,7 @@ import Color from 'common/styles/colors';
 import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
 import Page from 'common/components/Page/Page';
 import Paragraph, { Size } from 'common/typography/Paragraph';
-import { Heading4 } from 'common/typography/Heading';
+import { Heading3, Heading4 } from 'common/typography/Heading';
 import { Alignment, TypographyColor } from 'common/typography/common';
 import { getReinforcementToken, GetReinforcementTokenResponse } from 'api/token/reinforcementToken';
 
@@ -152,9 +152,9 @@ const SubscriptionManagementDashboardPage = (props: SubscriptionManagementDashbo
                             {
                                 !!subscriptionLevel && (
                                     <Grid className={classes.premiumBanner} item xs={12} onClick={() => history.push(`/manage/${token}/premium`)}>
-                                        <Paragraph color={TypographyColor.White}>
+                                        <Heading3 color={TypographyColor.White}>
                                             Check out Babblegraph Premium
-                                        </Paragraph>
+                                        </Heading3>
                                     </Grid>
                                 )
                             }
