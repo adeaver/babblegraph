@@ -150,7 +150,7 @@ const SubscriptionManagementDashboardPage = (props: SubscriptionManagementDashbo
                     <div>
                         <Grid container spacing={2}>
                             {
-                                !!subscriptionLevel && (
+                                !subscriptionLevel && (
                                     <Grid className={classes.premiumBanner} item xs={12} onClick={() => history.push(`/manage/${token}/premium`)}>
                                         <Paragraph color={TypographyColor.White}>
                                             Check out Babblegraph Premium
