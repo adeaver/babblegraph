@@ -125,3 +125,56 @@ func getPaymentMethodByID(userID users.UserID, body []byte) (interface{}, error)
 		PaymentMethod: paymentMethod,
 	}, nil
 }
+
+type deletePaymentMethodForUserError string
+
+const (
+	deletePaymentMethodForUserErrorDefault  deletePaymentMethodForUserError = "no-delete-default"
+	deletePaymentMethodForUserErrorOnlyCard deletePaymentMethodForUserError = "only-card"
+)
+
+func (d deletePaymentMethodForUserError) Ptr() *deletePaymentMethodForUserError {
+	return &d
+}
+
+type deletePaymentMethodForUserRequest struct {
+	StripePaymentMethodID bgstripe.PaymentMethodID `json:"stripe_payment_method_id"`
+}
+
+type deletePaymentMethodForUserResponse struct {
+	Error *deletePaymentMethodForUserError `json:"error,omitempty"`
+}
+
+func deletePaymentMethodForUser(userID users.UserID, body []byte) (interface{}, error) {
+	var req deletePaymentMethodForUserRequest
+	if err := json.Unmarshal(body, &req); err != nil {
+		return nil, err
+	}
+	var deleteErr *deletePaymentMethodForUserError
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		paymentMethods, err := bgstripe.GetPaymentMethodsForUser(tx, userID)
+		switch {
+		case err != nil:
+			return err
+		case len(paymentMethods) == 1:
+			deleteErr = deletePaymentMethodForUserErrorOnlyCard.Ptr()
+			return nil
+		}
+		for _, p := range paymentMethods {
+			if p.StripePaymentMethodID == req.StripePaymentMethodID {
+				if p.IsDefault {
+					deleteErr = deletePaymentMethodForUserErrorDefault.Ptr()
+					return nil
+				} else {
+					break
+				}
+			}
+		}
+		return bgstripe.CancelPaymentMethodAndRemoveForUser(tx, userID, req.StripePaymentMethodID)
+	}); err != nil {
+		return nil, err
+	}
+	return deletePaymentMethodForUserResponse{
+		Error: deleteErr,
+	}, nil
+}

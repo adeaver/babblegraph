@@ -108,3 +108,29 @@ export function getPaymentMethodByID(
         onError,
     );
 }
+
+export enum DeletePaymentMethodError {
+    DeleteDefault = 'no-delete-default',
+    OnlyCard = 'only-card',
+}
+
+export type DeletePaymentMethodForUserRequest = {
+    stripePaymentMethodId: string;
+}
+
+export type DeletePaymentMethodForUserResponse = {
+    error: DeletePaymentMethodError | undefined;
+}
+
+export function deletePaymentMethodForUser(
+    req: DeletePaymentMethodForUserRequest,
+    onSuccess: (resp: DeletePaymentMethodForUserResponse) => void,
+    onError: (err: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<DeletePaymentMethodForUserRequest, DeletePaymentMethodForUserResponse>(
+        '/api/stripe/delete_payment_method_for_user_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}

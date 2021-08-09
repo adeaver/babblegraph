@@ -17,6 +17,10 @@ const (
 
 	getPaymentMethodByIDQuery    = "SELECT * FROM bgstripe_payment_method WHERE stripe_payment_method_id = $1 AND babblegraph_user_id = $2"
 	getPaymentMethodForUserQuery = "SELECT * FROM bgstripe_payment_method WHERE babblegraph_user_id = $1"
+
+	deletePaymentMethodForUserQuery = "DELETE FROM bgstripe_payment_method WHERE babblegraph_user_id = $1 AND stripe_payment_method_id = $2"
+	// Only use this with trusted sources (i.e. webhook)
+	deletePaymentMethodQuery = "DELETE FROM bgstripe_payment_method WHERE stripe_payment_method_id = $1"
 )
 
 type AddPaymentMethodCredentials struct {
@@ -132,6 +136,39 @@ func GetPaymentMethodsForUser(tx *sqlx.Tx, userID users.UserID) ([]PaymentMethod
 		})
 	}
 	return out, nil
+}
+
+func CancelPaymentMethodAndRemoveForUser(tx *sqlx.Tx, userID users.UserID, paymentMethodID PaymentMethodID) error {
+	stripe.Key = env.MustEnvironmentVariable("STRIPE_KEY")
+	if err := RemovePaymentMethodForUser(tx, userID, paymentMethodID); err != nil {
+		return err
+	}
+	if _, err := paymentmethod.Detach(string(paymentMethodID), nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func RemovePaymentMethodForUser(tx *sqlx.Tx, userID users.UserID, paymentMethodID PaymentMethodID) error {
+	res, err := tx.Exec(deletePaymentMethodForUserQuery, userID, paymentMethodID)
+	if err != nil {
+		return err
+	}
+	numRows, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if numRows <= 0 {
+		return fmt.Errorf("No card deleted")
+	}
+	return nil
+}
+
+func RemovePaymentMethod(tx *sqlx.Tx, paymentMethodID PaymentMethodID) error {
+	if _, err := tx.Exec(deletePaymentMethodQuery, paymentMethodID); err != nil {
+		return err
+	}
+	return nil
 }
 
 func verifyCustomerIDForUser(tx *sqlx.Tx, userID users.UserID, customerID CustomerID) error {

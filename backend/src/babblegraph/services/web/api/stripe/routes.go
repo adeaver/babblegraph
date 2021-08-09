@@ -38,6 +38,9 @@ func RegisterRouteGroups() error {
 			}, {
 				Path:    "get_payment_method_by_id_1",
 				Handler: getPaymentMethodByID,
+			}, {
+				Path:    "delete_payment_method_for_user_1",
+				Handler: deletePaymentMethodForUser,
 			},
 		},
 	}); err != nil {

@@ -12,9 +12,9 @@ import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
 import Page from 'common/components/Page/Page';
 import DisplayCard from 'common/components/DisplayCard/DisplayCard';
 import Paragraph, { Size } from 'common/typography/Paragraph';
-import { Heading1, Heading3, Heading4 } from 'common/typography/Heading';
+import { Heading1, Heading3, Heading5 } from 'common/typography/Heading';
 import { Alignment, TypographyColor } from 'common/typography/common';
-import { PrimaryButton, WarningButton } from 'common/components/Button/Button';
+import { PrimaryButton, ConfirmationButton, WarningButton } from 'common/components/Button/Button';
 import CardIcon from 'common/components/Payment/CardIcon';
 
 import { ContentHeader } from './common';
@@ -27,13 +27,30 @@ import {
     PaymentMethod,
     setDefaultPaymentMethodForUser,
     SetDefaultPaymentMethodForUserResponse,
+    deletePaymentMethodForUser,
+    DeletePaymentMethodForUserResponse,
+    DeletePaymentMethodError
 } from 'api/stripe/payment_method';
 
 const styleClasses = makeStyles({
     paymentMethodDisplayCard: {
         padding: '10px',
+        boxSizing: 'border-box',
+        height: '100%',
+    },
+    addPaymentFormButtonContainer: {
+        width: '100%',
+        padding: '10px 0',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
 });
+
+const deletePaymentMethodErrorMessage = {
+    [DeletePaymentMethodError.DeleteDefault]: "You cannot delete your default card",
+    [DeletePaymentMethodError.OnlyCard]: "You cannot delete your last card!",
+}
 
 type Params = {
     token: string;
@@ -49,6 +66,8 @@ const PaymentAndSubscriptionPage = (props: PaymentAndSubscriptionPageProps) => {
     const [ error, setError ] = useState<Error>(null);
 
     const [ isLoadingStripeRequest, setIsLoadingStripeRequest ] = useState<boolean>(false);
+
+    const [ deletePaymentError, setDeletePaymentError ] = useState<string | null>(null);
 
     useEffect(() => {
         getPaymentMethodsForUser({},
@@ -92,6 +111,24 @@ const PaymentAndSubscriptionPage = (props: PaymentAndSubscriptionPageProps) => {
             setError(err);
         });
     }
+    const deletePaymentMethod = (paymentMethodID: string) => {
+        setIsLoadingPaymentMethods(true);
+        deletePaymentMethodForUser({
+            stripePaymentMethodId: paymentMethodID,
+        },
+        (resp: DeletePaymentMethodForUserResponse) => {
+            setIsLoadingPaymentMethods(false);
+            if (!resp.error) {
+                setPaymentMethods(paymentMethods.filter((p: PaymentMethod) => p.stripePaymentMethodId !== paymentMethodID));
+            } else {
+                setDeletePaymentError(deletePaymentMethodErrorMessage[resp.error]);
+            }
+        },
+        (err: Error) => {
+            setIsLoadingPaymentMethods(false);
+            setError(err);
+        });
+    }
 
     const isLoading = isLoadingPaymentMethods;
     let body;
@@ -110,6 +147,7 @@ const PaymentAndSubscriptionPage = (props: PaymentAndSubscriptionPageProps) => {
                     paymentMethods={paymentMethods}
                     isLoadingStripeRequest={isLoadingStripeRequest}
                     setDefaultPaymentMethod={setDefaultPaymentMethod}
+                    deletePaymentMethod={deletePaymentMethod}
                     handleIsLoadingStripeRequest={setIsLoadingStripeRequest}
                     handlePaymentMethodAddedSuccess={handleSuccessfullyAddedPaymentMethod}
                     handleAddPaymentMethodError={setError} />
@@ -139,6 +177,7 @@ type PaymentMethodsDisplayProps = {
     paymentMethods: Array<PaymentMethod>;
     isLoadingStripeRequest: boolean;
 
+    deletePaymentMethod: (paymentMethodID) => void;
     setDefaultPaymentMethod: (paymentMethodID) => void;
 
     handleIsLoadingStripeRequest: (isLoading: boolean) => void;
@@ -159,8 +198,10 @@ const PaymentMethodsDisplay = (props: PaymentMethodsDisplayProps) => {
         <PaymentMethodDisplay
             key={p.stripePaymentMethodId}
             setDefaultPaymentMethod={props.setDefaultPaymentMethod}
+            deletePaymentMethod={props.deletePaymentMethod}
             {...p} />
     ));
+    const classes = styleClasses();
     return (
         <div>
             <Heading3 color={TypographyColor.Primary}>
@@ -175,11 +216,13 @@ const PaymentMethodsDisplay = (props: PaymentMethodsDisplayProps) => {
                         handleError={props.handleAddPaymentMethodError} />
 
                 ) : (
-                    <PrimaryButton
-                        disabled={props.isLoadingStripeRequest}
-                        onClick={() => setShowAddPaymentMethodForm(true)}>
-                        Add new payment method
-                    </PrimaryButton>
+                    <div className={classes.addPaymentFormButtonContainer}>
+                        <PrimaryButton
+                            disabled={props.isLoadingStripeRequest}
+                            onClick={() => setShowAddPaymentMethodForm(true)}>
+                            Add new payment method
+                        </PrimaryButton>
+                    </div>
                 )
             }
             {
@@ -199,10 +242,13 @@ const PaymentMethodsDisplay = (props: PaymentMethodsDisplayProps) => {
 }
 
 type PaymentMethodDisplayProps = {
+    deletePaymentMethod: (paymentMethodID) => void;
     setDefaultPaymentMethod: (paymentMethodID) => void;
 } & PaymentMethod;
 
 const PaymentMethodDisplay = (props: PaymentMethodDisplayProps) => {
+    const [ showDeleteConfirmation, setShowDeleteConfirmation ] = useState<boolean>(false);
+
     const classes = styleClasses();
     return (
         <Grid item xs={12} md={6}>
@@ -214,27 +260,35 @@ const PaymentMethodDisplay = (props: PaymentMethodDisplayProps) => {
                 <Paragraph align={Alignment.Left}>
                     Expires { props.expirationMonth }/{ props.expirationYear }
                 </Paragraph>
-                <Grid container>
-                    {
-                        !props.isDefault && (
+                {
+                    !props.isDefault && (
+                        <Grid container>
                             <Grid item xs={12} md={6}>
                                 <PrimaryButton onClick={() => props.setDefaultPaymentMethod(props.stripePaymentMethodId)}>
                                     Make default
                                 </PrimaryButton>
                             </Grid>
-                        )
-                    }
-                    <Grid item xs={12} md={6}>
-                        <WarningButton>
-                            Delete
-                        </WarningButton>
-                    </Grid>
-                </Grid>
+                            <Grid item xs={12} md={6}>
+                            {
+                                showDeleteConfirmation ? (
+                                    <ConfirmationButton onClick={() => props.deletePaymentMethod(props.stripePaymentMethodId)}>
+                                        Confirm
+                                    </ConfirmationButton>
+                                ) : (
+                                    <WarningButton onClick={() => setShowDeleteConfirmation(true)}>
+                                        Delete
+                                    </WarningButton>
+                                )
+                            }
+                            </Grid>
+                        </Grid>
+                    )
+                }
                 {
                     props.isDefault && (
-                        <Heading4 color={TypographyColor.Primary}>
+                        <Heading5 color={TypographyColor.Primary}>
                             This is your default payment method
-                        </Heading4>
+                        </Heading5>
                     )
                 }
             </Card>
