@@ -79,3 +79,49 @@ func setDefaultPaymentMethodForUser(userID users.UserID, body []byte) (interface
 	}
 	return setDefaultPaymentMethodForUserResponse{}, nil
 }
+
+type getPaymentMethodsForUserRequest struct{}
+
+type getPaymentMethodsForUserResponse struct {
+	PaymentMethods []bgstripe.PaymentMethod `json:"payment_methods"`
+}
+
+func getPaymentMethodsForUser(userID users.UserID, body []byte) (interface{}, error) {
+	var paymentMethods []bgstripe.PaymentMethod
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		var err error
+		paymentMethods, err = bgstripe.GetPaymentMethodsForUser(tx, userID)
+		return err
+	}); err != nil {
+		return nil, err
+	}
+	return getPaymentMethodsForUserResponse{
+		PaymentMethods: paymentMethods,
+	}, nil
+}
+
+type getPaymentMethodByIDRequest struct {
+	StripePaymentMethodID bgstripe.PaymentMethodID `json:"stripe_payment_method_id"`
+}
+
+type getPaymentMethodByIDResponse struct {
+	PaymentMethod *bgstripe.PaymentMethod `json:"payment_method,omitempty"`
+}
+
+func getPaymentMethodByID(userID users.UserID, body []byte) (interface{}, error) {
+	var req getPaymentMethodByIDRequest
+	if err := json.Unmarshal(body, &req); err != nil {
+		return nil, err
+	}
+	var paymentMethod *bgstripe.PaymentMethod
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		var err error
+		paymentMethod, err = bgstripe.LookupPaymentMethod(tx, userID, req.StripePaymentMethodID)
+		return err
+	}); err != nil {
+		return nil, err
+	}
+	return getPaymentMethodByIDResponse{
+		PaymentMethod: paymentMethod,
+	}, nil
+}

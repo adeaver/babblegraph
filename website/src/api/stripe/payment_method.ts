@@ -68,3 +68,43 @@ export function setDefaultPaymentMethodForUser(
         onError,
     );
 }
+
+export type GetPaymentMethodsForUserRequest = {}
+
+export type GetPaymentMethodsForUserResponse = {
+    paymentMethods: Array<PaymentMethod>;
+}
+
+export function getPaymentMethodsForUser(
+    req: GetPaymentMethodsForUserRequest,
+    onSuccess: (resp: GetPaymentMethodsForUserResponse) => void,
+    onError: (err: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<GetPaymentMethodsForUserRequest, GetPaymentMethodsForUserResponse>(
+        '/api/stripe/get_payment_methods_for_user_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}
+
+export type GetPaymentMethodByIDRequest = {
+    stripePaymentMethodId: string;
+}
+
+export type GetPaymentMethodByIDResponse = {
+    paymentMethod: PaymentMethod | undefined;
+}
+
+export function getPaymentMethodByID(
+    req: GetPaymentMethodByIDRequest,
+    onSuccess: (resp: GetPaymentMethodByIDResponse) => void,
+    onError: (err: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<GetPaymentMethodByIDRequest, GetPaymentMethodByIDResponse>(
+        '/api/stripe/get_payment_method_by_id_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}

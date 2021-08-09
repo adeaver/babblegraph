@@ -15,7 +15,7 @@ import (
 const (
 	insertPaymentMethodQuery = "INSERT INTO bgstripe_payment_method (babblegraph_user_id, stripe_payment_method_id, card_type, last_four_digits, expiration_month, expiration_year) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT DO NOTHING"
 
-	getPaymentMethodByIDQuery    = "SELECT * FROM bgstripe_payment_method WHERE stripe_payment_method_id = $1"
+	getPaymentMethodByIDQuery    = "SELECT * FROM bgstripe_payment_method WHERE stripe_payment_method_id = $1 AND babblegraph_user_id = $2"
 	getPaymentMethodForUserQuery = "SELECT * FROM bgstripe_payment_method WHERE babblegraph_user_id = $1"
 )
 
@@ -56,7 +56,7 @@ func FindStripePaymentMethodAndInsert(tx *sqlx.Tx, userID users.UserID, stripePa
 	if err := InsertPaymentMethod(tx, userID, paymentMethod); err != nil {
 		return nil, err
 	}
-	bgPaymentMethod, err := LookupPaymentMethod(tx, stripePaymentMethodID)
+	bgPaymentMethod, err := LookupPaymentMethod(tx, userID, stripePaymentMethodID)
 	switch {
 	case err != nil:
 		return nil, err
@@ -84,9 +84,9 @@ func InsertPaymentMethod(tx *sqlx.Tx, userID users.UserID, paymentMethod *stripe
 	return nil
 }
 
-func LookupPaymentMethod(tx *sqlx.Tx, paymentMethodID PaymentMethodID) (*PaymentMethod, error) {
+func LookupPaymentMethod(tx *sqlx.Tx, userID users.UserID, paymentMethodID PaymentMethodID) (*PaymentMethod, error) {
 	var matches []dbStripePaymentMethod
-	if err := tx.Select(&matches, getPaymentMethodByIDQuery, paymentMethodID); err != nil {
+	if err := tx.Select(&matches, getPaymentMethodByIDQuery, paymentMethodID, userID); err != nil {
 		return nil, err
 	}
 	switch {
@@ -128,7 +128,7 @@ func GetPaymentMethodsForUser(tx *sqlx.Tx, userID users.UserID) ([]PaymentMethod
 			LastFourDigits:        m.LastFourDigits,
 			ExpirationMonth:       m.ExpirationMonth,
 			ExpirationYear:        m.ExpirationYear,
-			IsDefault:             customer.DefaultPaymentMethodID == nil && *customer.DefaultPaymentMethodID == m.StripePaymentMethodID,
+			IsDefault:             customer.DefaultPaymentMethodID != nil && *customer.DefaultPaymentMethodID == m.StripePaymentMethodID,
 		})
 	}
 	return out, nil

@@ -32,6 +32,12 @@ func RegisterRouteGroups() error {
 			}, {
 				Path:    "set_default_payment_method_for_user_1",
 				Handler: setDefaultPaymentMethodForUser,
+			}, {
+				Path:    "get_payment_methods_for_user_1",
+				Handler: getPaymentMethodsForUser,
+			}, {
+				Path:    "get_payment_method_by_id_1",
+				Handler: getPaymentMethodByID,
 			},
 		},
 	}); err != nil {
