@@ -4,13 +4,15 @@ import { RouteComponentProps, useHistory } from 'react-router-dom';
 import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 import Card from '@material-ui/core/Card';
+import Snackbar from '@material-ui/core/Snackbar';
 
+import Alert from 'common/components/Alert/Alert';
 import AddPaymentMethodForm from 'common/components/Stripe/AddPaymentMethodForm';
 import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
 import Page from 'common/components/Page/Page';
 import DisplayCard from 'common/components/DisplayCard/DisplayCard';
 import Paragraph, { Size } from 'common/typography/Paragraph';
-import { Heading1, Heading3 } from 'common/typography/Heading';
+import { Heading1, Heading3, Heading4 } from 'common/typography/Heading';
 import { Alignment, TypographyColor } from 'common/typography/common';
 import { PrimaryButton, WarningButton } from 'common/components/Button/Button';
 import CardIcon from 'common/components/Payment/CardIcon';
@@ -22,7 +24,9 @@ import {
     GetPaymentMethodByIDResponse,
     getPaymentMethodsForUser,
     GetPaymentMethodsForUserResponse,
-    PaymentMethod
+    PaymentMethod,
+    setDefaultPaymentMethodForUser,
+    SetDefaultPaymentMethodForUserResponse,
 } from 'api/stripe/payment_method';
 
 const styleClasses = makeStyles({
@@ -71,6 +75,23 @@ const PaymentAndSubscriptionPage = (props: PaymentAndSubscriptionPageProps) => {
             setError(err);
         })
     }
+    const setDefaultPaymentMethod = (paymentMethodID: string) => {
+        setIsLoadingPaymentMethods(true);
+        setDefaultPaymentMethodForUser({
+            stripePaymentMethodId: paymentMethodID,
+        },
+        (resp: SetDefaultPaymentMethodForUserResponse) => {
+            setIsLoadingPaymentMethods(false);
+            setPaymentMethods(paymentMethods.map((p: PaymentMethod) => ({
+                ...p,
+                isDefault: p.stripePaymentMethodId === paymentMethodID,
+            })));
+        },
+        (err: Error) => {
+            setIsLoadingPaymentMethods(false);
+            setError(err);
+        });
+    }
 
     const isLoading = isLoadingPaymentMethods;
     let body;
@@ -78,9 +99,9 @@ const PaymentAndSubscriptionPage = (props: PaymentAndSubscriptionPageProps) => {
         body = <LoadingSpinner />;
     } else if (!!error) {
         body = (
-            <Heading3 color={TypographyColor.Primary}>
+            <Paragraph>
                 There was a problem loading your payment information. Try again later!
-            </Heading3>
+            </Paragraph>
         );
     } else {
         body = (
@@ -88,6 +109,7 @@ const PaymentAndSubscriptionPage = (props: PaymentAndSubscriptionPageProps) => {
                 <PaymentMethodsDisplay
                     paymentMethods={paymentMethods}
                     isLoadingStripeRequest={isLoadingStripeRequest}
+                    setDefaultPaymentMethod={setDefaultPaymentMethod}
                     handleIsLoadingStripeRequest={setIsLoadingStripeRequest}
                     handlePaymentMethodAddedSuccess={handleSuccessfullyAddedPaymentMethod}
                     handleAddPaymentMethodError={setError} />
@@ -117,6 +139,8 @@ type PaymentMethodsDisplayProps = {
     paymentMethods: Array<PaymentMethod>;
     isLoadingStripeRequest: boolean;
 
+    setDefaultPaymentMethod: (paymentMethodID) => void;
+
     handleIsLoadingStripeRequest: (isLoading: boolean) => void;
     handlePaymentMethodAddedSuccess: (paymentMethodID: string) => void;
     handleAddPaymentMethodError: (err: Error) => void;
@@ -132,7 +156,10 @@ const PaymentMethodsDisplay = (props: PaymentMethodsDisplayProps) => {
     }
 
     const paymentMethods = props.paymentMethods.map((p: PaymentMethod) => (
-        <PaymentMethodDisplay key={p.stripePaymentMethodId} {...p} />
+        <PaymentMethodDisplay
+            key={p.stripePaymentMethodId}
+            setDefaultPaymentMethod={props.setDefaultPaymentMethod}
+            {...p} />
     ));
     return (
         <div>
@@ -164,11 +191,18 @@ const PaymentMethodsDisplay = (props: PaymentMethodsDisplayProps) => {
                     </Grid>
                 )
             }
+            <Snackbar open={!!addPaymentMethodFailure} close={() => setAddPaymentMethodFailure(null)} autoHideDuration={6000}>
+                <Alert severity="error">{addPaymentMethodFailure}</Alert>
+            </Snackbar>
         </div>
     );
 }
 
-const PaymentMethodDisplay = (props: PaymentMethod) => {
+type PaymentMethodDisplayProps = {
+    setDefaultPaymentMethod: (paymentMethodID) => void;
+} & PaymentMethod;
+
+const PaymentMethodDisplay = (props: PaymentMethodDisplayProps) => {
     const classes = styleClasses();
     return (
         <Grid item xs={12} md={6}>
@@ -184,7 +218,7 @@ const PaymentMethodDisplay = (props: PaymentMethod) => {
                     {
                         !props.isDefault && (
                             <Grid item xs={12} md={6}>
-                                <PrimaryButton>
+                                <PrimaryButton onClick={() => props.setDefaultPaymentMethod(props.stripePaymentMethodId)}>
                                     Make default
                                 </PrimaryButton>
                             </Grid>
@@ -196,6 +230,13 @@ const PaymentMethodDisplay = (props: PaymentMethod) => {
                         </WarningButton>
                     </Grid>
                 </Grid>
+                {
+                    props.isDefault && (
+                        <Heading4 color={TypographyColor.Primary}>
+                            This is your default payment method
+                        </Heading4>
+                    )
+                }
             </Card>
         </Grid>
     );

@@ -17,7 +17,7 @@ const (
 	getStripeCustomerForUserQuery = "SELECT * FROM bgstripe_customer WHERE babblegraph_user_id = $1"
 	getStripeCustomerByIDQuery    = "SELECT * FROM bgstripe_customer WHERE stripe_customer_id = $1"
 	createCustomerForUserQuery    = "INSERT INTO bgstripe_customer (babblegraph_user_id, stripe_customer_id) VALUES ($1, $2) ON CONFLICT DO NOTHING"
-	setDefaultPaymentMethodID     = "UPDATE bgstripe_customer SET default_payment_method_id = $1 WHERE stripe_customer_id = $2"
+	setDefaultPaymentMethodID     = "UPDATE bgstripe_customer SET default_payment_method = $1 WHERE stripe_customer_id = $2"
 )
 
 func CreateCustomerForUser(tx *sqlx.Tx, userID users.UserID) (*CustomerID, error) {
