@@ -18,7 +18,8 @@ import (
 const (
 	defaultSubscriptionTrialLength = 14
 
-	insertStripeSubscriptionForUserQuery = "INSERT INTO bgstripe_subscription (babblegraph_user_id, stripe_subscription_id, payment_state, stripe_product_id) VALUES ($1, $2, $3, $4)"
+	updateStripeSubscriptionProductIDQuery = "UPDATE bgstripe_subscription SET stripe_product_id = $1 WHERE babblegraph_user_id = $2 AND stripe_subscription_id = $3"
+	insertStripeSubscriptionForUserQuery   = "INSERT INTO bgstripe_subscription (babblegraph_user_id, stripe_subscription_id, payment_state, stripe_product_id) VALUES ($1, $2, $3, $4)"
 
 	lookupActiveSubscriptionForUserQuery = "SELECT * FROM bgstripe_subscription WHERE babblegraph_user_id = $1 AND payment_state != $2"
 
@@ -130,6 +131,44 @@ func LookupActiveSubscriptionForUser(tx *sqlx.Tx, userID users.UserID) (*Subscri
 		return nil, err
 	}
 	return mergeSubscriptionObjects(tx, *dbSubscription, stripeSubscription)
+}
+
+type UpdateSubscriptionOptions struct {
+	SubscriptionType  *SubscriptionType `json:"subscription_type,omitempty"`
+	CancelAtPeriodEnd *bool             `json:"canel_at_period_end,omitempty"`
+}
+
+func UpdateSubscription(tx *sqlx.Tx, userID users.UserID, options UpdateSubscriptionOptions) error {
+	stripe.Key = env.MustEnvironmentVariable("STRIPE_KEY")
+	dbSubscription, err := lookupActiveDBSubscriptionForUser(tx, userID)
+	switch {
+	case err != nil:
+		return err
+	case dbSubscription == nil:
+		return fmt.Errorf("User has no subscription to update")
+	}
+	subscriptionParams := &stripe.SubscriptionParams{}
+	if options.SubscriptionType != nil {
+		stripeProductID, err := getProductIDForSubscriptionType(*options.SubscriptionType)
+		if err != nil {
+			return err
+		}
+		if _, err := tx.Exec(updateStripeSubscriptionProductIDQuery, *stripeProductID, userID, dbSubscription.StripeSubscriptionID); err != nil {
+			return err
+		}
+		subscriptionParams.Items = []*stripe.SubscriptionItemsParams{
+			&stripe.SubscriptionItemsParams{
+				Price: ptr.String(stripeProductID.Str()),
+			},
+		}
+	}
+	if options.CancelAtPeriodEnd != nil {
+		subscriptionParams.CancelAtPeriodEnd = ptr.Bool(options.CancelAtPeriodEnd)
+	}
+	if _, err := sub.Update(string(subscription.StripeSubscriptionID), subscriptionParams); err != nil {
+		return err
+	}
+	return nil
 }
 
 func mergeSubscriptionObjects(tx *sqlx.Tx, bgSub dbStripeSubscription, stripeSub *stripe.Subscription) (*Subscription, error) {

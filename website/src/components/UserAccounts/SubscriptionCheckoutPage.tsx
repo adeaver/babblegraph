@@ -33,8 +33,8 @@ import {
     CreateUserSubscriptionResponse,
     getActiveSubscriptionForUser,
     GetActiveSubscriptionForUserResponse,
-    UpdateStripeSubscriptionFrequencyForUserResponse,
-    updateStripeSubscriptionFrequencyForUser,
+    UpdateStripeSubscriptionForUserResponse,
+    updateStripeSubscriptionForUser,
 } from 'api/stripe/subscription';
 
 const styleClasses = makeStyles({
@@ -105,12 +105,14 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
 
     const handleUpdateSubscription = () => {
         setIsLoadingUpdateSubscription(true);
-        updateStripeSubscriptionFrequencyForUser({
-            isYearlySubscription: subscriptionType === "yearly",
-            // stripeSubscriptionId: stripeSubscriptionID,
+        updateStripeSubscriptionForUser({
+            options: {
+                subscriptionType: subscriptionType,
+            },
         },
-        (resp: UpdateStripeSubscriptionFrequencyForUserResponse)  => {
+        (resp: UpdateStripeSubscriptionForUserResponse)  => {
             setIsLoadingUpdateSubscription(false);
+            !!resp.subscription && setSubscription(resp.subscription);
         },
         (err: Error) => {
             setIsLoadingUpdateSubscription(false);
@@ -120,11 +122,11 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
     const handleSubmit = () => {
         setIsLoadingCreateSubscription(true);
         createUserSubscription({
-            subscriptionCreationToken: token,
-            isYearlySubscription: subscriptionType === "yearly",
+            subscriptionType: subscriptionType,
         },
         (resp: CreateUserSubscriptionResponse) => {
             setIsLoadingCreateSubscription(false);
+            !!resp.subscription && setSubscription(resp.subscription);
         },
         (err: Error) => {
             setIsLoadingCreateSubscription(false);
@@ -284,10 +286,10 @@ const SubscriptionSelector = (props: SubscriptionSelectorProps) => {
                             &nbsp;
                         </Grid>
                         <Grid item className={classes.subscriptionOption} xs={12} md={3}>
-                            <FormControlLabel value="monthly" control={<PrimaryRadio />} label="Monthly ($3/month)" />
+                            <FormControlLabel value={SubscriptionType.Monthly} control={<PrimaryRadio />} label="Monthly ($3/month)" />
                         </Grid>
                         <Grid item className={classes.subscriptionOption} xs={12} md={3}>
-                            <FormControlLabel value="yearly" control={<PrimaryRadio />} label="Yearly ($34/year)" />
+                            <FormControlLabel value={SubscriptionType.Yearly} control={<PrimaryRadio />} label="Yearly ($34/year)" />
                         </Grid>
                     </Grid>
                 </RadioGroup>

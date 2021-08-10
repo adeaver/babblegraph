@@ -33,8 +33,8 @@ import {
     DeletePaymentMethodError
 } from 'api/stripe/payment_method';
 import {
-    DeleteStripeSubscriptionForUserResponse,
-    deleteStripeSubscriptionForUser,
+    UpdateStripeSubscriptionForUserResponse,
+    updateStripeSubscriptionForUser,
 } from 'api/stripe/subscription';
 
 const styleClasses = makeStyles({
@@ -319,8 +319,12 @@ const CancelSubscriptionButton = (props:  CancelSubscriptionButtonProps) => {
 
     const handleCancelSubscription = () => {
         setIsLoading(true);
-        deleteStripeSubscriptionForUser({},
-        (resp: DeleteStripeSubscriptionForUserResponse) => {
+        updateStripeSubscriptionForUser({
+            options: {
+                cancelAtPeriodEnd: true,
+            }
+        },
+        (resp: UpdateStripeSubscriptionForUserResponse) => {
             setIsLoading(false);
             setDidDelete(true);
         },

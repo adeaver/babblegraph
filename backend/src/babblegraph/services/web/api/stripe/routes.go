@@ -18,11 +18,8 @@ func RegisterRouteGroups() error {
 				Path:    "get_active_subscription_for_user_1",
 				Handler: getActiveSubscriptionForUser,
 			}, {
-				Path:    "delete_stripe_subscription_for_user_1",
-				Handler: deleteStripeSubscriptionForUser,
-			}, {
 				Path:    "update_stripe_subscription_for_user_1",
-				Handler: updateStripeSubscriptionFrequencyForUser,
+				Handler: updateStripeSubscriptionForUser,
 			}, {
 				Path:    "get_setup_intent_for_user_1",
 				Handler: getSetupIntentForUser,

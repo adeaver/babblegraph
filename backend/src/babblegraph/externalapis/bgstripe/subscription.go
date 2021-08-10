@@ -24,8 +24,6 @@ const (
 	// for untrusted sources  (i.e. the frontend)
 	updateStripeSubscriptionPaymentStateQuery       = "UPDATE bgstripe_subscription SET payment_state = $1 WHERE babblegraph_user_id = $2 AND stripe_subscription_id = $3"
 	updateStripeSubscriptionPaymentStateNoUserQuery = "UPDATE bgstripe_subscription SET payment_state = $1 WHERE stripe_subscription_id = $2"
-
-	updateStripeSubscriptionProductID = "UPDATE bgstripe_subscription SET stripe_product_id = $1 WHERE babblegraph_user_id = $2 AND stripe_subscription_id = $3"
 )
 
 type StripeCustomerSubscriptionOutput struct {
