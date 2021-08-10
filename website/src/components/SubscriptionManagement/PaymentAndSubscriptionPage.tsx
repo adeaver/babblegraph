@@ -5,6 +5,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 import Card from '@material-ui/core/Card';
 import Snackbar from '@material-ui/core/Snackbar';
+import Divider from '@material-ui/core/Divider';
 
 import Alert from 'common/components/Alert/Alert';
 import AddPaymentMethodForm from 'common/components/Stripe/AddPaymentMethodForm';
@@ -31,6 +32,10 @@ import {
     DeletePaymentMethodForUserResponse,
     DeletePaymentMethodError
 } from 'api/stripe/payment_method';
+import {
+    DeleteStripeSubscriptionForUserResponse,
+    deleteStripeSubscriptionForUser,
+} from 'api/stripe/subscription';
 
 const styleClasses = makeStyles({
     paymentMethodDisplayCard: {
@@ -38,12 +43,16 @@ const styleClasses = makeStyles({
         boxSizing: 'border-box',
         height: '100%',
     },
-    addPaymentFormButtonContainer: {
+    buttonContainer: {
         width: '100%',
         margin: '10px 0',
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
+        flexDirection: 'column',
+    },
+    divider: {
+        margin: '15px 0',
     },
 });
 
@@ -130,6 +139,7 @@ const PaymentAndSubscriptionPage = (props: PaymentAndSubscriptionPageProps) => {
         });
     }
 
+    const classes = styleClasses();
     const isLoading = isLoadingPaymentMethods;
     let body;
     if (isLoading) {
@@ -151,6 +161,8 @@ const PaymentAndSubscriptionPage = (props: PaymentAndSubscriptionPageProps) => {
                     handleIsLoadingStripeRequest={setIsLoadingStripeRequest}
                     handlePaymentMethodAddedSuccess={handleSuccessfullyAddedPaymentMethod}
                     handleAddPaymentMethodError={setError} />
+                <Divider className={classes.divider} />
+                <CancelSubscriptionButton />
             </div>
         )
     }
@@ -216,7 +228,7 @@ const PaymentMethodsDisplay = (props: PaymentMethodsDisplayProps) => {
                         handleError={props.handleAddPaymentMethodError} />
 
                 ) : (
-                    <div className={classes.addPaymentFormButtonContainer}>
+                    <div className={classes.buttonContainer}>
                         <PrimaryButton
                             disabled={props.isLoadingStripeRequest}
                             onClick={() => setShowAddPaymentMethodForm(true)}>
@@ -294,6 +306,67 @@ const PaymentMethodDisplay = (props: PaymentMethodDisplayProps) => {
             </Card>
         </Grid>
     );
+}
+
+type CancelSubscriptionButtonProps = {};
+
+const CancelSubscriptionButton = (props:  CancelSubscriptionButtonProps) => {
+    const [ showConfirmation, setShowConfirmation ] = useState<boolean>(false);
+
+    const [ isLoading, setIsLoading ] = useState<boolean>(false);
+    const [ didDelete, setDidDelete ] = useState<boolean>(false);
+    const [ error, setError ] = useState<Error>(null);
+
+    const handleCancelSubscription = () => {
+        setIsLoading(true);
+        deleteStripeSubscriptionForUser({},
+        (resp: DeleteStripeSubscriptionForUserResponse) => {
+            setIsLoading(false);
+            setDidDelete(true);
+        },
+        (err: Error) => {
+            setIsLoading(false);
+            setError(err);
+        });
+    }
+    const classes = styleClasses();
+    let body;
+    if (isLoading) {
+        body = <LoadingSpinner />;
+    } else if (didDelete) {
+        body = (
+            <Paragraph>
+                Your subscription will be canceled at the end of the current period! If you want to cancel now and receive a refund, reach out to hello@babblegraph.com via email!
+            </Paragraph>
+        )
+    } else {
+        body = (
+            <div className={classes.buttonContainer}>
+                <Paragraph>
+                    You can cancel your subscription here. You will retain your premium benefits until the end of the current period, after which you won’t be billed. You will still receive the daily newsletter. To unsubscribe, go to the unsubscribe tab on the previous page.
+                </Paragraph>
+                {
+                    showConfirmation ? (
+                        <WarningButton onClick={handleCancelSubscription}>
+                            Confirm Subscription Cancellation.
+                        </WarningButton>
+                    ) : (
+                        <PrimaryButton onClick={() => setShowConfirmation(true)}>
+                            Cancel Subscription
+                        </PrimaryButton>
+                    )
+                }
+            </div>
+        );
+    }
+    return (
+        <div>
+            <Heading3 color={TypographyColor.Primary}>
+                Cancel your subscription
+            </Heading3>
+            { body }
+        </div>
+    )
 }
 
 export default PaymentAndSubscriptionPage;

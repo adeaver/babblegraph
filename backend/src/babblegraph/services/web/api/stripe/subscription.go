@@ -87,30 +87,21 @@ func getUserNonTerminatedStripeSubscription(userID users.UserID, body []byte) (i
 	}, nil
 }
 
-type deleteStripeSubscriptionForUserRequest struct {
-	StripeSubscriptionID bgstripe.SubscriptionID `json:"stripe_subscription_id"`
-}
+type deleteStripeSubscriptionForUserRequest struct{}
 
-type deleteStripeSubscriptionForUserResponse struct {
-	Success bool `json:"success"`
-}
+type deleteStripeSubscriptionForUserResponse struct{}
 
 func deleteStripeSubscriptionForUser(userID users.UserID, body []byte) (interface{}, error) {
 	var req deleteStripeSubscriptionForUserRequest
 	if err := json.Unmarshal(body, &req); err != nil {
 		return nil, err
 	}
-	var success bool
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
-		var err error
-		success, err = bgstripe.CancelStripeSubscription(tx, userID, req.StripeSubscriptionID)
-		return err
+		return bgstripe.CancelStripeSubscription(tx, userID)
 	}); err != nil {
 		return nil, err
 	}
-	return deleteStripeSubscriptionForUserResponse{
-		Success: success,
-	}, nil
+	return deleteStripeSubscriptionForUserResponse{}, nil
 }
 
 type updateStripeSubscriptionFrequencyForUserRequest struct {

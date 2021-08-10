@@ -1,7 +1,6 @@
 package bgstripe
 
 import (
-	"babblegraph/model/useraccounts"
 	"babblegraph/model/users"
 	"babblegraph/util/env"
 	"babblegraph/util/ptr"
@@ -191,26 +190,32 @@ func HandleStripeSubscriptionStatusUpdate(tx *sqlx.Tx, stripeSubscriptionID Subs
 	return nil
 }
 
-func CancelStripeSubscription(tx *sqlx.Tx, userID users.UserID, stripeSubscriptionID SubscriptionID) (bool, error) {
+func CancelStripeSubscription(tx *sqlx.Tx, userID users.UserID) error {
 	stripe.Key = env.MustEnvironmentVariable("STRIPE_KEY")
-	res, err := tx.Exec(updateStripeSubscriptionPaymentStateQuery, PaymentStateTerminated, userID, stripeSubscriptionID)
+	stripeSubscriptionsForUser, err := lookupStripeSubscriptionsForUser(tx, userID)
 	if err != nil {
-		return false, err
+		return err
 	}
-	numRows, err := res.RowsAffected()
-	if err != nil {
-		return false, err
+	for _, subscription := range stripeSubscriptionsForUser {
+		switch subscription.PaymentState {
+		case PaymentStateCreatedUnpaid,
+			PaymentStateTrialNoPaymentMethod,
+			PaymentStateTrialPaymentMethodAdded,
+			PaymentStateActive,
+			PaymentStateErrored:
+			subscriptionParams := &stripe.SubscriptionParams{
+				CancelAtPeriodEnd: ptr.Bool(true),
+			}
+			if _, err := sub.Update(string(subscription.StripeSubscriptionID), subscriptionParams); err != nil {
+				return err
+			}
+		case PaymentStateTerminated:
+			// no-op
+		default:
+			return fmt.Errorf("Unrecognized subscription state: %d", subscription.PaymentState)
+		}
 	}
-	if numRows <= 0 {
-		return false, nil
-	}
-	if err := useraccounts.ExpireSubscriptionForUser(tx, userID); err != nil {
-		return false, err
-	}
-	if _, err := sub.Cancel(string(stripeSubscriptionID), &stripe.SubscriptionCancelParams{}); err != nil {
-		return false, err
-	}
-	return true, nil
+	return nil
 }
 
 func UpdatePaymentStateForSubscription(tx *sqlx.Tx, userID users.UserID, stripeSubscriptionID SubscriptionID, newPaymentState PaymentState) error {
