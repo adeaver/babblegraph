@@ -16,12 +16,8 @@ import (
 )
 
 const (
-	defaultSubscriptionTrialLength = 14
-
 	getStripeSubscriptionQuery         = "SELECT * FROM bgstripe_subscription WHERE stripe_subscription_id = $1"
 	getStripeSubscriptionsForUserQuery = "SELECT * FROM bgstripe_subscription WHERE babblegraph_user_id = $1"
-
-	insertStripeSubscriptionForUserQuery = "INSERT INTO bgstripe_subscription (babblegraph_user_id, stripe_subscription_id, payment_state, stripe_product_id) VALUES ($1, $2, $3, $4)"
 
 	// The logical distinction between these two is the that second one is for use with trusted
 	// sources where we don't need to verify that a subscription belongs to a user. The first is

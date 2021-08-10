@@ -52,6 +52,10 @@ func (s StripeProductID) Str() string {
 	return string(s)
 }
 
+func (s StripeProductID) Ptr() *StripeProductID {
+	return &s
+}
+
 type PaymentState int
 
 const (

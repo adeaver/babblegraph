@@ -26,11 +26,13 @@ import { PrimaryTextField } from 'common/components/TextField/TextField';
 import StripeInput from 'common/util/stripe/StripeInput';
 
 import {
+    Subscription,
+    SubscriptionType,
     PaymentState,
     createUserSubscription,
     CreateUserSubscriptionResponse,
-    getUserNonTerminatedStripeSubscription,
-    GetUserNonTerminatedStripeSubscriptionResponse,
+    getActiveSubscriptionForUser,
+    GetActiveSubscriptionForUserResponse,
     UpdateStripeSubscriptionFrequencyForUserResponse,
     updateStripeSubscriptionFrequencyForUser,
 } from 'api/stripe/subscription';
@@ -79,12 +81,9 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
     const [ isLoadingUserSubscription, setIsLoadingUserSubscription ] = useState<boolean>(true);
 
     const [ isLoadingUpdateSubscription, setIsLoadingUpdateSubscription ] = useState<boolean>(false);
-    const [ subscriptionType, setSubscriptionType ] = useState<string>("monthly");
+    const [ subscriptionType, setSubscriptionType ] = useState<SubscriptionType>(SubscriptionType.Monthly);
 
-    const [ isEligibleForTrial, setIsEligibleForTrial ] = useState<boolean>(false);
-    const [ stripeSubscriptionID, setStripeSubscriptionID ] = useState<string | null>(null);
-    const [ stripeClientSecret, setStripeClientSecret ] = useState<string | null>(null);
-    const [ stripePaymentState, setStripePaymentState ] = useState<PaymentState | null>(null);
+    const [ subscription, setSubscription ] = useState<Subscription | null>(null);
     const [ isLoadingCreateSubscription, setIsLoadingCreateSubscription ] = useState<boolean>(false);
     const [ error, setError ] = useState<Error>(null);
 
@@ -93,16 +92,10 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
     const [ paymentError, setPaymentError ] = useState<string | null>(null);
 
     useEffect(() => {
-        getUserNonTerminatedStripeSubscription({
-            subscriptionCreationToken: token,
-        },
-        (resp: GetUserNonTerminatedStripeSubscriptionResponse) => {
+        getActiveSubscriptionForUser({},
+        (resp: GetActiveSubscriptionForUserResponse) => {
             setIsLoadingUserSubscription(false);
-            resp.stripeSubscriptionId != null && setStripeSubscriptionID(resp.stripeSubscriptionId);
-            resp.stripePaymentState != null && setStripePaymentState(resp.stripePaymentState);
-            resp.stripeClientSecret != null && setStripeClientSecret(resp.stripeClientSecret);
-            !!resp.isYearlySubscription && setSubscriptionType("yearly");
-            setIsEligibleForTrial(resp.isEligibleForTrial);
+            !!resp.subscription && setSubscription(resp.subscription);
         },
         (err: Error) => {
             setIsLoadingUserSubscription(false);
@@ -114,7 +107,7 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
         setIsLoadingUpdateSubscription(true);
         updateStripeSubscriptionFrequencyForUser({
             isYearlySubscription: subscriptionType === "yearly",
-            stripeSubscriptionId: stripeSubscriptionID,
+            // stripeSubscriptionId: stripeSubscriptionID,
         },
         (resp: UpdateStripeSubscriptionFrequencyForUserResponse)  => {
             setIsLoadingUpdateSubscription(false);
@@ -132,24 +125,24 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
         },
         (resp: CreateUserSubscriptionResponse) => {
             setIsLoadingCreateSubscription(false);
-            setStripeSubscriptionID(resp.stripeSubscriptionId);
-            setStripePaymentState(resp.stripePaymentState);
         },
         (err: Error) => {
             setIsLoadingCreateSubscription(false);
             setError(err);
         });
     }
-
-    const isCorrectPaymentState = stripePaymentState == null ||
-        stripePaymentState === PaymentState.CreatedUnpaid || stripePaymentState === PaymentState.TrialNoPaymentMethod;
+    const isSubscriptionAlreadySetup = (
+        subscription &&
+        subscription.paymentState !== PaymentState.CreatedUnpaid &&
+        subscription.paymentState !== PaymentState.TrialNoPaymentMethod
+    );
     const isPageLoading = isLoadingUserSubscription;
     const isSelectorLoading = isLoadingCreateSubscription || isPaymentConfirmationLoading || isLoadingUpdateSubscription;
     const classes = styleClasses();
     let body;
     if (isPageLoading) {
         body = <LoadingSpinner />;
-    } else if (!isCorrectPaymentState) {
+    } else if (isSubscriptionAlreadySetup) {
         body = (
             <div>
                 <VerifiedUserIcon className={classes.checkIcon} />
@@ -190,7 +183,7 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
             </Heading3>
         );
     } else {
-        const shouldShowCheckoutForm = !!stripeSubscriptionID && !isLoadingUpdateSubscription;
+        const shouldShowCheckoutForm = !!subscription && !isLoadingUpdateSubscription;
         body = (
             <div>
                 <SubscriptionSelector
@@ -198,15 +191,15 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
                     isPaymentConfirmationLoading={isPaymentConfirmationLoading}
                     isLoadingUpdateSubscription={isLoadingUpdateSubscription}
                     isCheckoutFormVisible={shouldShowCheckoutForm}
-                    isEligibleForTrial={isEligibleForTrial}
+                    isEligibleForTrial={!!subscription.trialInfo.trialEligibilityDays}
                     handleUpdateSubscriptionType={setSubscriptionType}
                     handleUpdateSubscription={handleUpdateSubscription}
                     handleSubmit={handleSubmit} />
                 {
                     shouldShowCheckoutForm && (
-                        stripePaymentState === PaymentState.CreatedUnpaid ? (
+                        subscription.paymentIntentClientSecret ? (
                             <CollectPaymentForm
-                                subscriptionID={stripeSubscriptionID}
+                                paymentIntentClientSecret={subscription.paymentIntentClientSecret}
                                 handleIsStripeRequestLoading={setIsPaymentConfirmationLoading}
                                 handleSuccess={() => setSuccessType(PaymentType.Payment)}
                                 handleFailure={setPaymentError}

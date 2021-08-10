@@ -51,39 +51,23 @@ func createUserSubscription(userID users.UserID, body []byte) (interface{}, erro
 	}, nil
 }
 
-type getUserNonTerminatedStripeSubscriptionRequest struct {
-	SubscriptionCreationToken string `json:"subscription_creation_token"`
+type getActiveSubscriptionForUserRequest struct{}
+
+type getActiveSubscriptionForUserResponse struct {
+	Subscription *bgstripe.Subscription `json:"subscription,omitempty"`
 }
 
-type getUserNonTerminatedStripeSubscriptionResponse struct {
-	IsEligibleForTrial   bool                     `json:"is_eligible_for_trial"`
-	IsYearlySubscription *bool                    `json:"is_yearly_subscription,omitempty"`
-	StripeSubscriptionID *bgstripe.SubscriptionID `json:"stripe_subscription_id,omitempty"`
-	StripeClientSecret   *string                  `json:"stripe_client_secret,omitempty"`
-	StripePaymentState   *bgstripe.PaymentState   `json:"stripe_payment_state,omitempty"`
-}
-
-func getUserNonTerminatedStripeSubscription(userID users.UserID, body []byte) (interface{}, error) {
-	var stripeSubscriptionOutput *bgstripe.StripeCustomerSubscriptionOutput
-	var isEligibleForTrial bool
+func getActiveSubscriptionForUser(userID users.UserID, body []byte) (interface{}, error) {
+	var subscription *bgstripe.Subscription
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		var err error
-		stripeSubscriptionOutput, isEligibleForTrial, err = bgstripe.LookupNonterminatedStripeSubscriptionForUser(tx, userID)
+		subscription, err = bgstripe.LookupActiveSubscriptionForUser(tx, userID)
 		return err
 	}); err != nil {
 		return nil, err
 	}
-	if stripeSubscriptionOutput == nil {
-		return getUserNonTerminatedStripeSubscriptionResponse{
-			IsEligibleForTrial: isEligibleForTrial,
-		}, nil
-	}
-	return getUserNonTerminatedStripeSubscriptionResponse{
-		StripeSubscriptionID: &stripeSubscriptionOutput.SubscriptionID,
-		StripeClientSecret:   &stripeSubscriptionOutput.ClientSecret,
-		StripePaymentState:   &stripeSubscriptionOutput.PaymentState,
-		IsYearlySubscription: &stripeSubscriptionOutput.IsYearlySubscription,
-		IsEligibleForTrial:   isEligibleForTrial,
+	return getActiveSubscriptionForUserResponse{
+		Subscription: subscription,
 	}, nil
 }
 

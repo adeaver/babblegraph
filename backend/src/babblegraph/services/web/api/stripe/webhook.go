@@ -53,12 +53,12 @@ func handleStripeWebhook(w http.ResponseWriter, r *http.Request) {
 			if err := bgstripe.InsertPaymentMethod(tx, *userID, &paymentMethod); err != nil {
 				return err
 			}
-			stripeSubscription, _, err := bgstripe.LookupNonterminatedStripeSubscriptionForUser(tx, *userID)
+			stripeSubscription, err := bgstripe.LookupActiveSubscriptionForUser(tx, *userID)
 			if err != nil {
 				return err
 			}
 			if stripeSubscription != nil && stripeSubscription.PaymentState == bgstripe.PaymentStateTrialNoPaymentMethod {
-				if err := bgstripe.UpdatePaymentStateForSubscription(tx, *userID, stripeSubscription.SubscriptionID, bgstripe.PaymentStateTrialPaymentMethodAdded); err != nil {
+				if err := bgstripe.UpdatePaymentStateForSubscription(tx, *userID, stripeSubscription.StripeSubscriptionID, bgstripe.PaymentStateTrialPaymentMethodAdded); err != nil {
 					return err
 				}
 			}
