@@ -16,79 +16,86 @@ import (
 )
 
 const (
-	getStripeSubscriptionQuery         = "SELECT * FROM bgstripe_subscription WHERE stripe_subscription_id = $1"
-	getStripeSubscriptionsForUserQuery = "SELECT * FROM bgstripe_subscription WHERE babblegraph_user_id = $1"
+	defaultSubscriptionTrialLength = 14
 
-	// The logical distinction between these two is the that second one is for use with trusted
-	// sources where we don't need to verify that a subscription belongs to a user. The first is
-	// for untrusted sources  (i.e. the frontend)
-	updateStripeSubscriptionPaymentStateQuery       = "UPDATE bgstripe_subscription SET payment_state = $1 WHERE babblegraph_user_id = $2 AND stripe_subscription_id = $3"
-	updateStripeSubscriptionPaymentStateNoUserQuery = "UPDATE bgstripe_subscription SET payment_state = $1 WHERE stripe_subscription_id = $2"
+	updateStripeSubscriptionPaymentStateQuery = "UPDATE bgstripe_subscription SET payment_state = $1 WHERE stripe_subscription_id = $2"
+
+	updateStripeSubscriptionProductIDQuery = "UPDATE bgstripe_subscription SET stripe_product_id = $1 WHERE babblegraph_user_id = $2 AND stripe_subscription_id = $3"
+	insertStripeSubscriptionForUserQuery   = "INSERT INTO bgstripe_subscription (babblegraph_user_id, stripe_subscription_id, payment_state, stripe_product_id) VALUES ($1, $2, $3, $4)"
+
+	lookupStripeSubscriptionQuery        = "SELECT * FROM bgstripe_subscription WHERE stripe_subscription_id = $1"
+	lookupActiveSubscriptionForUserQuery = "SELECT * FROM bgstripe_subscription WHERE babblegraph_user_id = $1 AND payment_state != $2"
+
+	getTrialEligibilityLengthForUserIDQuery = "SELECT * FROM bgstripe_subscription WHERE babblegraph_user_id = $1 ORDER BY created_at ASC LIMIT 1"
 )
 
-type StripeCustomerSubscriptionOutput struct {
-	ClientSecret         string
-	SubscriptionID       SubscriptionID
-	PaymentState         PaymentState
-	IsYearlySubscription bool
+type Subscription struct {
+	StripeSubscriptionID      SubscriptionID        `json:"stripe_subscription_id"`
+	PaymentState              PaymentState          `json:"payment_state"`
+	CurrentPeriodEnd          time.Time             `json:"current_period_end"`
+	CancelAtPeriodEnd         bool                  `json:"cancel_at_period_end"`
+	PaymentIntentClientSecret *string               `json:"payment_intent_client_secret,omitempty"`
+	SubscriptionType          SubscriptionType      `json:"subscription_type"`
+	TrialInfo                 SubscriptionTrialInfo `json:"trial_info"`
 }
 
-func CreateUnpaidStripeCustomerSubscriptionForUser(tx *sqlx.Tx, userID users.UserID, isYearlySubscription bool) (*StripeCustomerSubscriptionOutput, error) {
+type SubscriptionType string
+
+const (
+	SubscriptionTypeYearly  SubscriptionType = "yearly"
+	SubscriptionTypeMonthly SubscriptionType = "monthly"
+)
+
+func (s SubscriptionType) Ptr() *SubscriptionType {
+	return &s
+}
+
+type SubscriptionTrialInfo struct {
+	IsCurrentlyTrialing  bool  `json:"is_currently_trialing"`
+	TrialEligibilityDays int64 `json:"trial_eligibility_days"`
+}
+
+func CreateSubscriptionForUser(tx *sqlx.Tx, userID users.UserID, subscriptionType SubscriptionType) (*Subscription, error) {
 	stripe.Key = env.MustEnvironmentVariable("STRIPE_KEY")
+	existingSubscription, err := LookupActiveSubscriptionForUser(tx, userID)
+	if err != nil {
+		return nil, err
+	}
+	if existingSubscription != nil {
+		return nil, fmt.Errorf("User already has an active subscription")
+	}
 	stripeCustomer, err := getStripeCustomerForUserID(tx, userID)
 	if err != nil {
 		return nil, err
 	}
-	stripeProductID := getPriceIDForEnvironmentAndPaymentType(isYearlySubscription)
-	// Trials are automatically considered active
-	newPaymentState := PaymentStateTrialNoPaymentMethod
-	trialPeriodDays, err := getNumberOfDaysOfTrial(tx, userID)
+	trialEligibilityDays, err := getTrialEligibilityLengthForUserID(tx, userID)
 	if err != nil {
 		return nil, err
 	}
-	if *trialPeriodDays <= 0 {
-		newPaymentState = PaymentStateCreatedUnpaid
-		trialPeriodDays = ptr.Int64(0)
-	}
-	subscriptionPriceLineItem := stripe.SubscriptionItemsParams{
-		Price: stripe.String(stripeProductID.Str()),
+	stripeProductID, err := getProductIDForSubscriptionType(subscriptionType)
+	if err != nil {
+		return nil, err
 	}
 	subscriptionParams := &stripe.SubscriptionParams{
-		Customer:        stripe.String(string(stripeCustomer.StripeCustomerID)),
-		Items:           []*stripe.SubscriptionItemsParams{&subscriptionPriceLineItem},
+		Customer: stripe.String(string(stripeCustomer.StripeCustomerID)),
+		Items: []*stripe.SubscriptionItemsParams{
+			&stripe.SubscriptionItemsParams{
+				Price: ptr.String(stripeProductID.Str()),
+			},
+		},
 		PaymentBehavior: stripe.String("default_incomplete"),
 	}
-	switch newPaymentState {
-	case PaymentStateTrialNoPaymentMethod:
-		// Create a trial
-		subscriptionParams.TrialPeriodDays = stripe.Int64(*trialPeriodDays)
-		subscriptionParams.AddExpand("pending_setup_intent")
-	case PaymentStateCreatedUnpaid:
-		// Create a subscription without a trial
-		subscriptionParams.AddExpand("latest_invoice.payment_intent")
-	default:
-		return nil, fmt.Errorf("Invalid payment state for new subscription: %d", newPaymentState)
+	subscriptionParams.AddExpand("latest_invoice.payment_intent")
+	paymentState := PaymentStateCreatedUnpaid
+	if *trialEligibilityDays > 0 {
+		paymentState = PaymentStateTrialNoPaymentMethod
+		subscriptionParams.TrialPeriodDays = trialEligibilityDays
 	}
 	stripeSubscription, err := sub.New(subscriptionParams)
 	if err != nil {
 		return nil, err
 	}
-	var clientSecret *string
-	switch newPaymentState {
-	case PaymentStateTrialNoPaymentMethod:
-		if stripeSubscription.PendingSetupIntent == nil {
-			return nil, fmt.Errorf("Expected pending setup to be nonnil")
-		}
-		clientSecret = ptr.String(stripeSubscription.PendingSetupIntent.ClientSecret)
-	case PaymentStateCreatedUnpaid:
-		if stripeSubscription.LatestInvoice == nil || stripeSubscription.LatestInvoice.PaymentIntent == nil {
-			return nil, fmt.Errorf("Expected latest invoice and payment intent to be nonnil")
-		}
-		clientSecret = ptr.String(stripeSubscription.LatestInvoice.PaymentIntent.ClientSecret)
-	default:
-		return nil, fmt.Errorf("Invalid payment state: %d", newPaymentState)
-	}
-	if _, err := tx.Exec(insertStripeSubscriptionForUserQuery, userID, stripeSubscription.ID, newPaymentState, stripeProductID); err != nil {
+	if _, err := tx.Exec(insertStripeSubscriptionForUserQuery, userID, stripeSubscription.ID, paymentState, stripeProductID); err != nil {
 		log.Println("Attempting to rollback stripe subscription")
 		if _, sErr := sub.Cancel(stripeSubscription.ID, &stripe.SubscriptionCancelParams{}); sErr != nil {
 			formattedSErr := fmt.Errorf("Error rolling back stripe subscription %s for user %s because of %s. Original error: %s", stripeSubscription.ID, userID, sErr.Error(), err.Error())
@@ -97,182 +104,210 @@ func CreateUnpaidStripeCustomerSubscriptionForUser(tx *sqlx.Tx, userID users.Use
 		}
 		return nil, err
 	}
-	return &StripeCustomerSubscriptionOutput{
-		SubscriptionID:       SubscriptionID(stripeSubscription.ID),
-		ClientSecret:         *clientSecret,
-		PaymentState:         newPaymentState,
-		IsYearlySubscription: isYearlySubscription,
-	}, nil
+	dbSubscription, err := lookupActiveDBSubscriptionForUser(tx, userID)
+	switch {
+	case err != nil:
+		return nil, err
+	case dbSubscription == nil:
+		return nil, fmt.Errorf("Could not retrieve subscription from database")
+	}
+	return mergeSubscriptionObjects(tx, *dbSubscription, stripeSubscription)
 }
 
-func LookupNonterminatedStripeSubscriptionForUser(tx *sqlx.Tx, userID users.UserID) (*StripeCustomerSubscriptionOutput, bool, error) {
+func LookupActiveSubscriptionForUser(tx *sqlx.Tx, userID users.UserID) (*Subscription, error) {
 	stripe.Key = env.MustEnvironmentVariable("STRIPE_KEY")
-	stripeSubscriptionsForUser, err := lookupStripeSubscriptionsForUser(tx, userID)
+	var matches []dbStripeSubscription
+	if err := tx.Select(&matches, lookupActiveSubscriptionForUserQuery, userID, PaymentStateTerminated); err != nil {
+		return nil, err
+	}
+	dbSubscription, err := lookupActiveDBSubscriptionForUser(tx, userID)
+	switch {
+	case err != nil:
+		return nil, err
+	case dbSubscription == nil:
+		return nil, nil
+	}
+	subscriptionParams := &stripe.SubscriptionParams{}
+	subscriptionParams.AddExpand("latest_invoice.payment_intent")
+	stripeSubscription, err := sub.Get(string(dbSubscription.StripeSubscriptionID), subscriptionParams)
 	if err != nil {
-		return nil, false, err
+		return nil, err
 	}
-	numberOfTrialDays, err := getNumberOfDaysOfTrial(tx, userID)
-	if err != nil {
-		return nil, false, err
-	}
-	isEligibleForTrial := *numberOfTrialDays > 0
-	for _, subscription := range stripeSubscriptionsForUser {
-		if subscription.PaymentState != PaymentStateTerminated {
-			isYearlySubscription, err := isStripeProductIDYearly(subscription.StripeProductID)
-			if err != nil {
-				return nil, false, err
-			}
-			subscriptionParams := &stripe.SubscriptionParams{}
-			var clientSecret string
-			switch subscription.PaymentState {
-			case PaymentStateTrialNoPaymentMethod:
-				subscriptionParams.AddExpand("pending_setup_intent")
-				stripeSubscription, err := sub.Get(string(subscription.StripeSubscriptionID), subscriptionParams)
-				if err != nil {
-					return nil, false, err
-				}
-				if stripeSubscription.PendingSetupIntent != nil {
-					clientSecret = stripeSubscription.PendingSetupIntent.ClientSecret
-				}
-			case PaymentStateCreatedUnpaid:
-				subscriptionParams.AddExpand("latest_invoice.payment_intent")
-				stripeSubscription, err := sub.Get(string(subscription.StripeSubscriptionID), subscriptionParams)
-				if err != nil {
-					return nil, false, err
-				}
-				if stripeSubscription.LatestInvoice != nil && stripeSubscription.LatestInvoice.PaymentIntent != nil {
-					clientSecret = stripeSubscription.LatestInvoice.PaymentIntent.ClientSecret
-				}
-			default:
-			}
-			return &StripeCustomerSubscriptionOutput{
-				SubscriptionID:       subscription.StripeSubscriptionID,
-				ClientSecret:         clientSecret,
-				PaymentState:         subscription.PaymentState,
-				IsYearlySubscription: *isYearlySubscription,
-			}, isEligibleForTrial, nil
-		}
-	}
-	return nil, isEligibleForTrial, nil
+	return mergeSubscriptionObjects(tx, *dbSubscription, stripeSubscription)
 }
 
-func HandleStripeSubscriptionStatusUpdate(tx *sqlx.Tx, stripeSubscriptionID SubscriptionID, newStatus stripe.SubscriptionStatus) error {
-	subscription, err := lookupStripeSubscriptionByID(tx, stripeSubscriptionID)
+type UpdateSubscriptionOptions struct {
+	SubscriptionType  *SubscriptionType `json:"subscription_type,omitempty"`
+	CancelAtPeriodEnd *bool             `json:"canel_at_period_end,omitempty"`
+}
+
+func UpdateSubscription(tx *sqlx.Tx, userID users.UserID, options UpdateSubscriptionOptions) error {
+	stripe.Key = env.MustEnvironmentVariable("STRIPE_KEY")
+	dbSubscription, err := lookupActiveDBSubscriptionForUser(tx, userID)
 	switch {
 	case err != nil:
 		return err
-	case subscription == nil:
-		return nil
+	case dbSubscription == nil:
+		return fmt.Errorf("User has no subscription to update")
 	}
-	switch newStatus {
-	case stripe.SubscriptionStatusActive:
-		if _, err := tx.Exec(updateStripeSubscriptionPaymentStateNoUserQuery, PaymentStateActive, stripeSubscriptionID); err != nil {
+	subscriptionParams := &stripe.SubscriptionParams{}
+	if options.SubscriptionType != nil {
+		stripeProductID, err := getProductIDForSubscriptionType(*options.SubscriptionType)
+		if err != nil {
 			return err
+		}
+		if _, err := tx.Exec(updateStripeSubscriptionProductIDQuery, *stripeProductID, userID, dbSubscription.StripeSubscriptionID); err != nil {
+			return err
+		}
+		subscriptionParams.Items = []*stripe.SubscriptionItemsParams{
+			&stripe.SubscriptionItemsParams{
+				Price: ptr.String(stripeProductID.Str()),
+			},
+		}
+	}
+	if options.CancelAtPeriodEnd != nil {
+		subscriptionParams.CancelAtPeriodEnd = options.CancelAtPeriodEnd
+	}
+	if _, err := sub.Update(string(dbSubscription.StripeSubscriptionID), subscriptionParams); err != nil {
+		return err
+	}
+	return nil
+}
+
+func CancelSubscription(tx *sqlx.Tx, userID users.UserID) error {
+	stripe.Key = env.MustEnvironmentVariable("STRIPE_KEY")
+	dbSubscription, err := lookupActiveDBSubscriptionForUser(tx, userID)
+	switch {
+	case err != nil:
+		return err
+	case dbSubscription == nil:
+		return fmt.Errorf("User has no subscription to update")
+	}
+	if err := updateSubscriptionPaymentState(tx, dbSubscription.StripeSubscriptionID, PaymentStateTerminated); err != nil {
+		return err
+	}
+	if _, err := sub.Cancel(string(dbSubscription.StripeSubscriptionID), &stripe.SubscriptionCancelParams{}); err != nil {
+		return err
+	}
+	return nil
+}
+
+func LookupBabblegraphUserIDForStripeSubscriptionID(tx *sqlx.Tx, stripeSubscriptionID string) (*users.UserID, error) {
+	dbSubscription, err := lookupDBSubcriptionByStripeID(tx, stripeSubscriptionID)
+	switch {
+	case err != nil:
+		return nil, err
+	case dbSubscription == nil:
+		return nil, fmt.Errorf("No stripe subscription found")
+	}
+	return &dbSubscription.BabblegraphUserID, nil
+}
+
+func ReconcileInvoice(tx *sqlx.Tx, invoice stripe.Invoice) (*users.UserID, *Subscription, error) {
+	stripe.Key = env.MustEnvironmentVariable("STRIPE_KEY")
+	if invoice.Subscription == nil {
+		return nil, nil, fmt.Errorf("invoice not tied to any subscription")
+	}
+	dbSubscription, err := lookupDBSubcriptionByStripeID(tx, invoice.Subscription.ID)
+	switch {
+	case err != nil:
+		return nil, nil, err
+	case dbSubscription == nil:
+		return nil, nil, fmt.Errorf("No stripe subscription found")
+	}
+	subscriptionParams := &stripe.SubscriptionParams{}
+	stripeSubscription, err := sub.Get(string(dbSubscription.StripeSubscriptionID), subscriptionParams)
+	if err != nil {
+		return nil, nil, err
+	}
+	subscription, err := mergeSubscriptionObjects(tx, *dbSubscription, stripeSubscription)
+	if err != nil {
+		return nil, nil, err
+	}
+	return &dbSubscription.BabblegraphUserID, subscription, nil
+}
+
+type SubscriptionReconciliationAction string
+
+const (
+	SubscriptionReconciliationActionFirstPaymentSuccessful SubscriptionReconciliationAction = "first-payment-successful"
+	SubscriptionReconciliationActionCancellation           SubscriptionReconciliationAction = "cancellation"
+)
+
+func (s SubscriptionReconciliationAction) Ptr() *SubscriptionReconciliationAction {
+	return &s
+}
+
+func ReconcileSubscriptionUpdate(tx *sqlx.Tx, stripeSubscription stripe.Subscription) (*SubscriptionReconciliationAction, error) {
+	dbSubscription, err := lookupDBSubcriptionByStripeID(tx, stripeSubscription.ID)
+	switch {
+	case err != nil:
+		return nil, err
+	case dbSubscription == nil:
+		return nil, fmt.Errorf("No stripe subscription found")
+	case dbSubscription.PaymentState == PaymentStateTerminated:
+		return nil, nil
+	}
+	var newPaymentState *PaymentState
+	var reconciliationAction *SubscriptionReconciliationAction
+	switch stripeSubscription.Status {
+	case stripe.SubscriptionStatusActive:
+		newPaymentState = PaymentStateActive.Ptr()
+		if dbSubscription.PaymentState == PaymentStateCreatedUnpaid {
+			reconciliationAction = SubscriptionReconciliationActionFirstPaymentSuccessful.Ptr()
 		}
 	case stripe.SubscriptionStatusIncomplete,
 		stripe.SubscriptionStatusIncompleteExpired,
 		stripe.SubscriptionStatusCanceled:
-		if _, err := tx.Exec(updateStripeSubscriptionPaymentStateNoUserQuery, PaymentStateTerminated, stripeSubscriptionID); err != nil {
-			return err
-		}
+		newPaymentState = PaymentStateTerminated.Ptr()
+		reconciliationAction = SubscriptionReconciliationActionCancellation.Ptr()
 	case stripe.SubscriptionStatusPastDue,
 		stripe.SubscriptionStatusUnpaid,
 		stripe.SubscriptionStatusTrialing,
 		stripe.SubscriptionStatusAll:
 		// no-op
 	}
-	return nil
-}
-
-func CancelStripeSubscription(tx *sqlx.Tx, userID users.UserID) error {
-	stripe.Key = env.MustEnvironmentVariable("STRIPE_KEY")
-	stripeSubscriptionsForUser, err := lookupStripeSubscriptionsForUser(tx, userID)
-	if err != nil {
-		return err
-	}
-	for _, subscription := range stripeSubscriptionsForUser {
-		switch subscription.PaymentState {
-		case PaymentStateCreatedUnpaid,
-			PaymentStateTrialNoPaymentMethod,
-			PaymentStateTrialPaymentMethodAdded,
-			PaymentStateActive,
-			PaymentStateErrored:
-			subscriptionParams := &stripe.SubscriptionParams{
-				CancelAtPeriodEnd: ptr.Bool(true),
-			}
-			if _, err := sub.Update(string(subscription.StripeSubscriptionID), subscriptionParams); err != nil {
-				return err
-			}
-		case PaymentStateTerminated:
-			// no-op
-		default:
-			return fmt.Errorf("Unrecognized subscription state: %d", subscription.PaymentState)
+	if newPaymentState != nil {
+		if err := updateSubscriptionPaymentState(tx, dbSubscription.SubscriptionID, *newPaymentState); err != nil {
+			return nil, err
 		}
 	}
-	return nil
+	return reconciliationAction, nil
 }
 
-func UpdatePaymentStateForSubscription(tx *sqlx.Tx, userID users.UserID, stripeSubscriptionID SubscriptionID, newPaymentState PaymentState) error {
-	if _, err := tx.Exec(updateStripeSubscriptionPaymentStateQuery, newPaymentState, userID, stripeSubscriptionID); err != nil {
-		return err
-	}
-	return nil
-}
-
-func UpdateStripeSubscriptionChargeFrequency(tx *sqlx.Tx, userID users.UserID, stripeSubscriptionID SubscriptionID, isYearlySubscription bool) (bool, error) {
-	stripe.Key = env.MustEnvironmentVariable("STRIPE_KEY")
-	stripeProductID := getPriceIDForEnvironmentAndPaymentType(isYearlySubscription)
-	res, err := tx.Exec(updateStripeSubscriptionProductID, stripeProductID, userID, stripeSubscriptionID)
+func mergeSubscriptionObjects(tx *sqlx.Tx, bgSub dbStripeSubscription, stripeSub *stripe.Subscription) (*Subscription, error) {
+	trialEligibilityDays, err := getTrialEligibilityLengthForUserID(tx, bgSub.BabblegraphUserID)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
-	numRows, err := res.RowsAffected()
+	var paymentIntentClientSecret *string
+	if bgSub.PaymentState == PaymentStateCreatedUnpaid {
+		if stripeSub.LatestInvoice == nil || stripeSub.LatestInvoice.PaymentIntent == nil {
+			return nil, fmt.Errorf("Expected latest invoice and payment intent to be nonnil")
+		}
+		paymentIntentClientSecret = ptr.String(stripeSub.LatestInvoice.PaymentIntent.ClientSecret)
+	}
+	subscriptionType, err := getSubscriptionTypeForProductID(bgSub.StripeProductID)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
-	if numRows <= 0 {
-		return false, nil
-	}
-	subscription, err := sub.Get(string(stripeSubscriptionID), nil)
-	if err != nil {
-		return false, err
-	}
-	subscriptionParams := &stripe.SubscriptionParams{
-		Items: []*stripe.SubscriptionItemsParams{
-			{
-				ID:    stripe.String(subscription.Items.Data[0].ID),
-				Price: stripe.String(stripeProductID.Str()),
-			},
+	return &Subscription{
+		StripeSubscriptionID:      bgSub.StripeSubscriptionID,
+		PaymentState:              bgSub.PaymentState,
+		CurrentPeriodEnd:          time.Unix(stripeSub.CurrentPeriodEnd, 0),
+		CancelAtPeriodEnd:         stripeSub.CancelAtPeriodEnd,
+		PaymentIntentClientSecret: paymentIntentClientSecret,
+		SubscriptionType:          *subscriptionType,
+		TrialInfo: SubscriptionTrialInfo{
+			IsCurrentlyTrialing:  bgSub.PaymentState == PaymentStateTrialPaymentMethodAdded || bgSub.PaymentState == PaymentStateTrialNoPaymentMethod,
+			TrialEligibilityDays: *trialEligibilityDays,
 		},
-	}
-	if _, err := sub.Update(string(stripeSubscriptionID), subscriptionParams); err != nil {
-		return false, err
-	}
-	return true, nil
+	}, nil
 }
 
-func lookupStripeSubscriptionsForUser(tx *sqlx.Tx, userID users.UserID) ([]dbStripeSubscription, error) {
+func lookupActiveDBSubscriptionForUser(tx *sqlx.Tx, userID users.UserID) (*dbStripeSubscription, error) {
 	var matches []dbStripeSubscription
-	if err := tx.Select(&matches, getStripeSubscriptionsForUserQuery, userID); err != nil {
-		return nil, err
-	}
-	return matches, nil
-}
-
-func LookupBabblegraphUserIDForStripeSubscriptionID(tx *sqlx.Tx, subscriptionID SubscriptionID) (*users.UserID, error) {
-	subscription, err := lookupStripeSubscriptionByID(tx, subscriptionID)
-	if err != nil {
-		return nil, err
-	}
-	if subscription == nil {
-		return nil, nil
-	}
-	return &subscription.BabblegraphUserID, nil
-}
-
-func lookupStripeSubscriptionByID(tx *sqlx.Tx, subscriptionID SubscriptionID) (*dbStripeSubscription, error) {
-	var matches []dbStripeSubscription
-	if err := tx.Select(&matches, getStripeSubscriptionQuery, subscriptionID); err != nil {
+	if err := tx.Select(&matches, lookupActiveSubscriptionForUserQuery, userID, PaymentStateTerminated); err != nil {
 		return nil, err
 	}
 	switch {
@@ -282,56 +317,85 @@ func lookupStripeSubscriptionByID(tx *sqlx.Tx, subscriptionID SubscriptionID) (*
 		m := matches[0]
 		return &m, nil
 	default:
-		return nil, fmt.Errorf("Expected one subscription, but got %d", len(matches))
+		return nil, fmt.Errorf("Expected at most one subscription, but got %d", len(matches))
+	}
+	return nil, fmt.Errorf("Unreachable")
+}
+
+func lookupDBSubcriptionByStripeID(tx *sqlx.Tx, subscriptionID string) (*dbStripeSubscription, error) {
+	var matches []dbStripeSubscription
+	if err := tx.Select(&matches, lookupStripeSubscriptionQuery, subscriptionID); err != nil {
+		return nil, err
+	}
+	switch {
+	case len(matches) == 0:
+		return nil, nil
+	case len(matches) == 1:
+		m := matches[0]
+		return &m, nil
+	default:
+		return nil, fmt.Errorf("Expected at most one subscription, but got %d", len(matches))
+	}
+	return nil, fmt.Errorf("Unreachable")
+}
+
+func updateSubscriptionPaymentState(tx *sqlx.Tx, subscriptionID SubscriptionID, newPaymentState PaymentState) error {
+	if _, err := tx.Exec(updateStripeSubscriptionPaymentStateQuery, newPaymentState, subscriptionID); err != nil {
+		return err
+	}
+	return nil
+}
+
+func getTrialEligibilityLengthForUserID(tx *sqlx.Tx, userID users.UserID) (*int64, error) {
+	var matches []dbStripeSubscription
+	if err := tx.Select(&matches, getTrialEligibilityLengthForUserIDQuery, userID); err != nil {
+		return nil, err
+	}
+	switch {
+	case len(matches) == 0:
+		return ptr.Int64(defaultSubscriptionTrialLength), nil
+	case len(matches) == 1:
+		now := time.Now()
+		daysSinceFirstSubscription := int64(math.Abs(now.Sub(matches[0].CreatedAt).Hours() / 24.0))
+		if daysSinceFirstSubscription >= defaultSubscriptionTrialLength {
+			return ptr.Int64(0), nil
+		}
+		return ptr.Int64(defaultSubscriptionTrialLength - daysSinceFirstSubscription), nil
+	default:
+		return nil, fmt.Errorf("Expected at most one subscription, but got %d", len(matches))
 	}
 }
 
-func getPriceIDForEnvironmentAndPaymentType(isYearlySubscription bool) StripeProductID {
+func getSubscriptionTypeForProductID(productID StripeProductID) (*SubscriptionType, error) {
+	switch productID {
+	case StripeProductIDYearlySubscriptionTest,
+		StripeProductIDYearlySubscriptionProd:
+		return SubscriptionTypeYearly.Ptr(), nil
+	case StripeProductIDMonthlySubscriptionTest,
+		StripeProductIDMonthlySubscriptionProd:
+		return SubscriptionTypeMonthly.Ptr(), nil
+	default:
+		return nil, fmt.Errorf("Unrecognized product ID %s", productID)
+	}
+}
+
+func getProductIDForSubscriptionType(subscriptionType SubscriptionType) (*StripeProductID, error) {
 	currentEnv := env.MustEnvironmentName()
 	switch currentEnv {
 	case env.EnvironmentProd:
-		if isYearlySubscription {
-			return StripeProductIDYearlySubscriptionProd
+		if subscriptionType == SubscriptionTypeYearly {
+			return StripeProductIDYearlySubscriptionProd.Ptr(), nil
 		}
-		return StripeProductIDMonthlySubscriptionProd
+		return StripeProductIDMonthlySubscriptionProd.Ptr(), nil
 	case env.EnvironmentStage,
 		env.EnvironmentLocal,
 		env.EnvironmentLocalNoEmail,
 		env.EnvironmentLocalTestEmail:
-		if isYearlySubscription {
-			return StripeProductIDYearlySubscriptionTest
+		if subscriptionType == SubscriptionTypeYearly {
+			return StripeProductIDYearlySubscriptionTest.Ptr(), nil
 		}
-		return StripeProductIDMonthlySubscriptionTest
+		return StripeProductIDMonthlySubscriptionTest.Ptr(), nil
 	default:
-		panic(fmt.Sprintf("unsupported environment: %s", currentEnv))
+		return nil, fmt.Errorf("unsupported environment: %s", currentEnv)
 	}
-}
-
-func isStripeProductIDYearly(stripeProductID StripeProductID) (*bool, error) {
-	switch stripeProductID {
-	case StripeProductIDYearlySubscriptionTest,
-		StripeProductIDYearlySubscriptionProd:
-		return ptr.Bool(true), nil
-	case StripeProductIDMonthlySubscriptionTest,
-		StripeProductIDMonthlySubscriptionProd:
-		return ptr.Bool(false), nil
-	default:
-		return nil, fmt.Errorf("Unrecognized product ID %s", stripeProductID)
-	}
-}
-
-func getNumberOfDaysOfTrial(tx *sqlx.Tx, userID users.UserID) (*int64, error) {
-	stripeSubscriptions, err := lookupStripeSubscriptionsForUser(tx, userID)
-	if err != nil {
-		return nil, err
-	}
-	var daysSinceOldestTrialPeriod int64 = 0
-	now := time.Now()
-	for _, subscription := range stripeSubscriptions {
-		daysSinceTrialForSubscription := int64(math.Abs(now.Sub(subscription.CreatedAt).Hours() / 24.0))
-		if daysSinceTrialForSubscription > daysSinceOldestTrialPeriod {
-			daysSinceOldestTrialPeriod = daysSinceTrialForSubscription
-		}
-	}
-	return ptr.Int64(defaultSubscriptionTrialLength - daysSinceOldestTrialPeriod), nil
 }

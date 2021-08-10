@@ -83,6 +83,10 @@ const (
 	PaymentStateTerminated PaymentState = 5
 )
 
+func (p PaymentState) Ptr() *PaymentState {
+	return &p
+}
+
 type paymentMethodRelationshipID string
 
 type PaymentMethodID string
