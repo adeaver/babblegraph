@@ -85,7 +85,7 @@ func InsertPaymentMethod(tx *sqlx.Tx, userID users.UserID, paymentMethod *stripe
 	if _, err := tx.Exec(insertPaymentMethodQuery, userID, paymentMethod.ID, paymentMethod.Card.Brand, paymentMethod.Card.Last4, paymentMethod.Card.ExpMonth, paymentMethod.Card.ExpYear); err != nil {
 		return err
 	}
-	return nil
+	return updatePaymentStateForNewPaymentMethod(tx, userID)
 }
 
 func LookupPaymentMethod(tx *sqlx.Tx, userID users.UserID, paymentMethodID PaymentMethodID) (*PaymentMethod, error) {

@@ -50,19 +50,7 @@ func handleStripeWebhook(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				return err
 			}
-			if err := bgstripe.InsertPaymentMethod(tx, *userID, &paymentMethod); err != nil {
-				return err
-			}
-			stripeSubscription, err := bgstripe.LookupActiveSubscriptionForUser(tx, *userID)
-			if err != nil {
-				return err
-			}
-			if stripeSubscription != nil && stripeSubscription.PaymentState == bgstripe.PaymentStateTrialNoPaymentMethod {
-				if err := bgstripe.UpdatePaymentStateForSubscription(tx, *userID, stripeSubscription.StripeSubscriptionID, bgstripe.PaymentStateTrialPaymentMethodAdded); err != nil {
-					return err
-				}
-			}
-			return nil
+			return bgstripe.InsertPaymentMethod(tx, *userID, &paymentMethod)
 		}); err != nil {
 			handleWebhookError(w, "capturing payment method event", err)
 			return

@@ -268,7 +268,7 @@ func ReconcileSubscriptionUpdate(tx *sqlx.Tx, stripeSubscription stripe.Subscrip
 		// no-op
 	}
 	if newPaymentState != nil {
-		if err := updateSubscriptionPaymentState(tx, dbSubscription.SubscriptionID, *newPaymentState); err != nil {
+		if err := updateSubscriptionPaymentState(tx, dbSubscription.StripeSubscriptionID, *newPaymentState); err != nil {
 			return nil, err
 		}
 	}
@@ -344,6 +344,19 @@ func updateSubscriptionPaymentState(tx *sqlx.Tx, subscriptionID SubscriptionID, 
 		return err
 	}
 	return nil
+}
+
+func updatePaymentStateForNewPaymentMethod(tx *sqlx.Tx, userID users.UserID) error {
+	dbSubscription, err := lookupActiveDBSubscriptionForUser(tx, userID)
+	switch {
+	case err != nil:
+		return err
+	case dbSubscription == nil:
+		return fmt.Errorf("No stripe subscription found")
+	case dbSubscription.PaymentState != PaymentStateTrialNoPaymentMethod:
+		return nil
+	}
+	return updateSubscriptionPaymentState(tx, dbSubscription.StripeSubscriptionID, PaymentStateTrialPaymentMethodAdded)
 }
 
 func getTrialEligibilityLengthForUserID(tx *sqlx.Tx, userID users.UserID) (*int64, error) {
