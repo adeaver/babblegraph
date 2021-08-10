@@ -203,11 +203,8 @@ const LoginForm = (props: LoginFormProps) => {
                 Forgot your password?
             </Link>
             <Paragraph>
-                If you don’t have a premium account and would like one, check out Babblegraph’s BuyMeACoffee page.
+                If you don’t have a premium account and would like one, check out the manage your subscription link on the bottom of your daily newsletter.
             </Paragraph>
-            <Link href="https://buymeacoffee.com/babblegraph">
-                Click here to learn more
-            </Link>
         </div>
     );
 }

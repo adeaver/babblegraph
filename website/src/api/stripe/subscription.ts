@@ -1,5 +1,24 @@
 import { makePostRequestWithStandardEncoding } from 'api/bgfetch/bgfetch';
 
+export type Subscription = {
+    stripeSubscriptionId: string;
+    paymentState: PaymentState;
+    currentPeriodEnd: Date;
+    paymentIntentClientSecret: string | undefined;
+    subscriptionType: SubscriptionType;
+    trialInfo: SubscriptionTrialInfo;
+}
+
+export type SubscriptionTrialInfo = {
+    isCurrentlyTrialing: boolean;
+    trialEligibilityDays: number;
+}
+
+export enum SubscriptionType {
+    Yearly = 'yearly',
+    Monthly = 'monthly',
+}
+
 export enum PaymentState {
     CreatedUnpaid = 0,
     TrialNoPaymentMethod = 1,
@@ -10,14 +29,11 @@ export enum PaymentState {
 }
 
 export type CreateUserSubscriptionRequest = {
-    subscriptionCreationToken: string;
-    isYearlySubscription: boolean;
+    subscriptionType: SubscriptionType;
 }
 
 export type CreateUserSubscriptionResponse = {
-    stripeSubscriptionId: string;
-    stripeClientSecret: string;
-    stripePaymentState: PaymentState;
+    subscription: Subscription | undefined;
 }
 
 export function createUserSubscription(
@@ -33,70 +49,47 @@ export function createUserSubscription(
     );
 }
 
-export type GetUserNonTerminatedStripeSubscriptionRequest = {
-    subscriptionCreationToken: string;
+export type GetActiveSubscriptionForUserRequest = {}
+
+export type GetActiveSubscriptionForUserResponse = {
+    subscription: Subscription | undefined;
 }
 
-export type GetUserNonTerminatedStripeSubscriptionResponse = {
-    isYearlySubscription: boolean | undefined;
-    stripeSubscriptionId: string | undefined;
-    stripeClientSecret: string | undefined;
-    stripePaymentState: PaymentState | undefined;
-    isEligibleForTrial: boolean;
-}
-
-export function getUserNonTerminatedStripeSubscription(
-    req: GetUserNonTerminatedStripeSubscriptionRequest,
-    onSuccess: (resp: GetUserNonTerminatedStripeSubscriptionResponse) => void,
+export function getActiveSubscriptionForUser(
+    req: GetActiveSubscriptionForUserRequest,
+    onSuccess: (resp: GetActiveSubscriptionForUserResponse) => void,
     onError: (e: Error) => void,
 ) {
-    makePostRequestWithStandardEncoding<GetUserNonTerminatedStripeSubscriptionRequest, GetUserNonTerminatedStripeSubscriptionResponse>(
-        '/api/stripe/get_user_nonterm_stripe_subscription_1',
+    makePostRequestWithStandardEncoding<GetActiveSubscriptionForUserRequest, GetActiveSubscriptionForUserResponse>(
+        '/api/stripe/get_active_subscription_for_user_1',
         req,
         onSuccess,
         onError,
     );
 }
 
-export type UpdateStripeSubscriptionFrequencyForUserRequest = {
-    stripeSubscriptionId: string;
-    isYearlySubscription: boolean;
+export type UpdateSubscriptionOptions = {
+    subscriptionType?: SubscriptionType;
+    cancelAtPeriodEnd?: boolean;
 }
 
-export type UpdateStripeSubscriptionFrequencyForUserResponse = {
-    success: boolean;
+export type UpdateStripeSubscriptionForUserRequest = {
+    options: UpdateSubscriptionOptions,
 }
 
-export function updateStripeSubscriptionFrequencyForUser(
-    req: UpdateStripeSubscriptionFrequencyForUserRequest,
-    onSuccess: (resp: UpdateStripeSubscriptionFrequencyForUserResponse) => void,
+export type UpdateStripeSubscriptionForUserResponse = {
+    subscription: Subscription | undefined;
+}
+
+export function updateStripeSubscriptionForUser(
+    req: UpdateStripeSubscriptionForUserRequest,
+    onSuccess: (resp: UpdateStripeSubscriptionForUserResponse) => void,
     onError: (e: Error) => void,
 ) {
-    makePostRequestWithStandardEncoding<UpdateStripeSubscriptionFrequencyForUserRequest, UpdateStripeSubscriptionFrequencyForUserResponse>(
+    makePostRequestWithStandardEncoding<UpdateStripeSubscriptionForUserRequest, UpdateStripeSubscriptionForUserResponse>(
         '/api/stripe/update_stripe_subscription_for_user_1',
         req,
         onSuccess,
         onError,
     );
 }
-
-
-export type DeleteStripeSubscriptionForUserRequest = {}
-
-export type DeleteStripeSubscriptionForUserResponse = {
-    success: boolean;
-}
-
-export function deleteStripeSubscriptionForUser(
-    req: DeleteStripeSubscriptionForUserRequest,
-    onSuccess: (resp: DeleteStripeSubscriptionForUserResponse) => void,
-    onError: (e: Error) => void,
-) {
-    makePostRequestWithStandardEncoding<DeleteStripeSubscriptionForUserRequest, DeleteStripeSubscriptionForUserResponse>(
-        '/api/stripe/delete_stripe_subscription_for_user_1',
-        req,
-        onSuccess,
-        onError,
-    );
-}
-

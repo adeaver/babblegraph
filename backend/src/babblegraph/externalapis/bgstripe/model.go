@@ -52,6 +52,10 @@ func (s StripeProductID) Str() string {
 	return string(s)
 }
 
+func (s StripeProductID) Ptr() *StripeProductID {
+	return &s
+}
+
 type PaymentState int
 
 const (
@@ -78,6 +82,10 @@ const (
 	// This subscription has ended
 	PaymentStateTerminated PaymentState = 5
 )
+
+func (p PaymentState) Ptr() *PaymentState {
+	return &p
+}
 
 type paymentMethodRelationshipID string
 

@@ -1,6 +1,7 @@
 package user
 
 import (
+	"babblegraph/externalapis/bgstripe"
 	"babblegraph/model/users"
 	"babblegraph/util/database"
 	"babblegraph/util/ptr"
@@ -31,7 +32,18 @@ func handleUnsubscribeUser(body []byte) (interface{}, error) {
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		var err error
 		didUpdate, err = users.UnsubscribeUserForIDAndEmail(tx, *userID, r.EmailAddress)
-		return err
+		if err != nil {
+			return err
+		}
+		subscription, err := bgstripe.LookupActiveSubscriptionForUser(tx, *userID)
+		switch {
+		case err != nil:
+			return err
+		case subscription == nil:
+			return nil
+		default:
+			return bgstripe.CancelSubscription(tx, *userID)
+		}
 	}); err != nil {
 		return nil, err
 	}

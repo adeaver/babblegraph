@@ -15,7 +15,7 @@ import { TypographyColor } from 'common/typography/common';
 declare const window: any;
 
 type CollectPaymentFormProps = {
-    subscriptionID: string;
+    paymentIntentClientSecret: string;
 
     handleIsStripeRequestLoading: (isLoading: boolean) => void;
     handleSuccess: () => void;
@@ -61,13 +61,9 @@ const CollectPaymentFormAction = (props: CollectPaymentFormActionProps) => {
         props.handleIsStripeRequestLoading(isLoading);
     }
 
-    useEffect(() => {
-        // TODO: Get Payment Intent from Subscription
-    }, []);
-
     const handleSubmit = (cardElement: typeof CardElement, cardholderName: string, postalCode: string) => {
         handleIsLoadingStripeRequest(true);
-        props.stripe.confirmCardPayment("", {
+        props.stripe.confirmCardPayment(props.paymentIntentClientSecret, {
             payment_method: {
                 card: cardElement,
                 billing_details: {

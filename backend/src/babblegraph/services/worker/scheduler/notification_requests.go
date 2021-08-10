@@ -56,7 +56,7 @@ func handlePendingUserAccountNotificatioRequests(localSentryHub *sentry.Hub, ema
 }
 
 func handleTrialEndingSoonNotification(tx *sqlx.Tx, cl *ses.Client, user users.User, req useraccountsnotifications.NotificationRequest) error {
-	subscriptionDetails, _, err := bgstripe.LookupNonterminatedStripeSubscriptionForUser(tx, req.UserID)
+	subscriptionDetails, err := bgstripe.LookupActiveSubscriptionForUser(tx, req.UserID)
 	switch {
 	case err != nil:
 		return err
