@@ -81,9 +81,7 @@ export function updateStripeSubscriptionFrequencyForUser(
 }
 
 
-export type DeleteStripeSubscriptionForUserRequest = {
-    stripeSubscriptionId: string;
-}
+export type DeleteStripeSubscriptionForUserRequest = {}
 
 export type DeleteStripeSubscriptionForUserResponse = {
     success: boolean;
