@@ -41,6 +41,8 @@ const (
 	NotificationTypeAccountCreated              NotificationType = "account_created"
 	NotificationTypePaymentError                NotificationType = "payment_error"
 	NotificationTypePremiumSubscriptionCanceled NotificationType = "premium_subscription_canceled"
+
+	NotificationTypeInitialPremiumInformation NotificationType = "initial_premium_information"
 )
 
 type notificationRequestDebounceFulfillmentRecordID string
@@ -57,6 +59,7 @@ type dbNotificationRequestDebounceFulfillmentRecord struct {
 var minimumElapsedTimeBetweenNotificationsByType = map[NotificationType]*time.Duration{
 	NotificationTypeTrialEndingSoon:             nil,
 	NotificationTypeAccountCreated:              nil,
+	NotificationTypeInitialPremiumInformation:   nil,
 	NotificationTypePaymentError:                ptr.Duration(14 * 24 * time.Hour), // 2 weeks
 	NotificationTypePremiumSubscriptionCanceled: ptr.Duration(3 * 24 * time.Hour),  // 3 days
 }

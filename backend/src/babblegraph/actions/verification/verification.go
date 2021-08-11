@@ -2,12 +2,14 @@ package verification
 
 import (
 	"babblegraph/model/routes"
+	"babblegraph/model/useraccountsnotifications"
 	"babblegraph/model/userreadability"
 	"babblegraph/model/users"
 	"babblegraph/util/database"
 	"babblegraph/util/encrypt"
 	"babblegraph/wordsmith"
 	"fmt"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -29,6 +31,10 @@ func VerifyUserByToken(token string) (*users.UserID, error) {
 	}
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		if err := users.SetUserStatusToVerified(tx, userID); err != nil {
+			return err
+		}
+		holdUntilTime := time.Now().Add(14 * 24 * time.Hour)
+		if _, err := useraccountsnotifications.EnqueueNotificationRequest(tx, userID, useraccountsnotifications.NotificationTypeInitialPremiumInformation, holdUntilTime); err != nil {
 			return err
 		}
 		return userreadability.InitializeReadingLevelClassification(tx, userID, wordsmith.LanguageCodeSpanish)

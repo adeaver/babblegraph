@@ -58,6 +58,14 @@ func MakePaymentSettingsRouteForUserID(userID users.UserID) (*string, error) {
 	return ptr.String(fmt.Sprintf("%s/payment-settings", *managementLink)), nil
 }
 
+func MakePremiumInformationLink(userID users.UserID) (*string, error) {
+	managementLink, err := MakeSubscriptionManagementRouteForUserID(userID)
+	if err != nil {
+		return nil, err
+	}
+	return ptr.String(fmt.Sprintf("%s/premium", *managementLink)), nil
+}
+
 func MakeLogoURLForEmailRecordID(emailRecordID email.ID) (*string, error) {
 	token, err := encrypt.GetToken(encrypt.TokenPair{
 		Key:   EmailOpenedKey.Str(),
