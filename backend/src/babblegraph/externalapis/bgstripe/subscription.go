@@ -181,7 +181,8 @@ func CancelSubscription(tx *sqlx.Tx, userID users.UserID) error {
 	case err != nil:
 		return err
 	case dbSubscription == nil:
-		return fmt.Errorf("User has no subscription to update")
+		log.Println("User has no subscription to update")
+		return nil
 	}
 	if err := updateSubscriptionPaymentState(tx, dbSubscription.StripeSubscriptionID, PaymentStateTerminated); err != nil {
 		return err
