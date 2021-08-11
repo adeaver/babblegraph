@@ -27,6 +27,7 @@ func StartScheduler(linkProcessor *linkprocessing.LinkProcessor, errs chan error
 		c.AddFunc("30 2 * * *", makeRefetchSeedDomainJob(linkProcessor, errs))
 		c.AddFunc("30 5 * * *", makeEmailJob(errs))
 		c.AddFunc("30 12 * * *", makeUserFeedbackJob(errs))
+		c.AddFunc("11 */3 * * *", makeExpireUserAccountsJob(errs))
 		c.AddFunc("*/1 * * * *", makeVerificationJob(errs))
 		c.AddFunc("*/3 * * * *", makeForgotPasswordJob(errs))
 		c.AddFunc("*/5 * * * *", makeUserAccountNotificationsJob(errs))
@@ -35,6 +36,7 @@ func StartScheduler(linkProcessor *linkprocessing.LinkProcessor, errs chan error
 		c.AddFunc("*/1 * * * *", makeUserAccountNotificationsJob(errs))
 		c.AddFunc("*/1 * * * *", makeVerificationJob(errs))
 		c.AddFunc("*/1 * * * *", makeForgotPasswordJob(errs))
+		c.AddFunc("*/3 * * * *", makeExpireUserAccountsJob(errs))
 		c.AddFunc("*/5 * * * *", makeArchiveForgotPasswordAttemptsJob(errs))
 		c.AddFunc("*/30 * * * *", makeRefetchSeedDomainJob(linkProcessor, errs))
 		makeEmailJob(errs)()
@@ -234,6 +236,29 @@ func makeUserAccountNotificationsJob(errs chan error) func() {
 			FromAddress:        env.MustEnvironmentVariable("EMAIL_ADDRESS"),
 		})
 		if err := handlePendingUserAccountNotificatioRequests(localHub, emailClient); err != nil {
+			localHub.CaptureException(err)
+			errs <- err
+		}
+	}
+}
+
+func makeExpireUserAccountsJob(errs chan error) func() {
+	return func() {
+		today := time.Now()
+		localHub := sentry.CurrentHub().Clone()
+		localHub.ConfigureScope(func(scope *sentry.Scope) {
+			scope.SetTag("user-accounts-expiration-job", fmt.Sprintf("user-accounts-expiration-job-%s-%d-%d-%d-%d", today.Month().String(), today.Day(), today.Year(), today.Hour(), today.Minute()))
+		})
+		defer func() {
+			if x := recover(); x != nil {
+				_, fn, line, _ := runtime.Caller(1)
+				err := fmt.Errorf("User Accounts Expiration Panic: %s: %d: %v\n%s", fn, line, x, string(debug.Stack()))
+				localHub.CaptureException(err)
+				errs <- err
+			}
+		}()
+		log.Println("Starting user accounts expiration job...")
+		if err := expireUserAccounts(); err != nil {
 			localHub.CaptureException(err)
 			errs <- err
 		}

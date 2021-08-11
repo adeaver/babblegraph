@@ -20,6 +20,8 @@ const (
 	setSubscriptionAsActiveQuery     = "UPDATE user_account_subscription_levels SET is_active = TRUE WHERE user_id = $1"
 	expireSubscriptionForUserQuery   = "UPDATE user_account_subscription_levels SET is_active = FALSE WHERE user_id = $1"
 
+	setAllExpiredUserAccountsAsInactiveQuery = "UPDATE user_account_subscription_levels SET is_active = FALSE WHERE subscription_level = $1 AND is_active = TRUE AND expires_at < CURRENT_TIMESTAMP"
+
 	forgotPasswordExpirationTime   = 15 * 60 * time.Second
 	maxDailyForgotPasswordRequests = 5
 
@@ -131,6 +133,18 @@ func ExpireSubscriptionForUser(tx *sqlx.Tx, userID users.UserID) error {
 		return err
 	}
 	return nil
+}
+
+func SetExpiredSubscriptionsAsInactive(tx *sqlx.Tx) (*int64, error) {
+	res, err := tx.Exec(setAllExpiredUserAccountsAsInactiveQuery, SubscriptionLevelPremium)
+	if err != nil {
+		return nil, err
+	}
+	numRows, err := res.RowsAffected()
+	if err != nil {
+		return nil, err
+	}
+	return numRows, nil
 }
 
 func GetAllUnfulfilledForgotPasswordAttempts(tx *sqlx.Tx) ([]ForgotPasswordAttempt, error) {
