@@ -26,11 +26,14 @@ type Params = {
 }
 
 const styleClasses = makeStyles({
-    premiumBanner: {
+    premiumBannerText: {
         borderRadius: '5px',
+        padding: '8px',
         backgroundColor: Color.Primary,
         cursor: 'pointer',
-        padding: '0',
+        // This is a hack
+        color: Color.White,
+        textAlign: 'center',
     },
     loginInfoContainer: {
         marginTop: '45px',
@@ -149,15 +152,6 @@ const SubscriptionManagementDashboardPage = (props: SubscriptionManagementDashbo
                 ) : (
                     <div>
                         <Grid container spacing={2}>
-                            {
-                                !subscriptionLevel && (
-                                    <Grid className={classes.premiumBanner} item xs={12} onClick={() => history.push(`/manage/${token}/premium`)}>
-                                        <Paragraph color={TypographyColor.White}>
-                                            Check out Babblegraph Premium
-                                        </Paragraph>
-                                    </Grid>
-                                )
-                            }
                             <ActionCard redirectURL={`/manage/${token}/interests`} title='Manage Your Interests'>
                                 Select some topics you’re interested in reading more about or deselect some topics you’d like to read about less. This is a great way to make sure that the content you get is fun and engaging.
                             </ActionCard>
@@ -199,6 +193,15 @@ const SubscriptionManagementDashboardPage = (props: SubscriptionManagementDashbo
                             <ActionCard redirectURL={`/manage/${token}/unsubscribe`} title='Unsubscribe'>
                                 If you’re no longer interested in receiving newsletters, you can unsubscribe here. By unsubscribing, we won’t send you any more emails about anything.
                             </ActionCard>
+                            {
+                                !subscriptionLevel && (
+                                    <Grid item xs={12} onClick={() => history.push(`/manage/${token}/premium`)}>
+                                        <Paragraph className={classes.premiumBannerText} align={Alignment.Center} color={TypographyColor.White}>
+                                            Check out new features that you can access with a Babblegraph Premium subscription!
+                                        </Paragraph>
+                                    </Grid>
+                                )
+                            }
                         </Grid>
                         {
                             !!emailAddress && (

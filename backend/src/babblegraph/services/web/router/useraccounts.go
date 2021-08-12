@@ -4,6 +4,7 @@ import (
 	"babblegraph/externalapis/bgstripe"
 	"babblegraph/model/routes"
 	"babblegraph/model/useraccounts"
+	"babblegraph/model/useraccountsnotifications"
 	"babblegraph/model/users"
 	"babblegraph/services/web/middleware"
 	"babblegraph/services/web/util/routetoken"
@@ -18,6 +19,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -197,6 +199,10 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 		case alreadyHasAccount:
 			cErr = createUserErrorAlreadyExists.Ptr()
 			return fmt.Errorf("user already has account")
+		}
+		holdUntilTime := time.Now().Add(30 * time.Minute)
+		if _, err := useraccountsnotifications.EnqueueNotificationRequest(tx, *userID, useraccountsnotifications.NotificationTypeAccountCreated, holdUntilTime); err != nil {
+			return err
 		}
 		if err := useraccounts.CreateUserPasswordForUser(tx, *userID, req.Password); err != nil {
 			return err

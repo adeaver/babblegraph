@@ -235,7 +235,7 @@ func makeUserAccountNotificationsJob(errs chan error) func() {
 			AWSRegion:          "us-east-1",
 			FromAddress:        env.MustEnvironmentVariable("EMAIL_ADDRESS"),
 		})
-		if err := handlePendingUserAccountNotificatioRequests(localHub, emailClient); err != nil {
+		if err := handlePendingUserAccountNotificationRequests(localHub, emailClient); err != nil {
 			localHub.CaptureException(err)
 			errs <- err
 		}

@@ -36,6 +36,8 @@ const (
 	EmailTypePremiumSubscriptionCanceled   EmailType = "premium-subscription-canceled"
 	EmailTypePaymentFailureNotification    EmailType = "payment-failure-notification"
 	EmailTypeAccountCreationNotification   EmailType = "account-creation-notification"
+
+	EmailTypeInitialPremiumAdvertisement EmailType = "initial-premium-advertisement"
 )
 
 type Recipient struct {

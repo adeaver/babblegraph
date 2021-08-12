@@ -16,7 +16,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func handlePendingUserAccountNotificatioRequests(localSentryHub *sentry.Hub, emailClient *ses.Client) error {
+func handlePendingUserAccountNotificationRequests(localSentryHub *sentry.Hub, emailClient *ses.Client) error {
 	var notificationRequests []useraccountsnotifications.NotificationRequest
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		var err error
@@ -44,6 +44,8 @@ func handlePendingUserAccountNotificatioRequests(localSentryHub *sentry.Hub, ema
 				return handlePaymentFailureNotification(tx, emailClient, *user)
 			case useraccountsnotifications.NotificationTypePremiumSubscriptionCanceled:
 				return handlePremiumSubscriptionCanceledNotification(tx, emailClient, *user)
+			case useraccountsnotifications.NotificationTypeInitialPremiumInformation:
+				return handleInitialPremiumInformationNotification(tx, emailClient, *user)
 			default:
 				return fmt.Errorf("Unknown notification type %s", req.Type)
 			}
@@ -214,6 +216,52 @@ func handleAccountCreationNotification(tx *sqlx.Tx, cl *ses.Client, user users.U
 			"This email is to let you know that your Babblegraph account was successfully created.",
 			"If you did not initiate this, please respond to this email!",
 			"If you did initiate this, then no further action is required on your part.",
+		},
+	}
+	if _, err := email_actions.SendGenericEmailWithOptionalActionForRecipient(tx, cl, *emailInput); err != nil {
+		return err
+	}
+	return nil
+}
+
+func handleInitialPremiumInformationNotification(tx *sqlx.Tx, cl *ses.Client, user users.User) error {
+	switch {
+	case user.Status != users.UserStatusVerified:
+		log.Println(fmt.Sprintf("User %s is not verified, skipping", user.ID))
+		return nil
+		// Add case for already subscribed
+	default:
+	}
+	premiumInformationLink, err := routes.MakePremiumInformationLink(user.ID)
+	if err != nil {
+		return err
+	}
+	emailInput := &email_actions.SendGenericEmailWithOptionalActionForRecipientInput{
+		EmailType: email.EmailTypeInitialPremiumAdvertisement,
+		Recipient: email.Recipient{
+			UserID:       user.ID,
+			EmailAddress: user.EmailAddress,
+		},
+		Subject:       "Enhance Your Babblegraph Experience with Premium",
+		EmailTitle:    "Enhance Your Babblegraph Experience with Premium",
+		PreheaderText: "Learn more about the features you can unlock with Babblegraph Premium",
+		BeforeParagraphs: []string{
+			"Hello!",
+			"Andrew here! I hope you’ve been enjoying your subscription to Babblegraph. If not, I always appreciate feedback for how to make it better.",
+			"As you may or may not know, Babblegraph is a one-person operation and is completely independent. There’s no Silicon Valley venture capital money, no highly paid CEO, nothing.",
+			"To keep Babblegraph independent, support myself, and cover the costs of running Babblegraph, I introduced a premium subscription tier which gives subscribers access to exclusive features to enhace their Babblegraph experience!",
+			"Some of the features include:",
+			"The ability to pick how many articles you receive in each newsletter, and which topics they cover. Want to make sure every email has some articles on cooking? You can do that!",
+			"Pick which days you receive your newsletter and which days you don’t.",
+			"Spotlight words that are on your tracking list by having Babblegraph prominently display an article guaranteed to use a word you’re practicing.",
+		},
+		GenericEmailAction: &email_actions.GenericEmailAction{
+			Link:       *premiumInformationLink,
+			ButtonText: "Learn more about Babblegraph Premium",
+		},
+		AfterParagraphs: []string{
+			"If you’re not interested, then you can safely ignore this email and continue using the Babblegraph daily newsletter!",
+			"And if you have any questions, you can always reply to this email!",
 		},
 	}
 	if _, err := email_actions.SendGenericEmailWithOptionalActionForRecipient(tx, cl, *emailInput); err != nil {
