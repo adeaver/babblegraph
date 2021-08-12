@@ -26,11 +26,14 @@ type Params = {
 }
 
 const styleClasses = makeStyles({
-    premiumBanner: {
+    premiumBannerText: {
         borderRadius: '5px',
+        padding: '8px',
         backgroundColor: Color.Primary,
         cursor: 'pointer',
-        padding: '0',
+        // This is a hack
+        color: Color.White,
+        textAlign: 'center',
     },
     loginInfoContainer: {
         marginTop: '45px',
@@ -192,8 +195,8 @@ const SubscriptionManagementDashboardPage = (props: SubscriptionManagementDashbo
                             </ActionCard>
                             {
                                 !subscriptionLevel && (
-                                    <Grid className={classes.premiumBanner} item xs={12} onClick={() => history.push(`/manage/${token}/premium`)}>
-                                        <Paragraph color={TypographyColor.White}>
+                                    <Grid item xs={12} onClick={() => history.push(`/manage/${token}/premium`)}>
+                                        <Paragraph className={classes.premiumBannerText} align={Alignment.Center} color={TypographyColor.White}>
                                             Check out new features that you can access with a Babblegraph Premium subscription!
                                         </Paragraph>
                                     </Grid>

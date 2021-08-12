@@ -11,8 +11,8 @@ type NotificationRequestID string
 type dbNotificationRequest struct {
 	ID             NotificationRequestID `db:"_id"`
 	CreatedAt      time.Time             `db:"created_at"`
-	LastModifiedAt time.Time             `db:"created_at"`
-	Type           NotificationType      `db:"type"`
+	LastModifiedAt time.Time             `db:"last_modified_at"`
+	Type           NotificationType      `db:"notification_type"`
 	UserID         users.UserID          `db:"user_id"`
 	HoldUntil      time.Time             `db:"hold_until"`
 	FulfilledAt    *time.Time            `db:"fulfilled_at"`

@@ -9,6 +9,7 @@ import (
 	"babblegraph/util/encrypt"
 	"babblegraph/wordsmith"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -39,6 +40,7 @@ func VerifyUserByToken(token string) (*users.UserID, error) {
 		}
 		return userreadability.InitializeReadingLevelClassification(tx, userID, wordsmith.LanguageCodeSpanish)
 	}); err != nil {
+		log.Println(fmt.Sprintf("Error verifying: %s", err.Error()))
 		return nil, err
 	}
 	return &userID, nil

@@ -11,8 +11,8 @@ import (
 const (
 	getOutstandingNotificationsToFulfillQuery = "SELECT * FROM user_account_notification_requests WHERE hold_until < CURRENT_TIMESTAMP AND fulfilled_at IS NULL"
 
-	insertNotificationRequestForUserQuery               = "INSERT INTO user_account_notification_requests (user_id, type, hold_until) VALUES ($1, $2, $3)"
-	getMostRecentNotificationRequestForUserAndTypeQuery = "SELECT * FROM user_account_notification_requests WHERE user_id = $1 AND type = $2 ORDER BY created_at DESC LIMIT 1"
+	insertNotificationRequestForUserQuery               = "INSERT INTO user_account_notification_requests (user_id, notification_type, hold_until) VALUES ($1, $2, $3)"
+	getMostRecentNotificationRequestForUserAndTypeQuery = "SELECT * FROM user_account_notification_requests WHERE user_id = $1 AND notification_type = $2 ORDER BY created_at DESC LIMIT 1"
 
 	fulfillNotificationRequestQuery         = "UPDATE user_account_notification_requests SET fulfilled_at = timezone('utc', now()) WHERE _id = $1"
 	insertNotificationRequestDebounceRecord = "INSERT INTO user_account_notification_request_debounce_fulfillment_records (notification_request_id) VALUES ($1)"
