@@ -44,8 +44,8 @@ const (
 	StripeProductIDYearlySubscriptionProd  StripeProductID = "price_1JIMqNJscBSiX47SxOGRUX1p"
 	StripeProductIDMonthlySubscriptionProd StripeProductID = "price_1JIMqNJscBSiX47SnYtkOVv6"
 
-	StripeProductIDYearlySubscriptionTest  StripeProductID = "price_1JIMr1JscBSiX47SEEUzRf0e"
-	StripeProductIDMonthlySubscriptionTest StripeProductID = "price_1JIMr1JscBSiX47SReF6SdJj"
+	StripeProductIDYearlySubscriptionTest  StripeProductID = "price_1JP8vOJscBSiX47S7sUI1z49"
+	StripeProductIDMonthlySubscriptionTest StripeProductID = "price_1JP8vOJscBSiX47S5F4CXxrK"
 )
 
 func (s StripeProductID) Str() string {
