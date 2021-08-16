@@ -22,6 +22,13 @@ const styleClasses = makeStyles({
         paddingRight: "5px",
         boxSizing: "border-box",
     },
+    stripeBadge: {
+        backgroundImage: "url('https://static.babblegraph.com/assets/powered-by-stripe.svg')",
+        height: "25px",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        marginBottom: "10px",
+    },
 });
 
 type GenericCardFormProps = {
@@ -166,6 +173,17 @@ export const GenericCardForm = (props: GenericCardFormProps) => {
                         disabled={!postalCode || !cardholderName || props.isLoading}>
                         { props.actionTitle }
                     </PrimaryButton>
+                </Grid>
+                <Grid item xs={false} md={3}>
+                    &nbsp;
+                </Grid>
+                <Grid item xs={false} md={3}>
+                    &nbsp;
+                </Grid>
+                <Grid item xs={12} md={6}>
+                    <a className={classes.stripeLink} href="https://stripe.com/" target="_blank">
+                        <div className={classes.stripeBadge} />
+                    </a>
                 </Grid>
             </Grid>
 

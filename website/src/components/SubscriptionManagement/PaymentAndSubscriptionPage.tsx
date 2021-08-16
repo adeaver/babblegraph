@@ -170,17 +170,17 @@ const PaymentAndSubscriptionPage = (props: PaymentAndSubscriptionPageProps) => {
         body = (
             <div>
                 {
-                    !!currentPeriodEndDate && (
-                        <Paragraph>
-                            Your current billing period ends {currentPeriodEndDate.toLocaleDateString()}
-                        </Paragraph>
-                    )
-                }
-                {
                     !!subscription &&
                     subscription.trialInfo.isCurrentlyTrialing && (
                         <Paragraph color={TypographyColor.Primary}>
                             You are currently trialing Babblegraph Premium
+                        </Paragraph>
+                    )
+                }
+                {
+                    !!currentPeriodEndDate && (
+                        <Paragraph>
+                            Your current billing period ends {currentPeriodEndDate.toLocaleDateString()}
                         </Paragraph>
                     )
                 }
