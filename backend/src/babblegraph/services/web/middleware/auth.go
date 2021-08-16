@@ -69,15 +69,31 @@ func WithAuthorizationCheck(w http.ResponseWriter, r *http.Request, input WithAu
 				input.HandleNoUserFound(w, r)
 				return
 			default:
+				var userStatus users.UserStatus
 				if err := database.WithTx(func(tx *sqlx.Tx) error {
-					var err error
+					user, err := users.GetUser(tx, *userID)
+					if err != nil {
+						return err
+					}
+					userStatus = user.Status
 					userSubscriptionLevel, err = useraccounts.LookupSubscriptionLevelForUser(tx, *userID)
 					return err
 				}); err != nil {
 					input.HandleError(err, w, r)
 					return
 				}
-				input.HandleFoundUser(*userID, userSubscriptionLevel, w, r)
+				switch userStatus {
+				case users.UserStatusVerified:
+					input.HandleFoundUser(*userID, userSubscriptionLevel, w, r)
+				case users.UserStatusUnverified,
+					users.UserStatusUnsubscribed,
+					users.UserStatusBlocklistBounced,
+					users.UserStatusBlocklistComplaint:
+					input.HandleNoUserFound(w, r)
+				default:
+					input.HandleError(fmt.Errorf("Invalid state"), w, r)
+					return
+				}
 				return
 			}
 		}

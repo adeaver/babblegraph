@@ -149,6 +149,7 @@ const (
 	createUserErrorPasswordRequirements createUserError = "pass-requirements"
 	createUserErrorNoSubscription       createUserError = "no-subscription"
 	createUserErrorPasswordsNoMatch     createUserError = "passwords-no-match"
+	createUserErrorInvalidState         createUserError = "invalid-state"
 )
 
 func (c createUserError) Ptr() *createUserError {
@@ -192,6 +193,14 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 	}
 	var cErr *createUserError
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		user, err := users.GetUser(tx, *userID)
+		if err != nil {
+			return err
+		}
+		if user.Status != users.UserStatusVerified {
+			cErr = createUserErrorInvalidState.Ptr()
+			return fmt.Errorf("invalid state")
+		}
 		alreadyHasAccount, err := useraccounts.DoesUserAlreadyHaveAccount(tx, *userID)
 		switch {
 		case err != nil:
