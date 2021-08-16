@@ -33,6 +33,9 @@ import {
     DeletePaymentMethodError
 } from 'api/stripe/payment_method';
 import {
+    Subscription,
+    getActiveSubscriptionForUser,
+    GetActiveSubscriptionForUserResponse,
     UpdateStripeSubscriptionForUserResponse,
     updateStripeSubscriptionForUser,
 } from 'api/stripe/subscription';
@@ -70,6 +73,9 @@ type PaymentAndSubscriptionPageProps = RouteComponentProps<Params>
 const PaymentAndSubscriptionPage = (props: PaymentAndSubscriptionPageProps) => {
     const { token } = props.match.params;
 
+    const [ isLoadingUserSubscription, setIsLoadingUserSubscription ] = useState<boolean>(true);
+    const [ subscription, setSubscription ] = useState<Subscription | null>(null);
+
     const [ isLoadingPaymentMethods, setIsLoadingPaymentMethods ] = useState<boolean>(true);
     const [ paymentMethods, setPaymentMethods ] = useState<Array<PaymentMethod>>([]);
     const [ error, setError ] = useState<Error>(null);
@@ -79,6 +85,15 @@ const PaymentAndSubscriptionPage = (props: PaymentAndSubscriptionPageProps) => {
     const [ deletePaymentError, setDeletePaymentError ] = useState<string | null>(null);
 
     useEffect(() => {
+        getActiveSubscriptionForUser({},
+        (resp: GetActiveSubscriptionForUserResponse) => {
+            setIsLoadingUserSubscription(false);
+            !!resp.subscription && setSubscription(resp.subscription);
+        },
+        (err: Error) => {
+            setIsLoadingUserSubscription(false);
+            setError(err);
+        });
         getPaymentMethodsForUser({},
             (resp: GetPaymentMethodsForUserResponse) => {
                 setIsLoadingPaymentMethods(false);
@@ -140,7 +155,7 @@ const PaymentAndSubscriptionPage = (props: PaymentAndSubscriptionPageProps) => {
     }
 
     const classes = styleClasses();
-    const isLoading = isLoadingPaymentMethods;
+    const isLoading = isLoadingPaymentMethods || isLoadingUserSubscription;
     let body;
     if (isLoading) {
         body = <LoadingSpinner />;
@@ -151,8 +166,24 @@ const PaymentAndSubscriptionPage = (props: PaymentAndSubscriptionPageProps) => {
             </Paragraph>
         );
     } else {
+        const currentPeriodEndDate = !subscription ? null : new Date(subscription.currentPeriodEnd);
         body = (
             <div>
+                {
+                    !!subscription &&
+                    subscription.trialInfo.isCurrentlyTrialing && (
+                        <Paragraph color={TypographyColor.Primary}>
+                            You are currently trialing Babblegraph Premium
+                        </Paragraph>
+                    )
+                }
+                {
+                    !!currentPeriodEndDate && (
+                        <Paragraph>
+                            Your current billing period ends {currentPeriodEndDate.toLocaleDateString()}
+                        </Paragraph>
+                    )
+                }
                 <PaymentMethodsDisplay
                     paymentMethods={paymentMethods}
                     isLoadingStripeRequest={isLoadingStripeRequest}
@@ -162,7 +193,9 @@ const PaymentAndSubscriptionPage = (props: PaymentAndSubscriptionPageProps) => {
                     handlePaymentMethodAddedSuccess={handleSuccessfullyAddedPaymentMethod}
                     handleAddPaymentMethodError={setError} />
                 <Divider className={classes.divider} />
-                <CancelSubscriptionButton />
+                <CancelSubscriptionButton
+                    cancelAtEndOfPeriod={!!subscription && subscription.cancelAtPeriodEnd}
+                    />
             </div>
         )
     }
@@ -308,41 +341,70 @@ const PaymentMethodDisplay = (props: PaymentMethodDisplayProps) => {
     );
 }
 
-type CancelSubscriptionButtonProps = {};
+type CancelSubscriptionButtonProps = {
+    cancelAtEndOfPeriod: boolean;
+};
 
 const CancelSubscriptionButton = (props:  CancelSubscriptionButtonProps) => {
     const [ showConfirmation, setShowConfirmation ] = useState<boolean>(false);
 
     const [ isLoading, setIsLoading ] = useState<boolean>(false);
-    const [ didDelete, setDidDelete ] = useState<boolean>(false);
+    const [ actionMessage, setActionMessage ] = useState<string | null>(null);
     const [ error, setError ] = useState<Error>(null);
 
-    const handleCancelSubscription = () => {
-        setIsLoading(true);
-        updateStripeSubscriptionForUser({
-            options: {
-                cancelAtPeriodEnd: true,
-            }
-        },
-        (resp: UpdateStripeSubscriptionForUserResponse) => {
-            setIsLoading(false);
-            setDidDelete(true);
-        },
-        (err: Error) => {
-            setIsLoading(false);
-            setError(err);
-        });
+    const handleCancellationAction = (cancellationAction: boolean) => {
+        return () => {
+            setIsLoading(true);
+            updateStripeSubscriptionForUser({
+                options: {
+                    cancelAtPeriodEnd: cancellationAction,
+                }
+            },
+            (resp: UpdateStripeSubscriptionForUserResponse) => {
+                setIsLoading(false);
+                setActionMessage(
+                    cancellationAction ? (
+                        "Your subscription will be canceled at the end of the current period! If you want to cancel now and receive a refund, reach out to hello@babblegraph.com via email!"
+                    ) : (
+                        "Your subscription has successfully been changed to resume automatic charges. You will be charged on the next billing date above."
+                    )
+                );
+            },
+            (err: Error) => {
+                setIsLoading(false);
+                setError(err);
+            });
+        }
     }
     const classes = styleClasses();
     let body;
     if (isLoading) {
         body = <LoadingSpinner />;
-    } else if (didDelete) {
+    } else if (!!actionMessage) {
         body = (
             <Paragraph>
-                Your subscription will be canceled at the end of the current period! If you want to cancel now and receive a refund, reach out to hello@babblegraph.com via email!
+                { actionMessage }
             </Paragraph>
         )
+    } else if (props.cancelAtEndOfPeriod) {
+        body = (
+            <div className={classes.buttonContainer}>
+                <Paragraph>
+                    Your subscription is currently set to expire at the end of the current billing period. You will not be charged automatically. If you no longer wish for your subscription to cancel automatically, you can restart it below. You won’t be charged until the end of the billing period.
+                </Paragraph>
+                {
+                    showConfirmation ? (
+                        <ConfirmationButton onClick={handleCancellationAction(false)}>
+                            Confirm
+                        </ConfirmationButton>
+                    ) : (
+                        <PrimaryButton onClick={() => setShowConfirmation(true)}>
+                            Restart Automatic Payments
+                        </PrimaryButton>
+                    )
+                }
+            </div>
+        );
     } else {
         body = (
             <div className={classes.buttonContainer}>
@@ -351,8 +413,8 @@ const CancelSubscriptionButton = (props:  CancelSubscriptionButtonProps) => {
                 </Paragraph>
                 {
                     showConfirmation ? (
-                        <WarningButton onClick={handleCancelSubscription}>
-                            Confirm Subscription Cancellation.
+                        <WarningButton onClick={handleCancellationAction(true)}>
+                            Confirm Subscription Cancellation
                         </WarningButton>
                     ) : (
                         <PrimaryButton onClick={() => setShowConfirmation(true)}>

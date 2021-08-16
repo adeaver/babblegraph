@@ -106,7 +106,7 @@ const AboutPage = () => {
                             answerText="Hello! My name is Andrew. I’m the sole creator behind Babblegraph and the only person working on it. I built Babblegraph because I found that it’s hard to use new words that you learn as an intermediate or advanced speaker. I read a lot of content in Spanish, but there’s never any guarantee that I’ll see a new word again." />
                         <FAQItem
                             questionText="Do you sell my data?"
-                            answerText="Nope, I don’t sell anything as of now. Babblegraph will never sell your data." />
+                            answerText="Nope! And Babblegraph will never sell your data. However, I do sell a premium subscription to Babblegraph!" />
                     </Card>
                     <Card className={classes.contentCard}>
                         <Heading2 color={TypographyColor.Primary}>

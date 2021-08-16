@@ -3,7 +3,8 @@ import { makePostRequestWithStandardEncoding } from 'api/bgfetch/bgfetch';
 export type Subscription = {
     stripeSubscriptionId: string;
     paymentState: PaymentState;
-    currentPeriodEnd: Date;
+    currentPeriodEnd: string;
+    cancelAtPeriodEnd: boolean;
     paymentIntentClientSecret: string | undefined;
     subscriptionType: SubscriptionType;
     trialInfo: SubscriptionTrialInfo;

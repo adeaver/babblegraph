@@ -138,7 +138,7 @@ func LookupActiveSubscriptionForUser(tx *sqlx.Tx, userID users.UserID) (*Subscri
 
 type UpdateSubscriptionOptions struct {
 	SubscriptionType  *SubscriptionType `json:"subscription_type,omitempty"`
-	CancelAtPeriodEnd *bool             `json:"canel_at_period_end,omitempty"`
+	CancelAtPeriodEnd *bool             `json:"cancel_at_period_end,omitempty"`
 }
 
 func UpdateSubscription(tx *sqlx.Tx, userID users.UserID, options UpdateSubscriptionOptions) error {
