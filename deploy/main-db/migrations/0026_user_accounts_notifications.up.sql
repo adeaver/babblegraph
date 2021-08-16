@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS user_account_notification_request_debounce_fulfillmen
     _id uuid DEFAULT uuid_generate_v4 (),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()),
     last_modified_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()),
-    notification_request_id uuid NOT NULL REFERENCES user_account_notification_request(_id),
+    notification_request_id uuid NOT NULL REFERENCES user_account_notification_requests(_id),
 
     PRIMARY KEY (_id)
 );
