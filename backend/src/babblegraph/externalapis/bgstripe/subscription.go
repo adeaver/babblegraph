@@ -18,9 +18,9 @@ import (
 const (
 	defaultSubscriptionTrialLength = 14
 
-	updateStripeSubscriptionPaymentStateQuery = "UPDATE bgstripe_subscription SET payment_state = $1 WHERE stripe_subscription_id = $2"
+	updateStripeSubscriptionPaymentStateQuery = "UPDATE bgstripe_subscription SET payment_state = $1, last_modified_at = timezone('utc', now()) WHERE stripe_subscription_id = $2"
 
-	updateStripeSubscriptionProductIDQuery = "UPDATE bgstripe_subscription SET stripe_product_id = $1 WHERE babblegraph_user_id = $2 AND stripe_subscription_id = $3"
+	updateStripeSubscriptionProductIDQuery = "UPDATE bgstripe_subscription SET stripe_product_id = $1, last_modified_at = timezone('utc', now()) WHERE babblegraph_user_id = $2 AND stripe_subscription_id = $3"
 	insertStripeSubscriptionForUserQuery   = "INSERT INTO bgstripe_subscription (babblegraph_user_id, stripe_subscription_id, payment_state, stripe_product_id) VALUES ($1, $2, $3, $4)"
 
 	lookupStripeSubscriptionQuery        = "SELECT * FROM bgstripe_subscription WHERE stripe_subscription_id = $1"
