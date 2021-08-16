@@ -70,7 +70,8 @@ func handleStripeWebhook(w http.ResponseWriter, r *http.Request) {
 			handleWebhookError(w, "capturing payment method event", err)
 			return
 		}
-	case "invoice.paid":
+	case "invoice.paid",
+		"invoice.payment_succeeded":
 		var invoice stripe.Invoice
 		if err := json.Unmarshal(event.Data.Raw, &invoice); err != nil {
 			handleWebhookError(w, "invoice event", err)

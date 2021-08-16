@@ -66,7 +66,7 @@ const UnsubscribePage = (props: UnsubscribePageProps) => {
     const [ hasUserProfile, setHasUserProfile ] = useState<boolean>(false);
 
     const handleSubmit = () => {
-        setIsUserProfileLoading(true);
+        setIsUnsubscribeRequestLoading(true);
         UnsubscribeUser({
             Token: token,
             EmailAddress: emailAddress,

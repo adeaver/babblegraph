@@ -66,6 +66,26 @@ func getActiveSubscriptionForUser(userID users.UserID, body []byte) (interface{}
 	}, nil
 }
 
+type getSubscriptionTrialInfoForUserRequest struct{}
+
+type getSubscriptionTrialInfoForUserResponse struct {
+	SubscriptionTrialInfo *bgstripe.SubscriptionTrialInfo `json:"subscription_trial_info"`
+}
+
+func getSubscriptionTrialInfoForUser(userID users.UserID, body []byte) (interface{}, error) {
+	var subscriptionTrialInfo *bgstripe.SubscriptionTrialInfo
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		var err error
+		subscriptionTrialInfo, err = bgstripe.LookupSubscriptionTrialInfoForUser(tx, userID)
+		return err
+	}); err != nil {
+		return nil, err
+	}
+	return getSubscriptionTrialInfoForUserResponse{
+		SubscriptionTrialInfo: subscriptionTrialInfo,
+	}, nil
+}
+
 type updateStripeSubscriptionForUserRequest struct {
 	Options bgstripe.UpdateSubscriptionOptions `json:"options"`
 }

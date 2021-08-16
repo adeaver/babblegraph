@@ -29,11 +29,14 @@ import Link, { LinkTarget } from 'common/components/Link/Link';
 import {
     Subscription,
     SubscriptionType,
+    SubscriptionTrialInfo,
     PaymentState,
     createUserSubscription,
     CreateUserSubscriptionResponse,
     getActiveSubscriptionForUser,
     GetActiveSubscriptionForUserResponse,
+    getSubscriptionTrialInfoForUser,
+    GetSubscriptionTrialInfoForUserResponse,
     UpdateStripeSubscriptionForUserResponse,
     updateStripeSubscriptionForUser,
 } from 'api/stripe/subscription';
@@ -90,6 +93,7 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
     const [ subscriptionType, setSubscriptionType ] = useState<SubscriptionType>(SubscriptionType.Monthly);
 
     const [ subscription, setSubscription ] = useState<Subscription | null>(null);
+    const [ subscriptionTrialInfo, setSubscriptionTrialInfo ] = useState<SubscriptionTrialInfo | null>(null);
     const [ isLoadingCreateSubscription, setIsLoadingCreateSubscription ] = useState<boolean>(false);
     const [ error, setError ] = useState<Error>(null);
 
@@ -102,8 +106,22 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
     useEffect(() => {
         getActiveSubscriptionForUser({},
         (resp: GetActiveSubscriptionForUserResponse) => {
-            setIsLoadingUserSubscription(false);
-            !!resp.subscription && setSubscription(resp.subscription);
+            if (!!resp.subscription) {
+                setIsLoadingUserSubscription(false);
+                setSubscription(resp.subscription);
+                setSubscriptionTrialInfo(resp.subscription.trialInfo);
+            } else {
+                getSubscriptionTrialInfoForUser({},
+                (resp: GetSubscriptionTrialInfoForUserResponse) => {
+                    setIsLoadingUserSubscription(false);
+                    setSubscriptionTrialInfo(resp.subscriptionTrialInfo);
+                },
+                (err: Error) => {
+                    setIsLoadingUserSubscription(false);
+                    setError(err);
+                });
+            }
+
         },
         (err: Error) => {
             setIsLoadingUserSubscription(false);
@@ -218,7 +236,7 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
                     isPaymentConfirmationLoading={isPaymentConfirmationLoading}
                     isLoadingUpdateSubscription={isLoadingUpdateSubscription}
                     isCheckoutFormVisible={shouldShowCheckoutForm}
-                    isEligibleForTrial={!subscription || !!subscription.trialInfo.trialEligibilityDays}
+                    isEligibleForTrial={!subscriptionTrialInfo || !!subscriptionTrialInfo.trialEligibilityDays}
                     handleUpdateSubscriptionType={setSubscriptionType}
                     handleUpdateSubscription={handleUpdateSubscription}
                     handleSubmit={handleSubmit} />

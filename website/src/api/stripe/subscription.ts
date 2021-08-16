@@ -69,6 +69,25 @@ export function getActiveSubscriptionForUser(
     );
 }
 
+export type GetSubscriptionTrialInfoForUserRequest = {}
+
+export type GetSubscriptionTrialInfoForUserResponse = {
+    subscriptionTrialInfo: SubscriptionTrialInfo | undefined;
+}
+
+export function getSubscriptionTrialInfoForUser(
+    req: GetSubscriptionTrialInfoForUserRequest,
+    onSuccess: (resp: GetSubscriptionTrialInfoForUserResponse) => void,
+    onError: (e: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<GetSubscriptionTrialInfoForUserRequest, GetSubscriptionTrialInfoForUserResponse>(
+        '/api/stripe/get_subscription_trial_info_for_user_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}
+
 export type UpdateSubscriptionOptions = {
     subscriptionType?: SubscriptionType;
     cancelAtPeriodEnd?: boolean;

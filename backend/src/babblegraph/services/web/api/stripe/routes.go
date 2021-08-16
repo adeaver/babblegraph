@@ -18,6 +18,9 @@ func RegisterRouteGroups() error {
 				Path:    "get_active_subscription_for_user_1",
 				Handler: getActiveSubscriptionForUser,
 			}, {
+				Path:    "get_subscription_trial_info_for_user_1",
+				Handler: getSubscriptionTrialInfoForUser,
+			}, {
 				Path:    "update_stripe_subscription_for_user_1",
 				Handler: updateStripeSubscriptionForUser,
 			}, {

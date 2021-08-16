@@ -114,6 +114,25 @@ func CreateSubscriptionForUser(tx *sqlx.Tx, userID users.UserID, subscriptionTyp
 	return mergeSubscriptionObjects(tx, *dbSubscription, stripeSubscription)
 }
 
+func LookupSubscriptionTrialInfoForUser(tx *sqlx.Tx, userID users.UserID) (*SubscriptionTrialInfo, error) {
+	subscription, err := LookupActiveSubscriptionForUser(tx, userID)
+	switch {
+	case err != nil:
+		return nil, err
+	case subscription != nil:
+		return &subscription.TrialInfo, nil
+	case subscription == nil:
+		trialEligibilityDays, err := getTrialEligibilityLengthForUserID(tx, userID)
+		if err != nil {
+			return nil, err
+		}
+		return &SubscriptionTrialInfo{
+			TrialEligibilityDays: *trialEligibilityDays,
+		}, nil
+	}
+	return nil, fmt.Errorf("unreachable")
+}
+
 func LookupActiveSubscriptionForUser(tx *sqlx.Tx, userID users.UserID) (*Subscription, error) {
 	stripe.Key = env.MustEnvironmentVariable("STRIPE_KEY")
 	var matches []dbStripeSubscription
