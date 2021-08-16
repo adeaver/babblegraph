@@ -24,6 +24,7 @@ import { PrimaryRadio } from 'common/components/Radio/Radio';
 import { PrimaryButton } from 'common/components/Button/Button';
 import { PrimaryTextField } from 'common/components/TextField/TextField';
 import StripeInput from 'common/util/stripe/StripeInput';
+import Link, { LinkTarget } from 'common/components/Link/Link';
 
 import {
     Subscription,
@@ -36,6 +37,10 @@ import {
     UpdateStripeSubscriptionForUserResponse,
     updateStripeSubscriptionForUser,
 } from 'api/stripe/subscription';
+import {
+    getManageTokenForPremiumCheckoutToken,
+    GetManageTokenForPremiumCheckoutTokenResponse,
+} from 'api/token/premiumCheckoutToken';
 
 const styleClasses = makeStyles({
     subscriptionSelector: {
@@ -79,6 +84,7 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
     const { token } = props.match.params;
 
     const [ isLoadingUserSubscription, setIsLoadingUserSubscription ] = useState<boolean>(true);
+    const [ isLoadingManagementToken, setIsLoadingManagementToken ] = useState<boolean>(true);
 
     const [ isLoadingUpdateSubscription, setIsLoadingUpdateSubscription ] = useState<boolean>(false);
     const [ subscriptionType, setSubscriptionType ] = useState<SubscriptionType>(SubscriptionType.Monthly);
@@ -91,6 +97,8 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
     const [ successType, setSuccessType ] = useState<PaymentType | null>(null);
     const [ paymentError, setPaymentError ] = useState<string | null>(null);
 
+    const [ subscriptionManagementToken, setSubscriptionManagementToken ] = useState<string | null>(null);
+
     useEffect(() => {
         getActiveSubscriptionForUser({},
         (resp: GetActiveSubscriptionForUserResponse) => {
@@ -99,6 +107,17 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
         },
         (err: Error) => {
             setIsLoadingUserSubscription(false);
+            setError(err);
+        });
+        getManageTokenForPremiumCheckoutToken({
+            token: token,
+        },
+        (resp: GetManageTokenForPremiumCheckoutTokenResponse) => {
+            setIsLoadingManagementToken(false);
+            setSubscriptionManagementToken(resp.token);
+        },
+        (err: Error) => {
+            setIsLoadingManagementToken(false);
             setError(err);
         });
     }, []);
@@ -138,7 +157,7 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
         subscription.paymentState !== PaymentState.CreatedUnpaid &&
         subscription.paymentState !== PaymentState.TrialNoPaymentMethod
     );
-    const isPageLoading = isLoadingUserSubscription;
+    const isPageLoading = isLoadingUserSubscription || isLoadingManagementToken;
     const isSelectorLoading = isLoadingCreateSubscription || isPaymentConfirmationLoading || isLoadingUpdateSubscription;
     const classes = styleClasses();
     let body;
@@ -154,6 +173,9 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
                 <Paragraph>
                     If you need to modify it, you can go to the subscription settings page! Thanks again for subscribing to Babblegraph.
                 </Paragraph>
+                <Link href={`/manage/${subscriptionManagementToken}/payment-settings`} target={LinkTarget.Self}>
+                    Click here to modify your subscription
+                </Link>
             </div>
         );
     } else if (!!successType) {
@@ -163,7 +185,7 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
             "Your payment was successful!"
         );
         const bodyMessage = successType === PaymentType.Setup ? (
-            "You will be automatically charged at the end of your trial! You will get an email before you’re charged."
+            "You will be automatically charged at the end of your trial! You will get an email before you’re charged. Your subscription will activate in a few minutes."
         ) : (
             "Your subscription is currently processing. Your premium subscription will become active in the next 10 minutes. You’ll receive an email when it's active!"
         )
@@ -176,6 +198,9 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
                 <Paragraph>
                     { bodyMessage }
                 </Paragraph>
+                <Link href={`/manage/${subscriptionManagementToken}`} target={LinkTarget.Self}>
+                    Click here to your settings
+                </Link>
             </div>
         );
     } else if (!!error) {
@@ -193,7 +218,7 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
                     isPaymentConfirmationLoading={isPaymentConfirmationLoading}
                     isLoadingUpdateSubscription={isLoadingUpdateSubscription}
                     isCheckoutFormVisible={shouldShowCheckoutForm}
-                    isEligibleForTrial={!!subscription.trialInfo.trialEligibilityDays}
+                    isEligibleForTrial={!subscription || !!subscription.trialInfo.trialEligibilityDays}
                     handleUpdateSubscriptionType={setSubscriptionType}
                     handleUpdateSubscription={handleUpdateSubscription}
                     handleSubmit={handleSubmit} />

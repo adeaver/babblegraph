@@ -20,3 +20,24 @@ export function getPremiumCheckoutToken(
         onError,
     );
 }
+
+export type GetManageTokenForPremiumCheckoutTokenRequest = {
+    token: string;
+}
+
+export type GetManageTokenForPremiumCheckoutTokenResponse = {
+    token: string;
+}
+
+export function getManageTokenForPremiumCheckoutToken(
+    req: GetManageTokenForPremiumCheckoutTokenRequest,
+    onSuccess: (resp: GetManageTokenForPremiumCheckoutTokenResponse) => void,
+    onError: (e: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<GetManageTokenForPremiumCheckoutTokenRequest, GetManageTokenForPremiumCheckoutTokenResponse>(
+        '/api/token/get_manage_token_for_premium_checkout_token_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}
