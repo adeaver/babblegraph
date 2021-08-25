@@ -1,6 +1,7 @@
 package scheduler
 
 import (
+	"babblegraph/externalapis/bgstripe"
 	"babblegraph/jobs/dailyemail"
 	"babblegraph/services/worker/linkprocessing"
 	"babblegraph/util/env"
@@ -31,6 +32,7 @@ func StartScheduler(linkProcessor *linkprocessing.LinkProcessor, errs chan error
 		c.AddFunc("*/1 * * * *", makeVerificationJob(errs))
 		c.AddFunc("*/3 * * * *", makeForgotPasswordJob(errs))
 		c.AddFunc("*/5 * * * *", makeUserAccountNotificationsJob(errs))
+		c.AddFunc("14 */1 * * *", makeSyncStripeEventsJob(errs))
 	case "local-test-emails",
 		"local":
 		c.AddFunc("*/1 * * * *", makeUserAccountNotificationsJob(errs))
@@ -39,6 +41,7 @@ func StartScheduler(linkProcessor *linkprocessing.LinkProcessor, errs chan error
 		c.AddFunc("*/3 * * * *", makeExpireUserAccountsJob(errs))
 		c.AddFunc("*/5 * * * *", makeArchiveForgotPasswordAttemptsJob(errs))
 		c.AddFunc("*/30 * * * *", makeRefetchSeedDomainJob(linkProcessor, errs))
+		c.AddFunc("*/1 * * * *", makeSyncStripeEventsJob(errs))
 		makeEmailJob(errs)()
 		makeUserFeedbackJob(errs)()
 	case "local-no-email":
@@ -262,5 +265,25 @@ func makeExpireUserAccountsJob(errs chan error) func() {
 			localHub.CaptureException(err)
 			errs <- err
 		}
+	}
+}
+
+func makeSyncStripeEventsJob(errs chan error) func() {
+	return func() {
+		today := time.Now()
+		localHub := sentry.CurrentHub().Clone()
+		localHub.ConfigureScope(func(scope *sentry.Scope) {
+			scope.SetTag("sync-stripe-events-job", fmt.Sprintf("sync-stripe-events-job-%s-%d-%d-%d-%d", today.Month().String(), today.Day(), today.Year(), today.Hour(), today.Minute()))
+		})
+		defer func() {
+			if x := recover(); x != nil {
+				_, fn, line, _ := runtime.Caller(1)
+				err := fmt.Errorf("Sync Stripe Events Panic: %s: %d: %v\n%s", fn, line, x, string(debug.Stack()))
+				localHub.CaptureException(err)
+				errs <- err
+			}
+		}()
+		log.Println("Starting sync stripe events job...")
+		bgstripe.ForceSyncStripeEvents()
 	}
 }
