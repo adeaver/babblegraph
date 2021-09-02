@@ -49,7 +49,6 @@ func handlePendingUserAccountNotificationRequests(localSentryHub *sentry.Hub, em
 			default:
 				return fmt.Errorf("Unknown notification type %s", req.Type)
 			}
-			return nil
 		}); err != nil {
 			localSentryHub.CaptureException(err)
 		}
