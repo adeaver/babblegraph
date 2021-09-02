@@ -30,6 +30,15 @@ const (
 	EmailTypeUserExpiration   EmailType = "user-expiration"
 
 	EmailTypePasswordReset EmailType = "password-reset"
+
+	EmailTypeTrialEndingSoonActionRequired EmailType = "trial-ending-soon-action-required"
+	EmailTypeTrialEndingSoon               EmailType = "trial-ending-soon"
+	EmailTypePremiumSubscriptionCanceled   EmailType = "premium-subscription-canceled"
+	EmailTypePaymentFailureNotification    EmailType = "payment-failure-notification"
+	EmailTypeAccountCreationNotification   EmailType = "account-creation-notification"
+
+	EmailTypeInitialPremiumAdvertisement EmailType = "initial-premium-advertisement"
+	EmailTypePremiumAnnouncement         EmailType = "premium-announcement-september-2021"
 )
 
 type Recipient struct {

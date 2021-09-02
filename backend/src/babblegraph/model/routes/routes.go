@@ -50,6 +50,22 @@ func MakeUnsubscribeRouteForUserID(userID users.UserID) (*string, error) {
 	return ptr.String(env.GetAbsoluteURLForEnvironment(fmt.Sprintf("unsubscribe/%s", *token))), nil
 }
 
+func MakePaymentSettingsRouteForUserID(userID users.UserID) (*string, error) {
+	managementLink, err := MakeSubscriptionManagementRouteForUserID(userID)
+	if err != nil {
+		return nil, err
+	}
+	return ptr.String(fmt.Sprintf("%s/payment-settings", *managementLink)), nil
+}
+
+func MakePremiumInformationLink(userID users.UserID) (*string, error) {
+	managementLink, err := MakeSubscriptionManagementRouteForUserID(userID)
+	if err != nil {
+		return nil, err
+	}
+	return ptr.String(fmt.Sprintf("%s/premium", *managementLink)), nil
+}
+
 func MakeLogoURLForEmailRecordID(emailRecordID email.ID) (*string, error) {
 	token, err := encrypt.GetToken(encrypt.TokenPair{
 		Key:   EmailOpenedKey.Str(),
@@ -81,14 +97,19 @@ func MakeWordReinforcementLink(userID users.UserID) (*string, error) {
 }
 
 func MakeUserCreationLink(userID users.UserID) (*string, error) {
-	token, err := encrypt.GetToken(encrypt.TokenPair{
-		Key:   CreateUserKey.Str(),
-		Value: userID,
-	})
+	token, err := MakeCreateUserToken(userID)
 	if err != nil {
 		return nil, err
 	}
 	return ptr.String(env.GetAbsoluteURLForEnvironment(fmt.Sprintf("signup/%s", *token))), nil
+}
+
+func MakePremiumSubscriptionCheckoutLink(userID users.UserID) (*string, error) {
+	token, err := MakePremiumSubscriptionCheckoutToken(userID)
+	if err != nil {
+		return nil, err
+	}
+	return ptr.String(env.GetAbsoluteURLForEnvironment(fmt.Sprintf("checkout/%s", *token))), nil
 }
 
 func MakeArticleLink(userDocumentID userdocuments.UserDocumentID) (*string, error) {

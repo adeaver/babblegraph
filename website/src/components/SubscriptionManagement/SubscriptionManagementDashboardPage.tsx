@@ -26,6 +26,15 @@ type Params = {
 }
 
 const styleClasses = makeStyles({
+    premiumBannerText: {
+        borderRadius: '5px',
+        padding: '8px',
+        backgroundColor: Color.Primary,
+        cursor: 'pointer',
+        // This is a hack
+        color: Color.White,
+        textAlign: 'center',
+    },
     loginInfoContainer: {
         marginTop: '45px',
         display: 'inline-block',
@@ -133,6 +142,7 @@ const SubscriptionManagementDashboardPage = (props: SubscriptionManagementDashbo
         });
     }, []);
 
+    const history = useHistory();
     const isLoading = isReinforcementTokenLoading || isUserProfileLoading;
     return (
         <Page>
@@ -171,9 +181,27 @@ const SubscriptionManagementDashboardPage = (props: SubscriptionManagementDashbo
                                     </ActionCard>
                                 )
                             }
+                            {
+                                subscriptionLevel && (
+                                    <ActionCard
+                                        redirectURL={`/manage/${token}/payment-settings`}
+                                        title='Subscription and Payment Settings'>
+                                        Need to update your preferred payment method or cancel your subscription? Click here!
+                                    </ActionCard>
+                                )
+                            }
                             <ActionCard redirectURL={`/manage/${token}/unsubscribe`} title='Unsubscribe'>
                                 If you’re no longer interested in receiving newsletters, you can unsubscribe here. By unsubscribing, we won’t send you any more emails about anything.
                             </ActionCard>
+                            {
+                                !subscriptionLevel && (
+                                    <Grid item xs={12} onClick={() => history.push(`/manage/${token}/premium`)}>
+                                        <Paragraph className={classes.premiumBannerText} align={Alignment.Center} color={TypographyColor.White}>
+                                            Check out new features that you can access with a Babblegraph Premium subscription!
+                                        </Paragraph>
+                                    </Grid>
+                                )
+                            }
                         </Grid>
                         {
                             !!emailAddress && (

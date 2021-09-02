@@ -1,8 +1,10 @@
 package router
 
 import (
+	"babblegraph/externalapis/bgstripe"
 	"babblegraph/model/routes"
 	"babblegraph/model/useraccounts"
+	"babblegraph/model/useraccountsnotifications"
 	"babblegraph/model/users"
 	"babblegraph/services/web/middleware"
 	"babblegraph/services/web/util/routetoken"
@@ -17,18 +19,23 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 )
 
 func registerUserAccountsRoutes() {
 	a.prefixes["useraccounts"] = true
+
 	a.r.HandleFunc("/api/useraccounts/login_user_1", middleware.WithoutBodyLogger(loginUser))
 	a.routeNames["/api/useraccounts/login_user_1"] = true
+
 	a.r.HandleFunc("/api/useraccounts/create_user_1", middleware.WithoutBodyLogger(createUser))
 	a.routeNames["/api/useraccounts/create_user_1"] = true
+
 	a.r.HandleFunc("/api/useraccounts/reset_password_1", middleware.WithoutBodyLogger(resetPassword))
 	a.routeNames["/api/useraccounts/reset_password_1"] = true
+
 	a.r.HandleFunc("/api/useraccounts/get_user_profile_1", middleware.WithoutBodyLogger(getUserProfile))
 	a.routeNames["/api/useraccounts/get_user_profile_1"] = true
 }
@@ -130,7 +137,7 @@ type createUserRequest struct {
 }
 
 type createUserResponse struct {
-	ManagementToken *string          `json:"management_token"`
+	CheckoutToken   *string          `json:"checkout_token"`
 	CreateUserError *createUserError `json:"create_user_error"`
 }
 
@@ -142,6 +149,7 @@ const (
 	createUserErrorPasswordRequirements createUserError = "pass-requirements"
 	createUserErrorNoSubscription       createUserError = "no-subscription"
 	createUserErrorPasswordsNoMatch     createUserError = "passwords-no-match"
+	createUserErrorInvalidState         createUserError = "invalid-state"
 )
 
 func (c createUserError) Ptr() *createUserError {
@@ -185,6 +193,14 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 	}
 	var cErr *createUserError
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		user, err := users.GetUser(tx, *userID)
+		if err != nil {
+			return err
+		}
+		if user.Status != users.UserStatusVerified {
+			cErr = createUserErrorInvalidState.Ptr()
+			return fmt.Errorf("invalid state")
+		}
 		alreadyHasAccount, err := useraccounts.DoesUserAlreadyHaveAccount(tx, *userID)
 		switch {
 		case err != nil:
@@ -193,15 +209,15 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 			cErr = createUserErrorAlreadyExists.Ptr()
 			return fmt.Errorf("user already has account")
 		}
-		subscriptionLevel, err := useraccounts.LookupSubscriptionLevelForUser(tx, *userID)
-		switch {
-		case err != nil:
+		holdUntilTime := time.Now().Add(30 * time.Minute)
+		if _, err := useraccountsnotifications.EnqueueNotificationRequest(tx, *userID, useraccountsnotifications.NotificationTypeAccountCreated, holdUntilTime); err != nil {
 			return err
-		case subscriptionLevel == nil:
-			cErr = createUserErrorNoSubscription.Ptr()
-			return fmt.Errorf("no subscription found for user")
 		}
-		return useraccounts.CreateUserPasswordForUser(tx, *userID, req.Password)
+		if err := useraccounts.CreateUserPasswordForUser(tx, *userID, req.Password); err != nil {
+			return err
+		}
+		_, err = bgstripe.CreateCustomerForUser(tx, *userID)
+		return err
 	}); err != nil {
 		log.Println(fmt.Sprintf("Error signing up user %s: %s", formattedEmailAddress, err.Error()))
 		if cErr != nil {
@@ -215,21 +231,23 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	token, err := routes.MakeSubscriptionManagementToken(*userID)
+	token, err := routes.MakePremiumSubscriptionCheckoutToken(*userID)
 	if err != nil {
+		log.Println("Error here")
 		writeErrorJSONResponse(w, errorResponse{
 			Message: "Request is not valid",
 		})
 		return
 	}
 	if err := middleware.AssignAuthToken(w, *userID); err != nil {
+		log.Println("Error here 2")
 		writeErrorJSONResponse(w, errorResponse{
 			Message: "Request is not valid",
 		})
 		return
 	}
 	writeJSONResponse(w, createUserResponse{
-		ManagementToken: token,
+		CheckoutToken: token,
 	})
 }
 

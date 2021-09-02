@@ -9,6 +9,7 @@ import (
 	"babblegraph/util/email"
 	"babblegraph/util/ses"
 	"log"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -31,7 +32,12 @@ func CreateUserWithBetaPremiumSubscription(emailClient *ses.Client, emailAddress
 		case !didUserHaveSubscriptionBeforeTask:
 			// User had no account previously
 			log.Println("User had no account previously, handling...")
-			if err := useraccounts.AddSubscriptionLevelForUser(tx, user.ID, useraccounts.SubscriptionLevelBetaPremium); err != nil {
+			if err := useraccounts.AddSubscriptionLevelForUser(tx, useraccounts.AddSubscriptionLevelForUserInput{
+				UserID:            user.ID,
+				SubscriptionLevel: useraccounts.SubscriptionLevelBetaPremium,
+				ShouldStartActive: true,
+				ExpirationTime:    time.Now(),
+			}); err != nil {
 				return err
 			}
 			if _, err := email_actions.SendUserCreationEmailForRecipient(tx, emailClient, email_model.Recipient{
@@ -43,7 +49,12 @@ func CreateUserWithBetaPremiumSubscription(emailClient *ses.Client, emailAddress
 		case didUserHaveSubscriptionBeforeTask && !wasSubscriptionAlreadyActive:
 			// User reactivated account
 			log.Println("User reactivated account, handling...")
-			if err := useraccounts.AddSubscriptionLevelForUser(tx, user.ID, useraccounts.SubscriptionLevelBetaPremium); err != nil {
+			if err := useraccounts.AddSubscriptionLevelForUser(tx, useraccounts.AddSubscriptionLevelForUserInput{
+				UserID:            user.ID,
+				SubscriptionLevel: useraccounts.SubscriptionLevelBetaPremium,
+				ShouldStartActive: true,
+				ExpirationTime:    time.Now(),
+			}); err != nil {
 				return err
 			}
 			if _, err := email_actions.SendAccountReactivationEmailForRecipient(tx, emailClient, email_model.Recipient{

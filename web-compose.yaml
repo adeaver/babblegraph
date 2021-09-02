@@ -33,6 +33,9 @@ services:
       - SENTRY_DSN=$BABBLEGRAPH_WEB_SENTRY_DSN
       - HMAC_SECRET=OsjVX9UWiXLWQ4QgkvMzh1S26XbGzkWp
       - ENV=local-no-emails
+      - STRIPE_KEY=$BABBLEGRAPH_STRIPE_KEY
+      - STRIPE_PUBLIC_KEY=$BABBLEGRAPH_STRIPE_PUBLIC_KEY
+      - STRIPE_WEBHOOK_SECRET=$BABBLEGRAPH_STRIPE_WEBHOOK_SECRET
     command: go run /usr/local/go/src/babblegraph/services/web/main.go
   frontend:
     build:

@@ -69,15 +69,31 @@ func WithAuthorizationCheck(w http.ResponseWriter, r *http.Request, input WithAu
 				input.HandleNoUserFound(w, r)
 				return
 			default:
+				var userStatus users.UserStatus
 				if err := database.WithTx(func(tx *sqlx.Tx) error {
-					var err error
+					user, err := users.GetUser(tx, *userID)
+					if err != nil {
+						return err
+					}
+					userStatus = user.Status
 					userSubscriptionLevel, err = useraccounts.LookupSubscriptionLevelForUser(tx, *userID)
 					return err
 				}); err != nil {
 					input.HandleError(err, w, r)
 					return
 				}
-				input.HandleFoundUser(*userID, userSubscriptionLevel, w, r)
+				switch userStatus {
+				case users.UserStatusVerified:
+					input.HandleFoundUser(*userID, userSubscriptionLevel, w, r)
+				case users.UserStatusUnverified,
+					users.UserStatusUnsubscribed,
+					users.UserStatusBlocklistBounced,
+					users.UserStatusBlocklistComplaint:
+					input.HandleNoUserFound(w, r)
+				default:
+					input.HandleError(fmt.Errorf("Invalid state"), w, r)
+					return
+				}
 				return
 			}
 		}
@@ -90,14 +106,21 @@ func WithAuthorizationLevelVerification(validAuthorizationLevels []useraccounts.
 		WithAuthorizationCheck(w, r, WithAuthorizationCheckInput{
 			HandleFoundUser: func(userID users.UserID, subscriptionLevel *useraccounts.SubscriptionLevel, w http.ResponseWriter, r *http.Request) {
 				// Users can have accounts without having a valid subscription
-				if subscriptionLevel == nil {
+				switch {
+				case len(validAuthorizationLevels) == 0:
+					// If a route has no valid authorization levels, then any authenticated request can access them
+					fn(userID)(w, r)
+					return
+				case subscriptionLevel == nil:
+					// If the route does have authentication and the subscription is inactive, then we need to deny the request
 					w.WriteHeader(http.StatusUnauthorized)
 					return
-				}
-				for _, validSubscriptionLevel := range validAuthorizationLevels {
-					if *subscriptionLevel == validSubscriptionLevel {
-						fn(userID)(w, r)
-						return
+				default:
+					for _, validSubscriptionLevel := range validAuthorizationLevels {
+						if *subscriptionLevel == validSubscriptionLevel {
+							fn(userID)(w, r)
+							return
+						}
 					}
 				}
 				w.WriteHeader(http.StatusUnauthorized)

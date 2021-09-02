@@ -77,10 +77,13 @@ func sendDailyEmailToUser(emailClient *ses.Client, user users.User) error {
 		var userScheduleForDay *usernewsletterschedule.UserNewsletterScheduleDayMetadata
 		var newsletterOptions *usernewsletterpreferences.UserNewsletterPreferences
 		subscriptionLevel, err := useraccounts.LookupSubscriptionLevelForUser(tx, user.ID)
-		if err != nil {
+		switch {
+		case err != nil:
 			return err
-		}
-		if subscriptionLevel != nil && *subscriptionLevel == useraccounts.SubscriptionLevelBetaPremium {
+		case subscriptionLevel == nil:
+			// no-op
+		case *subscriptionLevel == useraccounts.SubscriptionLevelBetaPremium,
+			*subscriptionLevel == useraccounts.SubscriptionLevelPremium:
 			var err error
 			userScheduleForDay, err = usernewsletterschedule.LookupNewsletterDayMetadataForUserAndDay(tx, user.ID, int(time.Now().UTC().Weekday()))
 			if err != nil {

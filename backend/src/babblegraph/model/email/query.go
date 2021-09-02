@@ -35,6 +35,16 @@ func GetEmailUsageForType(tx *sqlx.Tx, emailType EmailType) ([]EmailUsage, error
 	return matches, nil
 }
 
+const getHasEmailByTypeQuery = "SELECT * FROM email_records WHERE user_id = $1 AND type = $2"
+
+func DoesUserHaveEmailOfType(tx *sqlx.Tx, userID users.UserID, emailType EmailType) (bool, error) {
+	var matches []dbEmail
+	if err := tx.Select(&matches, getHasEmailByTypeQuery, userID, emailType); err != nil {
+		return false, err
+	}
+	return len(matches) > 0, nil
+}
+
 const updateEmailRecordIDWithSESMessageIDQuery = "UPDATE email_records SET ses_message_id = $1 WHERE _id = $2"
 
 func UpdateEmailRecordIDWithSESMessageID(tx *sqlx.Tx, id ID, sesMessageID string) error {

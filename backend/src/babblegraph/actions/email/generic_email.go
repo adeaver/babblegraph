@@ -40,9 +40,20 @@ type SendGenericEmailWithOptionalActionForRecipientInput struct {
 	BeforeParagraphs   []string
 	GenericEmailAction *GenericEmailAction
 	AfterParagraphs    []string
+	ShouldDedupeByType bool
 }
 
 func SendGenericEmailWithOptionalActionForRecipient(tx *sqlx.Tx, cl *ses.Client, input SendGenericEmailWithOptionalActionForRecipientInput) (*email.ID, error) {
+	if input.ShouldDedupeByType {
+		hasEmailOfType, err := email.DoesUserHaveEmailOfType(tx, input.Recipient.UserID, input.EmailType)
+		switch {
+		case err != nil:
+			return nil, err
+		case hasEmailOfType:
+			log.Println(fmt.Sprintf("User %s already has email of type %s. Skipping", input.Recipient.UserID, input.EmailType))
+			return nil, nil
+		}
+	}
 	switch {
 	case len(input.BeforeParagraphs) == 0:
 		return nil, fmt.Errorf("Must include before paragraphs")

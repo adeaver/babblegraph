@@ -15,8 +15,12 @@ const (
 
 	hasSubscriptionForUserQuery      = "SELECT * FROM user_account_subscription_levels WHERE user_id = $1"
 	getSubscriptionLevelForUserQuery = "SELECT * FROM user_account_subscription_levels WHERE user_id = $1 AND is_active = TRUE"
-	addSubscriptionLevelForUserQuery = "INSERT INTO user_account_subscription_levels (user_id, subscription_level, expires_at) VALUES ($1, $2, $3) ON CONFLICT (user_id) DO UPDATE SET is_active = TRUE, subscription_level = $2, expires_at = $3"
+	addSubscriptionLevelForUserQuery = "INSERT INTO user_account_subscription_levels (user_id, subscription_level, expires_at, is_active) VALUES ($1, $2, $3, $4) ON CONFLICT (user_id) DO UPDATE SET subscription_level = $2, expires_at = $3, is_active=$4"
+	updateExpirationTimeForUserQuery = "UPDATE user_account_subscription_levels SET expires_at = $2, is_active = $3 WHERE user_id = $1"
+	setSubscriptionAsActiveQuery     = "UPDATE user_account_subscription_levels SET is_active = TRUE WHERE user_id = $1"
 	expireSubscriptionForUserQuery   = "UPDATE user_account_subscription_levels SET is_active = FALSE WHERE user_id = $1"
+
+	getUserIDForExpiredSubscriptionQuery = "SELECT * FROM  user_account_subscription_levels WHERE subscription_level = $1 AND is_active = TRUE AND expires_at < CURRENT_TIMESTAMP"
 
 	forgotPasswordExpirationTime   = 15 * 60 * time.Second
 	maxDailyForgotPasswordRequests = 5
@@ -89,14 +93,36 @@ func LookupSubscriptionLevelForUser(tx *sqlx.Tx, userID users.UserID) (*Subscrip
 	return matches[0].SubscriptionLevel.Ptr(), nil
 }
 
-func getDefaultExpirationTime() time.Time {
-	// This is basically totally meaningless right now
-	now := time.Now()
-	return time.Date(now.Year()+1, now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second(), 0, now.Location()).UTC()
+type AddSubscriptionLevelForUserInput struct {
+	UserID            users.UserID
+	SubscriptionLevel SubscriptionLevel
+	ShouldStartActive bool
+	ExpirationTime    time.Time
 }
 
-func AddSubscriptionLevelForUser(tx *sqlx.Tx, userID users.UserID, level SubscriptionLevel) error {
-	if _, err := tx.Exec(addSubscriptionLevelForUserQuery, userID, level, getDefaultExpirationTime()); err != nil {
+func AddSubscriptionLevelForUser(tx *sqlx.Tx, input AddSubscriptionLevelForUserInput) error {
+	// Add three days to account for invoice
+	expirationTimeWithBuffer := input.ExpirationTime.Add(3 * 24 * time.Hour)
+	if _, err := tx.Exec(addSubscriptionLevelForUserQuery, input.UserID, input.SubscriptionLevel, expirationTimeWithBuffer, input.ShouldStartActive); err != nil {
+		return err
+	}
+	return nil
+}
+
+func UpdateSubscriptionExpirationTime(tx *sqlx.Tx, userID users.UserID, newExpirationTime time.Time) error {
+	now := time.Now()
+	if !now.Before(newExpirationTime) {
+		return fmt.Errorf("Cannot update expiration time to be in the past: %+v", newExpirationTime)
+	}
+	expirationTimeWithBuffer := newExpirationTime.Add(3 * 24 * time.Hour)
+	if _, err := tx.Exec(updateExpirationTimeForUserQuery, userID, expirationTimeWithBuffer, true); err != nil {
+		return err
+	}
+	return nil
+}
+
+func ActivateSubscriptionForUser(tx *sqlx.Tx, userID users.UserID) error {
+	if _, err := tx.Exec(setSubscriptionAsActiveQuery, userID); err != nil {
 		return err
 	}
 	return nil
@@ -107,6 +133,18 @@ func ExpireSubscriptionForUser(tx *sqlx.Tx, userID users.UserID) error {
 		return err
 	}
 	return nil
+}
+
+func GetUserIDsForExpiredSubscriptionQuery(tx *sqlx.Tx) ([]users.UserID, error) {
+	var matches []dbUserSubscription
+	if err := tx.Select(&matches, getUserIDForExpiredSubscriptionQuery, SubscriptionLevelPremium); err != nil {
+		return nil, err
+	}
+	var out []users.UserID
+	for _, m := range matches {
+		out = append(out, m.UserID)
+	}
+	return out, nil
 }
 
 func GetAllUnfulfilledForgotPasswordAttempts(tx *sqlx.Tx) ([]ForgotPasswordAttempt, error) {

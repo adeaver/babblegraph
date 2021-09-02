@@ -66,7 +66,7 @@ const UnsubscribePage = (props: UnsubscribePageProps) => {
     const [ hasUserProfile, setHasUserProfile ] = useState<boolean>(false);
 
     const handleSubmit = () => {
-        setIsUserProfileLoading(true);
+        setIsUnsubscribeRequestLoading(true);
         UnsubscribeUser({
             Token: token,
             EmailAddress: emailAddress,
@@ -182,11 +182,8 @@ const UnsubscribeForm = (props: UnsubscribeFormProps) => {
                 props.hasUserProfile && (
                     <div>
                         <Paragraph>
-                            IMPORTANT: unsubscribing does not automatically cancel your subscription. Please make sure that you don’t have any recurring payments setup by going to the BuyMeACoffee Page.
+                            This will also cancel your subscription to Babblegraph Premium.
                         </Paragraph>
-                        <Link href="https://buymeacoffee.com/babblegraph">
-                            Click here for BuyMeACoffee
-                        </Link>
                     </div>
                 )
             }

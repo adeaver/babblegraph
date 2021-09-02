@@ -19,7 +19,15 @@ func main() {
 	if err := setupDatabases(); err != nil {
 		log.Fatal(err.Error())
 	}
-	taskName := flag.String("task", "none", "Name of task to run [daily-email, privacy-policy, email-for-addresses, create-user, expire-user, create-elastic-indexes]")
+	taskName := flag.String("task", "none", `Name of task to run
+        daily-email: send daily email manually
+        privacy-policy: send privacy policy
+        email-for-addresses: send email for EMAIL_ADDRESSES environment variable
+        create-user: create beta-premium user
+        expire-user: expire user
+        create-elastic-indexes: create new indices in ElasticSearch
+        sync-stripe: sync failed stripe events
+        product-updates: send product updates`)
 	userEmail := flag.String("user-email", "none", "Email address of user to create")
 	flag.Parse()
 	if taskName == nil {
@@ -76,6 +84,10 @@ func main() {
 		if err := tasks.CreateElasticIndexes(); err != nil {
 			log.Fatal(err.Error())
 		}
+	case "sync-stripe":
+		tasks.ForceSyncStripeEvents()
+	case "product-updates":
+		tasks.SendProductUpdates()
 	default:
 		log.Fatal(fmt.Sprintf("Invalid task specified %s", *taskName))
 	}

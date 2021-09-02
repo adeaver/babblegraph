@@ -36,7 +36,7 @@ export type CreateUserRequest = {
 }
 
 export type CreateUserResponse = {
-    managementToken: string | null;
+    checkoutToken: string | null;
     createUserError: CreateUserError | null;
 }
 
@@ -115,3 +115,4 @@ export function resetPassword(
         onError,
     );
 }
+

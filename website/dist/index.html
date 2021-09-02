@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
     <!-- Global site tag (gtag.js) - Google Ads: 430556216 -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=AW-430556216"></script>
+    <script src="https://js.stripe.com/v3/"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
         function gtag() {
@@ -29,8 +30,8 @@
             });
             return false;
         }
+        window.initialData = {{.Data}};
     </script>
-
 </head>
 <body style="margin: 0;">
     <div id="content"></div>
