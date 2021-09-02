@@ -62,7 +62,7 @@ func SendProductUpdates() {
 					ButtonText: "Learn more about Babblegraph Premium",
 				},
 				AfterParagraphs: []string{
-					"If the premium feature aren’t enough to convince you, I’ll be continuing to develop new features for both Premium and non-Premium subscribers.",
+					"If the premium features aren’t enough to convince you, I’ll be continuing to develop new features for both Premium and non-Premium subscribers.",
 					"If you’re not interested, then you can safely ignore this email and continue using the Babblegraph daily newsletter!",
 					"And if you have any questions, you can always reply to this email!",
 				},
