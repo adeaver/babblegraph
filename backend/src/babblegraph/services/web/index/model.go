@@ -28,6 +28,7 @@ func RegisterIndexRoutes(r *mux.Router, indexPages []IndexPage) error {
 	}
 	r.HandleFunc("/logout", HandleLogout())
 	r.HandleFunc("/login", HandleLoginPage(staticFileDirName))
+	r.HandleFunc("/signup/{token}", HandleCreateUserPage(staticFileDirName))
 	r.HandleFunc("/article/{token}", HandleArticleLink)
 	r.HandleFunc("/paywall-report/{token}", HandlePaywallReport)
 	r.HandleFunc("/checkout/{token}", HandleCheckoutPage(staticFileDirName))

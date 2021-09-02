@@ -229,6 +229,7 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
         );
     } else {
         const shouldShowCheckoutForm = !!subscription && !isLoadingUpdateSubscription;
+        const currentPeriodEndDate = !subscription ? null : new Date(subscription.currentPeriodEnd);
         body = (
             <div>
                 <SubscriptionSelector
@@ -250,12 +251,26 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
                                 handleFailure={setPaymentError}
                                 handleError={setError} />
                         ) : (
-                            <AddPaymentMethodForm
-                                handleIsStripeRequestLoading={setIsPaymentConfirmationLoading}
-                                handleSuccess={(paymentMethodID: string) => setSuccessType(PaymentType.Setup)}
-                                handleFailure={setPaymentError}
-                                handleError={setError}
-                                isDefault />
+                            <div>
+                                <Heading3 color={TypographyColor.Primary}>
+                                    Add a payment method to your account
+                                </Heading3>
+                                <Paragraph>
+                                    {
+                                        !!currentPeriodEndDate ? (
+                                            `You won’t be charged until the end of your trial on ${currentPeriodEndDate.toLocaleDateString()}.`
+                                        ) : (
+                                            `You won’t be charged until the end of your trial. You can always add a payment method later.`
+                                        )
+                                    }
+                                </Paragraph>
+                                <AddPaymentMethodForm
+                                    handleIsStripeRequestLoading={setIsPaymentConfirmationLoading}
+                                    handleSuccess={(paymentMethodID: string) => setSuccessType(PaymentType.Setup)}
+                                    handleFailure={setPaymentError}
+                                    handleError={setError}
+                                    isDefault />
+                            </div>
                         )
                     )
                 }

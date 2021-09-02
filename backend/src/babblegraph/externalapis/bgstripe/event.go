@@ -5,6 +5,7 @@ import (
 	"babblegraph/model/useraccountsnotifications"
 	"babblegraph/util/database"
 	"babblegraph/util/env"
+	"babblegraph/util/ptr"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -17,13 +18,15 @@ import (
 
 func ForceSyncStripeEvents() {
 	stripe.Key = env.MustEnvironmentVariable("STRIPE_KEY")
-	params := &stripe.EventListParams{}
-	params.Filters.AddFilter("delivery_success", "", "false")
+	params := &stripe.EventListParams{
+		DeliverySuccess: ptr.Bool(false),
+	}
 	events := event.List(params)
 	for events.Next() {
 		event := events.Event()
 		if err := database.WithTx(func(tx *sqlx.Tx) error {
-			return HandleStripeEvent(tx, event)
+			log.Println(fmt.Sprintf("Handling event of type %s", event.Type))
+			return HandleStripeEvent(tx, *event)
 		}); err != nil {
 			log.Println(fmt.Sprintf("Error processing event: %s", err.Error()))
 		}

@@ -13,6 +13,7 @@ import Paragraph from 'common/typography/Paragraph';
 import { Heading1 } from 'common/typography/Heading';
 import { PrimaryButton } from 'common/components/Button/Button';
 import { TypographyColor } from 'common/typography/common';
+import { setLocation } from 'util/window/Location';
 
 import PremiumInformationPanel from 'components/PremiumInformation/PremiumInformationPanel';
 
@@ -139,19 +140,18 @@ const PremiumInformationPage = (props: PremiumInformationPageProps) => {
                 </Paragraph>
             );
         } else if (hasAccount && !hasSubscription && premiumCheckoutToken) {
-            // TODO: This needs to go somewhere
             callToAction = (
                 <PrimaryButton
-                    onClick={() => history.push(`/checkout/${premiumCheckoutToken}`)}
+                    onClick={() => setLocation(`/checkout/${premiumCheckoutToken}`)}
                     className={classes.callToActionButton}
                     size="large">
-                    Renew your Babblegraph Premium Subscription
+                    Start your Babblegraph Premium Subscription
                 </PrimaryButton>
             );
         } else if (!hasAccount && !hasSubscription && createUserToken) {
             callToAction = (
                 <PrimaryButton
-                    onClick={() => history.push(`/signup/${createUserToken}`)}
+                    onClick={() => setLocation(`/signup/${createUserToken}`)}
                     className={classes.callToActionButton}
                     size="large">
                     Try Babblegraph Premium
