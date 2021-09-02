@@ -9,6 +9,7 @@ import (
 	"babblegraph/util/database"
 	"babblegraph/util/env"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/getsentry/sentry-go"
@@ -79,6 +80,7 @@ func HandleCreateUserPage(staticFileDirName string) func(w http.ResponseWriter, 
 					destinationURL, err = routes.MakePremiumSubscriptionCheckoutLink(userID)
 					if err != nil {
 						w.WriteHeader(http.StatusBadRequest)
+						log.Println(err.Error())
 						sentry.CaptureException(fmt.Errorf("Error redirecting on login: %s", err.Error()))
 						return
 					}
@@ -98,13 +100,14 @@ func HandleCreateUserPage(staticFileDirName string) func(w http.ResponseWriter, 
 					return err
 				}); err != nil {
 					w.WriteHeader(http.StatusBadRequest)
+					log.Println(err.Error())
 					return
 				}
 				if doesUserHaveAccount {
 					http.Redirect(w, r, routes.MakeLoginLinkWithPremiumSubscriptionCheckoutRedirect(), http.StatusTemporaryRedirect)
 					return
 				}
-				HandleServeIndexPage(staticFileDirName)
+				HandleServeIndexPage(staticFileDirName)(w, r)
 			},
 			HandleInvalidAuthenticationToken: func(w http.ResponseWriter, r *http.Request) {
 				http.Redirect(w, r, routes.MakeLoginLinkWithPremiumSubscriptionCheckoutRedirect(), http.StatusTemporaryRedirect)

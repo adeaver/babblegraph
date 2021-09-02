@@ -248,7 +248,7 @@ func handleInitialPremiumInformationNotification(tx *sqlx.Tx, cl *ses.Client, us
 		BeforeParagraphs: []string{
 			"Hello!",
 			"Andrew here! I hope you’ve been enjoying your subscription to Babblegraph. If not, I always appreciate feedback for how to make it better.",
-			"As you may or may not know, Babblegraph is a one-person operation and is completely independent. There’s no Silicon Valley venture capital money, no highly paid CEO, nothing.",
+			"As you may or may not know, Babblegraph is a one-person operation and is completely independent. There’s no Silicon Valley venture capital money, no team of engineers, no lavish offices! Just me!.",
 			"To keep Babblegraph independent, support myself, and cover the costs of running Babblegraph, I introduced a premium subscription tier which gives subscribers access to exclusive features to enhace their Babblegraph experience!",
 			"Some of the features include:",
 			"The ability to pick how many articles you receive in each newsletter, and which topics they cover. Want to make sure every email has some articles on cooking? You can do that!",

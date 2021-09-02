@@ -20,6 +20,7 @@ type RouteHandler func(reqBody []byte) (_resp interface{}, _err error)
 
 func makeMuxRouter(processRequest RouteHandler) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Content-Type", "application/json")
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			log.Println(fmt.Sprintf("ERROR: %s", err.Error()))
@@ -53,6 +54,7 @@ type AuthRouteHandler func(userID users.UserID, reqBody []byte) (_resp interface
 
 func makeAuthenticatedMuxRouter(userID users.UserID, processRequest AuthRouteHandler) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Content-Type", "application/json")
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			log.Println(fmt.Sprintf("ERROR: %s", err.Error()))

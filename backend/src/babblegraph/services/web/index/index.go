@@ -37,6 +37,7 @@ func serveIndexTemplate(templateFileName string, w http.ResponseWriter, r *http.
 			sentry.CaptureException(err)
 		}
 	}()
+	w.Header().Add("Content-Type", "text/html")
 	var tmpl *template.Template
 	tmpl, err = template.New("index.html").ParseFiles(templateFileName)
 	if err != nil {

@@ -38,6 +38,7 @@ const (
 	EmailTypeAccountCreationNotification   EmailType = "account-creation-notification"
 
 	EmailTypeInitialPremiumAdvertisement EmailType = "initial-premium-advertisement"
+	EmailTypePremiumAnnouncement         EmailType = "premium-announcement-september-2021"
 )
 
 type Recipient struct {
