@@ -339,7 +339,6 @@ func lookupActiveDBSubscriptionForUser(tx *sqlx.Tx, userID users.UserID) (*dbStr
 	default:
 		return nil, fmt.Errorf("Expected at most one subscription, but got %d", len(matches))
 	}
-	return nil, fmt.Errorf("Unreachable")
 }
 
 func lookupDBSubcriptionByStripeID(tx *sqlx.Tx, subscriptionID string) (*dbStripeSubscription, error) {
@@ -356,7 +355,6 @@ func lookupDBSubcriptionByStripeID(tx *sqlx.Tx, subscriptionID string) (*dbStrip
 	default:
 		return nil, fmt.Errorf("Expected at most one subscription, but got %d", len(matches))
 	}
-	return nil, fmt.Errorf("Unreachable")
 }
 
 func updateSubscriptionPaymentState(tx *sqlx.Tx, subscriptionID SubscriptionID, newPaymentState PaymentState) error {
