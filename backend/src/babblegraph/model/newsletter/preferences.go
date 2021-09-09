@@ -3,6 +3,7 @@ package newsletter
 import (
 	"babblegraph/model/contenttopics"
 	"babblegraph/model/documents"
+	"babblegraph/model/email"
 	"babblegraph/model/useraccounts"
 	"babblegraph/model/usercontenttopics"
 	"babblegraph/model/userdocuments"
@@ -24,6 +25,9 @@ type userReadingLevel struct {
 }
 
 type userPreferencesAccessor interface {
+	getUserID() users.UserID
+	getLanguageCode() wordsmith.LanguageCode
+
 	getUserSubscriptionLevel() *useraccounts.SubscriptionLevel
 	getUserNewsletterPreferences() *usernewsletterpreferences.UserNewsletterPreferences
 	getUserScheduleForDay() *usernewsletterschedule.UserNewsletterScheduleDayMetadata
@@ -32,9 +36,16 @@ type userPreferencesAccessor interface {
 	getUserTopics() []contenttopics.ContentTopic
 	getTrackingLemmas() []wordsmith.LemmaID
 	getUserDomainCounts() []userlinks.UserDomainCount
+
+	insertDocumentForUserAndReturnID(emailRecordID email.ID, doc documents.Document) (*userdocuments.UserDocumentID, error)
 }
 
 type DefaultUserPreferencesAccessor struct {
+	tx *sqlx.Tx
+
+	userID       users.UserID
+	languageCode wordsmith.LanguageCode
+
 	userSubscriptionLevel     *useraccounts.SubscriptionLevel
 	userNewsletterPreferences *usernewsletterpreferences.UserNewsletterPreferences
 	userScheduleForDay        *usernewsletterschedule.UserNewsletterScheduleDayMetadata
@@ -89,6 +100,9 @@ func GetDefaultUserPreferencesAccessor(tx *sqlx.Tx, userID users.UserID, languag
 		return nil, err
 	}
 	return &DefaultUserPreferencesAccessor{
+		tx:                        tx,
+		userID:                    userID,
+		languageCode:              languageCode,
 		userSubscriptionLevel:     userSubscriptionLevel,
 		userNewsletterPreferences: userNewsletterPreferences,
 		userScheduleForDay:        userScheduleForDay,
@@ -101,6 +115,14 @@ func GetDefaultUserPreferencesAccessor(tx *sqlx.Tx, userID users.UserID, languag
 		trackingLemmas:   trackingLemmas,
 		userDomainCounts: userDomainCounts,
 	}, nil
+}
+
+func (d *DefaultUserPreferencesAccessor) getUserID() users.UserID {
+	return d.userID
+}
+
+func (d *DefaultUserPreferencesAccessor) getLanguageCode() wordsmith.LanguageCode {
+	return d.languageCode
 }
 
 func (d *DefaultUserPreferencesAccessor) getUserSubscriptionLevel() *useraccounts.SubscriptionLevel {
@@ -127,10 +149,14 @@ func (d *DefaultUserPreferencesAccessor) getUserTopics() []contenttopics.Content
 	return d.userTopics
 }
 
-func (d *DefaultUserPreferencesAccessor) getTrackingLemmas() []userlemma.Mapping {
+func (d *DefaultUserPreferencesAccessor) getTrackingLemmas() []wordsmith.LemmaID {
 	return d.trackingLemmas
 }
 
 func (d *DefaultUserPreferencesAccessor) getUserDomainCounts() []userlinks.UserDomainCount {
 	return d.userDomainCounts
+}
+
+func (d *DefaultUserPreferencesAccessor) insertDocumentForUserAndReturnID(emailRecordID email.ID, doc documents.Document) (*userdocuments.UserDocumentID, error) {
+	return userdocuments.InsertDocumentForUserAndReturnID(d.tx, d.userID, emailRecordID, doc)
 }

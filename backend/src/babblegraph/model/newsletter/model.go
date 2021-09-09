@@ -1,14 +1,16 @@
 package newsletter
 
 import (
+	"babblegraph/model/email"
 	"babblegraph/model/users"
 	"babblegraph/wordsmith"
 )
 
 type Newsletter struct {
-	UserID       users.UserID           `json:"user_id"`
-	LanguageCode wordsmith.LanguageCode `json:"language_code"`
-	Body         NewsletterBody         `json:"body"`
+	UserID        users.UserID           `json:"user_id"`
+	EmailRecordID email.ID               `json:"email_record_id"`
+	LanguageCode  wordsmith.LanguageCode `json:"language_code"`
+	Body          NewsletterBody         `json:"body"`
 }
 
 type NewsletterBody struct {

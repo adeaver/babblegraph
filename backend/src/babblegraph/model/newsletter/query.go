@@ -3,11 +3,14 @@ package newsletter
 import (
 	"babblegraph/model/documents"
 	"babblegraph/model/domains"
+	"babblegraph/model/email"
 	"babblegraph/model/routes"
 	"babblegraph/model/useraccounts"
+	"babblegraph/model/users"
 	"babblegraph/util/deref"
 	"babblegraph/wordsmith"
 	"fmt"
+	"log"
 	"math/rand"
 	"time"
 )
@@ -19,7 +22,11 @@ const (
 	minimumDaysSinceLastSpotlight = 3
 )
 
-func CreateNewsletter(languageCode wordsmith.LanguageCode, userAccessor userPreferencesAccessor, docsAccessor documentAccessor) (*Newsletter, error) {
+func CreateNewsletter(userID users.UserID, languageCode wordsmith.LanguageCode, emailAccessor emailAccessor, userAccessor userPreferencesAccessor, docsAccessor documentAccessor) (*Newsletter, error) {
+	emailRecordID := email.NewEmailRecordID()
+	if err := emailAccessor.InsertEmailRecord(emailRecordID, userID); err != nil {
+		return nil, err
+	}
 	userSubscriptionLevel := userAccessor.getUserSubscriptionLevel()
 	switch {
 	case userSubscriptionLevel == nil:
@@ -37,7 +44,7 @@ func CreateNewsletter(languageCode wordsmith.LanguageCode, userAccessor userPref
 		return nil, err
 	}
 	return &Newsletter{
-		// UserID       users.UserID           `json:"user_id"`
+		UserID:       userID,
 		LanguageCode: languageCode,
 		Body: NewsletterBody{
 			// LemmaReinforcementSpotlight *LemmaReinforcementSpotlight `json:"lemma_reinforcement_spotlight,omitempty"`
@@ -88,7 +95,7 @@ func pickUpToNRandomIndices(listLength, pickN int) []int {
 	return out
 }
 
-func makeLinkFromDocument(userAccessor userPreferencesAccessor, doc documents.Document) (*Link, error) {
+func makeLinkFromDocument(emailRecordID email.ID, userAccessor userPreferencesAccessor, doc documents.Document) (*Link, error) {
 	var title, imageURL, description *string
 	if isNotEmpty(doc.Metadata.Title) {
 		title = doc.Metadata.Title
@@ -101,19 +108,31 @@ func makeLinkFromDocument(userAccessor userPreferencesAccessor, doc documents.Do
 	}
 	domain, err := domains.GetDomainMetadata(doc.Domain)
 	if err != nil {
-		return nil, err
+		log.Println(fmt.Sprintf("Error getting domain: %s", err.Error()))
+		return nil, nil
 	}
 	// TODO: In order to avoid duplicate documents between emails
-	// we'll need to do the following:
-	// 1) Create EmailRecordID and EmailRecord when creating Newsletter
-	// 2) Modify email record to have a null sent_at date for pending emails
-	// 3) Add a method onto userAccessor to insert document for user and return ID
+	// we'll need to do the following: Modify email record to have a null sent_at date for pending emails
+	userDocumentID, err := userAccessor.insertDocumentForUserAndReturnID(emailRecordID, doc)
+	if err != nil {
+		return nil, err
+	}
+	articleLink, err := routes.MakeArticleLink(*userDocumentID)
+	if err != nil {
+		log.Println(fmt.Sprintf("Error making article link: %s", err.Error()))
+		return nil, nil
+	}
+	paywallReportLink, err := routes.MakePaywallReportLink(*userDocumentID)
+	if err != nil {
+		log.Println(fmt.Sprintf("Error making paywall report link: %s", err.Error()))
+		return nil, nil
+	}
 	return &Link{
-		// URL              string  `json:"url"`
-		// PaywallReportURL string  `json:"paywall_report_url"`
-		ImageURL:    imageURL,
-		Title:       title,
-		Description: description,
+		URL:              *articleLink,
+		PaywallReportURL: *paywallReportLink,
+		ImageURL:         imageURL,
+		Title:            title,
+		Description:      description,
 		Domain: &Domain{
 			Name:      string(domain.Domain),
 			FlagAsset: routes.GetFlagAssetForCountryCode(domain.Country),

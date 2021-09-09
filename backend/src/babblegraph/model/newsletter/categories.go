@@ -3,6 +3,7 @@ package newsletter
 import (
 	"babblegraph/model/contenttopics"
 	"babblegraph/model/documents"
+	"babblegraph/model/email"
 	"babblegraph/model/useraccounts"
 	"babblegraph/util/ptr"
 	"babblegraph/util/text"
@@ -13,37 +14,44 @@ import (
 	"sort"
 )
 
-func getDocumentCategories(languageCode wordsmith.LanguageCode, userAccessor userPreferencesAccessor, docsAccessor documentAccessor) ([]Category, error) {
-	topics := getTopicsForNewsletter(userAccessor)
-	allowableDomains, err := getAllowableDomains(userAccessor)
+type getDocumentCategoriesInput struct {
+	emailRecordID email.ID
+	languageCode  wordsmith.LanguageCode
+	userAccessor  userPreferencesAccessor
+	docsAccessor  documentAccessor
+}
+
+func getDocumentCategories(input getDocumentCategoriesInput) ([]Category, error) {
+	topics := getTopicsForNewsletter(input.userAccessor)
+	allowableDomains, err := getAllowableDomains(input.userAccessor)
 	if err != nil {
 		return nil, err
 	}
-	genericDocuments, err := docsAccessor.GetDocumentsForUser(getDocumentsForUserInput{
+	genericDocuments, err := input.docsAccessor.GetDocumentsForUser(getDocumentsForUserInput{
 		getDocumentsBaseInput: getDocumentsBaseInput{
-			LanguageCode:        languageCode,
-			ExcludedDocumentIDs: userAccessor.getSentDocumentIDs(),
+			LanguageCode:        input.languageCode,
+			ExcludedDocumentIDs: input.userAccessor.getSentDocumentIDs(),
 			ValidDomains:        allowableDomains,
-			MinimumReadingLevel: ptr.Int64(userAccessor.getReadingLevel().LowerBound),
-			MaximumReadingLevel: ptr.Int64(userAccessor.getReadingLevel().UpperBound),
+			MinimumReadingLevel: ptr.Int64(input.userAccessor.getReadingLevel().LowerBound),
+			MaximumReadingLevel: ptr.Int64(input.userAccessor.getReadingLevel().UpperBound),
 		},
-		Lemmas: userAccessor.getTrackingLemmas(),
+		Lemmas: input.userAccessor.getTrackingLemmas(),
 	})
 	if err != nil {
 		return nil, err
 	}
 	documentsByTopic := make(map[contenttopics.ContentTopic][]documents.DocumentWithScore)
 	for _, t := range topics {
-		documentsForTopic, err := docsAccessor.GetDocumentsForUser(getDocumentsForUserInput{
+		documentsForTopic, err := input.docsAccessor.GetDocumentsForUser(getDocumentsForUserInput{
 			getDocumentsBaseInput: getDocumentsBaseInput{
-				LanguageCode:        languageCode,
-				ExcludedDocumentIDs: userAccessor.getSentDocumentIDs(),
+				LanguageCode:        input.languageCode,
+				ExcludedDocumentIDs: input.userAccessor.getSentDocumentIDs(),
 				ValidDomains:        allowableDomains,
-				MinimumReadingLevel: ptr.Int64(userAccessor.getReadingLevel().LowerBound),
-				MaximumReadingLevel: ptr.Int64(userAccessor.getReadingLevel().UpperBound),
+				MinimumReadingLevel: ptr.Int64(input.userAccessor.getReadingLevel().LowerBound),
+				MaximumReadingLevel: ptr.Int64(input.userAccessor.getReadingLevel().UpperBound),
 			},
+			Lemmas: input.userAccessor.getTrackingLemmas(),
 			Topic:  t.Ptr(),
-			Lemmas: userAccessor.getTrackingLemmas(),
 		})
 		switch {
 		case err != nil:
@@ -56,8 +64,9 @@ func getDocumentCategories(languageCode wordsmith.LanguageCode, userAccessor use
 	}
 	// TODO: figure out number of documents
 	return joinDocumentsIntoCategories(joinDocumentsIntoCategoriesInput{
-		userAccessor: userAccessor,
-		languageCode: languageCode,
+		emailRecordID: input.emailRecordID,
+		userAccessor:  input.userAccessor,
+		languageCode:  input.languageCode,
 		// numberOfDocumentsInNewsletter:
 		documentsByTopic: documentsByTopic,
 		genericDocuments: genericDocuments,
@@ -65,6 +74,7 @@ func getDocumentCategories(languageCode wordsmith.LanguageCode, userAccessor use
 }
 
 type joinDocumentsIntoCategoriesInput struct {
+	emailRecordID                 email.ID
 	userAccessor                  userPreferencesAccessor
 	languageCode                  wordsmith.LanguageCode
 	numberOfDocumentsInNewsletter int
@@ -100,9 +110,12 @@ func joinDocumentsIntoCategories(input joinDocumentsIntoCategoriesInput) ([]Cate
 			doc := documentGroup.documentsWithScore[i].Document
 			u := urlparser.MustParseURL(doc.URL)
 			if _, ok := documentsInEmailByURLIdentifier[u.URLIdentifier]; !ok {
-				link, err := makeLinkFromDocument(input.userAccessor, doc)
-				if err != nil {
+				link, err := makeLinkFromDocument(input.emailRecordID, input.userAccessor, doc)
+				switch {
+				case err != nil:
 					return nil, err
+				case link == nil:
+					continue
 				}
 				documentCounter++
 				documentsInEmailByURLIdentifier[u.URLIdentifier] = true
@@ -131,9 +144,12 @@ func joinDocumentsIntoCategories(input joinDocumentsIntoCategoriesInput) ([]Cate
 			doc := input.genericDocuments[i].Document
 			u := urlparser.MustParseURL(doc.URL)
 			if _, ok := documentsInEmailByURLIdentifier[u.URLIdentifier]; !ok {
-				link, err := makeLinkFromDocument(input.userAccessor, doc)
-				if err != nil {
+				link, err := makeLinkFromDocument(input.emailRecordID, input.userAccessor, doc)
+				switch {
+				case err != nil:
 					return nil, err
+				case link == nil:
+					continue
 				}
 				documentCounter++
 				documentsInEmailByURLIdentifier[u.URLIdentifier] = true
