@@ -25,8 +25,8 @@ type LemmaReinforcementSpotlight struct {
 }
 
 type Category struct {
-	Name  string `json:"name"`
-	Links []Link `json:"links"`
+	Name  *string `json:"name,omitempty"`
+	Links []Link  `json:"links"`
 }
 
 type Link struct {
@@ -39,6 +39,6 @@ type Link struct {
 }
 
 type Domain struct {
-	FlagAsset  string `json:"flag_asset"`
-	DomainName string `json:"domain_name"`
+	FlagAsset string `json:"flag_asset"`
+	Name      string `json:"name"`
 }
