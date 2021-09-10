@@ -23,6 +23,8 @@ const (
         $1, $2, $3, $4, $5
     )`
 
+	updateSendRequestSendAtTimeQuery = "UPDATE newsletter_send_requests SET hour_to_send_index_utc=$1, quarter_hour_to_send_index_utc=$2 WHERE _id = $3"
+
 	updateSendRequestStatusQuery = "UPDATE newsletter_send_requests SET payload_status = $1, lat_modified_at=timezone('utc', now()) WHERE _id = $2"
 	insertDebounceRecordQuery    = "INSERT INTO newsletter_send_request_debounce_records (newsletter_send_request_id, to_payload_status) VALUES ($1, $2)"
 )
@@ -42,23 +44,38 @@ func GetOrCreateSendRequestsForUsersForDay(tx *sqlx.Tx, userIDs []users.UserID, 
 	usersWithSendRequests := make(map[users.UserID]bool)
 	for _, m := range matches {
 		usersWithSendRequests[m.UserID] = true
-		out = append(out, m.ToNonDB())
+		req, err := m.ToNonDB()
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, *req)
 	}
 	for _, u := range userIDs {
 		if _, ok := usersWithSendRequests[u]; !ok {
 			id := makeSendRequestID(u, languageCode, dateOfSendString)
-			if _, err := tx.Exec(insertSendRequestForUserQuery, u, languageCode, dateOfSendString, PayloadStatusNeedsPreload); err != nil {
+			if _, err := tx.Exec(insertSendRequestForUserQuery, id, u, languageCode, dateOfSendString, PayloadStatusNeedsPreload); err != nil {
+				return nil, err
+			}
+			utcDate, err := getUTCMidnightDateOfSend(dateOfSendString)
+			if err != nil {
 				return nil, err
 			}
 			out = append(out, NewsletterSendRequest{
 				ID:            id,
 				UserID:        u,
-				DateOfSend:    dateOfSendString,
+				DateOfSend:    *utcDate,
 				PayloadStatus: PayloadStatusNeedsPreload,
 			})
 		}
 	}
 	return out, nil
+}
+
+func UpdateSendRequestSendAtTime(tx *sqlx.Tx, id ID, sendAtHourIndexUTC, sendAtQuarterHourIndexUTC int) error {
+	if _, err := tx.Exec(updateSendRequestSendAtTimeQuery, sendAtHourIndexUTC, sendAtQuarterHourIndexUTC, id); err != nil {
+		return err
+	}
+	return nil
 }
 
 func UpdateSendRequestStatus(tx *sqlx.Tx, id ID, newStatus PayloadStatus) error {

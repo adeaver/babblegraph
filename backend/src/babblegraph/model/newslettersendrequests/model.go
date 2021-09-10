@@ -12,7 +12,7 @@ type NewsletterSendRequest struct {
 	ID            ID
 	UserID        users.UserID
 	LanguageCode  wordsmith.LanguageCode
-	DateOfSend    string
+	DateOfSend    time.Time
 	PayloadStatus PayloadStatus
 }
 
@@ -28,14 +28,18 @@ type dbNewsletterSendRequest struct {
 	PayloadStatus             PayloadStatus          `db:"payload_status"`
 }
 
-func (d dbNewsletterSendRequest) ToNonDB() NewsletterSendRequest {
-	return NewsletterSendRequest{
+func (d dbNewsletterSendRequest) ToNonDB() (*NewsletterSendRequest, error) {
+	utcDate, err := getUTCMidnightDateOfSend(d.DateOfSend)
+	if err != nil {
+		return nil, err
+	}
+	return &NewsletterSendRequest{
 		ID:            d.ID,
 		UserID:        d.UserID,
 		LanguageCode:  d.LanguageCode,
-		DateOfSend:    d.DateOfSend,
+		DateOfSend:    *utcDate,
 		PayloadStatus: d.PayloadStatus,
-	}
+	}, nil
 }
 
 type debounceRecordID string

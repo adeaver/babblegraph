@@ -4,6 +4,7 @@ import (
 	"babblegraph/model/documents"
 	"babblegraph/model/domains"
 	"babblegraph/services/worker/linkprocessing"
+	"babblegraph/services/worker/newsletterprocessing"
 	"babblegraph/services/worker/scheduler"
 	"babblegraph/util/database"
 	"babblegraph/util/elastic"
@@ -17,7 +18,8 @@ import (
 )
 
 const (
-	numIngestWorkerThreads = 5
+	numIngestWorkerThreads      = 5
+	numNewsletterPreloadThreads = 2
 )
 
 func main() {
@@ -55,7 +57,17 @@ func main() {
 	if err := scheduler.StartScheduler(linkProcessor, schedulerErrs); err != nil {
 		log.Fatal(err.Error())
 	}
-
+	newsletterProcessor, err := newsletterprocessing.CreateNewsletterProcessor()
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	preloadNewsletterErrs := make(chan error, 1)
+	preloadWorkerNum := 0
+	for i := 0; i < numNewsletterPreloadThreads; i++ {
+		preloadThread := startNewsletterPreloadWorkerThread(preloadWorkerNum, newsletterProcessor, preloadNewsletterErrs)
+		go preloadThread()
+		preloadWorkerNum++
+	}
 	for {
 		select {
 		case err := <-ingestErrs:
@@ -67,6 +79,11 @@ func main() {
 			}
 		case err := <-schedulerErrs:
 			log.Println(fmt.Sprintf("Saw panic: %s in scheduler.", err.Error()))
+		case err := <-preloadNewsletterErrs:
+			log.Println(fmt.Sprintf("Saw panic: %s. Starting new newsletter preload thread.", err.Error()))
+			preloadThread := startNewsletterPreloadWorkerThread(preloadWorkerNum, newsletterProcessor, preloadNewsletterErrs)
+			go preloadThread()
+			preloadWorkerNum++
 		}
 	}
 }

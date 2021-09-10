@@ -62,7 +62,7 @@ type DefaultUserPreferencesAccessor struct {
 	userSpotlightRecords      []userlemma.UserLemmaReinforcementSpotlightRecord
 }
 
-func GetDefaultUserPreferencesAccessor(tx *sqlx.Tx, userID users.UserID, languageCode wordsmith.LanguageCode) (*DefaultUserPreferencesAccessor, error) {
+func GetDefaultUserPreferencesAccessor(tx *sqlx.Tx, userID users.UserID, languageCode wordsmith.LanguageCode, dateOfSend time.Time) (*DefaultUserPreferencesAccessor, error) {
 	userSubscriptionLevel, err := useraccounts.LookupSubscriptionLevelForUser(tx, userID)
 	if err != nil {
 		return nil, err
@@ -75,7 +75,7 @@ func GetDefaultUserPreferencesAccessor(tx *sqlx.Tx, userID users.UserID, languag
 	if err != nil {
 		return nil, err
 	}
-	currentUTCWeekdayIndex := int(time.Now().UTC().Weekday())
+	currentUTCWeekdayIndex := int(dateOfSend.Weekday())
 	userScheduleForDay, err := usernewsletterschedule.LookupNewsletterDayMetadataForUserAndDay(tx, userID, currentUTCWeekdayIndex)
 	if err != nil {
 		return nil, err
