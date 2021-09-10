@@ -22,6 +22,9 @@ const (
     ) VALUES (
         $1, $2, $3, $4, $5
     )`
+
+	updateSendRequestStatusQuery = "UPDATE newsletter_send_requests SET payload_status = $1, lat_modified_at=timezone('utc', now()) WHERE _id = $2"
+	insertDebounceRecordQuery    = "INSERT INTO newsletter_send_request_debounce_records (newsletter_send_request_id, to_payload_status) VALUES ($1, $2)"
 )
 
 func GetOrCreateSendRequestsForUsersForDay(tx *sqlx.Tx, userIDs []users.UserID, languageCode wordsmith.LanguageCode, day time.Time) ([]NewsletterSendRequest, error) {
@@ -56,4 +59,14 @@ func GetOrCreateSendRequestsForUsersForDay(tx *sqlx.Tx, userIDs []users.UserID, 
 		}
 	}
 	return out, nil
+}
+
+func UpdateSendRequestStatus(tx *sqlx.Tx, id ID, newStatus PayloadStatus) error {
+	if _, err := tx.Exec(insertDebounceRecordQuery, id, newStatus); err != nil {
+		return err
+	}
+	if _, err := tx.Exec(updateSendRequestStatusQuery, newStatus, id); err != nil {
+		return err
+	}
+	return nil
 }

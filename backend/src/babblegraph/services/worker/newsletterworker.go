@@ -2,8 +2,12 @@ package main
 
 import (
 	"babblegraph/model/newsletter"
+	"babblegraph/model/newslettersendrequests"
 	"babblegraph/services/worker/newsletterprocessing"
 	"babblegraph/util/database"
+	"babblegraph/util/env"
+	"babblegraph/util/storage"
+	"encoding/json"
 	"fmt"
 	"log"
 	"runtime"
@@ -17,6 +21,10 @@ import (
 const (
 	defaultPreloadWaitInterval = 1 * time.Minute
 )
+
+func getNewsletterDataBucketName() string {
+	return fmt.Sprintf("worker-%s/newsletter-data", env.MustEnvironmentName().Str())
+}
 
 func startNewsletterPreloadWorkerThread(workerNumber int, newsletterProcessor *newsletterprocessing.NewsletterProcessor, errs chan error) func() {
 	return func() {
@@ -32,6 +40,7 @@ func startNewsletterPreloadWorkerThread(workerNumber int, newsletterProcessor *n
 				errs <- err
 			}
 		}()
+		s3Storage := storage.NewS3StorageForEnvironment()
 		for {
 			sendRequest, err := newsletterProcessor.GetNextSendRequestToPreload()
 			switch {
@@ -44,7 +53,6 @@ func startNewsletterPreloadWorkerThread(workerNumber int, newsletterProcessor *n
 				continue
 			}
 			if err := database.WithTx(func(tx *sqlx.Tx) error {
-				// TODO: Attempt to insert deduping record
 				wordsmithAccessor := newsletter.GetDefaultWordsmithAccessor()
 				emailAccessor := newsletter.GetDefaultEmailAccessor(tx)
 				docsAccessor := newsletter.GetDefaultDocumentsAccessor()
@@ -53,11 +61,25 @@ func startNewsletterPreloadWorkerThread(workerNumber int, newsletterProcessor *n
 					return err
 				}
 				newsletter, err := newsletter.CreateNewsletter(wordsmithAccessor, emailAccessor, userAccessor, docsAccessor)
+				switch {
+				case err != nil:
+					return err
+				case newsletter == nil:
+					return newslettersendrequests.UpdateSendRequestStatus(tx, sendRequest.ID, newslettersendrequests.PayloadStatusNoSendRequested)
+				case newsletter != nil:
+					err := newslettersendrequests.UpdateSendRequestStatus(tx, sendRequest.ID, newslettersendrequests.PayloadStatusPayloadReady)
+					if err != nil {
+						return err
+					}
+				}
 				if err != nil {
 					return err
 				}
-				// Serialize and upload it to DigitalOcean Spaces
-				return nil
+				newsletterBytes, err := json.Marshal(newsletter)
+				if err != nil {
+					return err
+				}
+				return s3Storage.UploadData(getNewsletterDataBucketName(), fmt.Sprintf("%s.json", sendRequest.ID), string(newsletterBytes))
 			}); err != nil {
 
 			}
@@ -83,9 +105,12 @@ func startNewsletterFulfillmentWorkerThread(workerNumber int, newsletterProcesso
 			sendRequest, err := newsletterProcessor.GetNextSendRequestToFulfill()
 			switch {
 			case err != nil:
-
+				localHub.CaptureException(err)
+				continue
 			case sendRequest == nil:
-
+				log.Println("No send request available, waiting")
+				time.Sleep(defaultPreloadWaitInterval)
+				continue
 			}
 		}
 	}

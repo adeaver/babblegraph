@@ -3,6 +3,7 @@ package newslettersendrequests
 import (
 	"babblegraph/model/users"
 	"babblegraph/wordsmith"
+	"time"
 )
 
 type ID string
@@ -15,9 +16,10 @@ type NewsletterSendRequest struct {
 	PayloadStatus PayloadStatus
 }
 
-// Add created and last modified
 type dbNewsletterSendRequest struct {
 	ID                        ID                     `db:"_id"`
+	CreatedAt                 time.Time              `db:"created_at"`
+	LastModifiedAt            time.Time              `db:"last_modified_at"`
 	UserID                    users.UserID           `db:"user_id"`
 	LanguageCode              wordsmith.LanguageCode `db:"language_code"`
 	DateOfSend                string                 `db:"date_of_send"`
@@ -34,6 +36,16 @@ func (d dbNewsletterSendRequest) ToNonDB() NewsletterSendRequest {
 		DateOfSend:    d.DateOfSend,
 		PayloadStatus: d.PayloadStatus,
 	}
+}
+
+type debounceRecordID string
+
+type dbNewsletterSendRequestProcessingDebounceRecord struct {
+	ID                      debounceRecordID `db:"_id"`
+	CreatedAt               time.Time        `db:"created_at"`
+	LastModifiedAt          time.Time        `db:"last_modified_at"`
+	NewsletterSendRequestID ID               `db:"newsletter_send_request_id"`
+	ToPayloadStatus         PayloadStatus    `db:"to_payload_status"`
 }
 
 type PayloadStatus string
