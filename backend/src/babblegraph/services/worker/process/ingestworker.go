@@ -1,4 +1,4 @@
-package main
+package process
 
 import (
 	"babblegraph/model/contenttopics"
@@ -24,7 +24,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func startIngestWorkerThread(workerNumber int, linkProcessor *linkprocessing.LinkProcessor, errs chan error) func() {
+func StartIngestWorkerThread(workerNumber int, linkProcessor *linkprocessing.LinkProcessor, errs chan error) func() {
 	return func() {
 		localHub := sentry.CurrentHub().Clone()
 		localHub.ConfigureScope(func(scope *sentry.Scope) {
@@ -38,6 +38,7 @@ func startIngestWorkerThread(workerNumber int, linkProcessor *linkprocessing.Lin
 				errs <- err
 			}
 		}()
+		fmt.Println("Starting Ingest Worker Process")
 		for {
 			var u, domain string
 			link, waitTime, err := linkProcessor.GetLink()

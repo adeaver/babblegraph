@@ -5,6 +5,7 @@ import (
 	"babblegraph/model/domains"
 	"babblegraph/services/worker/linkprocessing"
 	"babblegraph/services/worker/newsletterprocessing"
+	"babblegraph/services/worker/process"
 	"babblegraph/services/worker/scheduler"
 	"babblegraph/util/database"
 	"babblegraph/util/elastic"
@@ -48,7 +49,7 @@ func main() {
 	ingestErrs := make(chan error, 1)
 	if currentEnvironmentName != env.EnvironmentLocalTestEmail {
 		for i := 0; i < numIngestWorkerThreads; i++ {
-			workerThread := startIngestWorkerThread(workerNum, linkProcessor, ingestErrs)
+			workerThread := process.StartIngestWorkerThread(workerNum, linkProcessor, ingestErrs)
 			go workerThread()
 			workerNum++
 		}
@@ -64,7 +65,7 @@ func main() {
 	preloadNewsletterErrs := make(chan error, 1)
 	preloadWorkerNum := 0
 	for i := 0; i < numNewsletterPreloadThreads; i++ {
-		preloadThread := startNewsletterPreloadWorkerThread(preloadWorkerNum, newsletterProcessor, preloadNewsletterErrs)
+		preloadThread := process.StartNewsletterPreloadWorkerThread(preloadWorkerNum, newsletterProcessor, preloadNewsletterErrs)
 		go preloadThread()
 		preloadWorkerNum++
 	}
@@ -73,7 +74,7 @@ func main() {
 		case err := <-ingestErrs:
 			log.Println(fmt.Sprintf("Saw panic: %s. Starting new worker thread.", err.Error()))
 			if currentEnvironmentName != env.EnvironmentLocalTestEmail {
-				workerThread := startIngestWorkerThread(workerNum, linkProcessor, ingestErrs)
+				workerThread := process.StartIngestWorkerThread(workerNum, linkProcessor, ingestErrs)
 				go workerThread()
 				workerNum++
 			}
@@ -81,7 +82,7 @@ func main() {
 			log.Println(fmt.Sprintf("Saw panic: %s in scheduler.", err.Error()))
 		case err := <-preloadNewsletterErrs:
 			log.Println(fmt.Sprintf("Saw panic: %s. Starting new newsletter preload thread.", err.Error()))
-			preloadThread := startNewsletterPreloadWorkerThread(preloadWorkerNum, newsletterProcessor, preloadNewsletterErrs)
+			preloadThread := process.StartNewsletterPreloadWorkerThread(preloadWorkerNum, newsletterProcessor, preloadNewsletterErrs)
 			go preloadThread()
 			preloadWorkerNum++
 		}

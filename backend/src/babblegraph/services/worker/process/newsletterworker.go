@@ -1,4 +1,4 @@
-package main
+package process
 
 import (
 	"babblegraph/model/newsletter"
@@ -28,7 +28,7 @@ func getNewsletterDataBucketName() string {
 	return fmt.Sprintf("worker-%s/newsletter-data", env.MustEnvironmentName().Str())
 }
 
-func startNewsletterPreloadWorkerThread(workerNumber int, newsletterProcessor *newsletterprocessing.NewsletterProcessor, errs chan error) func() {
+func StartNewsletterPreloadWorkerThread(workerNumber int, newsletterProcessor *newsletterprocessing.NewsletterProcessor, errs chan error) func() {
 	return func() {
 		localHub := sentry.CurrentHub().Clone()
 		localHub.ConfigureScope(func(scope *sentry.Scope) {
@@ -42,6 +42,7 @@ func startNewsletterPreloadWorkerThread(workerNumber int, newsletterProcessor *n
 				errs <- err
 			}
 		}()
+		fmt.Println("Starting Newsletter Preload Process")
 		s3Storage := storage.NewS3StorageForEnvironment()
 		for {
 			sendRequest, err := newsletterProcessor.GetNextSendRequestToPreload()
