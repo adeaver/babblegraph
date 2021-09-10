@@ -32,5 +32,5 @@ services:
       - S3_KEY=$BABBLEGRAPH_SPACES_KEY
       - S3_SECRET=$BABBLEGRAPH_SPACES_SECRET
       - AES_KEY=ryDMLNhwEqPBHMgu6YOsCZ0ihx4WgvqE
-      - ENV=local
+      - ENV=local-no-emails
     command: go run /usr/local/go/src/babblegraph/services/worker/main.go

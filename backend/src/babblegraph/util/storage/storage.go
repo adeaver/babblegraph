@@ -20,7 +20,6 @@ type S3Storage struct {
 func NewS3StorageForEnvironment() *S3Storage {
 	key := env.MustEnvironmentVariable("S3_KEY")
 	secret := env.MustEnvironmentVariable("S3_SECRET")
-
 	s3Config := &aws.Config{
 		Credentials: credentials.NewStaticCredentials(key, secret, ""),
 		Endpoint:    aws.String("https://nyc3.digitaloceanspaces.com"),
@@ -50,11 +49,30 @@ func (s *S3Storage) GetData(bucketName, fileName string) (*string, error) {
 	return ptr.String(b.String()), nil
 }
 
-func (s *S3Storage) UploadData(bucketName, fileName, data string) error {
+type ContentType string
+
+const (
+	ContentTypeApplicationJSON = "application/json"
+)
+
+func (c ContentType) Str() string {
+	return string(c)
+}
+
+type UploadDataInput struct {
+	BucketName  string
+	FileName    string
+	Data        string
+	ContentType ContentType
+}
+
+func (s *S3Storage) UploadData(input UploadDataInput) error {
 	_, err := s.s3Client.PutObject(&s3.PutObjectInput{
-		Bucket: aws.String(bucketName),
-		Key:    aws.String(fileName),
-		Body:   strings.NewReader(data),
+		ACL:         aws.String("public-read-write"),
+		Bucket:      aws.String(input.BucketName),
+		Key:         aws.String(input.FileName),
+		Body:        strings.NewReader(input.Data),
+		ContentType: aws.String(input.ContentType.Str()),
 	})
 	return err
 }

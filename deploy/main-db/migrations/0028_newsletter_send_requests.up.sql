@@ -1,7 +1,7 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE TABLE IF NOT EXISTS newsletter_send_requests(
-    _id uuid DEFAULT uuid_generate_v4 (),
+    _id TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()),
     last_modified_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()),
     user_id uuid NOT NULL REFERENCES users(_id),
@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS newsletter_send_request_debounce_records(
     _id uuid DEFAULT uuid_generate_v4 (),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()),
     last_modified_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()),
-    newsletter_send_request_id uuid NOT NULL REFERENCES newsletter_send_requests(_id),
+    newsletter_send_request_id TEXT NOT NULL REFERENCES newsletter_send_requests(_id),
 	to_payload_status TEXT NOT NULL,
 
     PRIMARY KEY (_id)

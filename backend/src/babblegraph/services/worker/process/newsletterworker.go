@@ -42,7 +42,7 @@ func StartNewsletterPreloadWorkerThread(workerNumber int, newsletterProcessor *n
 				errs <- err
 			}
 		}()
-		fmt.Println("Starting Newsletter Preload Process")
+		log.Println("Starting Newsletter Preload Process")
 		s3Storage := storage.NewS3StorageForEnvironment()
 		for {
 			sendRequest, err := newsletterProcessor.GetNextSendRequestToPreload()
@@ -55,6 +55,7 @@ func StartNewsletterPreloadWorkerThread(workerNumber int, newsletterProcessor *n
 				time.Sleep(defaultPreloadWaitInterval)
 				continue
 			}
+			log.Println(fmt.Sprintf("Got send request with ID %s", sendRequest.ID))
 			if err := database.WithTx(func(tx *sqlx.Tx) error {
 				subscriptionLevel, err := useraccounts.LookupSubscriptionLevelForUser(tx, sendRequest.UserID)
 				switch {
@@ -82,6 +83,7 @@ func StartNewsletterPreloadWorkerThread(workerNumber int, newsletterProcessor *n
 				if err != nil {
 					return err
 				}
+				log.Println(fmt.Sprintf("Creating newsletter for send request with ID %s", sendRequest.ID))
 				newsletter, err := newsletter.CreateNewsletter(wordsmithAccessor, emailAccessor, userAccessor, docsAccessor)
 				switch {
 				case err != nil:
@@ -98,11 +100,19 @@ func StartNewsletterPreloadWorkerThread(workerNumber int, newsletterProcessor *n
 				if err != nil {
 					return err
 				}
-				return s3Storage.UploadData(getNewsletterDataBucketName(), fmt.Sprintf("%s.json", sendRequest.ID), string(newsletterBytes))
+				log.Println(fmt.Sprintf("Storing newsletter data for send request with ID %s", sendRequest.ID))
+				return s3Storage.UploadData(storage.UploadDataInput{
+					ContentType: storage.ContentTypeApplicationJSON,
+					BucketName:  getNewsletterDataBucketName(),
+					FileName:    fmt.Sprintf("%s.json", sendRequest.ID),
+					Data:        string(newsletterBytes),
+				})
 			}); err != nil {
+				log.Println(fmt.Sprintf("Got error processing send request with ID %s: %s", sendRequest.ID, err.Error()))
 				localHub.CaptureException(err)
 				continue
 			}
+			log.Println(fmt.Sprintf("finished processing send request with ID %s", sendRequest.ID))
 		}
 	}
 }

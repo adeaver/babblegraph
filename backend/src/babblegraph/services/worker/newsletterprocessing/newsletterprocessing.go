@@ -64,13 +64,16 @@ func (n *NewsletterProcessor) GetNextSendRequestToFulfill() (*newslettersendrequ
 
 // Acquire lock before calling this function
 func (n *NewsletterProcessor) syncSendRequests() error {
+	log.Println(fmt.Sprintf("Syncing send requests"))
 	toPreload, toFulfill, err := getSendRequestsByType()
 	if err != nil {
 		return err
 	}
+	log.Println(fmt.Sprintf("Got %d send requests to preload and %d to fulfill", len(toPreload), len(toFulfill)))
 	n.orderedSendRequestsToPreload = toPreload
 	n.orderedSendRequestsToFulfill = toFulfill
 	n.timeOfLastSync = time.Now()
+	log.Println(fmt.Sprintf("Sync complete"))
 	return nil
 }
 
