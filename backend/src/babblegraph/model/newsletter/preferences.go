@@ -28,6 +28,8 @@ type userPreferencesAccessor interface {
 	getUserID() users.UserID
 	getLanguageCode() wordsmith.LanguageCode
 
+	getDoesUserHaveAccount() bool
+
 	getUserSubscriptionLevel() *useraccounts.SubscriptionLevel
 	getUserNewsletterPreferences() *usernewsletterpreferences.UserNewsletterPreferences
 	getUserScheduleForDay() *usernewsletterschedule.UserNewsletterScheduleDayMetadata
@@ -36,8 +38,10 @@ type userPreferencesAccessor interface {
 	getUserTopics() []contenttopics.ContentTopic
 	getTrackingLemmas() []wordsmith.LemmaID
 	getUserDomainCounts() []userlinks.UserDomainCount
+	getSpotlightRecordsOrderedBySentOn() []userlemma.UserLemmaReinforcementSpotlightRecord
 
 	insertDocumentForUserAndReturnID(emailRecordID email.ID, doc documents.Document) (*userdocuments.UserDocumentID, error)
+	insertSpotlightReinforcementRecord(lemmaID wordsmith.LemmaID) error
 }
 
 type DefaultUserPreferencesAccessor struct {
@@ -46,6 +50,7 @@ type DefaultUserPreferencesAccessor struct {
 	userID       users.UserID
 	languageCode wordsmith.LanguageCode
 
+	doesUserHaveAccount       bool
 	userSubscriptionLevel     *useraccounts.SubscriptionLevel
 	userNewsletterPreferences *usernewsletterpreferences.UserNewsletterPreferences
 	userScheduleForDay        *usernewsletterschedule.UserNewsletterScheduleDayMetadata
@@ -54,10 +59,15 @@ type DefaultUserPreferencesAccessor struct {
 	userTopics                []contenttopics.ContentTopic
 	trackingLemmas            []wordsmith.LemmaID
 	userDomainCounts          []userlinks.UserDomainCount
+	userSpotlightRecords      []userlemma.UserLemmaReinforcementSpotlightRecord
 }
 
 func GetDefaultUserPreferencesAccessor(tx *sqlx.Tx, userID users.UserID, languageCode wordsmith.LanguageCode) (*DefaultUserPreferencesAccessor, error) {
 	userSubscriptionLevel, err := useraccounts.LookupSubscriptionLevelForUser(tx, userID)
+	if err != nil {
+		return nil, err
+	}
+	doesUserHaveAccount, err := useraccounts.DoesUserAlreadyHaveAccount(tx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -99,10 +109,15 @@ func GetDefaultUserPreferencesAccessor(tx *sqlx.Tx, userID users.UserID, languag
 	if err != nil {
 		return nil, err
 	}
+	userSpotlightRecords, err := userlemma.GetLemmaReinforcementRecordsForUserOrderedBySentOn(tx, userID)
+	if err != nil {
+		return nil, err
+	}
 	return &DefaultUserPreferencesAccessor{
 		tx:                        tx,
 		userID:                    userID,
 		languageCode:              languageCode,
+		doesUserHaveAccount:       doesUserHaveAccount,
 		userSubscriptionLevel:     userSubscriptionLevel,
 		userNewsletterPreferences: userNewsletterPreferences,
 		userScheduleForDay:        userScheduleForDay,
@@ -110,10 +125,11 @@ func GetDefaultUserPreferencesAccessor(tx *sqlx.Tx, userID users.UserID, languag
 			LowerBound: readingLevel.MinScore.ToInt64Rounded(),
 			UpperBound: readingLevel.MaxScore.ToInt64Rounded(),
 		},
-		sentDocumentIDs:  sentDocumentIDs,
-		userTopics:       userTopics,
-		trackingLemmas:   trackingLemmas,
-		userDomainCounts: userDomainCounts,
+		sentDocumentIDs:      sentDocumentIDs,
+		userTopics:           userTopics,
+		trackingLemmas:       trackingLemmas,
+		userDomainCounts:     userDomainCounts,
+		userSpotlightRecords: userSpotlightRecords,
 	}, nil
 }
 
@@ -123,6 +139,10 @@ func (d *DefaultUserPreferencesAccessor) getUserID() users.UserID {
 
 func (d *DefaultUserPreferencesAccessor) getLanguageCode() wordsmith.LanguageCode {
 	return d.languageCode
+}
+
+func (d *DefaultUserPreferencesAccessor) getDoesUserHaveAccount() bool {
+	return d.doesUserHaveAccount
 }
 
 func (d *DefaultUserPreferencesAccessor) getUserSubscriptionLevel() *useraccounts.SubscriptionLevel {
@@ -157,6 +177,18 @@ func (d *DefaultUserPreferencesAccessor) getUserDomainCounts() []userlinks.UserD
 	return d.userDomainCounts
 }
 
+func (d *DefaultUserPreferencesAccessor) getSpotlightRecordsOrderedBySentOn() []userlemma.UserLemmaReinforcementSpotlightRecord {
+	return d.userSpotlightRecords
+}
+
 func (d *DefaultUserPreferencesAccessor) insertDocumentForUserAndReturnID(emailRecordID email.ID, doc documents.Document) (*userdocuments.UserDocumentID, error) {
 	return userdocuments.InsertDocumentForUserAndReturnID(d.tx, d.userID, emailRecordID, doc)
+}
+
+func (d *DefaultUserPreferencesAccessor) insertSpotlightReinforcementRecord(lemmaID wordsmith.LemmaID) error {
+	return userlemma.UpsertLemmaReinforcementSpotlightRecord(d.tx, userlemma.UpsertLemmaReinforcementSpotlightRecordInput{
+		UserID:       d.userID,
+		LanguageCode: d.languageCode,
+		LemmaID:      lemmaID,
+	})
 }

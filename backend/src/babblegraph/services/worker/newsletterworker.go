@@ -1,7 +1,9 @@
 package main
 
 import (
+	"babblegraph/model/newsletter"
 	"babblegraph/services/worker/newsletterprocessing"
+	"babblegraph/util/database"
 	"fmt"
 	"log"
 	"runtime"
@@ -9,6 +11,7 @@ import (
 	"time"
 
 	"github.com/getsentry/sentry-go"
+	"github.com/jmoiron/sqlx"
 )
 
 const (
@@ -40,9 +43,24 @@ func startNewsletterPreloadWorkerThread(workerNumber int, newsletterProcessor *n
 				time.Sleep(defaultPreloadWaitInterval)
 				continue
 			}
-			// Create JSON body for newsletter
+			if err := database.WithTx(func(tx *sqlx.Tx) error {
+				// TODO: Attempt to insert deduping record
+				wordsmithAccessor := newsletter.GetDefaultWordsmithAccessor()
+				emailAccessor := newsletter.GetDefaultEmailAccessor(tx)
+				docsAccessor := newsletter.GetDefaultDocumentsAccessor()
+				userAccessor, err := newsletter.GetDefaultUserPreferencesAccessor(tx, sendRequest.UserID, sendRequest.LanguageCode)
+				if err != nil {
+					return err
+				}
+				newsletter, err := newsletter.CreateNewsletter(wordsmithAccessor, emailAccessor, userAccessor, docsAccessor)
+				if err != nil {
+					return err
+				}
+				// Serialize and upload it to DigitalOcean Spaces
+				return nil
+			}); err != nil {
 
-			// Serialize and upload it to DigitalOcean Spaces
+			}
 		}
 	}
 }

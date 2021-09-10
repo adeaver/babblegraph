@@ -1,6 +1,7 @@
 package newsletter
 
 import (
+	"babblegraph/model/documents"
 	"babblegraph/model/email"
 	"babblegraph/model/users"
 	"babblegraph/wordsmith"
@@ -32,12 +33,13 @@ type Category struct {
 }
 
 type Link struct {
-	ImageURL         *string `json:"image_url,omitempty"`
-	Title            *string `json:"title,omitempty"`
-	Description      *string `json:"description,omitempty"`
-	URL              string  `json:"url"`
-	PaywallReportURL string  `json:"paywall_report_url"`
-	Domain           *Domain `json:"domain"`
+	DocumentID       documents.DocumentID `json:"document_id"`
+	ImageURL         *string              `json:"image_url,omitempty"`
+	Title            *string              `json:"title,omitempty"`
+	Description      *string              `json:"description,omitempty"`
+	URL              string               `json:"url"`
+	PaywallReportURL string               `json:"paywall_report_url"`
+	Domain           *Domain              `json:"domain"`
 }
 
 type Domain struct {

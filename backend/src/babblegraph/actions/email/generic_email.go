@@ -70,6 +70,9 @@ func SendGenericEmailWithOptionalActionForRecipient(tx *sqlx.Tx, cl *ses.Client,
 	if err := email.InsertEmailRecord(tx, emailRecordID, input.Recipient.UserID, input.EmailType); err != nil {
 		return nil, err
 	}
+	if err := email.SetEmailRecordSentAtTime(tx, emailRecordID); err != nil {
+		return nil, err
+	}
 	template, err := createGenericEmailWithOptionalActionTemplate(tx, emailRecordID, input)
 	if err != nil {
 		return nil, err

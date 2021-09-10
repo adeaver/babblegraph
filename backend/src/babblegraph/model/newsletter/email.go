@@ -15,7 +15,7 @@ type DefaultEmailAccessor struct {
 	tx *sqlx.Tx
 }
 
-func CreateDefaultEmailAccessor(tx *sqlx.Tx) *DefaultEmailAccessor {
+func GetDefaultEmailAccessor(tx *sqlx.Tx) *DefaultEmailAccessor {
 	return &DefaultEmailAccessor{tx: tx}
 }
 

@@ -6,9 +6,8 @@ import (
 	"babblegraph/model/email"
 	"babblegraph/model/routes"
 	"babblegraph/model/useraccounts"
-	"babblegraph/model/users"
 	"babblegraph/util/deref"
-	"babblegraph/wordsmith"
+	"babblegraph/util/ptr"
 	"fmt"
 	"log"
 	"math/rand"
@@ -22,9 +21,9 @@ const (
 	minimumDaysSinceLastSpotlight = 3
 )
 
-func CreateNewsletter(userID users.UserID, languageCode wordsmith.LanguageCode, emailAccessor emailAccessor, userAccessor userPreferencesAccessor, docsAccessor documentAccessor) (*Newsletter, error) {
+func CreateNewsletter(wordsmithAccessor wordsmithAccessor, emailAccessor emailAccessor, userAccessor userPreferencesAccessor, docsAccessor documentAccessor) (*Newsletter, error) {
 	emailRecordID := email.NewEmailRecordID()
-	if err := emailAccessor.InsertEmailRecord(emailRecordID, userID); err != nil {
+	if err := emailAccessor.InsertEmailRecord(emailRecordID, userAccessor.getUserID()); err != nil {
 		return nil, err
 	}
 	userSubscriptionLevel := userAccessor.getUserSubscriptionLevel()
@@ -39,18 +38,55 @@ func CreateNewsletter(userID users.UserID, languageCode wordsmith.LanguageCode, 
 	default:
 		return nil, fmt.Errorf("Unrecognized subscription level: %s", *userSubscriptionLevel)
 	}
-	categories, err := getDocumentCategories(languageCode, userAccessor, docsAccessor)
+	categories, err := getDocumentCategories(getDocumentCategoriesInput{
+		emailRecordID: emailRecordID,
+		languageCode:  userAccessor.getLanguageCode(),
+		userAccessor:  userAccessor,
+		docsAccessor:  docsAccessor,
+	})
+	if err != nil {
+		return nil, err
+	}
+	var setTopicsLink *string
+	switch {
+	case len(userAccessor.getUserTopics()) > 0:
+		// no-op
+	case userAccessor.getDoesUserHaveAccount():
+		setTopicsLink = ptr.String(routes.MakeLoginLinkWithContentTopicsRedirect())
+	default:
+		setTopicsLink, err = routes.MakeSetTopicsLink(userAccessor.getUserID())
+		if err != nil {
+			return nil, err
+		}
+	}
+	var reinforcementLink *string
+	if userAccessor.getDoesUserHaveAccount() {
+		reinforcementLink = ptr.String(routes.MakeLoginLinkWithReinforcementRedirect())
+	} else {
+		reinforcementLink, err = routes.MakeWordReinforcementLink(userAccessor.getUserID())
+		if err != nil {
+			return nil, err
+		}
+	}
+	spotlightRecord, err := getSpotlightLemmaForNewsletter(getSpotlightLemmaForNewsletterInput{
+		emailRecordID:     emailRecordID,
+		categories:        categories,
+		userAccessor:      userAccessor,
+		docsAccessor:      docsAccessor,
+		wordsmithAccessor: wordsmithAccessor,
+	})
 	if err != nil {
 		return nil, err
 	}
 	return &Newsletter{
-		UserID:       userID,
-		LanguageCode: languageCode,
+		UserID:        userAccessor.getUserID(),
+		EmailRecordID: emailRecordID,
+		LanguageCode:  userAccessor.getLanguageCode(),
 		Body: NewsletterBody{
-			// LemmaReinforcementSpotlight *LemmaReinforcementSpotlight `json:"lemma_reinforcement_spotlight,omitempty"`
-			Categories:        categories,
-			SetTopicsLink:     nil,
-			ReinforcementLink: "",
+			LemmaReinforcementSpotlight: spotlightRecord,
+			Categories:                  categories,
+			SetTopicsLink:               setTopicsLink,
+			ReinforcementLink:           *reinforcementLink,
 		},
 	}, nil
 }
@@ -111,8 +147,6 @@ func makeLinkFromDocument(emailRecordID email.ID, userAccessor userPreferencesAc
 		log.Println(fmt.Sprintf("Error getting domain: %s", err.Error()))
 		return nil, nil
 	}
-	// TODO: In order to avoid duplicate documents between emails
-	// we'll need to do the following: Modify email record to have a null sent_at date for pending emails
 	userDocumentID, err := userAccessor.insertDocumentForUserAndReturnID(emailRecordID, doc)
 	if err != nil {
 		return nil, err
@@ -128,6 +162,7 @@ func makeLinkFromDocument(emailRecordID email.ID, userAccessor userPreferencesAc
 		return nil, nil
 	}
 	return &Link{
+		DocumentID:       doc.ID,
 		URL:              *articleLink,
 		PaywallReportURL: *paywallReportLink,
 		ImageURL:         imageURL,

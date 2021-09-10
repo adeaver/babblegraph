@@ -1,0 +1,1 @@
+ALTER TABLE email_records ALTER COLUMN sent_at SET DEFAULT NULL;
