@@ -58,6 +58,7 @@ const (
 	PayloadStatusNeedsPreload    PayloadStatus = "needs-preload"
 	PayloadStatusNoSendRequested PayloadStatus = "no-send-requested"
 	PayloadStatusPayloadReady    PayloadStatus = "payload-ready"
+	PayloadStatusUnverifiedUser  PayloadStatus = "user-not-verified"
 	PayloadStatusSent            PayloadStatus = "sent"
 	PayloadStatusDeleted         PayloadStatus = "deleted"
 )

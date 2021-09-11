@@ -23,6 +23,7 @@ RUN mkdir -p /service && chown -R $SERVICE_USER:$SERVICE_USER /service
 WORKDIR /service
 RUN mkdir -p ./templates && chown -R $SERVICE_USER:$SERVICE_USER ./templates
 COPY --chown=$SERVICE_USER:$SERVICE_USER --from=builder /usr/local/go/src/babblegraph/actions/email/templates ./templates
+COPY --chown=$SERVICE_USER:$SERVICE_USER --from=builder /usr/local/go/src/babblegraph/model/emailtemplate/templates ./emailtemplates
 
 COPY --chown=$SERVICE_USER:$SERVICE_USER --from=builder /usr/local/go/bin/worker .
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt

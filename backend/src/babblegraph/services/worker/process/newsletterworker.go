@@ -1,13 +1,17 @@
 package process
 
 import (
+	"babblegraph/model/email"
+	"babblegraph/model/emailtemplates"
 	"babblegraph/model/newsletter"
 	"babblegraph/model/newslettersendrequests"
 	"babblegraph/model/useraccounts"
 	"babblegraph/model/usernewsletterschedule"
+	"babblegraph/model/users"
 	"babblegraph/services/worker/newsletterprocessing"
 	"babblegraph/util/database"
 	"babblegraph/util/env"
+	"babblegraph/util/ses"
 	"babblegraph/util/storage"
 	"encoding/json"
 	"fmt"
@@ -117,7 +121,7 @@ func StartNewsletterPreloadWorkerThread(workerNumber int, newsletterProcessor *n
 	}
 }
 
-func startNewsletterFulfillmentWorkerThread(workerNumber int, newsletterProcessor *newsletterprocessing.NewsletterProcessor, errs chan error) func() {
+func StartNewsletterFulfillmentWorkerThread(workerNumber int, newsletterProcessor *newsletterprocessing.NewsletterProcessor, errs chan error) func() {
 	return func() {
 		localHub := sentry.CurrentHub().Clone()
 		localHub.ConfigureScope(func(scope *sentry.Scope) {
@@ -131,6 +135,14 @@ func startNewsletterFulfillmentWorkerThread(workerNumber int, newsletterProcesso
 				errs <- err
 			}
 		}()
+		log.Println("Starting Newsletter Fulfillment Process")
+		s3Storage := storage.NewS3StorageForEnvironment()
+		emailClient := ses.NewClient(ses.NewClientInput{
+			AWSAccessKey:       env.MustEnvironmentVariable("AWS_SES_ACCESS_KEY"),
+			AWSSecretAccessKey: env.MustEnvironmentVariable("AWS_SES_SECRET_KEY"),
+			AWSRegion:          "us-east-1",
+			FromAddress:        env.MustEnvironmentVariable("EMAIL_ADDRESS"),
+		})
 		for {
 			sendRequest, err := newsletterProcessor.GetNextSendRequestToFulfill()
 			switch {
@@ -142,6 +154,51 @@ func startNewsletterFulfillmentWorkerThread(workerNumber int, newsletterProcesso
 				time.Sleep(defaultPreloadWaitInterval)
 				continue
 			}
+			if database.WithTx(func(tx *sqlx.Tx) error {
+				user, err := users.GetUser(tx, sendRequest.UserID)
+				switch {
+				case err != nil:
+					return err
+				case user.Status != users.UserStatusVerified:
+					return newslettersendrequests.UpdateSendRequestStatus(tx, sendRequest.ID, newslettersendrequests.PayloadStatusUnverifiedUser)
+				}
+				if err := newslettersendrequests.UpdateSendRequestStatus(tx, sendRequest.ID, newslettersendrequests.PayloadStatusSent); err != nil {
+					return err
+				}
+				data, err := s3Storage.GetData("prod-spaces-1", makeSendRequestFileKey(sendRequest))
+				if err != nil {
+					return err
+				}
+				var newsletter newsletter.Newsletter
+				if err := json.Unmarshal([]byte(*data), &newsletter); err != nil {
+					return err
+				}
+				userAccessor, err := emailtemplates.GetDefaultUserAccessor(tx, sendRequest.UserID)
+				if err != nil {
+					return err
+				}
+				newsletterHTML, err := emailtemplates.MakeNewsletterHTML(emailtemplates.MakeNewsletterHTMLInput{
+					EmailRecordID: newsletter.EmailRecordID,
+					UserAccessor:  userAccessor,
+					Body:          newsletter.Body,
+				})
+				if err != nil {
+					return err
+				}
+				today := time.Now()
+				subject := fmt.Sprintf("Babblegraph Newsletter - %s %d, %d", today.Month().String(), today.Day(), today.Year())
+				return email.SendEmailWithHTMLBody(tx, emailClient, email.SendEmailWithHTMLBodyInput{
+					ID:           newsletter.EmailRecordID,
+					EmailAddress: user.EmailAddress,
+					Body:         *newsletterHTML,
+					Subject:      subject,
+				})
+			}); err != nil {
+				log.Println(fmt.Sprintf("Got error fulfilling send request with ID %s: %s", sendRequest.ID, err.Error()))
+				localHub.CaptureException(err)
+				continue
+			}
+			log.Println(fmt.Sprintf("finished fulfilling send request with ID %s", sendRequest.ID))
 		}
 	}
 }

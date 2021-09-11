@@ -19,8 +19,9 @@ import (
 )
 
 const (
-	numIngestWorkerThreads      = 5
-	numNewsletterPreloadThreads = 2
+	numIngestWorkerThreads          = 5
+	numNewsletterPreloadThreads     = 2
+	numNewsletterFulfillmentThreads = 1
 )
 
 func main() {
@@ -69,6 +70,15 @@ func main() {
 		go preloadThread()
 		preloadWorkerNum++
 	}
+	fulfillNewsletterErrs := make(chan error, 1)
+	fulfillWorkerNum := 0
+	if currentEnvironmentName != env.EnvironmentProd {
+		for i := 0; i < numNewsletterFulfillmentThreads; i++ {
+			fulfillThread := process.StartNewsletterFulfillmentWorkerThread(fulfillWorkerNum, newsletterProcessor, fulfillNewsletterErrs)
+			go fulfillThread()
+			fulfillWorkerNum++
+		}
+	}
 	for {
 		select {
 		case err := <-ingestErrs:
@@ -85,6 +95,11 @@ func main() {
 			preloadThread := process.StartNewsletterPreloadWorkerThread(preloadWorkerNum, newsletterProcessor, preloadNewsletterErrs)
 			go preloadThread()
 			preloadWorkerNum++
+		case err := <-fulfillNewsletterErrs:
+			log.Println(fmt.Sprintf("Saw panic: %s. Starting new newsletter fulfillment thread.", err.Error()))
+			fulfillThread := process.StartNewsletterFulfillmentWorkerThread(fulfillWorkerNum, newsletterProcessor, fulfillNewsletterErrs)
+			go fulfillThread()
+			fulfillWorkerNum++
 		}
 	}
 }
