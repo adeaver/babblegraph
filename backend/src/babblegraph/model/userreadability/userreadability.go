@@ -6,6 +6,7 @@ import (
 	"babblegraph/util/math/decimal"
 	"babblegraph/wordsmith"
 	"fmt"
+	"log"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -27,6 +28,7 @@ func GetReadabilityScoreRangeForUser(tx *sqlx.Tx, input GetReadabilityScoreRange
 	}
 	var readabilityLevel *userReadabilityLevel
 	for _, level := range readabilityLevels {
+		log.Println(fmt.Sprintf("level: %+v", level))
 		if level.Version == version1 {
 			readabilityLevel = &level
 			// It's important to break here

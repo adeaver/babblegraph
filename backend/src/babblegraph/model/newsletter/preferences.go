@@ -14,6 +14,8 @@ import (
 	"babblegraph/model/userreadability"
 	"babblegraph/model/users"
 	"babblegraph/wordsmith"
+	"fmt"
+	"log"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -80,6 +82,7 @@ func GetDefaultUserPreferencesAccessor(tx *sqlx.Tx, userID users.UserID, languag
 	if err != nil {
 		return nil, err
 	}
+	log.Println(fmt.Sprintf("User ID: %s, language code: %s", userID, languageCode))
 	readingLevel, err := userreadability.GetReadabilityScoreRangeForUser(tx, userreadability.GetReadabilityScoreRangeForUserInput{
 		UserID:       userID,
 		LanguageCode: languageCode,

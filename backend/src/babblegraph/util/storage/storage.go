@@ -68,7 +68,6 @@ type UploadDataInput struct {
 
 func (s *S3Storage) UploadData(input UploadDataInput) error {
 	_, err := s.s3Client.PutObject(&s3.PutObjectInput{
-		ACL:         aws.String("public-read-write"),
 		Bucket:      aws.String(input.BucketName),
 		Key:         aws.String(input.FileName),
 		Body:        strings.NewReader(input.Data),
