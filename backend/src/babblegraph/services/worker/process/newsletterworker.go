@@ -76,9 +76,9 @@ func StartNewsletterPreloadWorkerThread(workerNumber int, newsletterProcessor *n
 					if userScheduleForDay != nil && !userScheduleForDay.IsActive {
 						return newslettersendrequests.UpdateSendRequestStatus(tx, sendRequest.ID, newslettersendrequests.PayloadStatusNoSendRequested)
 					}
-					if err := newslettersendrequests.UpdateSendRequestStatus(tx, sendRequest.ID, newslettersendrequests.PayloadStatusPayloadReady); err != nil {
-						return err
-					}
+				}
+				if err := newslettersendrequests.UpdateSendRequestStatus(tx, sendRequest.ID, newslettersendrequests.PayloadStatusPayloadReady); err != nil {
+					return err
 				}
 				wordsmithAccessor := newsletter.GetDefaultWordsmithAccessor()
 				emailAccessor := newsletter.GetDefaultEmailAccessor(tx)
@@ -162,6 +162,7 @@ func StartNewsletterFulfillmentWorkerThread(workerNumber int, newsletterProcesso
 				case user.Status != users.UserStatusVerified:
 					return newslettersendrequests.UpdateSendRequestStatus(tx, sendRequest.ID, newslettersendrequests.PayloadStatusUnverifiedUser)
 				}
+				log.Println(fmt.Sprintf("Found user %s", user.ID))
 				if err := newslettersendrequests.UpdateSendRequestStatus(tx, sendRequest.ID, newslettersendrequests.PayloadStatusSent); err != nil {
 					return err
 				}
@@ -169,10 +170,12 @@ func StartNewsletterFulfillmentWorkerThread(workerNumber int, newsletterProcesso
 				if err != nil {
 					return err
 				}
+				log.Println(fmt.Sprintf("Found data %s", *data))
 				var newsletter newsletter.Newsletter
 				if err := json.Unmarshal([]byte(*data), &newsletter); err != nil {
 					return err
 				}
+				log.Println(fmt.Sprintf("Unmarshalled %+v", newsletter))
 				userAccessor, err := emailtemplates.GetDefaultUserAccessor(tx, sendRequest.UserID)
 				if err != nil {
 					return err
@@ -185,6 +188,7 @@ func StartNewsletterFulfillmentWorkerThread(workerNumber int, newsletterProcesso
 				if err != nil {
 					return err
 				}
+				log.Println(fmt.Sprintf("Created HTML %s", *newsletterHTML))
 				today := time.Now()
 				subject := fmt.Sprintf("Babblegraph Newsletter - %s %d, %d", today.Month().String(), today.Day(), today.Year())
 				return email.SendEmailWithHTMLBody(tx, emailClient, email.SendEmailWithHTMLBodyInput{
