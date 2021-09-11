@@ -16,7 +16,7 @@ type Newsletter struct {
 
 type NewsletterBody struct {
 	LemmaReinforcementSpotlight *LemmaReinforcementSpotlight `json:"lemma_reinforcement_spotlight,omitempty"`
-	Categories                  []Category                   `json:"category"`
+	Categories                  []Category                   `json:"categories"`
 	SetTopicsLink               *string                      `json:"set_topics_link,omitempty"`
 	ReinforcementLink           string                       `json:"reinforcement_link"`
 }

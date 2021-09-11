@@ -25,7 +25,7 @@ const (
 
 	updateSendRequestSendAtTimeQuery = "UPDATE newsletter_send_requests SET hour_to_send_index_utc=$1, quarter_hour_to_send_index_utc=$2 WHERE _id = $3"
 
-	updateSendRequestStatusQuery = "UPDATE newsletter_send_requests SET payload_status = $1, lat_modified_at=timezone('utc', now()) WHERE _id = $2"
+	updateSendRequestStatusQuery = "UPDATE newsletter_send_requests SET payload_status = $1, last_modified_at=timezone('utc', now()) WHERE _id = $2"
 	insertDebounceRecordQuery    = "INSERT INTO newsletter_send_request_debounce_records (newsletter_send_request_id, to_payload_status) VALUES ($1, $2)"
 )
 

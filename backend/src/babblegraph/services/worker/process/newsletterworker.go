@@ -24,8 +24,8 @@ const (
 	defaultPreloadWaitInterval = 1 * time.Minute
 )
 
-func getNewsletterDataBucketName() string {
-	return fmt.Sprintf("worker-%s/newsletter-data", env.MustEnvironmentName().Str())
+func makeSendRequestFileKey(sendRequest *newslettersendrequests.NewsletterSendRequest) string {
+	return fmt.Sprintf("worker-%s/newsletter-data/%s.json", env.MustEnvironmentName().Str(), sendRequest.ID)
 }
 
 func StartNewsletterPreloadWorkerThread(workerNumber int, newsletterProcessor *newsletterprocessing.NewsletterProcessor, errs chan error) func() {
@@ -103,8 +103,8 @@ func StartNewsletterPreloadWorkerThread(workerNumber int, newsletterProcessor *n
 				log.Println(fmt.Sprintf("Storing newsletter data for send request with ID %s", sendRequest.ID))
 				return s3Storage.UploadData(storage.UploadDataInput{
 					ContentType: storage.ContentTypeApplicationJSON,
-					BucketName:  getNewsletterDataBucketName(),
-					FileName:    fmt.Sprintf("%s.json", sendRequest.ID),
+					BucketName:  "prod-spaces-1",
+					FileName:    makeSendRequestFileKey(sendRequest),
 					Data:        string(newsletterBytes),
 				})
 			}); err != nil {

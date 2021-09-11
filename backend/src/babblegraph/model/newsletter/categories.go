@@ -5,6 +5,7 @@ import (
 	"babblegraph/model/documents"
 	"babblegraph/model/email"
 	"babblegraph/model/useraccounts"
+	"babblegraph/util/deref"
 	"babblegraph/util/ptr"
 	"babblegraph/util/text"
 	"babblegraph/util/urlparser"
@@ -15,10 +16,11 @@ import (
 )
 
 type getDocumentCategoriesInput struct {
-	emailRecordID email.ID
-	languageCode  wordsmith.LanguageCode
-	userAccessor  userPreferencesAccessor
-	docsAccessor  documentAccessor
+	emailRecordID                 email.ID
+	languageCode                  wordsmith.LanguageCode
+	userAccessor                  userPreferencesAccessor
+	docsAccessor                  documentAccessor
+	numberOfDocumentsInNewsletter *int
 }
 
 func getDocumentCategories(input getDocumentCategoriesInput) ([]Category, error) {
@@ -62,14 +64,13 @@ func getDocumentCategories(input getDocumentCategoriesInput) ([]Category, error)
 			documentsByTopic[t] = documentsForTopic
 		}
 	}
-	// TODO: figure out number of documents
 	return joinDocumentsIntoCategories(joinDocumentsIntoCategoriesInput{
-		emailRecordID: input.emailRecordID,
-		userAccessor:  input.userAccessor,
-		languageCode:  input.languageCode,
-		// numberOfDocumentsInNewsletter:
-		documentsByTopic: documentsByTopic,
-		genericDocuments: genericDocuments,
+		emailRecordID:                 input.emailRecordID,
+		userAccessor:                  input.userAccessor,
+		languageCode:                  input.languageCode,
+		numberOfDocumentsInNewsletter: deref.Int(input.numberOfDocumentsInNewsletter, defaultNumberOfArticlesPerEmail),
+		documentsByTopic:              documentsByTopic,
+		genericDocuments:              genericDocuments,
 	})
 }
 

@@ -26,23 +26,29 @@ func CreateNewsletter(wordsmithAccessor wordsmithAccessor, emailAccessor emailAc
 	if err := emailAccessor.InsertEmailRecord(emailRecordID, userAccessor.getUserID()); err != nil {
 		return nil, err
 	}
+	var numberOfDocumentsInNewsletter *int
 	userSubscriptionLevel := userAccessor.getUserSubscriptionLevel()
 	switch {
 	case userSubscriptionLevel == nil:
 		// no-op
 	case *userSubscriptionLevel == useraccounts.SubscriptionLevelBetaPremium,
 		*userSubscriptionLevel == useraccounts.SubscriptionLevelPremium:
-		if userScheduleForDay := userAccessor.getUserScheduleForDay(); userScheduleForDay != nil && !userScheduleForDay.IsActive {
-			return nil, nil
+		if userScheduleForDay := userAccessor.getUserScheduleForDay(); userScheduleForDay != nil {
+			if !userScheduleForDay.IsActive {
+				return nil, nil
+			}
+			numberOfDocumentsInNewsletter = ptr.Int(userScheduleForDay.NumberOfArticles)
 		}
+
 	default:
 		return nil, fmt.Errorf("Unrecognized subscription level: %s", *userSubscriptionLevel)
 	}
 	categories, err := getDocumentCategories(getDocumentCategoriesInput{
-		emailRecordID: emailRecordID,
-		languageCode:  userAccessor.getLanguageCode(),
-		userAccessor:  userAccessor,
-		docsAccessor:  docsAccessor,
+		emailRecordID:                 emailRecordID,
+		languageCode:                  userAccessor.getLanguageCode(),
+		userAccessor:                  userAccessor,
+		docsAccessor:                  docsAccessor,
+		numberOfDocumentsInNewsletter: numberOfDocumentsInNewsletter,
 	})
 	if err != nil {
 		return nil, err
