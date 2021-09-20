@@ -14,7 +14,6 @@ import PaywallReportPage from 'components/PaywallReportPage/PaywallReportPage';
 
 import SubscriptionManagementDashboardPage from 'components/SubscriptionManagement/SubscriptionManagementDashboardPage';
 import InterestSelectionPage from 'components/SubscriptionManagement/InterestSelectionPage';
-import DifficultyLevelSettingPage from 'components/SubscriptionManagement/DifficultyLevelSettingPage';
 import UnsubscribePage from 'components/SubscriptionManagement/UnsubscribePage';
 import WordReinforcementPage from 'components/SubscriptionManagement/WordReinforcementPage';
 import SchedulePage from 'components/SubscriptionManagement/SchedulePage';
@@ -37,7 +36,6 @@ class App extends React.Component{
                 <Switch>
                     { /* Subscription Management */ }
                     <Route path="/manage/:token/unsubscribe" component={UnsubscribePage} />
-                    <Route path="/manage/:token/level" component={DifficultyLevelSettingPage} />
                     <Route path="/manage/:token/interests" component={InterestSelectionPage} />
                     <Route path="/manage/:token/vocabulary" component={WordReinforcementPage} />
                     <Route path="/manage/:token/schedule" component={SchedulePage} />
