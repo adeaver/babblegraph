@@ -2,7 +2,9 @@ package newslettersendrequests
 
 import (
 	"babblegraph/model/users"
+	"babblegraph/util/env"
 	"babblegraph/wordsmith"
+	"fmt"
 	"time"
 )
 
@@ -14,6 +16,10 @@ type NewsletterSendRequest struct {
 	LanguageCode  wordsmith.LanguageCode
 	DateOfSend    time.Time
 	PayloadStatus PayloadStatus
+}
+
+func (req *NewsletterSendRequest) GetFileKey() string {
+	return fmt.Sprintf("worker-%s/newsletter-data/%s.json", env.MustEnvironmentName().Str(), req.ID)
 }
 
 type dbNewsletterSendRequest struct {

@@ -28,10 +28,6 @@ const (
 	defaultPreloadWaitInterval = 1 * time.Minute
 )
 
-func makeSendRequestFileKey(sendRequest *newslettersendrequests.NewsletterSendRequest) string {
-	return fmt.Sprintf("worker-%s/newsletter-data/%s.json", env.MustEnvironmentName().Str(), sendRequest.ID)
-}
-
 func StartNewsletterPreloadWorkerThread(workerNumber int, newsletterProcessor *newsletterprocessing.NewsletterProcessor, errs chan error) func() {
 	return func() {
 		localHub := sentry.CurrentHub().Clone()
@@ -108,7 +104,7 @@ func StartNewsletterPreloadWorkerThread(workerNumber int, newsletterProcessor *n
 				return s3Storage.UploadData(storage.UploadDataInput{
 					ContentType: storage.ContentTypeApplicationJSON,
 					BucketName:  "prod-spaces-1",
-					FileName:    makeSendRequestFileKey(sendRequest),
+					FileName:    sendRequest.GetFileKey(),
 					Data:        string(newsletterBytes),
 				})
 			}); err != nil {
@@ -166,7 +162,7 @@ func StartNewsletterFulfillmentWorkerThread(workerNumber int, newsletterProcesso
 				if err := newslettersendrequests.UpdateSendRequestStatus(tx, sendRequest.ID, newslettersendrequests.PayloadStatusSent); err != nil {
 					return err
 				}
-				data, err := s3Storage.GetData("prod-spaces-1", makeSendRequestFileKey(sendRequest))
+				data, err := s3Storage.GetData("prod-spaces-1", sendRequest.GetFileKey())
 				if err != nil {
 					return err
 				}

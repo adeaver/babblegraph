@@ -10,8 +10,9 @@ import (
 )
 
 const (
-	getSendRequestsForUsersForDayQuery = "SELECT * FROM newsletter_send_requests WHERE date_of_send = '%s' AND language_code = '%s' AND user_id IN (?)"
-	insertSendRequestForUserQuery      = `INSERT INTO
+	getSendRequestsForUsersForDayQuery      = "SELECT * FROM newsletter_send_requests WHERE date_of_send = '%s' AND language_code = '%s' AND user_id IN (?)"
+	getSendRequestsOlderThanWithStatusQuery = "SELECT * FROM newsletter_send_requests WHERE created_at <= $1 AND status != $2"
+	insertSendRequestForUserQuery           = `INSERT INTO
         newsletter_send_requests
     (
         _id,
@@ -67,6 +68,22 @@ func GetOrCreateSendRequestsForUsersForDay(tx *sqlx.Tx, userIDs []users.UserID, 
 				PayloadStatus: PayloadStatusNeedsPreload,
 			})
 		}
+	}
+	return out, nil
+}
+
+func GetNonDeletedSendRequestsOlderThan(tx *sqlx.Tx, t time.Time) ([]NewsletterSendRequest, error) {
+	var matches []dbNewsletterSendRequest
+	if err := tx.Select(&matches, getSendRequestsOlderThanWithStatusQuery, t, PayloadStatusDeleted); err != nil {
+		return nil, nil
+	}
+	var out []NewsletterSendRequest
+	for _, m := range matches {
+		req, err := m.ToNonDB()
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, *req)
 	}
 	return out, nil
 }

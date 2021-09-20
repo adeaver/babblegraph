@@ -75,3 +75,13 @@ func (s *S3Storage) UploadData(input UploadDataInput) error {
 	})
 	return err
 }
+
+func (s *S3Storage) DeleteData(bucketName, fileName string) error {
+	if _, err := s.s3Client.DeleteObject(&s3.DeleteObjectInput{
+		Bucket: aws.String(bucketName),
+		Key:    aws.String(fileName),
+	}); err != nil {
+		return err
+	}
+	return nil
+}

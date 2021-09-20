@@ -11,7 +11,6 @@ import (
 	"babblegraph/model/userlinks"
 	"babblegraph/model/usernewsletterpreferences"
 	"babblegraph/model/usernewsletterschedule"
-	"babblegraph/model/userreadability"
 	"babblegraph/model/users"
 	"babblegraph/wordsmith"
 	"time"
@@ -80,13 +79,6 @@ func GetDefaultUserPreferencesAccessor(tx *sqlx.Tx, userID users.UserID, languag
 	if err != nil {
 		return nil, err
 	}
-	readingLevel, err := userreadability.GetReadabilityScoreRangeForUser(tx, userreadability.GetReadabilityScoreRangeForUserInput{
-		UserID:       userID,
-		LanguageCode: languageCode,
-	})
-	if err != nil {
-		return nil, err
-	}
 	sentDocumentIDs, err := userdocuments.GetDocumentIDsSentToUser(tx, userID)
 	if err != nil {
 		return nil, err
@@ -121,9 +113,11 @@ func GetDefaultUserPreferencesAccessor(tx *sqlx.Tx, userID users.UserID, languag
 		userSubscriptionLevel:     userSubscriptionLevel,
 		userNewsletterPreferences: userNewsletterPreferences,
 		userScheduleForDay:        userScheduleForDay,
+		// The current scoring system is pretty broken. So we just set everyone to use the middle.
+		// TODO: create a better scoring system
 		userReadingLevel: &userReadingLevel{
-			LowerBound: readingLevel.MinScore.ToInt64Rounded(),
-			UpperBound: readingLevel.MaxScore.ToInt64Rounded(),
+			LowerBound: 30,
+			UpperBound: 80,
 		},
 		sentDocumentIDs:      sentDocumentIDs,
 		userTopics:           userTopics,
