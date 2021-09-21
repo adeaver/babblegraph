@@ -25,10 +25,12 @@ type getDocumentCategoriesInput struct {
 
 func getDocumentCategories(input getDocumentCategoriesInput) ([]Category, error) {
 	topics := getTopicsForNewsletter(input.userAccessor)
+	log.Println(fmt.Sprintf("Topics %+v", topics))
 	allowableDomains, err := getAllowableDomains(input.userAccessor)
 	if err != nil {
 		return nil, err
 	}
+	log.Println(fmt.Sprintf("Allowable domains %+v", allowableDomains))
 	genericDocuments, err := input.docsAccessor.GetDocumentsForUser(getDocumentsForUserInput{
 		getDocumentsBaseInput: getDocumentsBaseInput{
 			LanguageCode:        input.languageCode,
@@ -59,9 +61,10 @@ func getDocumentCategories(input getDocumentCategoriesInput) ([]Category, error)
 		case err != nil:
 			return nil, err
 		case len(documentsForTopic) == 0:
-			// no-op
+			log.Println(fmt.Sprintf("No documents for topic %s", t.Str()))
 		default:
 			documentsByTopic[t] = documentsForTopic
+			log.Println(fmt.Sprintf("Documents for topic %s: %+v", t.Str(), documentsForTopic))
 		}
 	}
 	return joinDocumentsIntoCategories(joinDocumentsIntoCategoriesInput{
