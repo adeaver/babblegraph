@@ -73,9 +73,9 @@ func (t *testDocsAccessor) GetDocumentsForUser(input getDocumentsForUserInput) (
 			log.Println(fmt.Sprintf("ID %s is excluded", doc.ID))
 		case !isDomainValid(doc.Domain, input.ValidDomains):
 			log.Println(fmt.Sprintf("Domain %s is invalid", doc.Domain))
-		case input.MinimumReadingLevel != nil && *input.MinimumReadingLevel < doc.ReadabilityScore:
+		case input.MinimumReadingLevel != nil && *input.MinimumReadingLevel > doc.ReadabilityScore:
 			log.Println(fmt.Sprintf("Reading level %d is too low", doc.ReadabilityScore))
-		case input.MaximumReadingLevel != nil && *input.MaximumReadingLevel > doc.ReadabilityScore:
+		case input.MaximumReadingLevel != nil && *input.MaximumReadingLevel < doc.ReadabilityScore:
 			log.Println(fmt.Sprintf("Reading level %d is too high", doc.ReadabilityScore))
 		case input.Topic != nil && !containsTopic(*input.Topic, doc.Topics):
 			log.Println(fmt.Sprintf("Document does not contain topic %s", input.Topic.Str()))
