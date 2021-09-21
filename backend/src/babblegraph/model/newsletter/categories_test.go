@@ -42,16 +42,18 @@ func TestDefaultCategories(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Error setting up test: %s", err.Error())
 		}
-		displayName, err := contenttopics.ContentTopicNameToDisplayName(topic)
-		if err != nil {
-			t.Fatalf("Error setting up test: %s", err.Error())
+		if containsTopic(topic, userAccessor.getUserTopics()) {
+			displayName, err := contenttopics.ContentTopicNameToDisplayName(topic)
+			if err != nil {
+				t.Fatalf("Error setting up test: %s", err.Error())
+			}
+			expectedCategories = append(expectedCategories, Category{
+				Name: ptr.String(text.ToTitleCaseForLanguage(displayName.Str(), wordsmith.LanguageCodeSpanish)),
+				Links: []Link{
+					*link,
+				},
+			})
 		}
-		expectedCategories = append(expectedCategories, Category{
-			Name: ptr.String(text.ToTitleCaseForLanguage(displayName.Str(), wordsmith.LanguageCodeSpanish)),
-			Links: []Link{
-				*link,
-			},
-		})
 		docs = append(docs, *doc)
 	}
 	categories, err := getDocumentCategories(getDocumentCategoriesInput{
@@ -99,5 +101,55 @@ func TestDefaultCategories(t *testing.T) {
 	}
 	if len(errs) > 0 {
 		t.Errorf(strings.Join(errs, "\n"))
+	}
+}
+
+func TestGenericCategory(t *testing.T) {
+	emailRecordID := email.NewEmailRecordID()
+	documentTopics := []contenttopics.ContentTopic{
+		contenttopics.ContentTopicArt,
+		contenttopics.ContentTopicAstronomy,
+		contenttopics.ContentTopicArchitecture,
+		contenttopics.ContentTopicAutomotive,
+		contenttopics.ContentTopicCulture,
+	}
+	userAccessor := &testUserAccessor{
+		readingLevel: &userReadingLevel{
+			LowerBound: 30,
+			UpperBound: 80,
+		},
+		userTopics: []contenttopics.ContentTopic{},
+	}
+	var expectedLinks []Link
+	var docs []documents.DocumentWithScore
+	for idx, topic := range documentTopics {
+		doc, link, err := getDefaultDocumentWithLink(idx, emailRecordID, userAccessor, getDefaultDocumentInput{
+			Topics: []contenttopics.ContentTopic{topic},
+		})
+		if err != nil {
+			t.Fatalf("Error setting up test: %s", err.Error())
+		}
+		expectedLinks = append(expectedLinks, *link)
+		docs = append(docs, *doc)
+	}
+	categories, err := getDocumentCategories(getDocumentCategoriesInput{
+		emailRecordID: emailRecordID,
+		languageCode:  wordsmith.LanguageCodeSpanish,
+		userAccessor:  userAccessor,
+		docsAccessor: &testDocsAccessor{
+			documents: docs,
+		},
+		numberOfDocumentsInNewsletter: ptr.Int(4),
+	})
+	if err != nil {
+		t.Fatalf("Got error %s", err.Error())
+	}
+	switch {
+	case len(categories) != 1:
+		t.Errorf("Expected 1 category, but got %d", len(categories))
+	case categories[0].Name != nil:
+		t.Errorf("Expected category to have null name, but got %s", categories[0].Name)
+	case len(categories[0].Links) != 4:
+		t.Errorf("Expected category to have 4 links, but got %d", len(categories[0].Links))
 	}
 }
