@@ -41,7 +41,7 @@ func TestDerefInt(t *testing.T) {
 		},
 	}
 	for idx, tc := range testCases {
-		result := String(tc.input, 42)
+		result := Int(tc.input, 42)
 		if result != tc.expectedOutput {
 			t.Errorf("Error on test case %d, expected %d, but got %d", idx+1, tc.expectedOutput, result)
 		}

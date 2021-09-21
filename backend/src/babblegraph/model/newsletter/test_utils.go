@@ -181,7 +181,7 @@ type getDefaultDocumentInput struct {
 
 func getDefaultDocumentWithLink(idx int, emailRecordID email.ID, userAccessor userPreferencesAccessor, input getDefaultDocumentInput) (*documents.DocumentWithScore, *Link, error) {
 	doc := documents.Document{
-		ID:               documents.DocumentID(idx),
+		ID:               documents.DocumentID(fmt.Sprintf("web_doc-%d", idx)),
 		Version:          documents.Version4,
 		URL:              fmt.Sprintf("https://www.elmundo.es/%d", idx),
 		ReadabilityScore: 50,
@@ -189,7 +189,7 @@ func getDefaultDocumentWithLink(idx int, emailRecordID email.ID, userAccessor us
 		DocumentType:     documents.TypeArticle,
 		Metadata: documents.Metadata{
 			Title:       ptr.String(fmt.Sprintf("Document %d", idx)),
-			Image:       ptr.String(fmt.Sprintf("https://www.elmundo.es/%d.jpg")),
+			Image:       ptr.String(fmt.Sprintf("https://www.elmundo.es/%d.jpg", idx)),
 			URL:         ptr.String(fmt.Sprintf("https://www.elmundo.es/%d", idx)),
 			Description: ptr.String(fmt.Sprintf("This is document #%d", idx)),
 		},
