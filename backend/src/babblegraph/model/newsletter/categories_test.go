@@ -148,7 +148,7 @@ func TestGenericCategory(t *testing.T) {
 	case len(categories) != 1:
 		t.Errorf("Expected 1 category, but got %d", len(categories))
 	case categories[0].Name != nil:
-		t.Errorf("Expected category to have null name, but got %s", categories[0].Name)
+		t.Errorf("Expected category to have null name, but got %s", *categories[0].Name)
 	case len(categories[0].Links) != 4:
 		t.Errorf("Expected category to have 4 links, but got %d", len(categories[0].Links))
 	}
