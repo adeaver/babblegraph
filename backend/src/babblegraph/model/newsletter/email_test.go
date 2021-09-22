@@ -10,7 +10,7 @@ type testEmailAccessor struct {
 }
 
 func (t *testEmailAccessor) InsertEmailRecord(id email.ID, userID users.UserID) error {
-	emailRecordsForUser, ok := t.emailRecords[userID]
+	emailRecordsForUser, _ := t.emailRecords[userID]
 	t.emailRecords[userID] = append(emailRecordsForUser, id)
 	return nil
 }
