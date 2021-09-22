@@ -46,7 +46,7 @@ func TestUserDoesNotHaveAccount(t *testing.T) {
 	}
 	body := testNewsletter.Body
 	if body.SetTopicsLink == nil || !strings.Contains(*body.SetTopicsLink, "/manage/") {
-		t.Errorf("Error on set topics link. Expected it to contain /manage/ but got, but got %s", body.SetTopicsLink)
+		t.Errorf("Error on set topics link. Expected it to contain /manage/ but got, but got %v", body.SetTopicsLink)
 	}
 	if !strings.Contains(body.ReinforcementLink, "/manage/") {
 		t.Errorf("Error on set topics link. Expected it to contain /manage/ but got, but got %s", body.ReinforcementLink)
