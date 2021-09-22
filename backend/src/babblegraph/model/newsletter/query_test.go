@@ -86,7 +86,7 @@ func TestUserScheduleDay(t *testing.T) {
 		userTopics: []contenttopics.ContentTopic{
 			contenttopics.ContentTopicArt,
 		},
-		userSubscriptionLevel: useraccounts.SubscriptionLevelPremium,
+		userSubscriptionLevel: useraccounts.SubscriptionLevelPremium.Ptr(),
 		userScheduleForDay: &usernewsletterschedule.UserNewsletterScheduleDayMetadata{
 			IsActive: false,
 		},
