@@ -14,7 +14,7 @@ import (
 
 func TestUserHasAccount(t *testing.T) {
 	wordsmithAccessor := &testWordsmithAccessor{}
-	emailAccessor := &testEmailAccessor{}
+	emailAccessor := getTestEmailAccessor()
 	userAccessor := &testUserAccessor{
 		languageCode:        wordsmith.LanguageCodeSpanish,
 		doesUserHaveAccount: true,
@@ -35,7 +35,7 @@ func TestUserHasAccount(t *testing.T) {
 
 func TestUserDoesNotHaveAccount(t *testing.T) {
 	wordsmithAccessor := &testWordsmithAccessor{}
-	emailAccessor := &testEmailAccessor{}
+	emailAccessor := getTestEmailAccessor()
 	userAccessor := &testUserAccessor{
 		languageCode: wordsmith.LanguageCodeSpanish,
 	}
@@ -55,7 +55,7 @@ func TestUserDoesNotHaveAccount(t *testing.T) {
 
 func TestNoSetTopicsLink(t *testing.T) {
 	wordsmithAccessor := &testWordsmithAccessor{}
-	emailAccessor := &testEmailAccessor{}
+	emailAccessor := getTestEmailAccessor()
 	userAccessor := &testUserAccessor{
 		languageCode:        wordsmith.LanguageCodeSpanish,
 		doesUserHaveAccount: true,
@@ -79,7 +79,7 @@ func TestNoSetTopicsLink(t *testing.T) {
 
 func TestUserScheduleDay(t *testing.T) {
 	wordsmithAccessor := &testWordsmithAccessor{}
-	emailAccessor := &testEmailAccessor{}
+	emailAccessor := getTestEmailAccessor()
 	userAccessor := &testUserAccessor{
 		languageCode:        wordsmith.LanguageCodeSpanish,
 		doesUserHaveAccount: true,
@@ -98,28 +98,5 @@ func TestUserScheduleDay(t *testing.T) {
 	}
 	if testNewsletter != nil {
 		t.Errorf("Expected null newsletter, but it was not")
-	}
-}
-
-func TestUserScheduleDayNoSubscription(t *testing.T) {
-	wordsmithAccessor := &testWordsmithAccessor{}
-	emailAccessor := &testEmailAccessor{}
-	userAccessor := &testUserAccessor{
-		languageCode:        wordsmith.LanguageCodeSpanish,
-		doesUserHaveAccount: true,
-		userTopics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicArt,
-		},
-		userScheduleForDay: &usernewsletterschedule.UserNewsletterScheduleDayMetadata{
-			IsActive: false,
-		},
-	}
-	docsAccessor := &testDocsAccessor{}
-	testNewsletter, err := CreateNewsletter(wordsmithAccessor, emailAccessor, userAccessor, docsAccessor)
-	if err != nil {
-		t.Fatalf(err.Error())
-	}
-	if testNewsletter == nil {
-		t.Errorf("Expected non-null newsletter, but it was not")
 	}
 }
