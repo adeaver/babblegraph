@@ -13,3 +13,10 @@ func Int(i *int, d int) int {
 	}
 	return *i
 }
+
+func Int64(i *int64, d int64) int64 {
+	if i == nil {
+		return d
+	}
+	return *i
+}

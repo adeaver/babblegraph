@@ -2,6 +2,7 @@ package newslettersendrequests
 
 import (
 	"babblegraph/model/users"
+	"babblegraph/util/deref"
 	"babblegraph/util/env"
 	"babblegraph/wordsmith"
 	"fmt"
@@ -39,11 +40,14 @@ func (d dbNewsletterSendRequest) ToNonDB() (*NewsletterSendRequest, error) {
 	if err != nil {
 		return nil, err
 	}
+	hourToSend := int(deref.Int64(d.HourToSendIndexUTC, 0))
+	minuteToSend := int(deref.Int64(d.QuarterHourToSendIndexUTC, 0) * 15)
+	sendAtTime := time.Date(utcDate.Year(), utcDate.Month(), utcDate.Day(), hourToSend, minuteToSend, 0, 0, time.UTC)
 	return &NewsletterSendRequest{
 		ID:            d.ID,
 		UserID:        d.UserID,
 		LanguageCode:  d.LanguageCode,
-		DateOfSend:    *utcDate,
+		DateOfSend:    sendAtTime,
 		PayloadStatus: d.PayloadStatus,
 	}, nil
 }

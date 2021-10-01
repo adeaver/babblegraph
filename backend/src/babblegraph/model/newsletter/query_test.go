@@ -81,7 +81,7 @@ func TestNoSetTopicsLink(t *testing.T) {
 		t.Fatalf(err.Error())
 	}
 	body := testNewsletter.Body
-	if err := testutils.CompareNullableString(body.SetTopicsLink, nil); err == nil {
+	if err := testutils.CompareNullableString(body.SetTopicsLink, nil); err != nil {
 		t.Errorf("Error on set topics link: %s", err.Error())
 	}
 	if body.ReinforcementLink != routes.MakeLoginLinkWithReinforcementRedirect() {

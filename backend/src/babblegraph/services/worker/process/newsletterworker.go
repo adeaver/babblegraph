@@ -42,6 +42,12 @@ func StartNewsletterPreloadWorkerThread(workerNumber int, newsletterProcessor *n
 				errs <- err
 			}
 		}()
+		usEastern, err := time.LoadLocation("US/Eastern")
+		if err != nil {
+			errs <- err
+			localHub.CaptureException(err)
+			return
+		}
 		log.Println("Starting Newsletter Preload Process")
 		s3Storage := storage.NewS3StorageForEnvironment()
 		for {
@@ -76,7 +82,11 @@ func StartNewsletterPreloadWorkerThread(workerNumber int, newsletterProcessor *n
 				if err := newslettersendrequests.UpdateSendRequestStatus(tx, sendRequest.ID, newslettersendrequests.PayloadStatusPayloadReady); err != nil {
 					return err
 				}
-				// if err := newslettersendrequests.UpdateSendRequestSendAtTime(tx, sendRequest.ID,
+				dateOfSend := sendRequest.DateOfSend
+				sendAtTimeUSEastern := time.Date(dateOfSend.Year(), dateOfSend.Month(), dateOfSend.Day(), 7, 0, 0, 0, usEastern)
+				if err := newslettersendrequests.UpdateSendRequestSendAtTime(tx, sendRequest.ID, sendAtTimeUSEastern); err != nil {
+					return err
+				}
 				wordsmithAccessor := newsletter.GetDefaultWordsmithAccessor()
 				emailAccessor := newsletter.GetDefaultEmailAccessor(tx)
 				docsAccessor := newsletter.GetDefaultDocumentsAccessor()
