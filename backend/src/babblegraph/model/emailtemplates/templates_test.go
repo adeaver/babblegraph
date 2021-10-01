@@ -29,10 +29,10 @@ func TestCreateNewsletterTemplate(t *testing.T) {
 	if len(*html) == 0 {
 		t.Fatalf("Got empty body")
 	}
-	if !strings.Contains("babblegraph.com/topics", *html) {
+	if !strings.Contains(*html, "babblegraph.com/topics") {
 		t.Errorf("Expected topics link")
 	}
-	if !strings.Contains("babblegraph.com/reinforce", *html) {
+	if !strings.Contains(*html, "babblegraph.com/reinforce") {
 		t.Errorf("Expected reinforcement link")
 	}
 }
