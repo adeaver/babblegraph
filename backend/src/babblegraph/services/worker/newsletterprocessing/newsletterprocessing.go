@@ -7,6 +7,7 @@ import (
 	"babblegraph/wordsmith"
 	"fmt"
 	"log"
+	"sort"
 	"sync"
 	"time"
 
@@ -58,6 +59,9 @@ func (n *NewsletterProcessor) GetNextSendRequestToFulfill() (*newslettersendrequ
 		return nil, nil
 	}
 	nextSendRequestToFulfill := n.orderedSendRequestsToFulfill[0]
+	if time.Now().Before(nextSendRequestToFulfill.DateOfSend) {
+		return nil, nil
+	}
 	n.orderedSendRequestsToFulfill = append([]newslettersendrequests.NewsletterSendRequest{}, n.orderedSendRequestsToFulfill[1:]...)
 	return &nextSendRequestToFulfill, nil
 }
@@ -72,6 +76,9 @@ func (n *NewsletterProcessor) syncSendRequests() error {
 	log.Println(fmt.Sprintf("Got %d send requests to preload and %d to fulfill", len(toPreload), len(toFulfill)))
 	n.orderedSendRequestsToPreload = toPreload
 	n.orderedSendRequestsToFulfill = toFulfill
+	sort.Slice(n.orderedSendRequestsToFulfill, func(i, j int) bool {
+		return n.orderedSendRequestsToFulfill[i].DateOfSend.Before(n.orderedSendRequestsToFulfill[j].DateOfSend)
+	})
 	n.timeOfLastSync = time.Now()
 	log.Println(fmt.Sprintf("Sync complete"))
 	return nil
