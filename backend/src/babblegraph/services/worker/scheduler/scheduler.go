@@ -2,7 +2,6 @@ package scheduler
 
 import (
 	"babblegraph/externalapis/bgstripe"
-	"babblegraph/jobs/dailyemail"
 	"babblegraph/services/worker/linkprocessing"
 	"babblegraph/util/env"
 	"babblegraph/util/ses"
@@ -69,37 +68,6 @@ func makeRefetchSeedDomainJob(linkProcessor *linkprocessing.LinkProcessor, errs 
 		}
 		log.Println(fmt.Sprintf("Finished refetch. Reseeding link processor"))
 		linkProcessor.ReseedDomains()
-	}
-}
-
-func makeEmailJob(errs chan error) func() {
-	return func() {
-		today := time.Now()
-		localHub := sentry.CurrentHub().Clone()
-		localHub.ConfigureScope(func(scope *sentry.Scope) {
-			scope.SetTag("email-job", fmt.Sprintf("email-job-%s-%d-%d", today.Month().String(), today.Day(), today.Year()))
-		})
-		defer func() {
-			if x := recover(); x != nil {
-				_, fn, line, _ := runtime.Caller(1)
-				err := fmt.Errorf("Email Panic: %s: %d: %v\n%s", fn, line, x, string(debug.Stack()))
-				localHub.CaptureException(err)
-				errs <- err
-			}
-		}()
-		log.Println("Initializing email client...")
-		emailClient := ses.NewClient(ses.NewClientInput{
-			AWSAccessKey:       env.MustEnvironmentVariable("AWS_SES_ACCESS_KEY"),
-			AWSSecretAccessKey: env.MustEnvironmentVariable("AWS_SES_SECRET_KEY"),
-			AWSRegion:          "us-east-1",
-			FromAddress:        env.MustEnvironmentVariable("EMAIL_ADDRESS"),
-		})
-		log.Println("Starting email job...")
-		dailyEmailFn := dailyemail.GetDailyEmailJob(localHub, emailClient)
-		if err := dailyEmailFn(); err != nil {
-			localHub.CaptureException(err)
-			errs <- err
-		}
 	}
 }
 
