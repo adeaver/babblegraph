@@ -18,6 +18,10 @@ func TestUserHasAccount(t *testing.T) {
 	userAccessor := &testUserAccessor{
 		languageCode:        wordsmith.LanguageCodeSpanish,
 		doesUserHaveAccount: true,
+		readingLevel: &userReadingLevel{
+			LowerBound: 30,
+			UpperBound: 80,
+		},
 	}
 	docsAccessor := &testDocsAccessor{}
 	testNewsletter, err := CreateNewsletter(wordsmithAccessor, emailAccessor, userAccessor, docsAccessor)
@@ -38,6 +42,10 @@ func TestUserDoesNotHaveAccount(t *testing.T) {
 	emailAccessor := getTestEmailAccessor()
 	userAccessor := &testUserAccessor{
 		languageCode: wordsmith.LanguageCodeSpanish,
+		readingLevel: &userReadingLevel{
+			LowerBound: 30,
+			UpperBound: 80,
+		},
 	}
 	docsAccessor := &testDocsAccessor{}
 	testNewsletter, err := CreateNewsletter(wordsmithAccessor, emailAccessor, userAccessor, docsAccessor)
@@ -61,6 +69,10 @@ func TestNoSetTopicsLink(t *testing.T) {
 		doesUserHaveAccount: true,
 		userTopics: []contenttopics.ContentTopic{
 			contenttopics.ContentTopicArt,
+		},
+		readingLevel: &userReadingLevel{
+			LowerBound: 30,
+			UpperBound: 80,
 		},
 	}
 	docsAccessor := &testDocsAccessor{}
@@ -90,6 +102,10 @@ func TestUserScheduleDay(t *testing.T) {
 		userScheduleForDay: &usernewsletterschedule.UserNewsletterScheduleDayMetadata{
 			IsActive: false,
 		},
+		readingLevel: &userReadingLevel{
+			LowerBound: 30,
+			UpperBound: 80,
+		},
 	}
 	docsAccessor := &testDocsAccessor{}
 	testNewsletter, err := CreateNewsletter(wordsmithAccessor, emailAccessor, userAccessor, docsAccessor)
@@ -112,6 +128,10 @@ func TestUserScheduleDayNoSubscription(t *testing.T) {
 		},
 		userScheduleForDay: &usernewsletterschedule.UserNewsletterScheduleDayMetadata{
 			IsActive: false,
+		},
+		readingLevel: &userReadingLevel{
+			LowerBound: 30,
+			UpperBound: 80,
 		},
 	}
 	docsAccessor := &testDocsAccessor{}

@@ -88,7 +88,10 @@ func GetNonDeletedSendRequestsOlderThan(tx *sqlx.Tx, t time.Time) ([]NewsletterS
 	return out, nil
 }
 
-func UpdateSendRequestSendAtTime(tx *sqlx.Tx, id ID, sendAtHourIndexUTC, sendAtQuarterHourIndexUTC int) error {
+func UpdateSendRequestSendAtTime(tx *sqlx.Tx, id ID, sendAtTime time.Time) error {
+	utcSendTime := sendAtTime.UTC()
+	sendAtHourIndexUTC := utcSendTime.Hour()
+	sendAtQuarterHourIndexUTC := utcSendTime.Minute() % 15
 	if _, err := tx.Exec(updateSendRequestSendAtTimeQuery, sendAtHourIndexUTC, sendAtQuarterHourIndexUTC, id); err != nil {
 		return err
 	}
