@@ -47,6 +47,7 @@ RUN mkdir -p /service && chown -R $SERVICE_USER:$SERVICE_USER /service
 WORKDIR /service
 RUN mkdir -p ./templates && chown -R $SERVICE_USER:$SERVICE_USER ./templates
 COPY --chown=$SERVICE_USER:$SERVICE_USER --from=backend-builder /usr/local/go/src/babblegraph/actions/email/templates ./templates
+COPY --chown=$SERVICE_USER:$SERVICE_USER --from=builder /usr/local/go/src/babblegraph/model/emailtemplate/templates ./emailtemplates
 
 RUN mkdir -p ./static && chown -R $SERVICE_USER:$SERVICE_USER ./static
 COPY --chown=$SERVICE_USER:$SERVICE_USER --from=frontend-builder /usr/app/dist/bundle.js ./static

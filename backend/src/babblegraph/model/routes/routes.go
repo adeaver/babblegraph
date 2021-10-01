@@ -15,6 +15,10 @@ func MustGetHomePageURL() string {
 	return env.GetAbsoluteURLForEnvironment("")
 }
 
+func GetLoginRoute() string {
+	return env.GetAbsoluteURLForEnvironment("login")
+}
+
 func MakeSubscriptionManagementRouteForUserID(userID users.UserID) (*string, error) {
 	token, err := MakeSubscriptionManagementToken(userID)
 	if err != nil {

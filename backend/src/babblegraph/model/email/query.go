@@ -57,3 +57,12 @@ func UpdateEmailRecordIDWithSESMessageID(tx *sqlx.Tx, id ID, sesMessageID string
 func NewEmailRecordID() ID {
 	return ID(uuid.New().String())
 }
+
+const updateEmailRecordSentAtQuery = "UPDATE email_records SET sent_at = timezone('utc', now()) WHERE _id = $1"
+
+func SetEmailRecordSentAtTime(tx *sqlx.Tx, id ID) error {
+	if _, err := tx.Exec(updateEmailRecordSentAtQuery, id); err != nil {
+		return err
+	}
+	return nil
+}

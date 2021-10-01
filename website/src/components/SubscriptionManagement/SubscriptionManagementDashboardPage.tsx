@@ -168,9 +168,6 @@ const SubscriptionManagementDashboardPage = (props: SubscriptionManagementDashbo
                                     </ActionCard>
                                 )
                             }
-                            <ActionCard redirectURL={`/manage/${token}/level`} title='Set your difficulty level'>
-                                If your daily email is too hard or too easy, you can change the difficulty level here.
-                            </ActionCard>
                             {
                                 subscriptionLevel && (
                                     <ActionCard
