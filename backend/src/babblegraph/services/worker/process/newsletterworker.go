@@ -76,6 +76,7 @@ func StartNewsletterPreloadWorkerThread(workerNumber int, newsletterProcessor *n
 				if err := newslettersendrequests.UpdateSendRequestStatus(tx, sendRequest.ID, newslettersendrequests.PayloadStatusPayloadReady); err != nil {
 					return err
 				}
+				// if err := newslettersendrequests.UpdateSendRequestSendAtTime(tx, sendRequest.ID,
 				wordsmithAccessor := newsletter.GetDefaultWordsmithAccessor()
 				emailAccessor := newsletter.GetDefaultEmailAccessor(tx)
 				docsAccessor := newsletter.GetDefaultDocumentsAccessor()
