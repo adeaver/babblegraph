@@ -64,6 +64,7 @@ func GetOrCreateSendRequestsForUsersForDay(tx *sqlx.Tx, userIDs []users.UserID, 
 			out = append(out, NewsletterSendRequest{
 				ID:            id,
 				UserID:        u,
+				LanguageCode:  languageCode,
 				DateOfSend:    *utcDate,
 				PayloadStatus: PayloadStatusNeedsPreload,
 			})
