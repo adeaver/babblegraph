@@ -72,12 +72,10 @@ func main() {
 	}
 	fulfillNewsletterErrs := make(chan error, 1)
 	fulfillWorkerNum := 0
-	if currentEnvironmentName != env.EnvironmentProd {
-		for i := 0; i < numNewsletterFulfillmentThreads; i++ {
-			fulfillThread := process.StartNewsletterFulfillmentWorkerThread(fulfillWorkerNum, newsletterProcessor, fulfillNewsletterErrs)
-			go fulfillThread()
-			fulfillWorkerNum++
-		}
+	for i := 0; i < numNewsletterFulfillmentThreads; i++ {
+		fulfillThread := process.StartNewsletterFulfillmentWorkerThread(fulfillWorkerNum, newsletterProcessor, fulfillNewsletterErrs)
+		go fulfillThread()
+		fulfillWorkerNum++
 	}
 	for {
 		select {
