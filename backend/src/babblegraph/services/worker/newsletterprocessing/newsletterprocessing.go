@@ -43,7 +43,7 @@ func (n *NewsletterProcessor) GetNextSendRequestToPreload() (*newslettersendrequ
 		return nil, nil
 	}
 	nextSendRequestToPreload := n.orderedSendRequestsToPreload[0]
-	if time.Now().Before(nextSendRequestToPreload.DateOfSend.Add(24 * time.Hour)) {
+	if time.Now().Before(nextSendRequestToPreload.DateOfSend.Add(-24 * time.Hour)) {
 		return nil, nil
 	}
 	n.orderedSendRequestsToPreload = append([]newslettersendrequests.NewsletterSendRequest{}, n.orderedSendRequestsToPreload[1:]...)
@@ -81,7 +81,7 @@ func (n *NewsletterProcessor) syncSendRequests() error {
 	sort.Slice(n.orderedSendRequestsToPreload, func(i, j int) bool {
 		return n.orderedSendRequestsToPreload[i].DateOfSend.Before(n.orderedSendRequestsToPreload[j].DateOfSend)
 	})
-
+	n.orderedSendRequestsToFulfill = toFulfill
 	sort.Slice(n.orderedSendRequestsToFulfill, func(i, j int) bool {
 		return n.orderedSendRequestsToFulfill[i].DateOfSend.Before(n.orderedSendRequestsToFulfill[j].DateOfSend)
 	})

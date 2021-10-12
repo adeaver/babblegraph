@@ -62,7 +62,7 @@ func GetOrCreateSendRequestsForUsersForDay(tx *sqlx.Tx, userIDs []users.UserID, 
 	}
 	for _, u := range userIDs {
 		if _, ok := usersWithSendRequests[u]; !ok {
-			dateOfSend := time.Date(day.Year(), day.Month(), day.Day(), defaultUSEasternHourToSend, defaultUSEasternQuarterHourToSend, 0, 0, usEastern)
+			dateOfSend := time.Date(day.Year(), day.Month(), day.Day(), defaultUSEasternHourToSend, defaultUSEasternQuarterHourToSend, 0, 0, usEastern).UTC()
 			id := makeSendRequestID(u, languageCode, dateOfSendString)
 			if _, err := tx.Exec(insertSendRequestForUserQuery, id, u, languageCode, dateOfSendString, PayloadStatusNeedsPreload, dateOfSend.Hour(), dateOfSend.Minute()/15); err != nil {
 				return nil, err

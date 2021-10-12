@@ -10,7 +10,7 @@ import (
 
 func getDateOfSendForTime(t time.Time) string {
 	utcTime := t.UTC()
-	return fmt.Sprintf("%02d%02d%4d", utcTime.Month(), utcTime.Day(), utcTime.Year())
+	return fmt.Sprintf("%02d%02d%04d", utcTime.Month(), utcTime.Day(), utcTime.Year())
 }
 
 func makeSendRequestID(userID users.UserID, languageCode wordsmith.LanguageCode, dateOfSendString string) ID {
