@@ -36,8 +36,9 @@ const styleClasses = makeStyles({
         alignSelf: 'center',
         padding: '5px',
     },
-    emailField: {
+    textField: {
         width: '100%',
+        margin: '10px 0',
     },
     formContainer: {
         padding: '10px 0',
@@ -59,6 +60,7 @@ const UnsubscribePage = (props: UnsubscribePageProps) => {
     const { token } = props.match.params;
 
     const [ isUnsubscribeRequestLoading, setIsUnsubscribeRequestLoading ] = useState<boolean>(false);
+    const [ unsubscribeReason, setUnsubscribeReason ] = useState<string | null>(null);
     const [ emailAddress, setEmailAddress ] = useState<string | null>(null);
     const [ error, setError ] = useState<Error | null>(null);
     const [ didUpdate, setDidUpdate ] = useState<boolean | null>(null);
@@ -117,6 +119,7 @@ const UnsubscribePage = (props: UnsubscribePageProps) => {
                                 <UnsubscribeForm
                                     emailAddress={emailAddress}
                                     hasUserProfile={hasUserProfile}
+                                    handleUnsubscribeReasonChange={setUnsubscribeReason}
                                     handleEmailAddressChange={setEmailAddress}
                                     handleSubmit={handleSubmit} />
                             )
@@ -163,12 +166,16 @@ type UnsubscribeFormProps = {
     emailAddress: string;
     hasUserProfile: boolean;
     handleEmailAddressChange: (v: string) => void;
+    handleUnsubscribeReasonChange: (v: string) => void;
     handleSubmit: () => void;
 }
 
 const UnsubscribeForm = (props: UnsubscribeFormProps) => {
     const handleEmailAddressChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         props.handleEmailAddressChange((event.target as HTMLInputElement).value);
+    };
+    const handleUnsubscribeReasonChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        props.handleUnsubscribeReasonChange((event.target as HTMLInputElement).value);
     };
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -188,10 +195,20 @@ const UnsubscribeForm = (props: UnsubscribeFormProps) => {
                 )
             }
             <Grid container>
+                <Grid item xs={12}>
+                    <PrimaryTextField
+                        id="unsubscribe-reason"
+                        className={classes.textField}
+                        label="Reason for unsubscribing (optional)"
+                        variant="outlined"
+                        rows={3}
+                        onChange={handleUnsubscribeReasonChange}
+                        multiline />
+                </Grid>
                 <Grid item xs={9} md={10}>
                     <PrimaryTextField
                         id="email"
-                        className={classes.emailField}
+                        className={classes.textField}
                         label="Email Address"
                         variant="outlined"
                         onChange={handleEmailAddressChange} />
