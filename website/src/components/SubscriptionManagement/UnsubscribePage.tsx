@@ -18,7 +18,7 @@ import { PrimaryButton } from 'common/components/Button/Button';
 import { PrimaryTextField } from 'common/components/TextField/TextField';
 import Link from 'common/components/Link/Link';
 
-import { UnsubscribeUser, UnsubscribeResponse } from 'api/user/unsubscribe';
+import { unsubscribeUser, UnsubscribeResponse } from 'api/user/unsubscribe';
 import {
     getUserProfile,
     GetUserProfileResponse
@@ -69,13 +69,13 @@ const UnsubscribePage = (props: UnsubscribePageProps) => {
 
     const handleSubmit = () => {
         setIsUnsubscribeRequestLoading(true);
-        UnsubscribeUser({
-            Token: token,
-            EmailAddress: emailAddress,
-        },
+        unsubscribeUser({
+            token: token,
+            unsubscribeReason: unsubscribeReason,
+            emailAddress: emailAddress, },
         (resp: UnsubscribeResponse) => {
             setIsUnsubscribeRequestLoading(false);
-            setDidUpdate(resp.Success);
+            setDidUpdate(resp.success);
         },
         (e: Error) => {
             setIsUnsubscribeRequestLoading(false);
@@ -175,12 +175,20 @@ const UnsubscribeForm = (props: UnsubscribeFormProps) => {
         props.handleEmailAddressChange((event.target as HTMLInputElement).value);
     };
     const handleUnsubscribeReasonChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        props.handleUnsubscribeReasonChange((event.target as HTMLInputElement).value);
+        const unsubscribeReason = (event.target as HTMLInputElement).value;
+        if unsubscribeReason.length() > 500 {
+            setValidationError("Unsubscribe reason needs to be less than 500 characters");
+        } else {
+            setValidationError(null);
+        }
+        props.handleUnsubscribeReasonChange();
     };
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         props.handleSubmit();
     }
+
+    const [ validationError, setValidationError ] = useState<string | null>(null);
 
     const classes = styleClasses();
     return (
@@ -190,6 +198,15 @@ const UnsubscribeForm = (props: UnsubscribeFormProps) => {
                     <div>
                         <Paragraph>
                             This will also cancel your subscription to Babblegraph Premium.
+                        </Paragraph>
+                    </div>
+                )
+            }
+            {
+                validationError && (
+                    <div>
+                        <Paragraph color={TypographyColor.Warning}>
+                            { validationError }
                         </Paragraph>
                     </div>
                 )
@@ -214,7 +231,7 @@ const UnsubscribeForm = (props: UnsubscribeFormProps) => {
                         onChange={handleEmailAddressChange} />
                 </Grid>
                 <Grid item xs={3} md={2} className={classes.submitButtonContainer}>
-                    <PrimaryButton type="submit" disabled={!props.emailAddress}>
+                    <PrimaryButton type="submit" disabled={!props.emailAddress || !!validationError}>
                         Submit
                     </PrimaryButton>
                 </Grid>
