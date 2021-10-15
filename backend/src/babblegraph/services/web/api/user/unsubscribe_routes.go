@@ -2,17 +2,20 @@ package user
 
 import (
 	"babblegraph/externalapis/bgstripe"
+	"babblegraph/model/unsubscribereason"
 	"babblegraph/model/users"
 	"babblegraph/util/database"
 	"babblegraph/util/ptr"
+	"babblegraph/wordsmith"
 	"encoding/json"
 
 	"github.com/jmoiron/sqlx"
 )
 
 type unsubscribeUserRequest struct {
-	Token        string `json:"token"`
-	EmailAddress string `json:"email_address"`
+	Token             string  `json:"token"`
+	UnsubscribeReason *string `json:"unsubscribe_reason"`
+	EmailAddress      string  `json:"email_address"`
 }
 
 type unsubscribeUserResponse struct {
@@ -34,6 +37,12 @@ func handleUnsubscribeUser(body []byte) (interface{}, error) {
 		didUpdate, err = users.UnsubscribeUserForIDAndEmail(tx, *userID, r.EmailAddress)
 		if err != nil {
 			return err
+		}
+		if r.UnsubscribeReason != nil && len(*r.UnsubscribeReason) != 0 {
+			err := unsubscribereason.InsertUnsubscribeReason(tx, *userID, wordsmith.LanguageCodeSpanish, *r.UnsubscribeReason)
+			if err != nil {
+				return err
+			}
 		}
 		subscription, err := bgstripe.LookupActiveSubscriptionForUser(tx, *userID)
 		switch {

@@ -18,7 +18,7 @@ import { PrimaryButton } from 'common/components/Button/Button';
 import { PrimaryTextField } from 'common/components/TextField/TextField';
 import Link from 'common/components/Link/Link';
 
-import { UnsubscribeUser, UnsubscribeResponse } from 'api/user/unsubscribe';
+import { unsubscribeUser, UnsubscribeResponse } from 'api/user/unsubscribe';
 import {
     getUserProfile,
     GetUserProfileResponse
@@ -36,8 +36,9 @@ const styleClasses = makeStyles({
         alignSelf: 'center',
         padding: '5px',
     },
-    emailField: {
+    textField: {
         width: '100%',
+        margin: '10px 0',
     },
     formContainer: {
         padding: '10px 0',
@@ -59,6 +60,7 @@ const UnsubscribePage = (props: UnsubscribePageProps) => {
     const { token } = props.match.params;
 
     const [ isUnsubscribeRequestLoading, setIsUnsubscribeRequestLoading ] = useState<boolean>(false);
+    const [ unsubscribeReason, setUnsubscribeReason ] = useState<string | null>(null);
     const [ emailAddress, setEmailAddress ] = useState<string | null>(null);
     const [ error, setError ] = useState<Error | null>(null);
     const [ didUpdate, setDidUpdate ] = useState<boolean | null>(null);
@@ -67,13 +69,13 @@ const UnsubscribePage = (props: UnsubscribePageProps) => {
 
     const handleSubmit = () => {
         setIsUnsubscribeRequestLoading(true);
-        UnsubscribeUser({
-            Token: token,
-            EmailAddress: emailAddress,
-        },
+        unsubscribeUser({
+            token: token,
+            unsubscribeReason: unsubscribeReason,
+            emailAddress: emailAddress, },
         (resp: UnsubscribeResponse) => {
             setIsUnsubscribeRequestLoading(false);
-            setDidUpdate(resp.Success);
+            setDidUpdate(resp.success);
         },
         (e: Error) => {
             setIsUnsubscribeRequestLoading(false);
@@ -117,6 +119,7 @@ const UnsubscribePage = (props: UnsubscribePageProps) => {
                                 <UnsubscribeForm
                                     emailAddress={emailAddress}
                                     hasUserProfile={hasUserProfile}
+                                    handleUnsubscribeReasonChange={setUnsubscribeReason}
                                     handleEmailAddressChange={setEmailAddress}
                                     handleSubmit={handleSubmit} />
                             )
@@ -163,6 +166,7 @@ type UnsubscribeFormProps = {
     emailAddress: string;
     hasUserProfile: boolean;
     handleEmailAddressChange: (v: string) => void;
+    handleUnsubscribeReasonChange: (v: string) => void;
     handleSubmit: () => void;
 }
 
@@ -170,10 +174,21 @@ const UnsubscribeForm = (props: UnsubscribeFormProps) => {
     const handleEmailAddressChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         props.handleEmailAddressChange((event.target as HTMLInputElement).value);
     };
+    const handleUnsubscribeReasonChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const unsubscribeReason = (event.target as HTMLInputElement).value;
+        if (unsubscribeReason.length > 500) {
+            setValidationError("Unsubscribe reason needs to be less than 500 characters");
+        } else {
+            setValidationError(null);
+        }
+        props.handleUnsubscribeReasonChange(unsubscribeReason);
+    };
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         props.handleSubmit();
     }
+
+    const [ validationError, setValidationError ] = useState<string | null>(null);
 
     const classes = styleClasses();
     return (
@@ -188,16 +203,36 @@ const UnsubscribeForm = (props: UnsubscribeFormProps) => {
                 )
             }
             <Grid container>
+                <Grid item xs={12}>
+                    <PrimaryTextField
+                        id="unsubscribe-reason"
+                        className={classes.textField}
+                        label="Reason for unsubscribing (optional)"
+                        variant="outlined"
+                        rows={3}
+                        error={validationError}
+                        onChange={handleUnsubscribeReasonChange}
+                        multiline />
+                </Grid>
+                {
+                    validationError && (
+                        <Grid item xs={12}>
+                            <Paragraph color={TypographyColor.Warning}>
+                                { validationError }
+                            </Paragraph>
+                        </Grid>
+                    )
+                }
                 <Grid item xs={9} md={10}>
                     <PrimaryTextField
                         id="email"
-                        className={classes.emailField}
+                        className={classes.textField}
                         label="Email Address"
                         variant="outlined"
                         onChange={handleEmailAddressChange} />
                 </Grid>
                 <Grid item xs={3} md={2} className={classes.submitButtonContainer}>
-                    <PrimaryButton type="submit" disabled={!props.emailAddress}>
+                    <PrimaryButton type="submit" disabled={!props.emailAddress || !!validationError}>
                         Submit
                     </PrimaryButton>
                 </Grid>
