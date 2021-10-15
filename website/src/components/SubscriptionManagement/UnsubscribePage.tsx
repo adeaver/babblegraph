@@ -176,12 +176,12 @@ const UnsubscribeForm = (props: UnsubscribeFormProps) => {
     };
     const handleUnsubscribeReasonChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const unsubscribeReason = (event.target as HTMLInputElement).value;
-        if unsubscribeReason.length() > 500 {
+        if (unsubscribeReason.length > 500) {
             setValidationError("Unsubscribe reason needs to be less than 500 characters");
         } else {
             setValidationError(null);
         }
-        props.handleUnsubscribeReasonChange();
+        props.handleUnsubscribeReasonChange(unsubscribeReason);
     };
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -202,15 +202,6 @@ const UnsubscribeForm = (props: UnsubscribeFormProps) => {
                     </div>
                 )
             }
-            {
-                validationError && (
-                    <div>
-                        <Paragraph color={TypographyColor.Warning}>
-                            { validationError }
-                        </Paragraph>
-                    </div>
-                )
-            }
             <Grid container>
                 <Grid item xs={12}>
                     <PrimaryTextField
@@ -219,9 +210,19 @@ const UnsubscribeForm = (props: UnsubscribeFormProps) => {
                         label="Reason for unsubscribing (optional)"
                         variant="outlined"
                         rows={3}
+                        error={validationError}
                         onChange={handleUnsubscribeReasonChange}
                         multiline />
                 </Grid>
+                {
+                    validationError && (
+                        <Grid item xs={12}>
+                            <Paragraph color={TypographyColor.Warning}>
+                                { validationError }
+                            </Paragraph>
+                        </Grid>
+                    )
+                }
                 <Grid item xs={9} md={10}>
                     <PrimaryTextField
                         id="email"

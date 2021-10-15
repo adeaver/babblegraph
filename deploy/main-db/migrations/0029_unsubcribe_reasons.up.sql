@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS unsubscribe_reasons(
     last_modified_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()),
     user_id uuid NOT NULL REFERENCES users(_id),
 	language_code TEXT NOT NULL,
-    reason TEXT NOT NULL,
+    reason VARCHAR(500) NOT NULL,
 
     PRIMARY KEY (_id)
 );
