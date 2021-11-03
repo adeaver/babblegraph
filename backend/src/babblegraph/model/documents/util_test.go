@@ -15,7 +15,7 @@ func TestMakeDocumentIndexForURL(t *testing.T) {
 	testCases := []testCase{
 		{
 			urlA:      "www.google.com/",
-			urlB:      "www.google.com",
+			urlB:      "www.google",
 			hasSameID: true,
 		}, {
 			urlA:      "google.com/?q=value",
