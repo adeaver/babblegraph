@@ -61,6 +61,7 @@ func AssignIDAndIndexDocument(input IndexDocumentInput) (*DocumentID, error) {
 		DocumentType:                       input.Type,
 		Domain:                             input.URL.Domain,
 		Topics:                             input.Topics,
+		TopicsLength:                       ptr.Int64(int64(len(input.Topics))),
 		LemmatizedDescription:              input.LemmatizedDescription,
 		LemmatizedDescriptionIndexMappings: input.LemmatizedDescriptionIndexMappings,
 		SeedJobIngestTimestamp:             input.SeedJobIngestTimestamp,
