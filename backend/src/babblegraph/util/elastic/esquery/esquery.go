@@ -60,3 +60,25 @@ func ExecuteSearch(index elastic.Index, query query, orderedSort *orderedSort, f
 	}
 	return elastic.RunSearchRequest(req, fn)
 }
+
+type updateBody struct {
+	Doc interface{} `json:"doc"`
+}
+
+func ExecuteUpdate(index elastic.Index, documentID string, body interface{}) error {
+	bodyBytes, err := json.Marshal(updateBody{
+		Doc: body,
+	})
+	if err != nil {
+		return err
+	}
+	if err := index.ValidateDocument(body); err != nil {
+		return fmt.Errorf("Document validation error for index %s: %s", index.GetName(), err.Error())
+	}
+	req := esapi.UpdateRequest{
+		Index:      index.GetName(),
+		DocumentID: documentID,
+		Body:       strings.NewReader(string(bodyBytes)),
+	}
+	return elastic.RunUpdateRequest(req)
+}
