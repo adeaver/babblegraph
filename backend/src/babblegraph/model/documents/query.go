@@ -3,6 +3,7 @@ package documents
 import (
 	"babblegraph/util/elastic/esquery"
 	"babblegraph/util/math/decimal"
+	"babblegraph/util/urlparser"
 	"babblegraph/wordsmith"
 	"encoding/json"
 	"fmt"
@@ -102,4 +103,14 @@ func ExecuteDocumentQuery(query executableQuery, input ExecuteDocumentQueryInput
 		return nil, err
 	}
 	return docs, nil
+}
+
+type UpdateDocumentInput struct {
+	Version      Version `json:"version"`
+	TopicsLength *int64  `json:"topics_length,omitempty"`
+}
+
+func UpdateDocumentForURL(u urlparser.ParsedURL, input UpdateDocumentInput) error {
+	documentID := makeDocumentIndexForURL(u)
+	return esquery.ExecuteUpdate(documentIndex{}, documentID.Str(), input)
 }

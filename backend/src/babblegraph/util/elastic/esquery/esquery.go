@@ -72,9 +72,6 @@ func ExecuteUpdate(index elastic.Index, documentID string, body interface{}) err
 	if err != nil {
 		return err
 	}
-	if err := index.ValidateDocument(body); err != nil {
-		return fmt.Errorf("Document validation error for index %s: %s", index.GetName(), err.Error())
-	}
 	req := esapi.UpdateRequest{
 		Index:      index.GetName(),
 		DocumentID: documentID,

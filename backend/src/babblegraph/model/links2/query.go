@@ -90,3 +90,26 @@ func UpsertLinkWithEmptyFetchStatus(tx *sqlx.Tx, urls []urlparser.ParsedURL, inc
 	}
 	return queryBuilder.Execute(tx)
 }
+
+// This is useful for reindexing
+func GetCursorForFetchVersion(tx *sqlx.Tx, fetchVersion FetchVersion, fn func(link Link) (bool, error)) error {
+	rows, err := tx.Queryx("SELECT * FROM links2 WHERE last_fetch_version = $1", fetchVersion)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var l dbLink
+		if err := rows.StructScan(&l); err != nil {
+			return err
+		}
+		shouldEndIteration, err := fn(l.ToNonDB())
+		switch {
+		case err != nil && shouldEndIteration:
+			return err
+		case err != nil && !shouldEndIteration:
+			log.Println(fmt.Sprintf("Got error: %s, continuing...", err.Error()))
+		}
+	}
+	return nil
+}
