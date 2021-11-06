@@ -49,7 +49,7 @@ const PremiumInformationPanel = (props: PremiumInformationPanelProps) => {
                     icon={<BallotIcon className={classes.featureIcon} />} />
             </List>
             <Heading3 color={TypographyColor.Primary}>
-                $3/month or $34/year
+                $20/year
             </Heading3>
             <Heading3>
                 The best part is that you can try it for free for 14 days!
