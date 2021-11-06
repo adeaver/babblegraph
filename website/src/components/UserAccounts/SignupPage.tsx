@@ -215,7 +215,7 @@ const SignupForm = (props: SignupFormProps) => {
                                     <PasswordConstraint isConstraintMet={props.password && !!props.password.match(/[0-9]/)}>
                                         Number (0-9)
                                     </PasswordConstraint>
-                                    <PasswordConstraint isConstraintMet={props.password && !props.password.match(/[0-9a-zA-Z]/)}>
+                                    <PasswordConstraint isConstraintMet={props.password && !!props.password.match(/[^0-9a-zA-Z]/)}>
                                         Special Character (such as !@#$%^&*)
                                     </PasswordConstraint>
                                 </ul>

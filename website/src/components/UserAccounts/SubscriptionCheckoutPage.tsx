@@ -222,12 +222,17 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
                 {
                     shouldShowCheckoutForm && (
                         subscription.paymentIntentClientSecret ? (
-                            <CollectPaymentForm
-                                paymentIntentClientSecret={subscription.paymentIntentClientSecret}
-                                handleIsStripeRequestLoading={setIsPaymentConfirmationLoading}
-                                handleSuccess={() => setSuccessType(PaymentType.Payment)}
-                                handleFailure={setPaymentError}
-                                handleError={setError} />
+                            <div>
+                                <Paragraph>
+                                    Enter your payment details below. You will be charged $20 USD. Your subscription to premium will not begin until your payment is completed.
+                                </Paragraph>
+                                <CollectPaymentForm
+                                    paymentIntentClientSecret={subscription.paymentIntentClientSecret}
+                                    handleIsStripeRequestLoading={setIsPaymentConfirmationLoading}
+                                    handleSuccess={() => setSuccessType(PaymentType.Payment)}
+                                    handleFailure={setPaymentError}
+                                    handleError={setError} />
+                            </div>
                         ) : (
                             <div>
                                 <Heading3 color={TypographyColor.Primary}>
@@ -236,11 +241,14 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
                                 <Paragraph>
                                     {
                                         !!currentPeriodEndDate ? (
-                                            `You won’t be charged until the end of your trial on ${currentPeriodEndDate.toLocaleDateString()}.`
+                                            `You will be charged $20 USD on ${currentPeriodEndDate.toLocaleDateString()}, the end of your trial. You will not be charged before then.`
                                         ) : (
-                                            `You won’t be charged until the end of your trial. You can always add a payment method later.`
+                                            `You will be charged $20 USD at the end of your trial. You will not be charged before then.`
                                         )
                                     }
+                                </Paragraph>
+                                <Paragraph>
+                                    If you do not add a payment method now, your subscription will automatically be canceled at the end of the trial.
                                 </Paragraph>
                                 <AddPaymentMethodForm
                                     handleIsStripeRequestLoading={setIsPaymentConfirmationLoading}
