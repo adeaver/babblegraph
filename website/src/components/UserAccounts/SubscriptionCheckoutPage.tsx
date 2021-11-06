@@ -34,8 +34,6 @@ import {
     CreateUserSubscriptionResponse,
     getActiveSubscriptionForUser,
     GetActiveSubscriptionForUserResponse,
-    getSubscriptionTrialInfoForUser,
-    GetSubscriptionTrialInfoForUserResponse,
     UpdateStripeSubscriptionForUserResponse,
     updateStripeSubscriptionForUser,
 } from 'api/stripe/subscription';
@@ -108,17 +106,21 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
                 setSubscription(resp.subscription);
                 setSubscriptionTrialInfo(resp.subscription.trialInfo);
             } else {
-                getSubscriptionTrialInfoForUser({},
-                (resp: GetSubscriptionTrialInfoForUserResponse) => {
-                    setIsLoadingUserSubscription(false);
-                    setSubscriptionTrialInfo(resp.subscriptionTrialInfo);
+                createUserSubscription({},
+                    (resp: CreateUserSubscriptionResponse) => {
+                        setIsLoadingUserSubscription(false);
+                        if (!!resp.subscription) {
+                            setSubscription(resp.subscription);
+                            setSubscriptionTrialInfo(resp.subscription.trialInfo);
+                        } else {
+                            setError(new Error("Something went wrong with your request"));
+                        }
                 },
                 (err: Error) => {
                     setIsLoadingUserSubscription(false);
                     setError(err);
                 });
             }
-
         },
         (err: Error) => {
             setIsLoadingUserSubscription(false);
@@ -139,15 +141,6 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
 
     const handleSubmit = () => {
         setIsLoadingCreateSubscription(true);
-        createUserSubscription({},
-        (resp: CreateUserSubscriptionResponse) => {
-            setIsLoadingCreateSubscription(false);
-            !!resp.subscription && setSubscription(resp.subscription);
-        },
-        (err: Error) => {
-            setIsLoadingCreateSubscription(false);
-            setError(err);
-        });
     }
     const isSubscriptionAlreadySetup = (
         subscription &&
@@ -218,7 +211,7 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
                 {
                     isEligibleForTrial ? (
                         <Paragraph color={TypographyColor.Confirmation}>
-                            You are eligible for the free trial of Babblegraph Premium
+                            Your free trial of Babblegraph Premium has begun!
                         </Paragraph>
                     ) : (
                         <Paragraph color={TypographyColor.Warning}>
