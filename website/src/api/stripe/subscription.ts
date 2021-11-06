@@ -29,9 +29,7 @@ export enum PaymentState {
     Terminated = 5,
 }
 
-export type CreateUserSubscriptionRequest = {
-    subscriptionType: SubscriptionType;
-}
+export type CreateUserSubscriptionRequest = {}
 
 export type CreateUserSubscriptionResponse = {
     subscription: Subscription | undefined;
@@ -89,7 +87,6 @@ export function getSubscriptionTrialInfoForUser(
 }
 
 export type UpdateSubscriptionOptions = {
-    subscriptionType?: SubscriptionType;
     cancelAtPeriodEnd?: boolean;
 }
 

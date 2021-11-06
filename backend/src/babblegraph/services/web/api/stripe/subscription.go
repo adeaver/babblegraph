@@ -11,9 +11,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type createUserSubscriptionRequest struct {
-	SubscriptionType bgstripe.SubscriptionType `json:"subscription_type"`
-}
+type createUserSubscriptionRequest struct{}
 
 type createUserSubscriptionResponse struct {
 	Subscription *bgstripe.Subscription `json:"subscription,omitempty"`
@@ -36,7 +34,7 @@ func createUserSubscription(userID users.UserID, body []byte) (interface{}, erro
 		}); err != nil {
 			return err
 		}
-		subscription, err = bgstripe.CreateSubscriptionForUser(tx, userID, req.SubscriptionType)
+		subscription, err = bgstripe.CreateSubscriptionForUser(tx, userID)
 		return err
 	}); err != nil {
 		return nil, err
