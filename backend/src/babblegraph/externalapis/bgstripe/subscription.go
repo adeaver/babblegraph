@@ -55,7 +55,7 @@ type SubscriptionTrialInfo struct {
 	TrialEligibilityDays int64 `json:"trial_eligibility_days"`
 }
 
-func CreateSubscriptionForUser(tx *sqlx.Tx, userID users.UserID, subscriptionType SubscriptionType) (*Subscription, error) {
+func CreateSubscriptionForUser(tx *sqlx.Tx, userID users.UserID) (*Subscription, error) {
 	stripe.Key = env.MustEnvironmentVariable("STRIPE_KEY")
 	existingSubscription, err := LookupActiveSubscriptionForUser(tx, userID)
 	if err != nil {
@@ -72,7 +72,7 @@ func CreateSubscriptionForUser(tx *sqlx.Tx, userID users.UserID, subscriptionTyp
 	if err != nil {
 		return nil, err
 	}
-	stripeProductID, err := getProductIDForSubscriptionType(subscriptionType)
+	stripeProductID, err := getProductIDForEnvironment()
 	if err != nil {
 		return nil, err
 	}
@@ -156,8 +156,7 @@ func LookupActiveSubscriptionForUser(tx *sqlx.Tx, userID users.UserID) (*Subscri
 }
 
 type UpdateSubscriptionOptions struct {
-	SubscriptionType  *SubscriptionType `json:"subscription_type,omitempty"`
-	CancelAtPeriodEnd *bool             `json:"cancel_at_period_end,omitempty"`
+	CancelAtPeriodEnd *bool `json:"cancel_at_period_end,omitempty"`
 }
 
 func UpdateSubscription(tx *sqlx.Tx, userID users.UserID, options UpdateSubscriptionOptions) error {
@@ -170,20 +169,6 @@ func UpdateSubscription(tx *sqlx.Tx, userID users.UserID, options UpdateSubscrip
 		return fmt.Errorf("User has no subscription to update")
 	}
 	subscriptionParams := &stripe.SubscriptionParams{}
-	if options.SubscriptionType != nil {
-		stripeProductID, err := getProductIDForSubscriptionType(*options.SubscriptionType)
-		if err != nil {
-			return err
-		}
-		if _, err := tx.Exec(updateStripeSubscriptionProductIDQuery, *stripeProductID, userID, dbSubscription.StripeSubscriptionID); err != nil {
-			return err
-		}
-		subscriptionParams.Items = []*stripe.SubscriptionItemsParams{
-			&stripe.SubscriptionItemsParams{
-				Price: ptr.String(stripeProductID.Str()),
-			},
-		}
-	}
 	if options.CancelAtPeriodEnd != nil {
 		subscriptionParams.CancelAtPeriodEnd = options.CancelAtPeriodEnd
 	}
@@ -410,22 +395,16 @@ func getSubscriptionTypeForProductID(productID StripeProductID) (*SubscriptionTy
 	}
 }
 
-func getProductIDForSubscriptionType(subscriptionType SubscriptionType) (*StripeProductID, error) {
+func getProductIDForEnvironment() (*StripeProductID, error) {
 	currentEnv := env.MustEnvironmentName()
 	switch currentEnv {
 	case env.EnvironmentProd:
-		if subscriptionType == SubscriptionTypeYearly {
-			return StripeProductIDYearlySubscriptionProd.Ptr(), nil
-		}
-		return StripeProductIDMonthlySubscriptionProd.Ptr(), nil
+		return StripeProductIDYearlySubscriptionProd.Ptr(), nil
 	case env.EnvironmentStage,
 		env.EnvironmentLocal,
 		env.EnvironmentLocalNoEmail,
 		env.EnvironmentLocalTestEmail:
-		if subscriptionType == SubscriptionTypeYearly {
-			return StripeProductIDYearlySubscriptionTest.Ptr(), nil
-		}
-		return StripeProductIDMonthlySubscriptionTest.Ptr(), nil
+		return StripeProductIDYearlySubscriptionTest.Ptr(), nil
 	default:
 		return nil, fmt.Errorf("unsupported environment: %s", currentEnv)
 	}

@@ -28,7 +28,6 @@ import Link, { LinkTarget } from 'common/components/Link/Link';
 
 import {
     Subscription,
-    SubscriptionType,
     SubscriptionTrialInfo,
     PaymentState,
     createUserSubscription,
@@ -89,8 +88,6 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
     const [ isLoadingUserSubscription, setIsLoadingUserSubscription ] = useState<boolean>(true);
     const [ isLoadingManagementToken, setIsLoadingManagementToken ] = useState<boolean>(true);
 
-    const [ isLoadingUpdateSubscription, setIsLoadingUpdateSubscription ] = useState<boolean>(false);
-    const [ subscriptionType, setSubscriptionType ] = useState<SubscriptionType>(SubscriptionType.Monthly);
 
     const [ subscription, setSubscription ] = useState<Subscription | null>(null);
     const [ subscriptionTrialInfo, setSubscriptionTrialInfo ] = useState<SubscriptionTrialInfo | null>(null);
@@ -140,22 +137,6 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
         });
     }, []);
 
-    const handleUpdateSubscription = () => {
-        setIsLoadingUpdateSubscription(true);
-        updateStripeSubscriptionForUser({
-            options: {
-                subscriptionType: subscriptionType,
-            },
-        },
-        (resp: UpdateStripeSubscriptionForUserResponse)  => {
-            setIsLoadingUpdateSubscription(false);
-            !!resp.subscription && setSubscription(resp.subscription);
-        },
-        (err: Error) => {
-            setIsLoadingUpdateSubscription(false);
-            setError(err);
-        });
-    }
     const handleSubmit = () => {
         setIsLoadingCreateSubscription(true);
         createUserSubscription({
@@ -176,7 +157,7 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
         subscription.paymentState !== PaymentState.TrialNoPaymentMethod
     );
     const isPageLoading = isLoadingUserSubscription || isLoadingManagementToken;
-    const isSelectorLoading = isLoadingCreateSubscription || isPaymentConfirmationLoading || isLoadingUpdateSubscription;
+    const isSelectorLoading = isLoadingCreateSubscription || isPaymentConfirmationLoading;
     const classes = styleClasses();
     let body;
     if (isPageLoading) {
@@ -228,19 +209,25 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
             </Heading3>
         );
     } else {
-        const shouldShowCheckoutForm = !!subscription && !isLoadingUpdateSubscription;
+        const shouldShowCheckoutForm = !!subscription;
+        const isEligibleForTrial = !subscriptionTrialInfo || !!subscriptionTrialInfo.trialEligibilityDays;
         const currentPeriodEndDate = !subscription ? null : new Date(subscription.currentPeriodEnd);
         body = (
             <div>
-                <SubscriptionSelector
-                    subscriptionType={subscriptionType}
-                    isPaymentConfirmationLoading={isPaymentConfirmationLoading}
-                    isLoadingUpdateSubscription={isLoadingUpdateSubscription}
-                    isCheckoutFormVisible={shouldShowCheckoutForm}
-                    isEligibleForTrial={!subscriptionTrialInfo || !!subscriptionTrialInfo.trialEligibilityDays}
-                    handleUpdateSubscriptionType={setSubscriptionType}
-                    handleUpdateSubscription={handleUpdateSubscription}
-                    handleSubmit={handleSubmit} />
+                <Heading1 color={TypographyColor.Primary}>
+                    Babblegraph Premium Subscription Checkout
+                </Heading1>
+                {
+                    isEligibleForTrial ? (
+                        <Paragraph color={TypographyColor.Confirmation}>
+                            You are eligible for the free trial of Babblegraph Premium
+                        </Paragraph>
+                    ) : (
+                        <Paragraph color={TypographyColor.Warning}>
+                            According to our records, you are not eligible for the 14 day free trial of Babblegraph Premium. If you believe this is an error, reach out via email at hello@babblegraph.com
+                        </Paragraph>
+                    )
+                }
                 {
                     shouldShowCheckoutForm && (
                         subscription.paymentIntentClientSecret ? (
@@ -296,94 +283,6 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
                 </Grid>
             </Grid>
         </Page>
-    );
-}
-
-type SubscriptionSelectorProps = {
-    subscriptionType: string;
-    isCheckoutFormVisible: boolean;
-    isPaymentConfirmationLoading: boolean;
-    isLoadingUpdateSubscription: boolean;
-    isEligibleForTrial: boolean;
-
-    handleUpdateSubscription: () => void;
-    handleUpdateSubscriptionType: (string) => void;
-    handleSubmit: () => void;
-}
-
-const SubscriptionSelector = (props: SubscriptionSelectorProps) => {
-    const handleRadioFormChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        props.handleUpdateSubscriptionType((event.target as HTMLInputElement).value);
-    };
-
-    const classes = styleClasses();
-    return (
-        <div>
-            <Heading1 color={TypographyColor.Primary}>
-                Babblegraph Premium Subscription Checkout
-            </Heading1>
-            <Heading3>
-                Choose your subscription
-            </Heading3>
-            {
-                props.isEligibleForTrial ? (
-                    <Paragraph color={TypographyColor.Confirmation}>
-                        You are eligible for the free trial of Babblegraph Premium
-                    </Paragraph>
-                ) : (
-                    <Paragraph color={TypographyColor.Warning}>
-                        According to our records, you are not eligible for the 14 day free trial of Babblegraph Premium. If you believe this is an error, reach out via email at hello@babblegraph.com
-                    </Paragraph>
-                )
-            }
-            <FormControl className={classes.subscriptionSelector} component="fieldset">
-                <RadioGroup aria-label="subscription-type" name="subscription-type1" value={props.subscriptionType} onChange={handleRadioFormChange}>
-                    <Grid container
-                        className={classes.checkoutFormObject}>
-                        <Grid item xs={false} md={3}>
-                            &nbsp;
-                        </Grid>
-                        <Grid item className={classes.subscriptionOption} xs={12} md={3}>
-                            <FormControlLabel value={SubscriptionType.Monthly} control={<PrimaryRadio />} label="Monthly ($3/month)" />
-                        </Grid>
-                        <Grid item className={classes.subscriptionOption} xs={12} md={3}>
-                            <FormControlLabel value={SubscriptionType.Yearly} control={<PrimaryRadio />} label="Yearly ($34/year)" />
-                        </Grid>
-                    </Grid>
-                </RadioGroup>
-            </FormControl>
-            {
-                (props.isEligibleForTrial && !props.isCheckoutFormVisible) && (
-                    <Paragraph size={Size.Small}>
-                        You can change this later!
-                    </Paragraph>
-                )
-            }
-            <Grid container>
-                <Grid item xs={false} md={3}>
-                    &nbsp;
-                </Grid>
-                <Grid item className={classes.submitButton} xs={12} md={6}>
-                    {
-                        !props.isCheckoutFormVisible ? (
-                            <PrimaryButton
-                                className={classes.checkoutFormObject}
-                                disabled={props.isPaymentConfirmationLoading || props.isLoadingUpdateSubscription}
-                                onClick={props.handleSubmit}>
-                                { props.isEligibleForTrial ? "Confirm and start your trial" : "Confirm your selection" }
-                            </PrimaryButton>
-                        ) : (
-                            <PrimaryButton
-                                className={classes.checkoutFormObject}
-                                disabled={props.isPaymentConfirmationLoading || props.isLoadingUpdateSubscription}
-                                onClick={props.handleUpdateSubscription}>
-                                Update Subscription Selection
-                            </PrimaryButton>
-                        )
-                    }
-                </Grid>
-            </Grid>
-        </div>
     );
 }
 
