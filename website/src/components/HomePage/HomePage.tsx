@@ -70,6 +70,9 @@ const styleClasses = makeStyles({
     mainPageLinkContainer: {
         cursor: 'pointer',
     },
+    verificationButton: {
+        width: '100%',
+    },
 });
 
 const errorMessages = {
@@ -302,7 +305,7 @@ const SuccessConfirmation = (props: SuccessConfirmationProps) => {
                     &nbsp;
                 </Grid>
                 <Grid item xs={6} md={4}>
-                    <PrimaryButton onClick={props.handleResendVerificationEmail}>
+                    <PrimaryButton className={classes.verificationButton} onClick={props.handleResendVerificationEmail}>
                         Resend the verification email
                     </PrimaryButton>
                 </Grid>

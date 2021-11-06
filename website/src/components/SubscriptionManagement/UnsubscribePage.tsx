@@ -97,6 +97,11 @@ const UnsubscribePage = (props: UnsubscribePageProps) => {
         });
     }, []);
 
+    const closeSnackbars = () => {
+        setDidUpdate(null);
+        setError(null);
+    }
+
     const classes = styleClasses();
     const isLoading = isUnsubscribeRequestLoading || isUserProfileLoading;
     return (
@@ -125,10 +130,10 @@ const UnsubscribePage = (props: UnsubscribePageProps) => {
                             )
                         }
                     </Card>
-                    <Snackbar open={!!error} autoHideDuration={6000}>
+                    <Snackbar open={!!error || (!didUpdate && didUpdate != null)} autoHideDuration={6000} onClose={closeSnackbars}>
                         <Alert severity="error">Something went wrong processing your request.</Alert>
                     </Snackbar>
-                    <Snackbar open={didUpdate} autoHideDuration={6000}>
+                    <Snackbar open={didUpdate} autoHideDuration={6000} onClose={closeSnackbars}>
                         <Alert severity="success">Successfully unsubscribed from Babblegraph.</Alert>
                     </Snackbar>
                 </Grid>

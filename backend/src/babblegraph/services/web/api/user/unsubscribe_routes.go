@@ -5,6 +5,7 @@ import (
 	"babblegraph/model/unsubscribereason"
 	"babblegraph/model/users"
 	"babblegraph/util/database"
+	"babblegraph/util/email"
 	"babblegraph/util/ptr"
 	"babblegraph/wordsmith"
 	"encoding/json"
@@ -27,14 +28,15 @@ func handleUnsubscribeUser(body []byte) (interface{}, error) {
 	if err := json.Unmarshal(body, &r); err != nil {
 		return nil, err
 	}
-	userID, err := parseSubscriptionManagementToken(r.Token, ptr.String(r.EmailAddress))
+	formattedEmailAddress := email.FormatEmailAddress(r.EmailAddress)
+	userID, err := parseSubscriptionManagementToken(r.Token, ptr.String(formattedEmailAddress))
 	if err != nil {
 		return nil, err
 	}
 	var didUpdate bool
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		var err error
-		didUpdate, err = users.UnsubscribeUserForIDAndEmail(tx, *userID, r.EmailAddress)
+		didUpdate, err = users.UnsubscribeUserForIDAndEmail(tx, *userID, formattedEmailAddress)
 		if err != nil {
 			return err
 		}
