@@ -139,9 +139,7 @@ const SubscriptionCheckoutPage = (props: SubscriptionCheckoutPageProps) => {
 
     const handleSubmit = () => {
         setIsLoadingCreateSubscription(true);
-        createUserSubscription({
-            subscriptionType: subscriptionType,
-        },
+        createUserSubscription({},
         (resp: CreateUserSubscriptionResponse) => {
             setIsLoadingCreateSubscription(false);
             !!resp.subscription && setSubscription(resp.subscription);
