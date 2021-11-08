@@ -13,7 +13,7 @@ import (
 var validVersionsForLanguageCode = map[wordsmith.LanguageCode][]Version{
 	wordsmith.LanguageCodeSpanish: []Version{
 		Version3,
-		Version6,
+		Version7,
 	},
 }
 
