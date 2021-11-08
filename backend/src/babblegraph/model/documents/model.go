@@ -24,7 +24,10 @@ const (
 	// Version 6 adds paywall tracking
 	Version6 Version = 6
 
-	CurrentDocumentVersion Version = Version6
+	// Version 7 adds content topics length filter
+	Version7 Version = 7
+
+	CurrentDocumentVersion Version = Version7
 )
 
 func (v Version) Ptr() *Version {
@@ -55,6 +58,10 @@ type Metadata struct {
 
 type DocumentID string
 
+func (d DocumentID) Str() string {
+	return string(d)
+}
+
 type Document struct {
 	ID                                 DocumentID                   `json:"id"`
 	Version                            Version                      `json:"version"`
@@ -65,6 +72,7 @@ type Document struct {
 	Metadata                           Metadata                     `json:"metadata"`
 	Domain                             string                       `json:"domain"`
 	Topics                             []contenttopics.ContentTopic `json:"content_topics"`
+	TopicsLength                       *int64                       `json:"topics_length,omitempty"`
 	SeedJobIngestTimestamp             *int64                       `json:"seed_job_ingest_timestamp,omitempty"`
 	LemmatizedDescription              *string                      `json:"lemmatized_description,omitempty"`
 	HasPaywall                         *bool                        `json:"has_paywall"`

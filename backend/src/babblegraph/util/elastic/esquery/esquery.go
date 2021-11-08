@@ -60,3 +60,22 @@ func ExecuteSearch(index elastic.Index, query query, orderedSort *orderedSort, f
 	}
 	return elastic.RunSearchRequest(req, fn)
 }
+
+type updateBody struct {
+	Doc interface{} `json:"doc"`
+}
+
+func ExecuteUpdate(index elastic.Index, documentID string, body interface{}) error {
+	bodyBytes, err := json.Marshal(updateBody{
+		Doc: body,
+	})
+	if err != nil {
+		return err
+	}
+	req := esapi.UpdateRequest{
+		Index:      index.GetName(),
+		DocumentID: documentID,
+		Body:       strings.NewReader(string(bodyBytes)),
+	}
+	return elastic.RunUpdateRequest(req)
+}

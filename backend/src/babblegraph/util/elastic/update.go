@@ -7,7 +7,7 @@ import (
 	"github.com/elastic/go-elasticsearch/esapi"
 )
 
-func RunUpdateMappingsRequest(req, migrationReq esapi.IndicesPutMappingRequest) error {
+func RunUpdateRequest(req esapi.UpdateRequest) error {
 	res, err := req.Do(context.Background(), esClient)
 	if err != nil {
 		return err
