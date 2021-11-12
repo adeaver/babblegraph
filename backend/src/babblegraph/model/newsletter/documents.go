@@ -27,8 +27,13 @@ type getDocumentsForUserForLemmaInput struct {
 }
 
 type documentAccessor interface {
-	GetDocumentsForUser(input getDocumentsForUserInput) ([]documents.DocumentWithScore, error)
+	GetDocumentsForUser(input getDocumentsForUserInput) (*documentsOutput, error)
 	GetDocumentsForUserForLemma(input getDocumentsForUserForLemmaInput) ([]documents.DocumentWithScore, error)
+}
+
+type documentsOutput struct {
+	RecentDocuments    []documents.DocumentWithScore
+	NonRecentDocuments []documents.DocumentWithScore
 }
 
 type DefaultDocumentsAccessor struct{}
@@ -37,17 +42,36 @@ func GetDefaultDocumentsAccessor() *DefaultDocumentsAccessor {
 	return &DefaultDocumentsAccessor{}
 }
 
-func (d *DefaultDocumentsAccessor) GetDocumentsForUser(input getDocumentsForUserInput) ([]documents.DocumentWithScore, error) {
+func (d *DefaultDocumentsAccessor) GetDocumentsForUser(input getDocumentsForUserInput) (*documentsOutput, error) {
 	dailyEmailDocQueryBuilder := documents.NewDailyEmailDocumentsQueryBuilder()
 	dailyEmailDocQueryBuilder.ContainingLemmas(input.Lemmas)
 	dailyEmailDocQueryBuilder.ForTopic(input.Topic)
-	return documents.ExecuteDocumentQuery(dailyEmailDocQueryBuilder, documents.ExecuteDocumentQueryInput{
+	dailyEmailDocQueryBuilder.WithRecencyBias(documents.RecencyBiasMostRecent)
+	recentDocuments, err := documents.ExecuteDocumentQuery(dailyEmailDocQueryBuilder, documents.ExecuteDocumentQueryInput{
 		LanguageCode:        input.getDocumentsBaseInput.LanguageCode,
 		ValidDomains:        input.getDocumentsBaseInput.ValidDomains,
 		ExcludedDocumentIDs: input.getDocumentsBaseInput.ExcludedDocumentIDs,
 		MinimumReadingLevel: input.getDocumentsBaseInput.MinimumReadingLevel,
 		MaximumReadingLevel: input.getDocumentsBaseInput.MaximumReadingLevel,
 	})
+	if err != nil {
+		return nil, err
+	}
+	dailyEmailDocQueryBuilder.WithRecencyBias(documents.RecencyBiasNotRecent)
+	notRecentDocuments, err := documents.ExecuteDocumentQuery(dailyEmailDocQueryBuilder, documents.ExecuteDocumentQueryInput{
+		LanguageCode:        input.getDocumentsBaseInput.LanguageCode,
+		ValidDomains:        input.getDocumentsBaseInput.ValidDomains,
+		ExcludedDocumentIDs: input.getDocumentsBaseInput.ExcludedDocumentIDs,
+		MinimumReadingLevel: input.getDocumentsBaseInput.MinimumReadingLevel,
+		MaximumReadingLevel: input.getDocumentsBaseInput.MaximumReadingLevel,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &documentsOutput{
+		RecentDocuments:    recentDocuments,
+		NonRecentDocuments: notRecentDocuments,
+	}, nil
 }
 
 func (d *DefaultDocumentsAccessor) GetDocumentsForUserForLemma(input getDocumentsForUserForLemmaInput) ([]documents.DocumentWithScore, error) {

@@ -60,10 +60,10 @@ func getDocumentCategories(input getDocumentCategoriesInput) ([]Category, error)
 		switch {
 		case err != nil:
 			return nil, err
-		case len(documentsForTopic) == 0:
+		case len(documentsForTopic.RecentDocuments)+len(documentsForTopic.NonRecentDocuments) == 0:
 			log.Println(fmt.Sprintf("No documents for topic %s", t.Str()))
 		default:
-			documentsByTopic[t] = documentsForTopic
+			documentsByTopic[t] = append(documentsForTopic.RecentDocuments, documentsForTopic.NonRecentDocuments...)
 			log.Println(fmt.Sprintf("Documents for topic %s: %+v", t.Str(), documentsForTopic))
 		}
 	}
@@ -73,7 +73,7 @@ func getDocumentCategories(input getDocumentCategoriesInput) ([]Category, error)
 		languageCode:                  input.languageCode,
 		numberOfDocumentsInNewsletter: deref.Int(input.numberOfDocumentsInNewsletter, defaultNumberOfArticlesPerEmail),
 		documentsByTopic:              documentsByTopic,
-		genericDocuments:              genericDocuments,
+		genericDocuments:              append(genericDocuments.RecentDocuments, genericDocuments.NonRecentDocuments...),
 	})
 }
 

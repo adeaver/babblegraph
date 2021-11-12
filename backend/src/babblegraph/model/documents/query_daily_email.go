@@ -14,7 +14,7 @@ const (
 	RecencyBiasMostRecent RecencyBias = "most_recent"
 	RecencyBiasNotRecent  RecencyBias = "not_recent"
 
-	recencyBiasBoundary = -7 * 24 * time.Hour // one week
+	RecencyBiasBoundary = -7 * 24 * time.Hour // one week
 )
 
 func (r RecencyBias) Ptr() *RecencyBias {
@@ -62,13 +62,15 @@ func (d *dailyEmailDocumentsQueryBuilder) ExtendBaseQuery(queryBuilder *esquery.
 	}
 	if d.recencyBias != nil {
 		seedJobIngestTimestampRangeQuery := esquery.NewRangeQueryBuilderForFieldName("seed_job_ingest_timestamp")
-		recencyBoundary := time.Now().Add(recencyBiasBoundary).Unix()
+		recencyBoundary := time.Now().Add(RecencyBiasBoundary).Unix()
 		switch {
 		case *d.recencyBias == RecencyBiasMostRecent:
 			seedJobIngestTimestampRangeQuery.GreaterThanOrEqualToInt64(recencyBoundary)
+			queryBuilder.AddMust(seedJobIngestTimestampRangeQuery.BuildRangeQuery())
 		case *d.recencyBias == RecencyBiasNotRecent:
 			// The minus one here is to ensure that documents don't appear twice
-			seedJobIngestTimestampRangeQuery.LessThanOrEqualToInt64(recencyBoundary - 1)
+			seedJobIngestTimestampRangeQuery.GreaterThanOrEqualToInt64(recencyBoundary)
+			queryBuilder.AddMustNot(seedJobIngestTimestampRangeQuery.BuildRangeQuery())
 		}
 	}
 	if len(d.lemmas) > 0 {
