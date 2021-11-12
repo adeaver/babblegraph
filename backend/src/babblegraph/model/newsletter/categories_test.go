@@ -239,7 +239,7 @@ func TestFavorRecentDocuments(t *testing.T) {
 	}
 	var expectedLinks []Link
 	var docs []documents.DocumentWithScore
-	for idx := 0; idx < 8; idx++ {
+	for idx := 0; idx <= 8; idx++ {
 		doc, link, err := getDefaultDocumentWithLink(idx, emailRecordID, userAccessor, getDefaultDocumentInput{
 			Topics: []contenttopics.ContentTopic{contenttopics.ContentTopicArt},
 		})
