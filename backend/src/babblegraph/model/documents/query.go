@@ -10,9 +10,20 @@ import (
 	"log"
 )
 
+/*
+   We want to filter out articles that are assigned to all keywords
+   because they are irrelevant. This is necessary since those articles
+   may have many keywords from a user's tracking list.
+
+   Less than 5 was chosen by viewing the number of articles that have
+   multiple content topics attached to them. There is a huge spike at 7,
+   which is obviously not useful. By inspection, 4 seems reasonable.
+*/
+const maximumNumberOfTopicsPerDocument int64 = 4
+
 var validVersionsForLanguageCode = map[wordsmith.LanguageCode][]Version{
-	wordsmith.LanguageCodeSpanish: []Version{
-		Version3,
+	wordsmith.LanguageCodeSpanish: {
+		Version7,
 		Version7,
 	},
 }
@@ -39,19 +50,6 @@ func ExecuteDocumentQuery(query executableQuery, input ExecuteDocumentQueryInput
 	queryBuilder.AddMust(esquery.Match("language_code", input.LanguageCode.Str()))
 	queryBuilder.AddMust(esquery.Terms("domain.keyword", input.ValidDomains))
 	queryBuilder.AddMustNot(esquery.Match("has_paywall", true))
-	/*
-	   We want to filter out articles that are assigned to all keywords
-	   because they are irrelevant. This is necessary since those articles
-	   may have many keywords from a user's tracking list.
-
-	   Less than 5 was chosen by viewing the number of articles that have
-	   multiple content topics attached to them. There is a huge spike at 7,
-	   which is obviously not useful. By inspection, 4 seems reasonable.
-	*/
-	queryBuilder.AddFilter(esquery.Script("doc['content_topics.keyword'].size() < 5"))
-	if filteredWords, ok := filteredWordsForLanguageCode[input.LanguageCode]; ok {
-		queryBuilder.AddMustNot(esquery.Terms("metadata.title", filteredWords))
-	}
 	if len(input.ExcludedDocumentIDs) != 0 {
 		var excludedDocumentIDsQueryString []string
 		for _, docID := range input.ExcludedDocumentIDs {

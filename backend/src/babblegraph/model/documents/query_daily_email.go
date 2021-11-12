@@ -5,18 +5,37 @@ import (
 	"babblegraph/util/elastic/esquery"
 	"babblegraph/wordsmith"
 	"strings"
+	"time"
 )
+
+type RecencyBias string
+
+const (
+	RecencyBiasMostRecent RecencyBias = "most_recent"
+	RecencyBiasNotRecent  RecencyBias = "not_recent"
+
+	recencyBiasBoundary = -7 * 24 * time.Hour // one week
+)
+
+func (r RecencyBias) Ptr() *RecencyBias {
+	return &r
+}
 
 // Each query can only search for a single topic
 // to make sure that the documents returned are most
 // relevant for that topic - not the union of the two
 type dailyEmailDocumentsQueryBuilder struct {
-	topic  *contenttopics.ContentTopic
-	lemmas []string
+	recencyBias *RecencyBias
+	topic       *contenttopics.ContentTopic
+	lemmas      []string
 }
 
 func NewDailyEmailDocumentsQueryBuilder() *dailyEmailDocumentsQueryBuilder {
 	return &dailyEmailDocumentsQueryBuilder{}
+}
+
+func (d *dailyEmailDocumentsQueryBuilder) WithRecencyBias(r RecencyBias) {
+	d.recencyBias = r.Ptr()
 }
 
 func (d *dailyEmailDocumentsQueryBuilder) ForTopic(topic *contenttopics.ContentTopic) {
@@ -40,6 +59,17 @@ func (d *dailyEmailDocumentsQueryBuilder) ExtendBaseQuery(queryBuilder *esquery.
 		// The idea here is that we filter out documents that contain
 		// similar keywords
 		queryBuilder.AddFilter(esquery.Term("content_topics.keyword", d.topic.Str()))
+	}
+	if d.recencyBias != nil {
+		seedJobIngestTimestampRangeQuery := esquery.NewRangeQueryBuilderForFieldName("seed_job_ingest_timestamp")
+		recencyBoundary := time.Now().Add(recencyBiasBoundary).Unix()
+		switch {
+		case *d.recencyBias == RecencyBiasMostRecent:
+			seedJobIngestTimestampRangeQuery.GreaterThanOrEqualToInt64(recencyBoundary)
+		case *d.recencyBias == RecencyBiasNotRecent:
+			// The minus one here is to ensure that documents don't appear twice
+			seedJobIngestTimestampRangeQuery.LessThanOrEqualToInt64(recencyBoundary - 1)
+		}
 	}
 	if len(d.lemmas) > 0 {
 		queryBuilder.AddShould(esquery.Match("lemmatized_description", strings.Join(d.lemmas, " ")))
