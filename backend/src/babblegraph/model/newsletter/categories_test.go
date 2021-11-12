@@ -262,18 +262,11 @@ func TestFavorRecentDocuments(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Got error %s", err.Error())
 	}
-	displayName, err := contenttopics.ContentTopicNameToDisplayName(contenttopics.ContentTopicArt)
-	if err != nil {
-		t.Fatalf("Error setting up test: %s", err.Error())
-	}
-	expectedDisplayName := text.ToTitleCaseForLanguage(displayName.Str(), wordsmith.LanguageCodeSpanish)
 	switch {
 	case len(categories) != 1:
 		t.Errorf("Expected 1 category, but got %d", len(categories))
-	case categories[0].Name == nil:
-		t.Errorf("Expected category to have name %s, but got null", expectedDisplayName)
-	case *categories[0].Name != expectedDisplayName:
-		t.Errorf("Expected category to have name %s, but got %s", expectedDisplayName, *categories[0].Name)
+	case categories[0].Name != nil:
+		t.Errorf("Expected category to have no name, but got %s", *categories[0].Name)
 	}
 	for _, link := range categories[0].Links {
 		originalIdx, err := strconv.Atoi(strings.TrimPrefix(link.DocumentID.Str(), "web_doc-"))
