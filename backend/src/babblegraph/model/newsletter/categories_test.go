@@ -276,7 +276,7 @@ func TestFavorRecentDocuments(t *testing.T) {
 		t.Errorf("Expected category to have name %s, but got %s", expectedDisplayName, *categories[0].Name)
 	}
 	for _, link := range categories[0].Links {
-		originalIdx, err := strconv.Atoi(strings.TrimPrefix(link.DocumentID.Str(), "web-doc_"))
+		originalIdx, err := strconv.Atoi(strings.TrimPrefix(link.DocumentID.Str(), "web_doc-"))
 		switch {
 		case err != nil:
 			t.Errorf("Got error converting string to index: %s", err.Error())
