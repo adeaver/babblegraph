@@ -4,14 +4,15 @@ import (
 	"babblegraph/model/documents"
 	"fmt"
 	"log"
+	"time"
 )
 
 type testDocsAccessor struct {
 	documents []documents.DocumentWithScore
 }
 
-func (t *testDocsAccessor) GetDocumentsForUser(input getDocumentsForUserInput) ([]documents.DocumentWithScore, error) {
-	var docs []documents.DocumentWithScore
+func (t *testDocsAccessor) GetDocumentsForUser(input getDocumentsForUserInput) (*documentsOutput, error) {
+	var recentDocuments, nonRecentDocuments []documents.DocumentWithScore
 	for _, docWithScore := range t.documents {
 		doc := docWithScore.Document
 		switch {
@@ -28,10 +29,20 @@ func (t *testDocsAccessor) GetDocumentsForUser(input getDocumentsForUserInput) (
 		case input.Topic != nil && !containsTopic(*input.Topic, doc.Topics):
 			log.Println(fmt.Sprintf("Document does not contain topic %s", input.Topic.Str()))
 		default:
-			docs = append(docs, docWithScore)
+			recencyBoundary := time.Now().Add(documents.RecencyBiasBoundary).Unix()
+			switch {
+			case docWithScore.Document.SeedJobIngestTimestamp == nil,
+				*docWithScore.Document.SeedJobIngestTimestamp < recencyBoundary:
+				nonRecentDocuments = append(nonRecentDocuments, docWithScore)
+			case *docWithScore.Document.SeedJobIngestTimestamp >= recencyBoundary:
+				recentDocuments = append(recentDocuments, docWithScore)
+			}
 		}
 	}
-	return docs, nil
+	return &documentsOutput{
+		RecentDocuments:    recentDocuments,
+		NonRecentDocuments: nonRecentDocuments,
+	}, nil
 }
 
 func (t *testDocsAccessor) GetDocumentsForUserForLemma(input getDocumentsForUserForLemmaInput) ([]documents.DocumentWithScore, error) {

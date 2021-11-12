@@ -9,8 +9,10 @@ import (
 	"babblegraph/util/text"
 	"babblegraph/wordsmith"
 	"fmt"
+	"strconv"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestDefaultCategories(t *testing.T) {
@@ -223,5 +225,56 @@ func TestCategoryWithGeneric(t *testing.T) {
 	}
 	if len(categories[1].Links) != 3 {
 		t.Errorf("Expected generic category to have 3 links, but got %d", len(categories[1].Links))
+	}
+}
+
+func TestFavorRecentDocuments(t *testing.T) {
+	emailRecordID := email.NewEmailRecordID()
+	userAccessor := &testUserAccessor{
+		readingLevel: &userReadingLevel{
+			LowerBound: 30,
+			UpperBound: 80,
+		},
+		userTopics: []contenttopics.ContentTopic{},
+	}
+	var expectedLinks []Link
+	var docs []documents.DocumentWithScore
+	for idx := 0; idx <= 8; idx++ {
+		doc, link, err := getDefaultDocumentWithLink(idx, emailRecordID, userAccessor, getDefaultDocumentInput{
+			Topics: []contenttopics.ContentTopic{contenttopics.ContentTopicArt},
+		})
+		doc.Document.SeedJobIngestTimestamp = ptr.Int64(time.Now().Add(time.Duration(-2*(8-idx)*24) * time.Hour).Unix())
+		if err != nil {
+			t.Fatalf("Error setting up test: %s", err.Error())
+		}
+		expectedLinks = append(expectedLinks, *link)
+		docs = append(docs, *doc)
+	}
+	categories, err := getDocumentCategories(getDocumentCategoriesInput{
+		emailRecordID: emailRecordID,
+		languageCode:  wordsmith.LanguageCodeSpanish,
+		userAccessor:  userAccessor,
+		docsAccessor: &testDocsAccessor{
+			documents: docs,
+		},
+		numberOfDocumentsInNewsletter: ptr.Int(4),
+	})
+	if err != nil {
+		t.Fatalf("Got error %s", err.Error())
+	}
+	switch {
+	case len(categories) != 1:
+		t.Errorf("Expected 1 category, but got %d", len(categories))
+	case categories[0].Name != nil:
+		t.Errorf("Expected category to have no name, but got %s", *categories[0].Name)
+	}
+	for _, link := range categories[0].Links {
+		originalIdx, err := strconv.Atoi(strings.TrimPrefix(link.DocumentID.Str(), "web_doc-"))
+		switch {
+		case err != nil:
+			t.Errorf("Got error converting string to index: %s", err.Error())
+		case originalIdx <= 4:
+			t.Errorf("Expected only recent documents (idx 5-8), but got document with idx %d", originalIdx)
+		}
 	}
 }
