@@ -16,7 +16,7 @@ func (t *testDocsAccessor) GetDocumentsForUser(input getDocumentsForUserInput) (
 	for _, docWithScore := range t.documents {
 		doc := docWithScore.Document
 		switch {
-		case doc.LanguageCode != input.LanguageCode,
+		case doc.LanguageCode != input.LanguageCode:
 			log.Println(fmt.Sprintf("Language code is not valid"))
 		case isIDExcluded(doc.ID, input.ExcludedDocumentIDs):
 			log.Println(fmt.Sprintf("ID %s is excluded", doc.ID))
