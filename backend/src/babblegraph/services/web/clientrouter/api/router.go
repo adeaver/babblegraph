@@ -2,7 +2,7 @@ package api
 
 import (
 	"babblegraph/model/users"
-	"babblegraph/services/web/clientapi/middleware"
+	"babblegraph/services/web/clientrouter/middleware"
 	"fmt"
 	"net/http"
 
