@@ -4,7 +4,7 @@ import (
 	"babblegraph/model/routes"
 	"babblegraph/model/useraccounts"
 	"babblegraph/model/users"
-	"babblegraph/services/web/clientapi/middleware"
+	"babblegraph/services/web/clientrouter/middleware"
 	"net/http"
 )
 

@@ -2,7 +2,7 @@ package index
 
 import (
 	"babblegraph/actions/email"
-	"babblegraph/services/web/clientapi/middleware"
+	"babblegraph/services/web/clientrouter/middleware"
 	"babblegraph/util/database"
 	"fmt"
 	"log"

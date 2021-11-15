@@ -1,6 +1,7 @@
 package main
 
 import (
+	"babblegraph/services/web/clientrouter"
 	"babblegraph/util/database"
 	"babblegraph/util/env"
 	"babblegraph/wordsmith"
