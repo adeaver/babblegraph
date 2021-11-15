@@ -6,7 +6,7 @@ import (
 	"babblegraph/model/userdocuments"
 	"babblegraph/model/userlinks"
 	"babblegraph/model/users"
-	"babblegraph/services/web/middleware"
+	"babblegraph/services/web/clientapi/middleware"
 	"babblegraph/util/database"
 	"babblegraph/util/encrypt"
 	"babblegraph/util/random"

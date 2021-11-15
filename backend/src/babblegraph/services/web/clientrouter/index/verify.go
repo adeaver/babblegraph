@@ -3,7 +3,7 @@ package index
 import (
 	"babblegraph/actions/verification"
 	"babblegraph/model/routes"
-	"babblegraph/services/web/middleware"
+	"babblegraph/services/web/clientapi/middleware"
 	"net/http"
 
 	"github.com/gorilla/mux"

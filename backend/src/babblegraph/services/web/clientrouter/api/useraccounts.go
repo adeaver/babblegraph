@@ -1,4 +1,4 @@
-package router
+package api
 
 import (
 	"babblegraph/externalapis/bgstripe"
@@ -6,8 +6,8 @@ import (
 	"babblegraph/model/useraccounts"
 	"babblegraph/model/useraccountsnotifications"
 	"babblegraph/model/users"
-	"babblegraph/services/web/middleware"
-	"babblegraph/services/web/util/routetoken"
+	"babblegraph/services/web/clientrouter/middleware"
+	"babblegraph/services/web/clientrouter/util/routetoken"
 	"babblegraph/util/database"
 	"babblegraph/util/email"
 	"babblegraph/util/encrypt"

@@ -1,7 +1,7 @@
 package index
 
 import (
-	"babblegraph/services/web/middleware"
+	"babblegraph/services/web/clientapi/middleware"
 	"babblegraph/util/env"
 	"fmt"
 	"net/http"

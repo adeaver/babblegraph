@@ -3,7 +3,7 @@ package middleware
 import (
 	"babblegraph/model/useraccounts"
 	"babblegraph/model/users"
-	"babblegraph/services/web/util/auth"
+	"babblegraph/services/web/clientapi/util/auth"
 	"babblegraph/util/database"
 	"fmt"
 	"log"

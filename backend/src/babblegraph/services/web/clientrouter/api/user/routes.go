@@ -4,7 +4,7 @@ import (
 	"babblegraph/model/routes"
 	"babblegraph/model/useraccounts"
 	"babblegraph/model/users"
-	"babblegraph/services/web/router"
+	"babblegraph/services/web/clientrouter/api"
 	"babblegraph/util/database"
 	"babblegraph/util/encrypt"
 	"babblegraph/util/ptr"
@@ -15,9 +15,9 @@ import (
 )
 
 func RegisterRouteGroups() error {
-	return router.RegisterRouteGroup(router.RouteGroup{
+	return api.RegisterRouteGroup(api.RouteGroup{
 		Prefix: "user",
-		Routes: []router.Route{
+		Routes: []api.Route{
 			{
 				Path:    "unsubscribe_user_1",
 				Handler: handleUnsubscribeUser,
@@ -54,7 +54,7 @@ func RegisterRouteGroups() error {
 				Handler: requestPasswordResetLink,
 			},
 		},
-		AuthenticatedRoutes: []router.AuthenticatedRoute{
+		AuthenticatedRoutes: []api.AuthenticatedRoute{
 			{
 				Path:    "get_user_schedule_1",
 				Handler: handleGetUserNewsletterSchedule,

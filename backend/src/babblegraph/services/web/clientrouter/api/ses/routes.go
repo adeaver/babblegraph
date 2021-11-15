@@ -4,7 +4,7 @@ import (
 	"babblegraph/externalapis/bgstripe"
 	"babblegraph/model/sesnotifications"
 	"babblegraph/model/users"
-	"babblegraph/services/web/router"
+	"babblegraph/services/web/clientrouter/api"
 	"babblegraph/util/database"
 	"babblegraph/util/ses"
 	"encoding/json"
@@ -16,9 +16,9 @@ import (
 )
 
 func RegisterRouteGroups() error {
-	return router.RegisterRouteGroup(router.RouteGroup{
+	return api.RegisterRouteGroup(api.RouteGroup{
 		Prefix: "ses",
-		Routes: []router.Route{
+		Routes: []api.Route{
 			{
 				Path:    "handle_bounce_notification_1",
 				Handler: handleBounceNotification,

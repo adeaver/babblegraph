@@ -2,15 +2,15 @@ package token
 
 import (
 	"babblegraph/model/routes"
-	"babblegraph/services/web/router"
-	"babblegraph/services/web/util/routetoken"
+	"babblegraph/services/web/clientrouter/api"
+	"babblegraph/services/web/clientrouter/util/routetoken"
 	"encoding/json"
 )
 
 func RegisterRouteGroups() error {
-	return router.RegisterRouteGroup(router.RouteGroup{
+	return api.RegisterRouteGroup(api.RouteGroup{
 		Prefix: "token",
-		Routes: []router.Route{
+		Routes: []api.Route{
 			{
 				Path:    "get_reinforcement_token_1",
 				Handler: handleGetReinforcementToken,

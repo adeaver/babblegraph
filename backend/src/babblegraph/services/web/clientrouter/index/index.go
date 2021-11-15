@@ -2,8 +2,8 @@ package index
 
 import (
 	"babblegraph/model/utm"
-	"babblegraph/services/web/initialdata"
-	"babblegraph/services/web/middleware"
+	"babblegraph/services/web/clientapi/initialdata"
+	"babblegraph/services/web/clientapi/middleware"
 	"babblegraph/util/database"
 	"fmt"
 	"log"

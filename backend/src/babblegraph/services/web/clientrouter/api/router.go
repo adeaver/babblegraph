@@ -1,8 +1,8 @@
-package router
+package api
 
 import (
 	"babblegraph/model/users"
-	"babblegraph/services/web/middleware"
+	"babblegraph/services/web/clientapi/middleware"
 	"fmt"
 	"net/http"
 

@@ -1,15 +1,15 @@
 package utm
 
 import (
-	"babblegraph/services/web/router"
+	"babblegraph/services/web/clientrouter/api"
 	"babblegraph/util/ptr"
 	"encoding/json"
 )
 
 func RegisterRouteGroups() error {
-	return router.RegisterRouteGroup(router.RouteGroup{
+	return api.RegisterRouteGroup(api.RouteGroup{
 		Prefix: "utm",
-		Routes: []router.Route{
+		Routes: []api.Route{
 			{
 				Path:             "set_page_load_event_1",
 				Handler:          handleSetPageLoadEvent,

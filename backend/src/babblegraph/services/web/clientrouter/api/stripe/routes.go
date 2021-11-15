@@ -1,16 +1,14 @@
 package stripe
 
-import (
-	"babblegraph/services/web/router"
-)
+import "babblegraph/services/web/clientrouter/api"
 
 const routeGroupPrefix = "stripe"
 
 func RegisterRouteGroups() error {
-	if err := router.RegisterRouteGroup(router.RouteGroup{
+	if err := api.RegisterRouteGroup(api.RouteGroup{
 		Prefix: routeGroupPrefix,
-		Routes: []router.Route{},
-		AuthenticatedRoutes: []router.AuthenticatedRoute{
+		Routes: []api.Route{},
+		AuthenticatedRoutes: []api.AuthenticatedRoute{
 			{
 				Path:    "create_user_subscription_1",
 				Handler: createUserSubscription,
@@ -46,5 +44,5 @@ func RegisterRouteGroups() error {
 	}); err != nil {
 		return err
 	}
-	return router.RegisterRouteWithoutWrapper(routeGroupPrefix, "handle_stripe_event_1", handleStripeWebhook)
+	return api.RegisterRouteWithoutWrapper(routeGroupPrefix, "handle_stripe_event_1", handleStripeWebhook)
 }

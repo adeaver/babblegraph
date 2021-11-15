@@ -2,8 +2,8 @@ package language
 
 import (
 	"babblegraph/model/routes"
-	language_model "babblegraph/services/web/model/language"
-	"babblegraph/services/web/router"
+	"babblegraph/services/web/clientrouter/api"
+	language_model "babblegraph/services/web/clientrouter/model/language"
 	"babblegraph/util/encrypt"
 	"babblegraph/wordsmith"
 	"encoding/json"
@@ -11,9 +11,9 @@ import (
 )
 
 func RegisterRouteGroups() error {
-	return router.RegisterRouteGroup(router.RouteGroup{
+	return api.RegisterRouteGroup(api.RouteGroup{
 		Prefix: "language",
-		Routes: []router.Route{
+		Routes: []api.Route{
 			{
 				Path:    "get_lemmas_matching_text_1",
 				Handler: handleGetLemmasMatchingText,
