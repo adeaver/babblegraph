@@ -1,6 +1,7 @@
 package main
 
 import (
+	"babblegraph/services/web/adminrouter"
 	"babblegraph/services/web/clientrouter"
 	"babblegraph/util/database"
 	"babblegraph/util/env"
@@ -28,6 +29,9 @@ func main() {
 		log.Fatal(err.Error())
 	}
 	defer sentry.Flush(2 * time.Second)
+	if err := adminrouter.RegisterAdminRouter(r); err != nil {
+		log.Fatal(err.Error())
+	}
 	if err := clientrouter.RegisterClientRouter(r); err != nil {
 		log.Fatal(err.Error())
 	}
