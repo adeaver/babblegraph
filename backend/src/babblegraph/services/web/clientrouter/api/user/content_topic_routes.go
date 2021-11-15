@@ -4,6 +4,7 @@ import (
 	"babblegraph/model/contenttopics"
 	"babblegraph/model/usercontenttopics"
 	"babblegraph/util/database"
+	"babblegraph/util/email"
 	"babblegraph/util/ptr"
 	"encoding/json"
 
@@ -53,7 +54,8 @@ func handleUpdateUserContentTopicsForToken(body []byte) (interface{}, error) {
 	if err := json.Unmarshal(body, &req); err != nil {
 		return nil, err
 	}
-	userID, err := parseSubscriptionManagementToken(req.Token, ptr.String(req.EmailAddress))
+	formattedEmailAddress := email.FormatEmailAddress(req.EmailAddress)
+	userID, err := parseSubscriptionManagementToken(req.Token, ptr.String(formattedEmailAddress))
 	if err != nil {
 		return nil, err
 	}

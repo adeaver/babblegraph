@@ -4,6 +4,7 @@ import (
 	"babblegraph/model/usernewsletterpreferences"
 	"babblegraph/model/users"
 	"babblegraph/util/database"
+	"babblegraph/util/email"
 	"babblegraph/util/ptr"
 	"babblegraph/wordsmith"
 	"encoding/json"
@@ -32,7 +33,8 @@ func getUserNewsletterPreferences(userID users.UserID, body []byte) (interface{}
 	if err := json.Unmarshal(body, &req); err != nil {
 		return nil, err
 	}
-	tokenUserID, err := parseSubscriptionManagementToken(req.SubscriptionManagementToken, ptr.String(req.EmailAddress))
+	formattedEmailAddress := email.FormatEmailAddress(req.EmailAddress)
+	tokenUserID, err := parseSubscriptionManagementToken(req.SubscriptionManagementToken, ptr.String(formattedEmailAddress))
 	switch {
 	case err != nil:
 		return nil, err
