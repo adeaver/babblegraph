@@ -7,20 +7,18 @@ import {
     Link
 } from 'react-router-dom';
 
+import LoginPage from 'AdminWeb/components/LoginPage/LoginPage';
+
 class App extends React.Component{
     render() {
         return (
             <Router basename="/ops">
                 <Switch>
-                    <Route path="/hello" component={Temporary} />
+                    <Route component={LoginPage} />
                 </Switch>
             </Router>
         );
     }
 }
-
-const Temporary = () => (
-    <p>Hello</p>
-)
 
 ReactDOM.render(<App />, document.getElementById('content'));
