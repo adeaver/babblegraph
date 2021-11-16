@@ -1,4 +1,4 @@
-package adminuser
+package user
 
 import (
 	"babblegraph/util/ptr"
