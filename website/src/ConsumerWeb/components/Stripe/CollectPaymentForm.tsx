@@ -7,7 +7,7 @@ import {
 } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 
-import { GenericCardForm, StripeError } from 'common/components/Stripe/common';
+import { GenericCardForm, StripeError } from 'ConsumerWeb/components/Stripe/common';
 import { Heading3 } from 'common/typography/Heading';
 import Paragraph from 'common/typography/Paragraph';
 import { TypographyColor } from 'common/typography/common';

@@ -8,7 +8,6 @@ import Snackbar from '@material-ui/core/Snackbar';
 import Divider from '@material-ui/core/Divider';
 
 import Alert from 'common/components/Alert/Alert';
-import AddPaymentMethodForm from 'common/components/Stripe/AddPaymentMethodForm';
 import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
 import Page from 'common/components/Page/Page';
 import DisplayCard from 'common/components/DisplayCard/DisplayCard';
@@ -19,6 +18,8 @@ import { PrimaryButton, ConfirmationButton, WarningButton } from 'common/compone
 import CardIcon from 'common/components/Payment/CardIcon';
 
 import { ContentHeader } from './common';
+
+import AddPaymentMethodForm from 'ConsumerWeb/components/Stripe/AddPaymentMethodForm';
 
 import {
     getPaymentMethodByID,

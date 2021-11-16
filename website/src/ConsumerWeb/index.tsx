@@ -7,7 +7,7 @@ import {
     Link
 } from 'react-router-dom';
 
-import HomePage from 'ConsumerWeb/ConsumerWeb/components/HomePage/HomePage';
+import HomePage from 'ConsumerWeb/components/HomePage/HomePage';
 import AboutPage from 'ConsumerWeb/components/AboutPage/AboutPage';
 import PrivacyPolicyPage from 'ConsumerWeb/components/PrivacyPolicyPage/PrivacyPolicyPage';
 import PaywallReportPage from 'ConsumerWeb/components/PaywallReportPage/PaywallReportPage';

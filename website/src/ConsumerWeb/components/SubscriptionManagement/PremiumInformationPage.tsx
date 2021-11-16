@@ -15,7 +15,7 @@ import { PrimaryButton } from 'common/components/Button/Button';
 import { TypographyColor } from 'common/typography/common';
 import { setLocation } from 'util/window/Location';
 
-import PremiumInformationPanel from 'components/PremiumInformation/PremiumInformationPanel';
+import PremiumInformationPanel from 'ConsumerWeb/components/PremiumInformation/PremiumInformationPanel';
 
 import {
     getCreateUserToken,

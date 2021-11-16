@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { RouteComponentProps, useHistory } from 'react-router-dom';
 
-import AddPaymentMethodForm from 'common/components/Stripe/AddPaymentMethodForm';
-import CollectPaymentForm from 'common/components/Stripe/CollectPaymentForm';
+import AddPaymentMethodForm from 'ConsumerWeb/components/Stripe/AddPaymentMethodForm';
+import CollectPaymentForm from 'ConsumerWeb/components/Stripe/CollectPaymentForm';
 
 import { makeStyles } from '@material-ui/core/styles';
 import FormControl from '@material-ui/core/FormControl';

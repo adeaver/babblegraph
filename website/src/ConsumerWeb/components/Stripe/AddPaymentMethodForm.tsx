@@ -8,7 +8,7 @@ import {
 import { loadStripe } from "@stripe/stripe-js";
 
 import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
-import { GenericCardForm, StripeError } from 'common/components/Stripe/common';
+import { GenericCardForm, StripeError } from 'ConsumerWeb/components/Stripe/common';
 import { Heading3 } from 'common/typography/Heading';
 import { TypographyColor } from 'common/typography/common';
 
@@ -19,7 +19,7 @@ import {
     SetDefaultPaymentMethodForUserResponse,
     insertNewPaymentMethodForUser,
     InsertNewPaymentMethodForUserResponse,
-} from 'api/stripe/payment_method';
+} from 'ConsumerWeb/api/stripe/payment_method';
 
 declare const window: any;
 
