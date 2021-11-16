@@ -7,27 +7,27 @@ import {
     Link
 } from 'react-router-dom';
 
-import HomePage from 'components/HomePage/HomePage';
-import AboutPage from 'components/AboutPage/AboutPage';
-import PrivacyPolicyPage from 'components/PrivacyPolicyPage/PrivacyPolicyPage';
-import PaywallReportPage from 'components/PaywallReportPage/PaywallReportPage';
+import HomePage from 'ConsumerWeb/ConsumerWeb/components/HomePage/HomePage';
+import AboutPage from 'ConsumerWeb/components/AboutPage/AboutPage';
+import PrivacyPolicyPage from 'ConsumerWeb/components/PrivacyPolicyPage/PrivacyPolicyPage';
+import PaywallReportPage from 'ConsumerWeb/components/PaywallReportPage/PaywallReportPage';
 
-import SubscriptionManagementDashboardPage from 'components/SubscriptionManagement/SubscriptionManagementDashboardPage';
-import InterestSelectionPage from 'components/SubscriptionManagement/InterestSelectionPage';
-import UnsubscribePage from 'components/SubscriptionManagement/UnsubscribePage';
-import WordReinforcementPage from 'components/SubscriptionManagement/WordReinforcementPage';
-import SchedulePage from 'components/SubscriptionManagement/SchedulePage';
-import NewsletterPreferencesPage from 'components/SubscriptionManagement/NewsletterPreferencesPage';
-import SubscriptionManagementPremiumInformationPage from 'components/SubscriptionManagement/PremiumInformationPage';
-import PaymentAndSubscriptionSettingsPage from 'components/SubscriptionManagement/PaymentAndSubscriptionPage';
+import SubscriptionManagementDashboardPage from 'ConsumerWeb/components/SubscriptionManagement/SubscriptionManagementDashboardPage';
+import InterestSelectionPage from 'ConsumerWeb/components/SubscriptionManagement/InterestSelectionPage';
+import UnsubscribePage from 'ConsumerWeb/components/SubscriptionManagement/UnsubscribePage';
+import WordReinforcementPage from 'ConsumerWeb/components/SubscriptionManagement/WordReinforcementPage';
+import SchedulePage from 'ConsumerWeb/components/SubscriptionManagement/SchedulePage';
+import NewsletterPreferencesPage from 'ConsumerWeb/components/SubscriptionManagement/NewsletterPreferencesPage';
+import SubscriptionManagementPremiumInformationPage from 'ConsumerWeb/components/SubscriptionManagement/PremiumInformationPage';
+import PaymentAndSubscriptionSettingsPage from 'ConsumerWeb/components/SubscriptionManagement/PaymentAndSubscriptionPage';
 
-import LoginPage from 'components/UserAccounts/LoginPage';
-import SignupPage from 'components/UserAccounts/SignupPage';
-import ForgotPasswordPage from 'components/UserAccounts/ForgotPasswordPage';
-import ResetPasswordPage from 'components/UserAccounts/ResetPasswordPage';
-import SubscriptionCheckoutPage from 'components/UserAccounts/SubscriptionCheckoutPage';
+import LoginPage from 'ConsumerWeb/components/UserAccounts/LoginPage';
+import SignupPage from 'ConsumerWeb/components/UserAccounts/SignupPage';
+import ForgotPasswordPage from 'ConsumerWeb/components/UserAccounts/ForgotPasswordPage';
+import ResetPasswordPage from 'ConsumerWeb/components/UserAccounts/ResetPasswordPage';
+import SubscriptionCheckoutPage from 'ConsumerWeb/components/UserAccounts/SubscriptionCheckoutPage';
 
-import NotFoundPage from 'components/NotFoundPage/NotFoundPage';
+import NotFoundPage from 'ConsumerWeb/components/NotFoundPage/NotFoundPage';
 
 class App extends React.Component{
     render() {

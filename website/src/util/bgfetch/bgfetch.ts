@@ -1,7 +1,7 @@
 import {
     encodeToAPIObject,
     decodeAPIObject
-} from 'api/bgfetch/apiencoding';
+} from 'util/bgfetch/apiencoding';
 
 export function makePostRequest<T, U>(
     url: string,

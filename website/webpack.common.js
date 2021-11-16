@@ -1,10 +1,12 @@
 var path = require('path');
 
 module.exports = {
-    entry: './src/index.tsx',
+    entry: {
+        consumer: './src/ConsumerWeb/index.tsx',
+    },
     output: {
         path: path.resolve(__dirname, 'dist'),
-        filename: 'bundle.js',
+        filename: '[name]Bundle.js',
     },
     resolve: {
         extensions: [ '.tsx', '.ts', '.js' ],
