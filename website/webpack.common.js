@@ -3,6 +3,7 @@ var path = require('path');
 module.exports = {
     entry: {
         consumer: './src/ConsumerWeb/index.tsx',
+        ops: './src/AdminWeb/index.tsx',
     },
     output: {
         path: path.resolve(__dirname, 'dist'),

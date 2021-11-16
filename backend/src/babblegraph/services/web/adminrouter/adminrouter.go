@@ -1,6 +1,7 @@
 package adminrouter
 
 import (
+	"babblegraph/util/env"
 	"fmt"
 	"net/http"
 
@@ -8,8 +9,9 @@ import (
 )
 
 func RegisterAdminRouter(r *mux.Router) error {
-	r.HandleFunc("/ops", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "<h1>babblegraph.com/ops is under construction\n</h1>")
+	staticFileDirName := env.MustEnvironmentVariable("STATIC_DIR")
+	r.PathPrefix("/ops").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, fmt.Sprintf("%s/ops_index.html", staticFileDirName))
 	})
 	return nil
 }
