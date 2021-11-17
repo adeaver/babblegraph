@@ -57,6 +57,12 @@ func ExecuteDocumentQuery(query executableQuery, input ExecuteDocumentQueryInput
 		}
 		queryBuilder.AddMustNot(esquery.Terms("id.keyword", excludedDocumentIDsQueryString))
 	}
+	topicsLengthRangeQueryBuilder := esquery.NewRangeQueryBuilderForFieldName("topics_length")
+	topicsLengthRangeQueryBuilder.LessThanOrEqualToInt64(maximumNumberOfTopicsPerDocument)
+	queryBuilder.AddFilter(topicsLengthRangeQueryBuilder.BuildRangeQuery())
+	if filteredWords, ok := filteredWordsForLanguageCode[input.LanguageCode]; ok {
+		queryBuilder.AddMustNot(esquery.Terms("metadata.title", filteredWords))
+	}
 	if input.MinimumReadingLevel != nil || input.MaximumReadingLevel != nil {
 		readingLevelRangeQueryBuilder := esquery.NewRangeQueryBuilderForFieldName("readability_score")
 		if input.MinimumReadingLevel != nil {
