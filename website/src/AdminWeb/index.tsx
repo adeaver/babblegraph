@@ -7,6 +7,7 @@ import {
     Link
 } from 'react-router-dom';
 
+import RegistrationPage from 'AdminWeb/components/RegistrationPage/RegistrationPage';
 import LoginPage from 'AdminWeb/components/LoginPage/LoginPage';
 
 class App extends React.Component{
@@ -14,6 +15,7 @@ class App extends React.Component{
         return (
             <Router basename="/ops">
                 <Switch>
+                    <Route path="/register/:token" component={RegistrationPage} />
                     <Route component={LoginPage} />
                 </Switch>
             </Router>

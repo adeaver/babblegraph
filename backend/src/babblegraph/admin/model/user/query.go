@@ -11,9 +11,9 @@ const (
 	getAdminUserByIDQuery           = "SELECT * FROM admin_user WHERE _id = $1"
 )
 
-func GetAdminUser(tx *sqlx.Tx, id AdminUserID) (*AdminUser, error) {
+func GetAdminUser(tx *sqlx.Tx, id AdminID) (*AdminUser, error) {
 	var adminUsers []dbAdminUser
-	err := tx.Select(&adminUser, getAdminUserByIDQuery, id)
+	err := tx.Select(&adminUsers, getAdminUserByIDQuery, id)
 	switch {
 	case err != nil:
 		return nil, err
@@ -29,7 +29,7 @@ func GetAdminUser(tx *sqlx.Tx, id AdminUserID) (*AdminUser, error) {
 
 func LookupAdminUserByEmailAddress(tx *sqlx.Tx, emailAddress string) (*AdminUser, error) {
 	var adminUsers []dbAdminUser
-	err := tx.Select(&adminUser, getAdminUserByEmailAddressQuery, emailAddress)
+	err := tx.Select(&adminUsers, getAdminUserByEmailAddressQuery, emailAddress)
 	switch {
 	case err != nil:
 		return nil, err

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { RouteComponentProps } from 'react-router-dom';
 
 import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
@@ -7,20 +8,13 @@ import Card from '@material-ui/core/Card';
 import Page from 'common/components/Page/Page';
 import { TypographyColor } from 'common/typography/common';
 import { Heading1 } from 'common/typography/Heading';
+import Paragraph from 'common/typography/Paragraph';
 import { PrimaryButton } from 'common/components/Button/Button';
 import { PrimaryTextField } from 'common/components/TextField/TextField';
 
-import {
-    validateLoginCredentials,
-    ValidateLoginCredentialsResponse,
-    validateTwoFactorAuthenticationCode,
-    ValidateTwoFactorAuthenticationCodeResponse,
-} from 'AdminWeb/api/auth/auth';
-
 const styleClasses = makeStyles({
     displayCard: {
-        padding: '20px',
-        marginTop: '20px',
+        padding: '10px',
     },
     submitButtonContainer: {
         alignSelf: 'center',
@@ -37,78 +31,75 @@ const styleClasses = makeStyles({
     },
 });
 
-type LoginPageProps = {};
+type Params = {
+    token: string
+}
 
-const LoginPage = (props: LoginPageProps) => {
-    const classes = styleClasses();
+type RegistrationPageProps = RouteComponentProps<Params>
+
+const RegistrationPage = (props: RegistrationPageProps) => {
+    const { token } = props.match.params;
+
+    const [ shouldShowRegistrationForm, setShouldShowRegistrationForm ] = useState<boolean>(true);
+
+    const [ emailAddress, setEmailAddress ] = useState<string>("");
+    const [ password, setPassword ] = useState<string>("");
+    const [ confirmPassword, setConfirmPassword ] = useState<string>("");
 
     const [ isLoading, setIsLoading ] = useState<boolean>(false);
 
-    const [ emailAddress, setEmailAddress ] = useState<string | null>(null);
-    const [ password, setPassword ] = useState<string | null>(null);
-
-    const [ shouldShowLoginForm, setShouldShowLoginForm ] = useState<boolean>(true);
-
     const handleSubmit = () => {
-        setIsLoading(true);
-        validateLoginCredentials({
-            emailAddress: emailAddress,
-            password: password,
-        },
-        (resp: ValidateLoginCredentialsResponse) => {
-            setIsLoading(false);
-            if (resp.success) {
-                setShouldShowLoginForm(false);
-            }
-        },
-        (err: Error) => {
-            setIsLoading(false);
-        });
     }
 
+    const classes = styleClasses();
     return (
         <Page>
             <Grid container>
-                <Grid item xs={false} md={3}>
+                <Grid xs={false} md={3}>
                     &nbsp;
                 </Grid>
-                <Grid item xs={12} md={6}>
-                    <Card className={classes.displayCard} variant='outlined'>
+                <Grid xs={12} md={6}>
+                    <Card className={classes.displayCard}>
                         <Heading1 color={TypographyColor.Primary}>
                             babblegraph
                         </Heading1>
                         {
-                            shouldShowLoginForm ? (
-                                <LoginForm
+                            shouldShowRegistrationForm ? (
+                                <RegistrationForm
                                     emailAddress={emailAddress}
                                     setEmailAddress={setEmailAddress}
                                     password={password}
                                     setPassword={setPassword}
+                                    confirmPassword={confirmPassword}
+                                    setConfirmPassword={setConfirmPassword}
                                     handleSubmit={handleSubmit}
                                     isLoading={isLoading} />
                             ) : (
-                                <p>2FA</p>
+                                <p>Two factor code</p>
                             )
                         }
                     </Card>
                 </Grid>
             </Grid>
         </Page>
-    )
+    );
 }
 
-type LoginFormProps = {
+type RegistrationFormProps = {
     emailAddress: string;
     setEmailAddress: (v: string) => void;
 
     password: string;
     setPassword: (v: string) => void;
 
+    confirmPassword: string;
+    setConfirmPassword: (v: string) => void;
+
     handleSubmit: () => void;
     isLoading: boolean;
 }
 
-const LoginForm = (props: LoginFormProps) => {
+const RegistrationForm = (props: RegistrationFormProps) => {
     const classes = styleClasses();
 
     const handleEmailAddressChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -117,14 +108,23 @@ const LoginForm = (props: LoginFormProps) => {
     const handlePasswordChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         props.setPassword((event.target as HTMLInputElement).value);
     };
+    const handleConfirmPasswordChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        props.setConfirmPassword((event.target as HTMLInputElement).value);
+    };
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         props.handleSubmit();
     }
     return  (
         <form onSubmit={handleSubmit} noValidate autoComplete="off">
+            <Paragraph>
+                Password must contain at 3 of the following: number, capital letter, lowercase letter, and symbol.
+            </Paragraph>
             <Grid container className={classes.formGridContainer}>
-                <Grid item xs={12} md={5} className={classes.formGridItem}>
+                <Grid item xs={false} md={3}>
+                    &nbsp;
+                </Grid>
+                <Grid item xs={12} md={6} className={classes.formGridItem}>
                     <PrimaryTextField
                         className={classes.textField}
                         id="email"
@@ -133,7 +133,13 @@ const LoginForm = (props: LoginFormProps) => {
                         defaultValue={props.emailAddress}
                         onChange={handleEmailAddressChange} />
                 </Grid>
-                <Grid item xs={12} md={5} className={classes.formGridItem}>
+                <Grid item xs={false} md={3}>
+                    &nbsp;
+                </Grid>
+                <Grid item xs={false} md={3}>
+                    &nbsp;
+                </Grid>
+                <Grid item xs={12} md={6} className={classes.formGridItem}>
                     <PrimaryTextField
                         className={classes.textField}
                         id="password"
@@ -143,9 +149,31 @@ const LoginForm = (props: LoginFormProps) => {
                         defaultValue={props.password}
                         onChange={handlePasswordChange} />
                 </Grid>
+                <Grid item xs={false} md={3}>
+                    &nbsp;
+                </Grid>
+                <Grid item xs={false} md={3}>
+                    &nbsp;
+                </Grid>
+                <Grid item xs={12} md={6} className={classes.formGridItem}>
+                    <PrimaryTextField
+                        className={classes.textField}
+                        id="confirm-password"
+                        label="Confirm Password"
+                        type="password"
+                        variant="outlined"
+                        defaultValue={props.confirmPassword}
+                        onChange={handleConfirmPasswordChange} />
+                </Grid>
+                <Grid item xs={false} md={3}>
+                    &nbsp;
+                </Grid>
+                <Grid item xs={false} md={3}>
+                    &nbsp;
+                </Grid>
                 <Grid item xs={3} md={2} className={classes.formGridItem}>
                     <PrimaryButton type="submit" disabled={!props.emailAddress || !props.password || props.isLoading}>
-                        Login
+                       Register
                     </PrimaryButton>
                 </Grid>
             </Grid>
@@ -153,4 +181,4 @@ const LoginForm = (props: LoginFormProps) => {
     );
 }
 
-export default LoginPage;
+export default RegistrationPage;

@@ -1,7 +1,7 @@
 package adminrouter
 
 import (
-	"babblegraph/services/web/adminrouter/api/user"
+	"babblegraph/services/web/adminrouter/api/auth"
 	"babblegraph/services/web/router"
 	"babblegraph/util/env"
 	"fmt"
@@ -14,7 +14,7 @@ func RegisterAdminRouter(r *mux.Router) error {
 	staticFileDirName := env.MustEnvironmentVariable("STATIC_DIR")
 	s := r.PathPrefix("/ops").Subrouter()
 	if err := router.WithAPIRouter(s, "api", []router.RouteGroup{
-		user.Routes,
+		auth.Routes,
 	}); err != nil {
 		return err
 	}

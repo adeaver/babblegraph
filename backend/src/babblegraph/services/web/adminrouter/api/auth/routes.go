@@ -1,4 +1,4 @@
-package user
+package auth
 
 import (
 	"babblegraph/admin/model/auth"
@@ -15,7 +15,7 @@ import (
 )
 
 var Routes = router.RouteGroup{
-	Prefix: "user",
+	Prefix: "auth",
 	Routes: []router.Route{
 		{
 			Path: "validate_login_credentials_1",

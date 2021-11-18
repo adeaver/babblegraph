@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS admin_user_password(
     admin_user_id uuid NOT NULL REFERENCES admin_user(_id),
     password_hash TEXT NOT NULL,
     salt TEXT NOT NULL,
+    is_active BOOLEAN NOT NULL DEFAULT FALSE,
 
     PRIMARY KEY (_id)
 );
@@ -44,7 +45,7 @@ CREATE TABLE IF NOT EXISTS admin_2fa_codes(
     admin_user_id uuid NOT NULL REFERENCES admin_user(_id),
     code TEXT NOT NULL,
 
-    PRIMARY KEY (_id)
+    PRIMARY KEY (code)
 );
 
 CREATE INDEX IF NOT EXISTS admin_2fa_codes_user_id ON admin_2fa_codes(admin_user_id);
@@ -56,7 +57,7 @@ CREATE TABLE IF NOT EXISTS admin_access_token(
     admin_user_id uuid NOT NULL REFERENCES admin_user(_id),
     token TEXT NOT NULL,
 
-    PRIMARY KEY (_id)
+    PRIMARY KEY (token)
 );
 
 CREATE INDEX IF NOT EXISTS admin_access_token_user_id ON admin_access_token(admin_user_id);

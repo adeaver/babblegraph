@@ -27,11 +27,13 @@ type AdminUser struct {
 type adminPasswordID string
 
 type dbAdminUserPassword struct {
-	CreatedAt    time.Time       `db:"created_at"`
-	ID           adminPasswordID `db:"_id"`
-	AdminUserID  AdminID         `db:"admin_user_id"`
-	PasswordHash string          `db:"password_hash"`
-	Salt         string          `db:"salt"`
+	CreatedAt      time.Time       `db:"created_at"`
+	LastModifiedAt time.Time       `db:"last_modified_at"`
+	ID             adminPasswordID `db:"_id"`
+	AdminUserID    AdminID         `db:"admin_user_id"`
+	PasswordHash   string          `db:"password_hash"`
+	Salt           string          `db:"salt"`
+	IsActive       bool            `db:"is_active"`
 }
 
 type adminPermissionID string
