@@ -85,3 +85,26 @@ export function createAdminUserPassword(
         onError,
     );
 }
+
+export type ValidateTwoFactorAuthenticationCodeForCreateRequest = {
+	token: string;
+	twoFactorAuthenticationCode: string;
+}
+
+export type ValidateTwoFactorAuthenticationCodeForCreateResponse = {
+	success: boolean;
+}
+
+export function validateTwoFactorAuthenticationCodeForCreate(
+    req: ValidateTwoFactorAuthenticationCodeForCreateRequest,
+    onSuccess: (resp: ValidateTwoFactorAuthenticationCodeForCreateResponse) => void,
+    onError: (e: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<ValidateTwoFactorAuthenticationCodeForCreateRequest, ValidateTwoFactorAuthenticationCodeForCreateResponse>(
+        '/ops/api/auth/validate_two_factor_code_for_create_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}
+

@@ -40,6 +40,11 @@ var Routes = router.RouteGroup{
 			Handler: router.RouteHandler{
 				HandleRequestBody: createAdminUserPassword,
 			},
+		}, {
+			Path: "validate_two_factor_code_for_create_1",
+			Handler: router.RouteHandler{
+				HandleRawRequest: validateTwoFactorAuthenticationCodeForCreate,
+			},
 		},
 	},
 }
@@ -221,4 +226,71 @@ func createAdminUserPassword(body []byte) (interface{}, error) {
 	return createAdminUserPasswordResponse{
 		Success: true,
 	}, nil
+}
+
+type validateTwoFactorAuthenticationCodeForCreateRequest struct {
+	Token                       string `json:"token"`
+	TwoFactorAuthenticationCode string `json:"two_factor_authentication_code"`
+}
+
+type validateTwoFactorAuthenticationCodeForCreateResponse struct {
+	Success bool `json:"success"`
+}
+
+func validateTwoFactorAuthenticationCodeForCreate(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("Content-Type", "application/json")
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	var req validateTwoFactorAuthenticationCodeForCreateRequest
+	if err := json.Unmarshal(body, &req); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	var adminUserID user.AdminID
+	if err := encrypt.WithDecodedToken(req.Token, func(t encrypt.TokenPair) error {
+		if t.Key != routes.AdminRegistrationKey.Str() {
+			return fmt.Errorf("incorrect key")
+		}
+		adminIDStr, ok := t.Value.(string)
+		if !ok {
+			return fmt.Errorf("incorrect type")
+		}
+		adminUserID = user.AdminID(adminIDStr)
+		return nil
+	}); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	var accessToken *string
+	var expirationTime *time.Time
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		if err := auth.ValidateTwoFactorAuthenticationAttempt(tx, adminUserID, req.TwoFactorAuthenticationCode); err != nil {
+			return err
+		}
+		if err := user.ActivateAdminUserPassword(tx, adminUserID); err != nil {
+			return err
+		}
+		accessToken, expirationTime, err = auth.CreateAccessToken(tx, adminUserID)
+		return err
+	}); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	if accessToken == nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	http.SetCookie(w, &http.Cookie{
+		Name:     auth.AccessTokenCookieName,
+		Value:    *accessToken,
+		HttpOnly: true,
+		Path:     "/",
+		Expires:  *expirationTime,
+	})
+	json.NewEncoder(w).Encode(validateTwoFactorAuthenticationCodeForCreateResponse{
+		Success: true,
+	})
 }

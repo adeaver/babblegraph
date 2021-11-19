@@ -22,7 +22,7 @@ const (
         ON CONFLICT (admin_user_id)
         SET password_hash = $2, salt = $3
     `
-	validateAdminUserPasswordQuery = `
+	activeAdminPasswordQuery = `
         UPDATE admin_user_password
         SET is_active = TRUE
         WHERE admin_user_id = $1
@@ -86,6 +86,13 @@ func CreateAdminUserPassword(tx *sqlx.Tx, adminUserID AdminID, password string) 
 		return err
 	}
 	if _, err := tx.Exec(createAdminUserPasswordQuery, adminUserID, *passwordHash, *salt); err != nil {
+		return err
+	}
+	return nil
+}
+
+func ActivateAdminUserPassword(tx *sqlx.Tx, adminUserID AdminID) error {
+	if _, err := tx.Exec(activeAdminPasswordQuery, adminUserID); err != nil {
 		return err
 	}
 	return nil

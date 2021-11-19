@@ -15,6 +15,8 @@ import { PrimaryTextField } from 'common/components/TextField/TextField';
 import {
     createAdminUserPassword,
     CreateAdminUserPasswordResponse,
+    validateTwoFactorAuthenticationCodeForCreate,
+    ValidateTwoFactorAuthenticationCodeForCreateResponse,
 } from 'AdminWeb/api/auth/auth';
 
 const styleClasses = makeStyles({
@@ -51,6 +53,8 @@ const RegistrationPage = (props: RegistrationPageProps) => {
     const [ password, setPassword ] = useState<string>("");
     const [ confirmPassword, setConfirmPassword ] = useState<string>("");
 
+    const [ twoFactorAuthenticationCode, setTwoFactorAuthenticationCode ] = useState<string>("");
+
     const [ isLoading, setIsLoading ] = useState<boolean>(false);
 
     const handleSubmit = () => {
@@ -73,6 +77,22 @@ const RegistrationPage = (props: RegistrationPageProps) => {
         }
     }
 
+    const handleSubmitTwoFactorAuthenticationCode = () => {
+        setIsLoading(true);
+        validateTwoFactorAuthenticationCodeForCreate({
+            token: token,
+            twoFactorAuthenticationCode: twoFactorAuthenticationCode,
+        },
+        (resp: ValidateTwoFactorAuthenticationCodeForCreateResponse) => {
+            setIsLoading(false);
+            if (resp.success) {
+                // Go to dashboard
+            }
+        },
+        (err: Error) => {
+            setIsLoading(false);
+        });
+    }
     const classes = styleClasses();
     return (
         <Page>
@@ -97,7 +117,11 @@ const RegistrationPage = (props: RegistrationPageProps) => {
                                     handleSubmit={handleSubmit}
                                     isLoading={isLoading} />
                             ) : (
-                                <p>Two factor code</p>
+                                <TwoFactorAuthenticationForm
+                                    twoFactorAuthenticationCode={twoFactorAuthenticationCode}
+                                    setTwoFactorAuthenticationCode={setTwoFactorAuthenticationCode}
+                                    handleSubmit={handleSubmitTwoFactorAuthenticationCode}
+                                    isLoading={isLoading} />
                             )
                         }
                     </Card>
@@ -196,6 +220,55 @@ const RegistrationForm = (props: RegistrationFormProps) => {
                 <Grid item xs={3} md={2} className={classes.formGridItem}>
                     <PrimaryButton type="submit" disabled={!props.emailAddress || !props.password || props.isLoading}>
                        Register
+                    </PrimaryButton>
+                </Grid>
+            </Grid>
+        </form>
+    );
+}
+
+type TwoFactorAuthenticationFormProps = {
+    twoFactorAuthenticationCode: string;
+    setTwoFactorAuthenticationCode: (v: string) => void;
+
+    handleSubmit: () => void;
+    isLoading: boolean;
+}
+
+const TwoFactorAuthenticationForm = (props: TwoFactorAuthenticationFormProps) => {
+    const classes = styleClasses();
+
+    const handleTwoFactorAuthenticationCodeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        props.setTwoFactorAuthenticationCode((event.target as HTMLInputElement).value);
+    };
+    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        props.handleSubmit();
+    }
+    return (
+        <form onSubmit={handleSubmit} noValidate autoComplete="off">
+            <Grid container className={classes.formGridContainer}>
+                <Grid item xs={false} md={3}>
+                    &nbsp;
+                </Grid>
+                <Grid item xs={12} md={6} className={classes.formGridItem}>
+                    <PrimaryTextField
+                        className={classes.textField}
+                        id="two-factor-code"
+                        label="Two Factor Authentication Code"
+                        variant="outlined"
+                        defaultValue={props.twoFactorAuthenticationCode}
+                        onChange={handleTwoFactorAuthenticationCodeChange} />
+                </Grid>
+                <Grid item xs={false} md={3}>
+                    &nbsp;
+                </Grid>
+                <Grid item xs={false} md={3}>
+                    &nbsp;
+                </Grid>
+                <Grid item xs={3} md={2} className={classes.formGridItem}>
+                    <PrimaryButton type="submit" disabled={!props.twoFactorAuthenticationCode || props.isLoading}>
+                        Validate
                     </PrimaryButton>
                 </Grid>
             </Grid>
