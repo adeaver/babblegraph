@@ -19,7 +19,7 @@ class App extends React.Component{
                     <Route path="/dashboard" component={Dashboard} />
 
                     <Route path="/register/:token" component={RegistrationPage} />
-                    <Route component={LoginPage} />
+                    <Route exact path="/" component={LoginPage} />
                 </Switch>
             </Router>
         );
