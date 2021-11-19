@@ -1,13 +1,17 @@
 package adminrouter
 
 import (
+	auth_model "babblegraph/admin/model/auth"
 	"babblegraph/services/web/adminrouter/api/auth"
 	"babblegraph/services/web/router"
+	"babblegraph/util/database"
 	"babblegraph/util/env"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/mux"
+	"github.com/jmoiron/sqlx"
 )
 
 func RegisterAdminRouter(r *mux.Router) error {
@@ -19,7 +23,28 @@ func RegisterAdminRouter(r *mux.Router) error {
 		return err
 	}
 	s.PathPrefix("").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL == nil || !(r.URL.Path == "/ops" || r.URL.Path == "/ops/" || strings.HasPrefix(r.URL.Path, "/ops/register")) {
+			var hasAuth bool
+			for _, cookie := range r.Cookies() {
+				if cookie.Name == auth_model.AccessTokenCookieName {
+					token := cookie.Value
+					if err := database.WithTx(func(tx *sqlx.Tx) error {
+						if _, err := auth_model.ValidateAccessTokenAndGetUserID(tx, token); err != nil {
+							return err
+						}
+						return nil
+					}); err == nil {
+						hasAuth = true
+					}
+				}
+			}
+			if !hasAuth {
+				http.Redirect(w, r, "/ops", http.StatusTemporaryRedirect)
+				return
+			}
+		}
 		http.ServeFile(w, r, fmt.Sprintf("%s/ops_index.html", staticFileDirName))
+		return
 	})
 	return nil
 }

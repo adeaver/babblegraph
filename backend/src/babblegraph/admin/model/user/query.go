@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	getAdminUserByEmailAddressQuery = "SELECT * FROM admin_user WHERE email_address = $1"
-	getAdminUserByIDQuery           = "SELECT * FROM admin_user WHERE _id = $1"
+	getAdminUserByEmailAddressQuery = "SELECT * FROM admin_user WHERE email_address = $1 AND is_active = TRUE"
+	getAdminUserByIDQuery           = "SELECT * FROM admin_user WHERE _id = $1 AND is_active = TRUE"
 	createUserQuery                 = "INSERT INTO admin_user (email_address) VALUES ($1)"
 
 	createAdminUserPasswordQuery = `INSERT INTO
@@ -30,6 +30,22 @@ const (
 	validateAdminPasswordQuery = `
         SELECT * FROM admin_user_password
         WHERE admin_user_id = $1 AND is_active = TRUE
+    `
+
+	lookupAdminUserPermissionQuery = `
+        SELECT * FROM admin_user_permission
+        WHERE admin_user_id = $1 AND is_active = TRUE
+    `
+	createAdminUserPermissionQuery = `
+        INSERT INTO admin_user_permission (
+            admin_user_id, permission, is_active
+        ) VALUES ($1, $2, TRUE)
+    `
+	deactivateAdminUserPermissionQuery = `
+        UPDATE admin_user_permission SET
+            is_active = FALSE
+        WHERE
+            admin_user_id = $1 AND permission = TRUE
     `
 )
 
@@ -114,4 +130,18 @@ func ValidateAdminUserPassword(tx *sqlx.Tx, adminUserID AdminID, password string
 		return fmt.Errorf("Expected only one password")
 	}
 	return comparePasswords(passwords[0].PasswordHash, password, passwords[0].Salt)
+}
+
+func ValidateAdminUserPermission(tx *sqlx.Tx, adminUserID AdminID, permission Permission) error {
+	var permissions []dbAdminAccessPermission
+	err := tx.Select(&permissions, lookupAdminUserPermissionQuery, adminUserID, permission)
+	switch {
+	case err != nil:
+		return err
+	case len(permissions) == 0:
+		return fmt.Errorf("no permission")
+	case len(permissions) > 1:
+		return fmt.Errorf("expected at most one permission")
+	}
+	return nil
 }

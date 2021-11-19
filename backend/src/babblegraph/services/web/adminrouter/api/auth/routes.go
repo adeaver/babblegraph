@@ -8,10 +8,7 @@ import (
 	"babblegraph/util/database"
 	"babblegraph/util/email"
 	"babblegraph/util/encrypt"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"log"
 	"net/http"
 	"time"
 
@@ -22,30 +19,20 @@ var Routes = router.RouteGroup{
 	Prefix: "auth",
 	Routes: []router.Route{
 		{
-			Path: "validate_login_credentials_1",
-			Handler: router.RouteHandler{
-				HandleRequestBody: validateLoginCredentials,
-			},
+			Path:    "validate_login_credentials_1",
+			Handler: validateLoginCredentials,
 		}, {
-			Path: "validate_two_factor_code_1",
-			Handler: router.RouteHandler{
-				HandleRawRequest: validateTwoFactorAuthenticationCode,
-			},
+			Path:    "validate_two_factor_code_1",
+			Handler: validateTwoFactorAuthenticationCode,
 		}, {
-			Path: "invalidate_login_credentials_1",
-			Handler: router.RouteHandler{
-				HandleRawRequest: invalidateCredentials,
-			},
+			Path:    "invalidate_login_credentials_1",
+			Handler: invalidateCredentials,
 		}, {
-			Path: "create_admin_user_password_1",
-			Handler: router.RouteHandler{
-				HandleRequestBody: createAdminUserPassword,
-			},
+			Path:    "create_admin_user_password_1",
+			Handler: createAdminUserPassword,
 		}, {
-			Path: "validate_two_factor_code_for_create_1",
-			Handler: router.RouteHandler{
-				HandleRawRequest: validateTwoFactorAuthenticationCodeForCreate,
-			},
+			Path:    "validate_two_factor_code_for_create_1",
+			Handler: validateTwoFactorAuthenticationCodeForCreate,
 		},
 	},
 }
@@ -59,9 +46,9 @@ type validateLoginCredentialsResponse struct {
 	Success bool `json:"success"`
 }
 
-func validateLoginCredentials(reqBody []byte) (interface{}, error) {
+func validateLoginCredentials(r *router.Request) (interface{}, error) {
 	var req validateLoginCredentialsRequest
-	if err := json.Unmarshal(reqBody, &req); err != nil {
+	if err := r.GetJSONBody(&req); err != nil {
 		return nil, err
 	}
 	var success bool
@@ -99,17 +86,10 @@ type validateTwoFactorAuthenticationCodeResponse struct {
 	Success bool `json:"success"`
 }
 
-func validateTwoFactorAuthenticationCode(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add("Content-Type", "application/json")
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
+func validateTwoFactorAuthenticationCode(r *router.Request) (interface{}, error) {
 	var req validateTwoFactorAuthenticationCodeRequest
-	if err := json.Unmarshal(body, &req); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
+	if err := r.GetJSONBody(&req); err != nil {
+		return nil, err
 	}
 	formattedEmailAddress := email.FormatEmailAddress(req.EmailAddress)
 	var accessToken *string
@@ -128,24 +108,21 @@ func validateTwoFactorAuthenticationCode(w http.ResponseWriter, r *http.Request)
 		accessToken, expirationTime, err = auth.CreateAccessToken(tx, adminUser.AdminID)
 		return err
 	}); err != nil {
-		log.Println(err.Error())
-		w.WriteHeader(http.StatusBadRequest)
-		return
+		return nil, err
 	}
 	if accessToken == nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
+		return nil, fmt.Errorf("Null access token")
 	}
-	http.SetCookie(w, &http.Cookie{
+	r.RespondWithCookie(&http.Cookie{
 		Name:     auth.AccessTokenCookieName,
 		Value:    *accessToken,
 		HttpOnly: true,
 		Path:     "/",
 		Expires:  *expirationTime,
 	})
-	json.NewEncoder(w).Encode(validateTwoFactorAuthenticationCodeResponse{
+	return validateTwoFactorAuthenticationCodeResponse{
 		Success: true,
-	})
+	}, nil
 }
 
 type invalidateCredentialsRequest struct{}
@@ -154,18 +131,16 @@ type invalidateCredentialsResponse struct {
 	Success bool `json:"success"`
 }
 
-func invalidateCredentials(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add("Content-Type", "application/json")
-	for _, cookie := range r.Cookies() {
+func invalidateCredentials(r *router.Request) (interface{}, error) {
+	for _, cookie := range r.GetCookies() {
 		if cookie.Name == auth.AccessTokenCookieName {
 			token := cookie.Value
 			if err := database.WithTx(func(tx *sqlx.Tx) error {
 				return auth.InvalidateAccessToken(tx, token)
 			}); err != nil {
-				w.WriteHeader(http.StatusBadRequest)
-				return
+				return nil, err
 			}
-			http.SetCookie(w, &http.Cookie{
+			r.RespondWithCookie(&http.Cookie{
 				Name:     auth.AccessTokenCookieName,
 				Value:    "",
 				HttpOnly: true,
@@ -174,9 +149,9 @@ func invalidateCredentials(w http.ResponseWriter, r *http.Request) {
 			})
 		}
 	}
-	json.NewEncoder(w).Encode(invalidateCredentialsResponse{
+	return invalidateCredentialsResponse{
 		Success: true,
-	})
+	}, nil
 }
 
 type createAdminUserPasswordRequest struct {
@@ -189,9 +164,9 @@ type createAdminUserPasswordResponse struct {
 	Success bool `json:"success"`
 }
 
-func createAdminUserPassword(body []byte) (interface{}, error) {
+func createAdminUserPassword(r *router.Request) (interface{}, error) {
 	var req createAdminUserPasswordRequest
-	if err := json.Unmarshal(body, &req); err != nil {
+	if err := r.GetJSONBody(&req); err != nil {
 		return nil, err
 	}
 	formattedEmailAddress := email.FormatEmailAddress(req.EmailAddress)
@@ -241,17 +216,10 @@ type validateTwoFactorAuthenticationCodeForCreateResponse struct {
 	Success bool `json:"success"`
 }
 
-func validateTwoFactorAuthenticationCodeForCreate(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add("Content-Type", "application/json")
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
+func validateTwoFactorAuthenticationCodeForCreate(r *router.Request) (interface{}, error) {
 	var req validateTwoFactorAuthenticationCodeForCreateRequest
-	if err := json.Unmarshal(body, &req); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
+	if err := r.GetJSONBody(&req); err != nil {
+		return nil, err
 	}
 	var adminUserID user.AdminID
 	if err := encrypt.WithDecodedToken(req.Token, func(t encrypt.TokenPair) error {
@@ -265,8 +233,7 @@ func validateTwoFactorAuthenticationCodeForCreate(w http.ResponseWriter, r *http
 		adminUserID = user.AdminID(adminIDStr)
 		return nil
 	}); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
+		return nil, err
 	}
 	var accessToken *string
 	var expirationTime *time.Time
@@ -277,24 +244,23 @@ func validateTwoFactorAuthenticationCodeForCreate(w http.ResponseWriter, r *http
 		if err := user.ActivateAdminUserPassword(tx, adminUserID); err != nil {
 			return err
 		}
+		var err error
 		accessToken, expirationTime, err = auth.CreateAccessToken(tx, adminUserID)
 		return err
 	}); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
+		return nil, err
 	}
 	if accessToken == nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
+		return nil, fmt.Errorf("No access token")
 	}
-	http.SetCookie(w, &http.Cookie{
+	r.RespondWithCookie(&http.Cookie{
 		Name:     auth.AccessTokenCookieName,
 		Value:    *accessToken,
 		HttpOnly: true,
 		Path:     "/",
 		Expires:  *expirationTime,
 	})
-	json.NewEncoder(w).Encode(validateTwoFactorAuthenticationCodeForCreateResponse{
+	return validateTwoFactorAuthenticationCodeForCreateResponse{
 		Success: true,
-	})
+	}, nil
 }
