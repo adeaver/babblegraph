@@ -18,7 +18,14 @@ const (
 
 	default2FAExpirationTime = 10 * time.Minute
 
-	createAccessTokenQuery = "INSERT INTO admin_access_token (token, expires_at, admin_user_id) VALUES ($1, $2, $3)"
+	createAccessTokenQuery = `INSERT INTO
+        admin_access_token (
+            token,
+            expires_at,
+            admin_user_id
+        ) VALUES ($1, $2, $3)
+        ON CONFLICT (admin_user_id) DO UPDATE
+        SET expires_at = $2, token = $1`
 	getAccessTokenQuery    = "SELECT * FROM admin_access_token WHERE token = $1"
 	deleteAccessTokenQuery = "DELETE FROM admin_access_token WHERE token = $1"
 

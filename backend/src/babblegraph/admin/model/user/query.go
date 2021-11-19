@@ -27,6 +27,10 @@ const (
         SET is_active = TRUE
         WHERE admin_user_id = $1
     `
+	validateAdminPasswordQuery = `
+        SELECT * FROM admin_user_password
+        WHERE admin_user_id = $1 AND is_active = TRUE
+    `
 )
 
 func GetAdminUser(tx *sqlx.Tx, id AdminID) (*AdminUser, error) {
@@ -96,4 +100,18 @@ func ActivateAdminUserPassword(tx *sqlx.Tx, adminUserID AdminID) error {
 		return err
 	}
 	return nil
+}
+
+func ValidateAdminUserPassword(tx *sqlx.Tx, adminUserID AdminID, password string) error {
+	var passwords []dbAdminUserPassword
+	err := tx.Select(&passwords, validateAdminPasswordQuery, adminUserID)
+	switch {
+	case err != nil:
+		return err
+	case len(passwords) == 0:
+		return fmt.Errorf("No active passwords")
+	case len(passwords) > 1:
+		return fmt.Errorf("Expected only one password")
+	}
+	return comparePasswords(passwords[0].PasswordHash, password, passwords[0].Salt)
 }

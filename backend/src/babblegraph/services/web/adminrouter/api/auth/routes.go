@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"time"
 
@@ -73,7 +74,9 @@ func validateLoginCredentials(reqBody []byte) (interface{}, error) {
 		case adminUser == nil:
 			return nil
 		}
-		// TODO: validate password
+		if err := user.ValidateAdminUserPassword(tx, adminUser.AdminID, req.Password); err != nil {
+			return nil
+		}
 		if err := auth.CreateTwoFactorAuthenticationAttempt(tx, adminUser.AdminID); err != nil {
 			return err
 		}
@@ -125,6 +128,7 @@ func validateTwoFactorAuthenticationCode(w http.ResponseWriter, r *http.Request)
 		accessToken, expirationTime, err = auth.CreateAccessToken(tx, adminUser.AdminID)
 		return err
 	}); err != nil {
+		log.Println(err.Error())
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}

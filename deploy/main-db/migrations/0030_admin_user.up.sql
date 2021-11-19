@@ -60,5 +60,5 @@ CREATE TABLE IF NOT EXISTS admin_access_token(
     PRIMARY KEY (token)
 );
 
-CREATE INDEX IF NOT EXISTS admin_access_token_user_id ON admin_access_token(admin_user_id);
+CREATE UNIQUE INDEX IF NOT EXISTS admin_access_token_user_id ON admin_access_token(admin_user_id);
 CREATE UNIQUE INDEX IF NOT EXISTS admin_access_token_token ON admin_access_token(token);

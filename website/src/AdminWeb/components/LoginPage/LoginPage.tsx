@@ -9,6 +9,7 @@ import { TypographyColor } from 'common/typography/common';
 import { Heading1 } from 'common/typography/Heading';
 import { PrimaryButton } from 'common/components/Button/Button';
 import { PrimaryTextField } from 'common/components/TextField/TextField';
+import { setLocation } from 'util/window/Location';
 
 import {
     validateLoginCredentials,
@@ -47,6 +48,8 @@ const LoginPage = (props: LoginPageProps) => {
     const [ emailAddress, setEmailAddress ] = useState<string | null>(null);
     const [ password, setPassword ] = useState<string | null>(null);
 
+    const [ twoFactorAuthenticationCode, setTwoFactorAuthenticationCode ] = useState<string>("");
+
     const [ shouldShowLoginForm, setShouldShowLoginForm ] = useState<boolean>(true);
 
     const handleSubmit = () => {
@@ -59,6 +62,22 @@ const LoginPage = (props: LoginPageProps) => {
             setIsLoading(false);
             if (resp.success) {
                 setShouldShowLoginForm(false);
+            }
+        },
+        (err: Error) => {
+            setIsLoading(false);
+        });
+    }
+    const handleSubmitTwoFactorAuthenticationCode = () => {
+        setIsLoading(true);
+        validateTwoFactorAuthenticationCode({
+            emailAddress: emailAddress,
+            twoFactorAuthenticationCode: twoFactorAuthenticationCode,
+        },
+        (resp: ValidateTwoFactorAuthenticationCodeResponse) => {
+            setIsLoading(false);
+            if (resp.success) {
+                setLocation("/ops/dashboard");
             }
         },
         (err: Error) => {
@@ -87,7 +106,11 @@ const LoginPage = (props: LoginPageProps) => {
                                     handleSubmit={handleSubmit}
                                     isLoading={isLoading} />
                             ) : (
-                                <p>2FA</p>
+                                <TwoFactorAuthenticationForm
+                                    twoFactorAuthenticationCode={twoFactorAuthenticationCode}
+                                    setTwoFactorAuthenticationCode={setTwoFactorAuthenticationCode}
+                                    handleSubmit={handleSubmitTwoFactorAuthenticationCode}
+                                    isLoading={isLoading} />
                             )
                         }
                     </Card>
@@ -146,6 +169,55 @@ const LoginForm = (props: LoginFormProps) => {
                 <Grid item xs={3} md={2} className={classes.formGridItem}>
                     <PrimaryButton type="submit" disabled={!props.emailAddress || !props.password || props.isLoading}>
                         Login
+                    </PrimaryButton>
+                </Grid>
+            </Grid>
+        </form>
+    );
+}
+
+type TwoFactorAuthenticationFormProps = {
+    twoFactorAuthenticationCode: string;
+    setTwoFactorAuthenticationCode: (v: string) => void;
+
+    handleSubmit: () => void;
+    isLoading: boolean;
+}
+
+const TwoFactorAuthenticationForm = (props: TwoFactorAuthenticationFormProps) => {
+    const classes = styleClasses();
+
+    const handleTwoFactorAuthenticationCodeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        props.setTwoFactorAuthenticationCode((event.target as HTMLInputElement).value);
+    };
+    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        props.handleSubmit();
+    }
+    return (
+        <form onSubmit={handleSubmit} noValidate autoComplete="off">
+            <Grid container className={classes.formGridContainer}>
+                <Grid item xs={false} md={3}>
+                    &nbsp;
+                </Grid>
+                <Grid item xs={12} md={6} className={classes.formGridItem}>
+                    <PrimaryTextField
+                        className={classes.textField}
+                        id="two-factor-code"
+                        label="Two Factor Authentication Code"
+                        variant="outlined"
+                        defaultValue={props.twoFactorAuthenticationCode}
+                        onChange={handleTwoFactorAuthenticationCodeChange} />
+                </Grid>
+                <Grid item xs={false} md={3}>
+                    &nbsp;
+                </Grid>
+                <Grid item xs={false} md={3}>
+                    &nbsp;
+                </Grid>
+                <Grid item xs={3} md={2} className={classes.formGridItem}>
+                    <PrimaryButton type="submit" disabled={!props.twoFactorAuthenticationCode || props.isLoading}>
+                        Validate
                     </PrimaryButton>
                 </Grid>
             </Grid>
