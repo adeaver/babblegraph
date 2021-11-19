@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS admin_user(
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()),
     last_modified_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()),
     email_address TEXT NOT NULL,
-    is_active BOOLEAN NOT NULL,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
 
     PRIMARY KEY (_id)
 );

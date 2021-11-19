@@ -1,6 +1,7 @@
 package routes
 
 import (
+	admin_user "babblegraph/admin/model/user"
 	"babblegraph/model/users"
 	"babblegraph/util/encrypt"
 )
@@ -20,6 +21,8 @@ const (
 
 	ArticleLinkKeyForUserDocumentID   RouteEncryptionKey = "article-link-user-document"
 	PaywallReportKeyForUserDocumentID RouteEncryptionKey = "paywall-report-user-document"
+
+	AdminRegistrationKey RouteEncryptionKey = "admin-registration"
 
 	/*
 			   A mistake to learn from:
@@ -63,5 +66,12 @@ func MakePremiumSubscriptionCheckoutToken(userID users.UserID) (*string, error) 
 	return encrypt.GetToken(encrypt.TokenPair{
 		Key:   PremiumSubscriptionCheckoutKey.Str(),
 		Value: userID,
+	})
+}
+
+func MakeAdminRegistrationToken(adminID admin_user.AdminID) (*string, error) {
+	return encrypt.GetToken(encrypt.TokenPair{
+		Key:   AdminRegistrationKey.Str(),
+		Value: adminID,
 	})
 }

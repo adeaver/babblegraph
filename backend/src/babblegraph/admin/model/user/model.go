@@ -48,3 +48,7 @@ type dbAdminAccessPermission struct {
 }
 
 type Permission string
+
+var validAdminEmailDomains = map[string]bool{
+	"babblegraph.com": true,
+}

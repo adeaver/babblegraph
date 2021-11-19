@@ -27,7 +27,8 @@ func main() {
         create-elastic-indexes: create new indices in ElasticSearch
         sync-stripe: sync failed stripe events
         product-updates: send product updates
-        content-topics-length-backfill: backfill content topics length`)
+        content-topics-length-backfill: backfill content topics length
+        create-admin: create admin`)
 	userEmail := flag.String("user-email", "none", "Email address of user to create")
 	flag.Parse()
 	if taskName == nil {
@@ -75,6 +76,13 @@ func main() {
 		tasks.SendProductUpdates()
 	case "content-topics-length-backfill":
 		if err := tasks.BackfillContentTopicsLength(); err != nil {
+			log.Fatal(err.Error())
+		}
+	case "create-admin":
+		if userEmail == nil {
+			log.Fatal("no email specified")
+		}
+		if err := tasks.CreateAdminAndEmitToken(*userEmail); err != nil {
 			log.Fatal(err.Error())
 		}
 	default:

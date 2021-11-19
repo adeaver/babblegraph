@@ -62,3 +62,26 @@ export function invalidateCredentials(
         onError,
     );
 }
+
+export type CreateAdminUserPasswordRequest = {
+	emailAddress: string;
+	password: string;
+	token: string;
+}
+
+export type CreateAdminUserPasswordResponse = {
+	success: boolean;
+}
+
+export function createAdminUserPassword(
+    req: CreateAdminUserPasswordRequest,
+    onSuccess: (resp: CreateAdminUserPasswordResponse) => void,
+    onError: (e: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<CreateAdminUserPasswordRequest, CreateAdminUserPasswordResponse>(
+        '/ops/api/auth/create_admin_user_password_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}

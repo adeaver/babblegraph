@@ -41,7 +41,7 @@ func comparePasswords(hashedPassword, password, salt string) error {
 // Valid passwords contain:
 // Between 16 and 32 characters
 // At least 3 of: Capital Letter, Lowercase Letter, Number, Symbol
-func ValidatePasswordMeetsRequirements(password string) bool {
+func validatePasswordMeetsRequirements(password string) bool {
 	if len(password) < 16 || len(password) > 32 {
 		return false
 	}

@@ -12,6 +12,11 @@ import Paragraph from 'common/typography/Paragraph';
 import { PrimaryButton } from 'common/components/Button/Button';
 import { PrimaryTextField } from 'common/components/TextField/TextField';
 
+import {
+    createAdminUserPassword,
+    CreateAdminUserPasswordResponse,
+} from 'AdminWeb/api/auth/auth';
+
 const styleClasses = makeStyles({
     displayCard: {
         padding: '10px',
@@ -49,6 +54,23 @@ const RegistrationPage = (props: RegistrationPageProps) => {
     const [ isLoading, setIsLoading ] = useState<boolean>(false);
 
     const handleSubmit = () => {
+        setIsLoading(true);
+        if (password === confirmPassword) {
+            createAdminUserPassword({
+                token: token,
+                emailAddress: emailAddress,
+                password: password,
+            },
+            (resp: CreateAdminUserPasswordResponse) => {
+                setIsLoading(false);
+                if (resp.success) {
+                    setShouldShowRegistrationForm(false);
+                }
+            },
+            (err: Error) => {
+                setIsLoading(false);
+            });
+        }
     }
 
     const classes = styleClasses();

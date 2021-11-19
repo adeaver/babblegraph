@@ -3,10 +3,13 @@ package auth
 import (
 	"babblegraph/admin/model/auth"
 	"babblegraph/admin/model/user"
+	"babblegraph/model/routes"
 	"babblegraph/services/web/router"
 	"babblegraph/util/database"
 	"babblegraph/util/email"
+	"babblegraph/util/encrypt"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -31,6 +34,11 @@ var Routes = router.RouteGroup{
 			Path: "invalidate_login_credentials_1",
 			Handler: router.RouteHandler{
 				HandleRawRequest: invalidateCredentials,
+			},
+		}, {
+			Path: "create_admin_user_password_1",
+			Handler: router.RouteHandler{
+				HandleRequestBody: createAdminUserPassword,
 			},
 		},
 	},
@@ -160,4 +168,57 @@ func invalidateCredentials(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(invalidateCredentialsResponse{
 		Success: true,
 	})
+}
+
+type createAdminUserPasswordRequest struct {
+	EmailAddress string `json:"email_address"`
+	Password     string `json:"password"`
+	Token        string `json:"token"`
+}
+
+type createAdminUserPasswordResponse struct {
+	Success bool `json:"success"`
+}
+
+func createAdminUserPassword(body []byte) (interface{}, error) {
+	var req createAdminUserPasswordRequest
+	if err := json.Unmarshal(body, &req); err != nil {
+		return nil, err
+	}
+	formattedEmailAddress := email.FormatEmailAddress(req.EmailAddress)
+	var adminUserID user.AdminID
+	if err := encrypt.WithDecodedToken(req.Token, func(t encrypt.TokenPair) error {
+		if t.Key != routes.AdminRegistrationKey.Str() {
+			return fmt.Errorf("incorrect key")
+		}
+		adminIDStr, ok := t.Value.(string)
+		if !ok {
+			return fmt.Errorf("incorrect type")
+		}
+		adminUserID = user.AdminID(adminIDStr)
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		adminUser, err := user.GetAdminUser(tx, adminUserID)
+		switch {
+		case err != nil:
+			return err
+		case adminUser.EmailAddress != formattedEmailAddress:
+			return fmt.Errorf("Invalid")
+		}
+		if err := user.CreateAdminUserPassword(tx, adminUser.AdminID, req.Password); err != nil {
+			return err
+		}
+		if err := auth.CreateTwoFactorAuthenticationAttempt(tx, adminUser.AdminID); err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	return createAdminUserPasswordResponse{
+		Success: true,
+	}, nil
 }
