@@ -17,9 +17,9 @@ const (
         admin_user_password (
             admin_user_id,
             password_hash,
-            salt,
+            salt
         ) VALUES ($1, $2, $3)
-        ON CONFLICT (admin_user_id)
+        ON CONFLICT (admin_user_id) DO UPDATE
         SET password_hash = $2, salt = $3
     `
 	activeAdminPasswordQuery = `

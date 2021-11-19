@@ -9,16 +9,16 @@ import (
 )
 
 const (
-	create2FACodeQuery        = "INSERT INTO admin_2fa_codes (code, admin_id) VALUES ($1, $2)"
-	expireNonActiveCodesQuery = "UPDATE admin_2fa_codes SET expires_at = timezone('utc', now()) WHERE admin_id = $1"
-	get2FACodeQuery           = "SELECT * FROM admin_2fa_codes WHERE admin_id = $1 AND code = $2"
+	create2FACodeQuery        = "INSERT INTO admin_2fa_codes (code, admin_user_id) VALUES ($1, $2)"
+	expireNonActiveCodesQuery = "UPDATE admin_2fa_codes SET expires_at = timezone('utc', now()) WHERE admin_user_id = $1"
+	get2FACodeQuery           = "SELECT * FROM admin_2fa_codes WHERE admin_user_id = $1 AND code = $2"
 
 	getUnfulfilled2FACodeQuery   = "SELECT * FROM admin_2fa_codes WHERE expires_at IS NULL"
-	update2FACodeExpirationQuery = "UPDATE admin_2fa_codes SET expires_at = $1 WHERE admin_id = $2 AND code = $3 AND expires_at IS NULL"
+	update2FACodeExpirationQuery = "UPDATE admin_2fa_codes SET expires_at = $1 WHERE admin_user_id = $2 AND code = $3 AND expires_at IS NULL"
 
 	default2FAExpirationTime = 10 * time.Minute
 
-	createAccessTokenQuery = "INSERT INTO admin_access_token (token, expires_at, admin_id) VALUES ($1, $2, $3)"
+	createAccessTokenQuery = "INSERT INTO admin_access_token (token, expires_at, admin_user_id) VALUES ($1, $2, $3)"
 	getAccessTokenQuery    = "SELECT * FROM admin_access_token WHERE token = $1"
 	deleteAccessTokenQuery = "DELETE FROM admin_access_token WHERE token = $1"
 
@@ -98,7 +98,7 @@ func ValidateAccessTokenAndGetUserID(tx *sqlx.Tx, accessToken string) (*user.Adm
 		if accessTokens[0].ExpiresAt.Before(time.Now()) {
 			return nil, fmt.Errorf("Expired access token")
 		}
-		return &accessTokens[0].AdminID, nil
+		return &accessTokens[0].AdminUserID, nil
 	}
 }
 

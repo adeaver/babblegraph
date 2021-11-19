@@ -11,6 +11,7 @@ import { Heading1 } from 'common/typography/Heading';
 import Paragraph from 'common/typography/Paragraph';
 import { PrimaryButton } from 'common/components/Button/Button';
 import { PrimaryTextField } from 'common/components/TextField/TextField';
+import { setLocation } from 'util/window/Location';
 
 import {
     createAdminUserPassword,
@@ -86,7 +87,7 @@ const RegistrationPage = (props: RegistrationPageProps) => {
         (resp: ValidateTwoFactorAuthenticationCodeForCreateResponse) => {
             setIsLoading(false);
             if (resp.success) {
-                // Go to dashboard
+                setLocation("/ops/dashboard");
             }
         },
         (err: Error) => {
