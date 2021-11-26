@@ -63,7 +63,6 @@ const NewsletterPreferencesPage = (props: NewsletterPreferencesPageProps) =>  {
     const [ isLoadingUserNewsletterPreferences, setIsLoadingUserNewsletterPreferences ] = useState<boolean>(true);
 
     const [ emailAddress, setEmailAddress ] = useState<string | null>(null);
-    const [ subscriptionLevel, setSubscriptionLevel ] = useState<string | undefined>(undefined);
 
     const [ didUpdate, setDidUpdate ] = useState<boolean | null>(null);
 
@@ -77,7 +76,6 @@ const NewsletterPreferencesPage = (props: NewsletterPreferencesPageProps) =>  {
         (resp: GetUserProfileResponse) => {
             setIsLoadingUserProfile(false);
             if (resp.subscriptionLevel) {
-                setSubscriptionLevel(resp.subscriptionLevel);
                 setEmailAddress(resp.emailAddress);
                 getUserNewsletterPreferences({
                     emailAddress: resp.emailAddress,
