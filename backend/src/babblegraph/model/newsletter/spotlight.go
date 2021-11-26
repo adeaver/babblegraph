@@ -1,9 +1,9 @@
 package newsletter
 
 import (
+	"babblegraph/model/documents"
 	"babblegraph/model/email"
 	"babblegraph/model/routes"
-	"babblegraph/model/useraccounts"
 	"babblegraph/util/deref"
 	"babblegraph/util/ptr"
 	"babblegraph/wordsmith"
@@ -21,17 +21,8 @@ type getSpotlightLemmaForNewsletterInput struct {
 }
 
 func getSpotlightLemmaForNewsletter(input getSpotlightLemmaForNewsletterInput) (*LemmaReinforcementSpotlight, error) {
-	userSubscriptionLevel := input.userAccessor.getUserSubscriptionLevel()
-	switch {
-	case userSubscriptionLevel == nil:
+	if newsletterPreferences := input.userAccessor.getUserNewsletterPreferences(); newsletterPreferences == nil || !newsletterPreferences.ShouldIncludeLemmaReinforcementSpotlight {
 		return nil, nil
-	case *userSubscriptionLevel == useraccounts.SubscriptionLevelBetaPremium,
-		*userSubscriptionLevel == useraccounts.SubscriptionLevelPremium:
-		if newsletterPreferences := input.userAccessor.getUserNewsletterPreferences(); newsletterPreferences == nil || !newsletterPreferences.ShouldIncludeLemmaReinforcementSpotlight {
-			return nil, nil
-		}
-	default:
-		panic("unreachable")
 	}
 	documentIDsToExclude := input.userAccessor.getSentDocumentIDs()
 	for _, category := range input.categories {
@@ -44,17 +35,63 @@ func getSpotlightLemmaForNewsletter(input getSpotlightLemmaForNewsletterInput) (
 		return nil, err
 	}
 	orderedListOfSpotlightRecords := getOrderedListOfPotentialSpotlightLemmas(input.userAccessor)
-	for _, potentialSpotlight := range orderedListOfSpotlightRecords {
+	var preferencesLink string
+	if input.userAccessor.getDoesUserHaveAccount() {
+		preferencesLink = routes.MakeLoginLinkWithNewsletterPreferencesRedirect()
+	} else {
+		prefLink, err := routes.MakeNewsletterPreferencesLink(input.userAccessor.getUserID())
+		if err != nil {
+			return nil, err
+		}
+		preferencesLink = *prefLink
+	}
+	reinforcementSpotlight, err := lookupSpotlightForAllPotentialSpotlights(lookupSpotlightForAllPotentialSpotlightsInput{
+		getSpotlightLemmaForNewsletterInput: input,
+		documentIDsToExclude:                documentIDsToExclude,
+		potentialSpotlights:                 orderedListOfSpotlightRecords,
+		allowableDomains:                    allowableDomains,
+		preferencesLink:                     preferencesLink,
+	})
+	switch {
+	case err != nil:
+		return nil, err
+	case reinforcementSpotlight != nil:
+		return reinforcementSpotlight, nil
+
+	}
+	// TODO: create metric here
+	return lookupSpotlightForAllPotentialSpotlights(lookupSpotlightForAllPotentialSpotlightsInput{
+		getSpotlightLemmaForNewsletterInput: input,
+		documentIDsToExclude:                documentIDsToExclude,
+		potentialSpotlights:                 orderedListOfSpotlightRecords,
+		allowableDomains:                    allowableDomains,
+		preferencesLink:                     preferencesLink,
+		shouldSearchNonRecentDocuments:      true,
+	})
+}
+
+type lookupSpotlightForAllPotentialSpotlightsInput struct {
+	getSpotlightLemmaForNewsletterInput
+	documentIDsToExclude           []documents.DocumentID
+	potentialSpotlights            []wordsmith.LemmaID
+	shouldSearchNonRecentDocuments bool
+	preferencesLink                string
+	allowableDomains               []string
+}
+
+func lookupSpotlightForAllPotentialSpotlights(input lookupSpotlightForAllPotentialSpotlightsInput) (*LemmaReinforcementSpotlight, error) {
+	for _, potentialSpotlight := range input.potentialSpotlights {
 		documents, err := input.docsAccessor.GetDocumentsForUserForLemma(getDocumentsForUserForLemmaInput{
 			getDocumentsBaseInput: getDocumentsBaseInput{
 				LanguageCode:        input.userAccessor.getLanguageCode(),
-				ExcludedDocumentIDs: documentIDsToExclude,
-				ValidDomains:        allowableDomains,
+				ExcludedDocumentIDs: input.documentIDsToExclude,
+				ValidDomains:        input.allowableDomains,
 				MinimumReadingLevel: ptr.Int64(input.userAccessor.getReadingLevel().LowerBound),
 				MaximumReadingLevel: ptr.Int64(input.userAccessor.getReadingLevel().UpperBound),
 			},
-			Lemma:  potentialSpotlight,
-			Topics: input.userAccessor.getUserTopics(),
+			Lemma:           potentialSpotlight,
+			Topics:          input.userAccessor.getUserTopics(),
+			SearchNonRecent: input.shouldSearchNonRecentDocuments,
 		})
 		if err != nil {
 			return nil, err
@@ -83,7 +120,7 @@ func getSpotlightLemmaForNewsletter(input getSpotlightLemmaForNewsletterInput) (
 					return &LemmaReinforcementSpotlight{
 						LemmaText:       lemma.LemmaText,
 						Document:        *link,
-						PreferencesLink: routes.MakeLoginLinkWithNewsletterPreferencesRedirect(),
+						PreferencesLink: input.preferencesLink,
 					}, nil
 				}
 			}
