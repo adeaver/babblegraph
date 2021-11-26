@@ -13,7 +13,6 @@ import (
 )
 
 type getUserNewsletterPreferencesRequest struct {
-	EmailAddress                string `json:"email_address"`
 	LanguageCode                string `json:"language_code"`
 	SubscriptionManagementToken string `json:"subscription_management_token"`
 }
@@ -32,8 +31,7 @@ func getUserNewsletterPreferences(body []byte) (interface{}, error) {
 	if err := json.Unmarshal(body, &req); err != nil {
 		return nil, err
 	}
-	formattedEmailAddress := email.FormatEmailAddress(req.EmailAddress)
-	userID, err := routetoken.ValidateTokenAndEmailAndGetUserID(req.SubscriptionManagementToken, routes.SubscriptionManagementRouteEncryptionKey, formattedEmailAddress)
+	userID, err := routetoken.ValidateTokenAndGetUserID(req.SubscriptionManagementToken, routes.SubscriptionManagementRouteEncryptionKey)
 	if err != nil {
 		return nil, err
 	}

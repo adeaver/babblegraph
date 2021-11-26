@@ -33,14 +33,20 @@ import {
 } from 'api/user/userNewsletterPreferences';
 
 const styleClasses = makeStyles({
-    buttonContainer: {
-        padding: '20px',
-        minWidth: '100%',
-        maxWidth: '100%',
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
+    submitButton: {
+        display: 'block',
+        margin: 'auto',
+    },
+    submitButtonContainer: {
+        alignSelf: 'center',
+        padding: '5px',
+    },
+    emailField: {
+        width: '100%',
+    },
+    confirmationForm: {
+        padding: '10px 0',
+        width: '100%',
     },
     toggleContainer: {
         display: 'flex',
@@ -63,6 +69,7 @@ const NewsletterPreferencesPage = (props: NewsletterPreferencesPageProps) =>  {
     const [ isLoadingUserNewsletterPreferences, setIsLoadingUserNewsletterPreferences ] = useState<boolean>(true);
 
     const [ emailAddress, setEmailAddress ] = useState<string | null>(null);
+    const [ subscriptionLevel, setSubscriptionLevel ] = useState<string | undefined>(undefined);
 
     const [ didUpdate, setDidUpdate ] = useState<boolean | null>(null);
 
@@ -77,30 +84,31 @@ const NewsletterPreferencesPage = (props: NewsletterPreferencesPageProps) =>  {
             setIsLoadingUserProfile(false);
             if (resp.subscriptionLevel) {
                 setEmailAddress(resp.emailAddress);
-                getUserNewsletterPreferences({
-                    emailAddress: resp.emailAddress,
-                    // TODO(multiple-languages): don't hardcode this
-                    languageCode: "es",
-                    subscriptionManagementToken: token,
-                },
-                (resp: GetUserNewsletterPreferencesResponse) => {
-                    setIsLoadingUserNewsletterPreferences(false);
-                    setIsWordReinforcementSpotlightActive(resp.preferences.isLemmaReinforcementSpotlightActive);
-                },
-                (e: Error) => {
-                    setIsLoadingUserNewsletterPreferences(false);
-                    setError(e);
-                });
-            } else {
-                setIsLoadingUserNewsletterPreferences(false);
+                setSubscriptionLevel(resp.subscriptionLevel);
             }
         },
         (e: Error) => {
             setIsLoadingUserProfile(false);
             setError(e);
         });
+        getUserNewsletterPreferences({
+            // TODO(multiple-languages): don't hardcode this
+            languageCode: "es",
+            subscriptionManagementToken: token,
+        },
+        (resp: GetUserNewsletterPreferencesResponse) => {
+            setIsLoadingUserNewsletterPreferences(false);
+            setIsWordReinforcementSpotlightActive(resp.preferences.isLemmaReinforcementSpotlightActive);
+        },
+        (e: Error) => {
+            setIsLoadingUserNewsletterPreferences(false);
+            setError(e);
+        });
     }, []);
 
+    const handleEmailAddressChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setEmailAddress((event.target as HTMLInputElement).value);
+    };
     const handleSubmit = () => {
         setIsLoadingUserNewsletterPreferences(true);
         updateUserNewsletterPreferences({
@@ -147,22 +155,38 @@ const NewsletterPreferencesPage = (props: NewsletterPreferencesPageProps) =>  {
                                     You can adjust some general settings for your newsletter here.
                                 </Paragraph>
                                 <Divider />
-                                {
-                                    !subscriptionLevel && (
-                                        <Paragraph align={Alignment.Left} color={TypographyColor.Warning}>
-                                            Since you’re not subscribed, there are no settings that you will be able to adjust.
-                                        </Paragraph>
-                                    )
-                                }
                                 <LemmaReinforcementHighlightToggle
                                     isActive={isWordReinforcementSpotlightActive}
                                     toggleIsActive={setIsWordReinforcementSpotlightActive} />
                                 <Divider />
-                                <div className={classes.buttonContainer}>
-                                    <PrimaryButton onClick={handleSubmit}>
-                                        Save your preferences
-                                    </PrimaryButton>
-                                </div>
+                                <form className={classes.confirmationForm} noValidate autoComplete="off">
+                                    <Grid container>
+                                        {
+                                            !!props.userProfile ? (
+                                                <Grid item xs={4} md={5}>
+                                                    &nbsp;
+                                                </Grid>
+                                            ) : (
+                                                <Grid item xs={8} md={10}>
+                                                    <PrimaryTextField
+                                                        id="email"
+                                                        className={classes.emailField}
+                                                        label="Email Address"
+                                                        variant="outlined"
+                                                        onChange={handleEmailAddressChange} />
+                                                </Grid>
+                                            )
+                                        }
+                                        <Grid item xs={4} md={2} className={classes.submitButtonContainer}>
+                                            <PrimaryButton
+                                                className={classes.submitButton}
+                                                onClick={props.handleSubmit}
+                                                disabled={!props.emailAddress}>
+                                                Submit
+                                            </PrimaryButton>
+                                        </Grid>
+                                    </Grid>
+                                </form>
                             </DisplayCard>
                         )
                     }
