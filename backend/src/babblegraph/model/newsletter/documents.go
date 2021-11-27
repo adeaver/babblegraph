@@ -80,7 +80,7 @@ func (d *DefaultDocumentsAccessor) GetDocumentsForUserForLemma(input getDocument
 	spotlightQueryBuilder.AddTopics(input.Topics)
 	recencyBias := documents.RecencyBiasMostRecent
 	if input.SearchNonRecent {
-		recencyBias := documents.RecencyBiasNotRecent
+		recencyBias = documents.RecencyBiasNotRecent
 	}
 	spotlightQueryBuilder.WithRecencyBias(recencyBias)
 	return documents.ExecuteDocumentQuery(spotlightQueryBuilder, documents.ExecuteDocumentQueryInput{
