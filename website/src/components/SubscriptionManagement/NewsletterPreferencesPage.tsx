@@ -15,6 +15,7 @@ import { Alignment, TypographyColor } from 'common/typography/common';
 import { PrimarySwitch } from 'common/components/Switch/Switch';
 import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
 import { PrimaryButton } from 'common/components/Button/Button';
+import { PrimaryTextField } from 'common/components/TextField/TextField';
 
 import { ContentHeader } from './common';
 
@@ -162,7 +163,7 @@ const NewsletterPreferencesPage = (props: NewsletterPreferencesPageProps) =>  {
                                 <form className={classes.confirmationForm} noValidate autoComplete="off">
                                     <Grid container>
                                         {
-                                            !!props.userProfile ? (
+                                            !!subscriptionLevel ? (
                                                 <Grid item xs={4} md={5}>
                                                     &nbsp;
                                                 </Grid>
@@ -180,8 +181,8 @@ const NewsletterPreferencesPage = (props: NewsletterPreferencesPageProps) =>  {
                                         <Grid item xs={4} md={2} className={classes.submitButtonContainer}>
                                             <PrimaryButton
                                                 className={classes.submitButton}
-                                                onClick={props.handleSubmit}
-                                                disabled={!props.emailAddress}>
+                                                onClick={handleSubmit}
+                                                disabled={!emailAddress}>
                                                 Submit
                                             </PrimaryButton>
                                         </Grid>
