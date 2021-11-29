@@ -45,7 +45,8 @@ func handlePendingUserAccountNotificationRequests(localSentryHub *sentry.Hub, em
 			case useraccountsnotifications.NotificationTypePremiumSubscriptionCanceled:
 				return handlePremiumSubscriptionCanceledNotification(tx, emailClient, *user)
 			case useraccountsnotifications.NotificationTypeInitialPremiumInformation:
-				return handleInitialPremiumInformationNotification(tx, emailClient, *user)
+				// Temporarily disable this
+				return nil
 			default:
 				return fmt.Errorf("Unknown notification type %s", req.Type)
 			}

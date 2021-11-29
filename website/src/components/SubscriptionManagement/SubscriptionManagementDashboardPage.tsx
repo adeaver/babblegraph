@@ -3,10 +3,10 @@ import { RouteComponentProps, useHistory } from 'react-router-dom';
 
 import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
+
 import Card from '@material-ui/core/Card';
 import Divider from '@material-ui/core/Divider';
 import ArrowForwardIcon from '@material-ui/icons/ArrowForward';
-
 import Link, { LinkTarget } from 'common/components/Link/Link';
 import Color from 'common/styles/colors';
 import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
@@ -168,16 +168,11 @@ const SubscriptionManagementDashboardPage = (props: SubscriptionManagementDashbo
                                     </ActionCard>
                                 )
                             }
-                            {
-                                subscriptionLevel && (
-                                    <ActionCard
-                                        redirectURL={`/manage/${token}/preferences`}
-                                        title='Newsletter general settings'
-                                        isPremiumFeature>
-                                        Adjust general settings for your newsletter, such as toggling whether or not you want to receive word tracking spotlights in your newsletters.
-                                    </ActionCard>
-                                )
-                            }
+                            <ActionCard
+                                redirectURL={`/manage/${token}/preferences`}
+                                title='Newsletter general settings'>
+                                Adjust general settings for your newsletter, such as toggling whether or not you want to receive word tracking spotlights in your newsletters.
+                            </ActionCard>
                             {
                                 subscriptionLevel && (
                                     <ActionCard
@@ -190,14 +185,14 @@ const SubscriptionManagementDashboardPage = (props: SubscriptionManagementDashbo
                             <ActionCard redirectURL={`/manage/${token}/unsubscribe`} title='Unsubscribe'>
                                 If you’re no longer interested in receiving newsletters, you can unsubscribe here. By unsubscribing, we won’t send you any more emails about anything.
                             </ActionCard>
-                            {
+                            { /* TEMPORARILY DISABLED
                                 !subscriptionLevel && (
                                     <Grid item xs={12} onClick={() => history.push(`/manage/${token}/premium`)}>
                                         <Paragraph className={classes.premiumBannerText} align={Alignment.Center} color={TypographyColor.White}>
                                             Check out new features that you can access with a Babblegraph Premium subscription!
                                         </Paragraph>
                                     </Grid>
-                                )
+                                ) */
                             }
                         </Grid>
                         {

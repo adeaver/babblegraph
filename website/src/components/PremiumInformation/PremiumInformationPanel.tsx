@@ -40,10 +40,6 @@ const PremiumInformationPanel = (props: PremiumInformationPanelProps) => {
                     description="Choose which days you receive newsletters from Babblegraph and which days you don’t."
                     icon={<DateRangeIcon className={classes.featureIcon} />} />
                 <PremiumFeatureListItem
-                    title="Word Tracking Spotlights"
-                    description="With word tracking spotlights, every newsletter will include an article that highlights a word on your tracking list. Spotlights rotates through all your words, so you’ll even see less common words regularly!"
-                    icon={<FindInPageIcon className={classes.featureIcon} />} />
-                <PremiumFeatureListItem
                     title="Newsletter Customization"
                     description="Want fewer articles in your newsletter? Want guarantee that you’ll see a certain topic in every email? Premium Subscribers can do just that with the newsletter customization tool!"
                     icon={<BallotIcon className={classes.featureIcon} />} />

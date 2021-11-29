@@ -8,19 +8,6 @@ import (
 	"time"
 )
 
-type RecencyBias string
-
-const (
-	RecencyBiasMostRecent RecencyBias = "most_recent"
-	RecencyBiasNotRecent  RecencyBias = "not_recent"
-
-	RecencyBiasBoundary = -7 * 24 * time.Hour // one week
-)
-
-func (r RecencyBias) Ptr() *RecencyBias {
-	return &r
-}
-
 // Each query can only search for a single topic
 // to make sure that the documents returned are most
 // relevant for that topic - not the union of the two

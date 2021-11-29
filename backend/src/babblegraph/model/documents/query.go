@@ -8,7 +8,21 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"time"
 )
+
+type RecencyBias string
+
+const (
+	RecencyBiasMostRecent RecencyBias = "most_recent"
+	RecencyBiasNotRecent  RecencyBias = "not_recent"
+
+	RecencyBiasBoundary = -7 * 24 * time.Hour // one week
+)
+
+func (r RecencyBias) Ptr() *RecencyBias {
+	return &r
+}
 
 /*
    We want to filter out articles that are assigned to all keywords
