@@ -238,7 +238,7 @@ func TestSpotlightRecordsForTrackedLemmaWithoutSpotlight(t *testing.T) {
 	emailRecordID := email.NewEmailRecordID()
 	lemmasByID := make(map[wordsmith.LemmaID]wordsmith.Lemma)
 	var docs []documents.DocumentWithScore
-	for i := 15; i >= 0; i-- {
+	for i := 16; i >= 0; i-- {
 		lemma := wordsmith.LemmaID(fmt.Sprintf("word%d", i))
 		lemmasByID[lemma] = wordsmith.Lemma{
 			ID:        lemma,
