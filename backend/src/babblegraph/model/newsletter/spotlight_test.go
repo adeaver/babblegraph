@@ -4,7 +4,6 @@ import (
 	"babblegraph/model/contenttopics"
 	"babblegraph/model/documents"
 	"babblegraph/model/email"
-	"babblegraph/model/routes"
 	"babblegraph/model/userlemma"
 	"babblegraph/model/usernewsletterpreferences"
 	"babblegraph/model/users"
@@ -188,10 +187,6 @@ func TestSpotlightRecordsForUserWithoutAccount(t *testing.T) {
 		}
 		if err != nil {
 			t.Errorf("Error comparing links: %s", err.Error())
-		}
-		subscriptionManagementToken, err := routes.MakeSubscriptionManagementToken(userAccessor.getUserID())
-		if err != nil {
-			t.Fatalf("Error setting up test: %s", err.Error())
 		}
 		if !strings.Contains(testNewsletter.Body.LemmaReinforcementSpotlight.PreferencesLink, "manage") {
 			t.Errorf("Expected link to contain manage, but got %s", testNewsletter.Body.LemmaReinforcementSpotlight.PreferencesLink)
