@@ -151,6 +151,7 @@ func TestUserScheduleDayNoSubscription(t *testing.T) {
 }
 
 func TestSpotlightRecordsForUserWithAccount(t *testing.T) {
+	expectedLemma := wordsmith.LemmaID("word3")
 	emailAccessor := getTestEmailAccessor()
 	userAccessor := &testUserAccessor{
 		languageCode:        wordsmith.LanguageCodeSpanish,
@@ -177,15 +178,15 @@ func TestSpotlightRecordsForUserWithAccount(t *testing.T) {
 				LastSentOn:   time.Now(),
 			}, {
 				LanguageCode: wordsmith.LanguageCodeSpanish,
-				LemmaID:      "word3",
+				LemmaID:      expectedLemma,
 				LastSentOn:   time.Now().Add(-8 * 24 * time.Hour),
 			},
 		},
 		trackingLemmas: []wordsmith.LemmaID{
-			"word1", "word2", "word3",
+			"word1", "word2", expectedLemma,
 		},
 	}
-	var links []Link
+	var correctLink *Link
 	emailRecordID := email.NewEmailRecordID()
 	lemmasByID := make(map[wordsmith.LemmaID]wordsmith.Lemma)
 	var docs []documents.DocumentWithScore
@@ -205,7 +206,9 @@ func TestSpotlightRecordsForUserWithAccount(t *testing.T) {
 			t.Fatalf("Error setting up test: %s", err.Error())
 		}
 		docs = append(docs, *doc)
-		links = append(links, *link)
+		if lemma.Str() == expectedLemma.Str() {
+			correctLink = link
+		}
 	}
 	wordsmithAccessor := &testWordsmithAccessor{
 		lemmasByID: lemmasByID,
@@ -220,10 +223,10 @@ func TestSpotlightRecordsForUserWithAccount(t *testing.T) {
 	case testNewsletter.Body.LemmaReinforcementSpotlight == nil:
 		t.Errorf("Expected non-null newsletter lemma reinforcement, but it was not")
 	default:
-		if testNewsletter.Body.LemmaReinforcementSpotlight.LemmaText != "word3" {
-			t.Errorf("Expected lemma to be word3, but got %s", testNewsletter.Body.LemmaReinforcementSpotlight.LemmaText)
+		if testNewsletter.Body.LemmaReinforcementSpotlight.LemmaText != expectedLemma.Str() {
+			t.Errorf("Expected lemma to be %s, but got %s", expectedLemma.Str(), testNewsletter.Body.LemmaReinforcementSpotlight.LemmaText)
 		}
-		correctDocument, err := testLink(testNewsletter.Body.LemmaReinforcementSpotlight.Document, links[4])
+		correctDocument, err := testLink(testNewsletter.Body.LemmaReinforcementSpotlight.Document, *correctLink)
 		if !correctDocument {
 			t.Errorf("Document ID from links is not correct")
 		}
