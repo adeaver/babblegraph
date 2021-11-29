@@ -7,6 +7,7 @@ import (
 	"babblegraph/util/deref"
 	"babblegraph/util/ptr"
 	"babblegraph/wordsmith"
+	"log"
 	"sort"
 	"strings"
 	"time"
@@ -24,6 +25,7 @@ func getSpotlightLemmaForNewsletter(input getSpotlightLemmaForNewsletterInput) (
 	if newsletterPreferences := input.userAccessor.getUserNewsletterPreferences(); newsletterPreferences == nil || !newsletterPreferences.ShouldIncludeLemmaReinforcementSpotlight {
 		return nil, nil
 	}
+	log.Println("Getting spotlight")
 	documentIDsToExclude := input.userAccessor.getSentDocumentIDs()
 	for _, category := range input.categories {
 		for _, l := range category.Links {
@@ -35,6 +37,7 @@ func getSpotlightLemmaForNewsletter(input getSpotlightLemmaForNewsletterInput) (
 		return nil, err
 	}
 	orderedListOfSpotlightRecords := getOrderedListOfPotentialSpotlightLemmas(input.userAccessor)
+	log.Println("Ordered spotlight records %+v", orderedListOfSpotlightRecords)
 	var preferencesLink string
 	if input.userAccessor.getDoesUserHaveAccount() {
 		preferencesLink = routes.MakeLoginLinkWithNewsletterPreferencesRedirect()
@@ -57,8 +60,8 @@ func getSpotlightLemmaForNewsletter(input getSpotlightLemmaForNewsletterInput) (
 		return nil, err
 	case reinforcementSpotlight != nil:
 		return reinforcementSpotlight, nil
-
 	}
+	log.Println("Trying older documents")
 	// TODO: create metric here
 	return lookupSpotlightForAllPotentialSpotlights(lookupSpotlightForAllPotentialSpotlightsInput{
 		getSpotlightLemmaForNewsletterInput: input,
