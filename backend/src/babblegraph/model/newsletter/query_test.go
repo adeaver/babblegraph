@@ -162,7 +162,7 @@ func TestSpotlightRecordsForUserWithAccount(t *testing.T) {
 			LowerBound: 30,
 			UpperBound: 80,
 		},
-		userNewsletterPreferences: usernewsletterpreferences.UserNewsletterPreferences{
+		userNewsletterPreferences: &usernewsletterpreferences.UserNewsletterPreferences{
 			ShouldIncludeLemmaReinforcementSpotlight: true,
 			LanguageCode:                             wordsmith.LanguageCodeSpanish,
 		},
