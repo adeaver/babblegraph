@@ -51,9 +51,9 @@ func (t *testDocsAccessor) GetDocumentsForUserForLemma(input getDocumentsForUser
 			log.Println(fmt.Sprintf("ID does not match: %s", doc.ID))
 		case !isDomainValid(doc.Domain, input.ValidDomains):
 			log.Println(fmt.Sprintf("Domain not valid: %s", doc.Domain))
-		case input.MinimumReadingLevel != nil && *input.MinimumReadingLevel < doc.ReadabilityScore:
+		case input.MinimumReadingLevel != nil && *input.MinimumReadingLevel > doc.ReadabilityScore:
 			log.Println(fmt.Sprintf("Reading score too high: %+v", doc.ReadabilityScore))
-		case input.MaximumReadingLevel != nil && *input.MaximumReadingLevel > doc.ReadabilityScore:
+		case input.MaximumReadingLevel != nil && *input.MaximumReadingLevel < doc.ReadabilityScore:
 			log.Println(fmt.Sprintf("Reading score too low: %+v", doc.ReadabilityScore))
 		case doc.LemmatizedDescription == nil || !containsLemma(input.Lemma, *doc.LemmatizedDescription):
 			log.Println(fmt.Sprintf("No description: %+v", doc.LemmatizedDescription))
