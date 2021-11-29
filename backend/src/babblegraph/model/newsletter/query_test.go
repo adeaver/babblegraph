@@ -173,7 +173,7 @@ func TestSpotlightRecordsForUserWithAccount(t *testing.T) {
 			}, {
 				LanguageCode: wordsmith.LanguageCodeSpanish,
 				LemmaID:      "word3",
-				LastSentOn:   time.Now().Add(-7 * 24 * time.Hour),
+				LastSentOn:   time.Now().Add(-8 * 24 * time.Hour),
 			},
 		},
 	}
