@@ -7,6 +7,7 @@ import (
 	"babblegraph/model/routes"
 	"babblegraph/model/useraccounts"
 	"babblegraph/model/userlemma"
+	"babblegraph/model/usernewsletterpreferences"
 	"babblegraph/model/usernewsletterschedule"
 	"babblegraph/util/ptr"
 	"babblegraph/util/testutils"
@@ -160,6 +161,10 @@ func TestSpotlightRecordsForUserWithAccount(t *testing.T) {
 		readingLevel: &userReadingLevel{
 			LowerBound: 30,
 			UpperBound: 80,
+		},
+		userNewsletterPreferences: usernewsletterpreferences.UserNewsletterPreferences{
+			ShouldIncludeLemmaReinforcementSpotlight: true,
+			LanguageCode:                             wordsmith.LanguageCodeSpanish,
 		},
 		spotlightRecords: []userlemma.UserLemmaReinforcementSpotlightRecord{
 			{
