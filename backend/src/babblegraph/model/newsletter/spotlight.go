@@ -7,6 +7,7 @@ import (
 	"babblegraph/util/deref"
 	"babblegraph/util/ptr"
 	"babblegraph/wordsmith"
+	"fmt"
 	"log"
 	"sort"
 	"strings"
@@ -37,7 +38,7 @@ func getSpotlightLemmaForNewsletter(input getSpotlightLemmaForNewsletterInput) (
 		return nil, err
 	}
 	orderedListOfSpotlightRecords := getOrderedListOfPotentialSpotlightLemmas(input.userAccessor)
-	log.Println("Ordered spotlight records %+v", orderedListOfSpotlightRecords)
+	log.Println(fmt.Sprintf("Ordered spotlight records %+v", orderedListOfSpotlightRecords))
 	var preferencesLink string
 	if input.userAccessor.getDoesUserHaveAccount() {
 		preferencesLink = routes.MakeLoginLinkWithNewsletterPreferencesRedirect()
