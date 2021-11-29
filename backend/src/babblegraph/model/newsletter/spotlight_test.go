@@ -193,8 +193,9 @@ func TestSpotlightRecordsForUserWithoutAccount(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Error setting up test: %s", err.Error())
 		}
-		if !strings.HasSuffix(testNewsletter.Body.LemmaReinforcementSpotlight.PreferencesLink, fmt.Sprintf("manage/%s/preferences", *subscriptionManagementToken)) {
-			t.Errorf("Expected link to end with login?d=npf, but got %s", testNewsletter.Body.LemmaReinforcementSpotlight.PreferencesLink)
+		expectedSuffx := fmt.Sprintf("manage/%s/preferences", *subscriptionManagementToken)
+		if !strings.HasSuffix(testNewsletter.Body.LemmaReinforcementSpotlight.PreferencesLink, expectedSuffix) {
+			t.Errorf("Expected link to end with %s, but got %s", expectedSuffix, testNewsletter.Body.LemmaReinforcementSpotlight.PreferencesLink)
 		}
 	}
 }
