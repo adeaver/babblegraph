@@ -11,6 +11,7 @@ import (
 	"babblegraph/util/ptr"
 	"babblegraph/util/testutils"
 	"babblegraph/wordsmith"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -179,17 +180,17 @@ func TestSpotlightRecordsForUserWithAccount(t *testing.T) {
 	var links []Link
 	emailRecordID := email.NewEmailRecordID()
 	lemmasByID := make(map[wordsmith.LemmaID]wordsmith.Lemma)
-	lemmas := []wordsmith.LemmaID{"otherWord", "otherWord1", "word1", "word2", "word3", "word4"}
 	var docs []documents.DocumentWithScore
-	for idx, lemma := range lemmas {
+	for i := 15; i >= 0; i-- {
+		lemma := wordsmith.LemmaID(fmt.Sprintf("word%d", i))
 		lemmasByID[lemma] = wordsmith.Lemma{
 			ID:        lemma,
 			Language:  wordsmith.LanguageCodeSpanish,
 			LemmaText: lemma.Str(),
 		}
-		doc, link, err := getDefaultDocumentWithLink(idx, emailRecordID, userAccessor, getDefaultDocumentInput{
+		doc, link, err := getDefaultDocumentWithLink(i, emailRecordID, userAccessor, getDefaultDocumentInput{
 			Topics:                 []contenttopics.ContentTopic{contenttopics.ContentTopicArt},
-			SeedJobIngestTimestamp: ptr.Int64(time.Now().Add(-1 * time.Duration(idx) * 24 * time.Hour).Unix()),
+			SeedJobIngestTimestamp: ptr.Int64(time.Now().Add(-1 * time.Duration(15-i) * 24 * time.Hour).Unix()),
 			Lemmas:                 []wordsmith.LemmaID{lemma},
 		})
 		if err != nil {
@@ -209,7 +210,7 @@ func TestSpotlightRecordsForUserWithAccount(t *testing.T) {
 	case testNewsletter == nil:
 		t.Errorf("Expected non-null newsletter, but it was not")
 	case testNewsletter.Body.LemmaReinforcementSpotlight == nil:
-		t.Errorf("Expected non-null newsletter lemma rei, but it was not")
+		t.Errorf("Expected non-null newsletter lemma reinforcement, but it was not")
 	default:
 		if testNewsletter.Body.LemmaReinforcementSpotlight.LemmaText != "word3" {
 			t.Errorf("Expected lemma to be word3, but got %s", testNewsletter.Body.LemmaReinforcementSpotlight.LemmaText)
