@@ -181,6 +181,9 @@ func TestSpotlightRecordsForUserWithAccount(t *testing.T) {
 				LastSentOn:   time.Now().Add(-8 * 24 * time.Hour),
 			},
 		},
+		trackingLemmas: []wordsmith.LemmaID{
+			"word1", "word2", "word3",
+		},
 	}
 	var links []Link
 	emailRecordID := email.NewEmailRecordID()
