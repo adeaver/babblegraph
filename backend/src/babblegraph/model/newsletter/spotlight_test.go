@@ -193,7 +193,7 @@ func TestSpotlightRecordsForUserWithoutAccount(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Error setting up test: %s", err.Error())
 		}
-		expectedSuffx := fmt.Sprintf("manage/%s/preferences", *subscriptionManagementToken)
+		expectedSuffix := fmt.Sprintf("manage/%s/preferences", *subscriptionManagementToken)
 		if !strings.HasSuffix(testNewsletter.Body.LemmaReinforcementSpotlight.PreferencesLink, expectedSuffix) {
 			t.Errorf("Expected link to end with %s, but got %s", expectedSuffix, testNewsletter.Body.LemmaReinforcementSpotlight.PreferencesLink)
 		}
