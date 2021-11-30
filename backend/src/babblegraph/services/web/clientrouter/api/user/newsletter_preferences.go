@@ -3,7 +3,7 @@ package user
 import (
 	"babblegraph/model/routes"
 	"babblegraph/model/usernewsletterpreferences"
-	"babblegraph/services/web/util/routetoken"
+	"babblegraph/services/web/clientrouter/util/routetoken"
 	"babblegraph/util/database"
 	"babblegraph/util/email"
 	"babblegraph/wordsmith"
