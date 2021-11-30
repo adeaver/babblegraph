@@ -51,11 +51,20 @@ func containsLemma(lemma wordsmith.LemmaID, description string) bool {
 }
 
 type getDefaultDocumentInput struct {
-	Topics []contenttopics.ContentTopic
-	Lemmas []wordsmith.LemmaID
+	Topics                 []contenttopics.ContentTopic
+	Lemmas                 []wordsmith.LemmaID
+	SeedJobIngestTimestamp *int64
 }
 
 func getDefaultDocumentWithLink(idx int, emailRecordID email.ID, userAccessor userPreferencesAccessor, input getDefaultDocumentInput) (*documents.DocumentWithScore, *Link, error) {
+	var lemmatizedDescription *string
+	if len(input.Lemmas) > 0 {
+		var descriptionParts []string
+		for _, lemma := range input.Lemmas {
+			descriptionParts = append(descriptionParts, lemma.Str())
+		}
+		lemmatizedDescription = ptr.String(strings.Join(descriptionParts, " "))
+	}
 	doc := documents.Document{
 		ID:               documents.DocumentID(fmt.Sprintf("web_doc-%d", idx)),
 		Version:          documents.Version4,
@@ -69,9 +78,11 @@ func getDefaultDocumentWithLink(idx int, emailRecordID email.ID, userAccessor us
 			URL:         ptr.String(fmt.Sprintf("https://www.elmundo.es/%d", idx)),
 			Description: ptr.String(fmt.Sprintf("This is document #%d", idx)),
 		},
-		Domain:     "elmundo.es",
-		Topics:     input.Topics,
-		HasPaywall: ptr.Bool(false),
+		Domain:                 "elmundo.es",
+		Topics:                 input.Topics,
+		HasPaywall:             ptr.Bool(false),
+		LemmatizedDescription:  lemmatizedDescription,
+		SeedJobIngestTimestamp: input.SeedJobIngestTimestamp,
 	}
 	link, err := makeLinkFromDocument(emailRecordID, userAccessor, doc)
 	if err != nil {

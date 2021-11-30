@@ -2,7 +2,6 @@ import { makePostRequestWithStandardEncoding } from 'util/bgfetch/bgfetch';
 
 export type GetUserNewsletterPreferencesRequest = {
     languageCode: string;
-    emailAddress: string;
     subscriptionManagementToken: string;
 }
 

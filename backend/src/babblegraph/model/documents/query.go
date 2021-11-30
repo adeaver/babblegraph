@@ -8,7 +8,21 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"time"
 )
+
+type RecencyBias string
+
+const (
+	RecencyBiasMostRecent RecencyBias = "most_recent"
+	RecencyBiasNotRecent  RecencyBias = "not_recent"
+
+	RecencyBiasBoundary = -7 * 24 * time.Hour // one week
+)
+
+func (r RecencyBias) Ptr() *RecencyBias {
+	return &r
+}
 
 /*
    We want to filter out articles that are assigned to all keywords
@@ -56,6 +70,12 @@ func ExecuteDocumentQuery(query executableQuery, input ExecuteDocumentQueryInput
 			excludedDocumentIDsQueryString = append(excludedDocumentIDsQueryString, string(docID))
 		}
 		queryBuilder.AddMustNot(esquery.Terms("id.keyword", excludedDocumentIDsQueryString))
+	}
+	topicsLengthRangeQueryBuilder := esquery.NewRangeQueryBuilderForFieldName("topics_length")
+	topicsLengthRangeQueryBuilder.LessThanOrEqualToInt64(maximumNumberOfTopicsPerDocument)
+	queryBuilder.AddFilter(topicsLengthRangeQueryBuilder.BuildRangeQuery())
+	if filteredWords, ok := filteredWordsForLanguageCode[input.LanguageCode]; ok {
+		queryBuilder.AddMustNot(esquery.Terms("metadata.title", filteredWords))
 	}
 	if input.MinimumReadingLevel != nil || input.MaximumReadingLevel != nil {
 		readingLevelRangeQueryBuilder := esquery.NewRangeQueryBuilderForFieldName("readability_score")

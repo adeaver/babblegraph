@@ -52,6 +52,12 @@ func RegisterRouteGroups() error {
 			}, {
 				Path:    "handle_request_password_reset_link_1",
 				Handler: requestPasswordResetLink,
+			}, {
+				Path:    "get_user_newsletter_preferences_1",
+				Handler: getUserNewsletterPreferences,
+			}, {
+				Path:    "update_user_newsletter_preferences_1",
+				Handler: updateUserNewsletterPreferences,
 			},
 		},
 		AuthenticatedRoutes: []api.AuthenticatedRoute{
@@ -69,22 +75,7 @@ func RegisterRouteGroups() error {
 					useraccounts.SubscriptionLevelBetaPremium,
 					useraccounts.SubscriptionLevelPremium,
 				},
-			}, {
-				Path:    "get_user_newsletter_preferences_1",
-				Handler: getUserNewsletterPreferences,
-				ValidAuthorizationLevels: []useraccounts.SubscriptionLevel{
-					useraccounts.SubscriptionLevelBetaPremium,
-					useraccounts.SubscriptionLevelPremium,
-				},
-			}, {
-				Path:    "update_user_newsletter_preferences_1",
-				Handler: updateUserNewsletterPreferences,
-				ValidAuthorizationLevels: []useraccounts.SubscriptionLevel{
-					useraccounts.SubscriptionLevelBetaPremium,
-					useraccounts.SubscriptionLevelPremium,
-				},
-			},
-		},
+			}},
 	})
 }
 
