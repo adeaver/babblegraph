@@ -7,6 +7,8 @@ import (
 	"babblegraph/util/ptr"
 	"fmt"
 	"os"
+	"strings"
+	"text/template"
 )
 
 func getPathForTemplateFile(filename string) (*string, error) {
@@ -38,4 +40,20 @@ func createBaseEmailTemplate(emailRecordID email.ID, userAccessor UserAccessor) 
 		HeroImageURL:               *heroImageURL,
 		HomePageURL:                routes.MustGetHomePageURL(),
 	}, nil
+}
+
+func openAndExecuteTemplate(templateFileName string, body interface{}) (*string, error) {
+	templateFile, err := getPathForTemplateFile(templateFileName)
+	if err != nil {
+		return nil, err
+	}
+	t, err := template.New(templateFileName).ParseFiles(*templateFile)
+	if err != nil {
+		return nil, err
+	}
+	var b strings.Builder
+	if err := t.Execute(&b, body); err != nil {
+		return nil, err
+	}
+	return ptr.String(b.String()), nil
 }
