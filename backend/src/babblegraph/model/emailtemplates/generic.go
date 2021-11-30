@@ -61,7 +61,7 @@ type MakeGenericEmailHTMLInput struct {
 }
 
 func MakeGenericEmailHTML(input MakeGenericEmailHTMLInput) (*string, error) {
-	return openAndExecuteTemplate(genericEmailTemplateFilename, genericTemplate{
+	return openAndExecuteTemplate(genericNonUserEmailTemplateFilename, genericTemplate{
 		EmailTitle:       input.EmailTitle,
 		PreheaderText:    input.PreheaderText,
 		BeforeParagraphs: input.BeforeParagraphs,
