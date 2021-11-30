@@ -5,6 +5,7 @@ import (
 	"babblegraph/services/worker/linkprocessing"
 	"babblegraph/util/env"
 	"babblegraph/util/ses"
+	"babblegraph/util/storage"
 	"fmt"
 	"log"
 	"runtime"
@@ -26,6 +27,7 @@ func StartScheduler(linkProcessor *linkprocessing.LinkProcessor, errs chan error
 		c.AddFunc("30 0 * * *", makeArchiveForgotPasswordAttemptsJob(errs))
 		c.AddFunc("30 2 * * *", makeRefetchSeedDomainJob(linkProcessor, errs))
 		c.AddFunc("30 3 * * *", makeHandleAdminExpirationJob(errs))
+		c.AddFunc("30 4 * * *", makeCleanupOldNewsletterJob(errs))
 		c.AddFunc("30 12 * * *", makeUserFeedbackJob(errs))
 		c.AddFunc("11 */3 * * *", makeExpireUserAccountsJob(errs))
 		c.AddFunc("*/1 * * * *", makeVerificationJob(errs))
@@ -35,6 +37,7 @@ func StartScheduler(linkProcessor *linkprocessing.LinkProcessor, errs chan error
 		c.AddFunc("*/1 * * * *", makeHandleTwoFactorAuthenticationCode(errs))
 	case "local-test-emails",
 		"local":
+		c.AddFunc("*/1 * * * *", makeCleanupOldNewsletterJob(errs))
 		c.AddFunc("*/1 * * * *", makeHandleAdminExpirationJob(errs))
 		c.AddFunc("*/1 * * * *", makeUserAccountNotificationsJob(errs))
 		c.AddFunc("*/1 * * * *", makeVerificationJob(errs))
@@ -47,6 +50,7 @@ func StartScheduler(linkProcessor *linkprocessing.LinkProcessor, errs chan error
 		makeUserFeedbackJob(errs)()
 	case "local-no-email":
 		makeRefetchSeedDomainJob(linkProcessor, errs)()
+		makeCleanupOldNewsletterJob(errs)()
 	}
 	c.Start()
 	return nil
@@ -304,6 +308,29 @@ func makeHandleAdminExpirationJob(errs chan error) func() {
 		}()
 		log.Println("Starting admin codes expiration job...")
 		if err := handleCleanUpAdminTwoFactorCodesAndAccessTokens(); err != nil {
+			localHub.CaptureException(err)
+			errs <- err
+		}
+	}
+}
+
+func makeCleanupOldNewsletterJob(errs chan error) func() {
+	return func() {
+		today := time.Now()
+		localHub := sentry.CurrentHub().Clone()
+		localHub.ConfigureScope(func(scope *sentry.Scope) {
+			scope.SetTag("newsletter-cleanup-job", fmt.Sprintf("newsletter-cleanup-job-%s-%d-%d-%d-%d", today.Month().String(), today.Day(), today.Year(), today.Hour(), today.Minute()))
+		})
+		defer func() {
+			if x := recover(); x != nil {
+				_, fn, line, _ := runtime.Caller(1)
+				err := fmt.Errorf("Newsletter Cleanup Job: %s: %d: %v\n%s", fn, line, x, string(debug.Stack()))
+				localHub.CaptureException(err)
+				errs <- err
+			}
+		}()
+		log.Println("Starting newsletter cleanup job...")
+		if err := handleCleanupOldNewsletter(localHub, storage.NewS3StorageForEnvironment()); err != nil {
 			localHub.CaptureException(err)
 			errs <- err
 		}
