@@ -39,6 +39,8 @@ const (
 
 	EmailTypeInitialPremiumAdvertisement EmailType = "initial-premium-advertisement"
 	EmailTypePremiumAnnouncement         EmailType = "premium-announcement-september-2021"
+
+	EmailTypeAdminTwoFactorAuthenticationCode EmailType = "admin-two-factor-authentication-code"
 )
 
 type Recipient struct {
