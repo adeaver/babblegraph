@@ -11,7 +11,7 @@ import (
 
 const (
 	getSendRequestsForUsersForDayQuery      = "SELECT * FROM newsletter_send_requests WHERE date_of_send = '%s' AND language_code = '%s' AND user_id IN (?)"
-	getSendRequestsOlderThanWithStatusQuery = "SELECT * FROM newsletter_send_requests WHERE created_at <= $1 AND status != $2"
+	getSendRequestsOlderThanWithStatusQuery = "SELECT * FROM newsletter_send_requests WHERE created_at <= $1 AND payload_status != $2"
 	insertSendRequestForUserQuery           = `INSERT INTO
         newsletter_send_requests
     (
@@ -82,7 +82,7 @@ func GetOrCreateSendRequestsForUsersForDay(tx *sqlx.Tx, userIDs []users.UserID, 
 func GetNonDeletedSendRequestsOlderThan(tx *sqlx.Tx, t time.Time) ([]NewsletterSendRequest, error) {
 	var matches []dbNewsletterSendRequest
 	if err := tx.Select(&matches, getSendRequestsOlderThanWithStatusQuery, t, PayloadStatusDeleted); err != nil {
-		return nil, nil
+		return nil, err
 	}
 	var out []NewsletterSendRequest
 	for _, m := range matches {
