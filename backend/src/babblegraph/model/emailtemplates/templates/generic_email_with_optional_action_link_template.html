@@ -3,7 +3,7 @@
   <head>
     <meta name="viewport" content="width=device-width">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <title>{{ .EmailTitle }}</title>
+    <title>{{ .genericTemplate.EmailTitle }}</title>
     <style>
     /* -------------------------------------
         INLINED WITH htmlemail.io/inline
@@ -95,7 +95,7 @@
     </style>
   </head>
   <body class="" style="background-color: #f6f6f6; font-family: sans-serif; -webkit-font-smoothing: antialiased; font-size: 14px; line-height: 1.4; margin: 0; padding: 0; -ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%;">
-    <span class="preheader" style="color: transparent; display: none; height: 0; max-height: 0; max-width: 0; opacity: 0; overflow: hidden; mso-hide: all; visibility: hidden; width: 0;">{{ .PreheaderText }}</span>
+    <span class="preheader" style="color: transparent; display: none; height: 0; max-height: 0; max-width: 0; opacity: 0; overflow: hidden; mso-hide: all; visibility: hidden; width: 0;">{{ .genericTemplate.PreheaderText }}</span>
     <table border="0" cellpadding="0" cellspacing="0" class="body" style="border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt; width: 100%; background-color: #f6f6f6;">
       <tr>
         <td style="font-family: sans-serif; font-size: 14px; vertical-align: top;">&nbsp;</td>
@@ -116,10 +116,10 @@
                                 <img src="{{.BaseEmailTemplate.HeroImageURL}}" alt="Babblegraph" width="100%" height="auto" />
                             </a>
                         </h1>
-                        {{range $paragraph := .BeforeParagraphs }}
+                        {{range $paragraph := .genericTemplate.BeforeParagraphs }}
                             <p style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; Margin-bottom: 15px;">{{ $paragraph }}</p>
                         {{end}}
-                        {{ if .Action }}
+                        {{ if .genericTemplate.Action }}
                                 <table border="0" cellpadding="0" cellspacing="0" class="btn btn-primary" style="border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt; width: 100%; box-sizing: border-box;">
                                   <tbody>
                                     <tr>
@@ -127,7 +127,7 @@
                                         <table border="0" cellpadding="0" cellspacing="0" style="border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt; width: auto;">
                                           <tbody>
                                             <tr>
-                                              <td style="font-family: sans-serif; font-size: 14px; vertical-align: top; background-color: #A663CC; border-radius: 5px; text-align: center;"> <a href="{{ .Action.Link }}" target="_blank" style="display: inline-block; color: #ffffff; background-color: #A663CC; border: solid 1px #A663CC; border-radius: 5px; box-sizing: border-box; cursor: pointer; text-decoration: none; font-size: 14px; font-weight: bold; margin: 0; padding: 12px 25px; text-transform: capitalize; border-color: #A663CC;">{{ .Action.ButtonText }}</a> </td>
+                                              <td style="font-family: sans-serif; font-size: 14px; vertical-align: top; background-color: #A663CC; border-radius: 5px; text-align: center;"> <a href="{{ .genericTemplate.Action.Link }}" target="_blank" style="display: inline-block; color: #ffffff; background-color: #A663CC; border: solid 1px #A663CC; border-radius: 5px; box-sizing: border-box; cursor: pointer; text-decoration: none; font-size: 14px; font-weight: bold; margin: 0; padding: 12px 25px; text-transform: capitalize; border-color: #A663CC;">{{ .genericTemplate.Action.ButtonText }}</a> </td>
                                             </tr>
                                           </tbody>
                                         </table>
@@ -135,9 +135,9 @@
                                     </tr>
                                   </tbody>
                                 </table>
-                                <p style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; Margin-bottom: 15px;">If you’re having trouble clicking that button, copy this link into your web browser: <a href="{{ .Action.Link }}" target="_blank" style="display: inline-block; color: #20A4F3; cursor: pointer; text-decoration: underline; font-size: 14px; font-weight: bold; margin: 0; padding: 12px 25px; border-color: #A663CC;">{{ .Action.Link }}</a></p>
+                                <p style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; Margin-bottom: 15px;">If you’re having trouble clicking that button, copy this link into your web browser: <a href="{{ .genericTemplate.Action.Link }}" target="_blank" style="display: inline-block; color: #20A4F3; cursor: pointer; text-decoration: underline; font-size: 14px; font-weight: bold; margin: 0; padding: 12px 25px; border-color: #A663CC;">{{ .genericTemplate.Action.Link }}</a></p>
                         {{ end }}
-                        {{range $paragraph := .AfterParagraphs }}
+                        {{range $paragraph := .genericTemplate.AfterParagraphs }}
                             <p style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; Margin-bottom: 15px;">{{ $paragraph }}</p>
                         {{ end }}
                       </td>

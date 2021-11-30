@@ -15,6 +15,7 @@ const (
 
 	getUnfulfilled2FACodeQuery   = "SELECT * FROM admin_2fa_codes WHERE expires_at IS NULL"
 	update2FACodeExpirationQuery = "UPDATE admin_2fa_codes SET expires_at = $1 WHERE admin_user_id = $2 AND code = $3 AND expires_at IS NULL"
+	deleteExpired2FACodesQuery   = "DELETE FROM admin_2fa_codes WHERE epxires_at < current_date - interval '2 days'"
 
 	default2FAExpirationTime = 10 * time.Minute
 
@@ -26,8 +27,9 @@ const (
         ) VALUES ($1, $2, $3)
         ON CONFLICT (admin_user_id) DO UPDATE
         SET expires_at = $2, token = $1`
-	getAccessTokenQuery    = "SELECT * FROM admin_access_token WHERE token = $1"
-	deleteAccessTokenQuery = "DELETE FROM admin_access_token WHERE token = $1"
+	getAccessTokenQuery            = "SELECT * FROM admin_access_token WHERE token = $1"
+	deleteAccessTokenQuery         = "DELETE FROM admin_access_token WHERE token = $1"
+	deleteExpiredAccessTokensQuery = "DELETE FROM admin_access_token WHERE epxires_at < current_date - interval '2 days'"
 
 	defaultAccessTokenExpirationTime = 24 * time.Hour
 )
@@ -82,6 +84,13 @@ func FulfillTwoFactorAuthenticationAttempt(tx *sqlx.Tx, adminID user.AdminID, co
 	return nil
 }
 
+func RemoveExpiredTwoFactorCodes(tx *sqlx.Tx) error {
+	if _, err := tx.Exec(deleteExpired2FACodesQuery); err != nil {
+		return err
+	}
+	return nil
+}
+
 func CreateAccessToken(tx *sqlx.Tx, adminID user.AdminID) (*string, *time.Time, error) {
 	accessToken := generateAccessToken()
 	expirationTime := time.Now().Add(defaultAccessTokenExpirationTime)
@@ -111,6 +120,13 @@ func ValidateAccessTokenAndGetUserID(tx *sqlx.Tx, accessToken string) (*user.Adm
 
 func InvalidateAccessToken(tx *sqlx.Tx, accessToken string) error {
 	if _, err := tx.Exec(deleteAccessTokenQuery, accessToken); err != nil {
+		return err
+	}
+	return nil
+}
+
+func RemoveExpiredAccessTokens(tx *sqlx.Tx) error {
+	if _, err := tx.Exec(deleteExpiredAccessTokensQuery); err != nil {
 		return err
 	}
 	return nil
