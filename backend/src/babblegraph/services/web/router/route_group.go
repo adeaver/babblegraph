@@ -32,8 +32,14 @@ func (r Route) makeMuxRoute() func(http.ResponseWriter, *http.Request) {
 			writeErrorJSONResponse(w, errorResponse{
 				Message: "Error processing request",
 			})
+			return
 		case wrappedRequest.respStatus != nil:
 			status = *wrappedRequest.respStatus
+		}
+		if len(wrappedRequest.respCookies) != 0 {
+			for _, cookie := range wrappedRequest.respCookies {
+				http.SetCookie(w, cookie)
+			}
 		}
 		w.WriteHeader(status)
 		writeJSONResponse(w, resp)
