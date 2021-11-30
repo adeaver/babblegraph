@@ -15,7 +15,7 @@ const (
 
 	getUnfulfilled2FACodeQuery   = "SELECT * FROM admin_2fa_codes WHERE expires_at IS NULL"
 	update2FACodeExpirationQuery = "UPDATE admin_2fa_codes SET expires_at = $1 WHERE admin_user_id = $2 AND code = $3 AND expires_at IS NULL"
-	deleteExpired2FACodesQuery   = "DELETE FROM admin_2fa_codes WHERE epxires_at < current_date - interval '2 days'"
+	deleteExpired2FACodesQuery   = "DELETE FROM admin_2fa_codes WHERE expires_at < current_date - interval '2 days'"
 
 	default2FAExpirationTime = 10 * time.Minute
 
@@ -29,7 +29,7 @@ const (
         SET expires_at = $2, token = $1`
 	getAccessTokenQuery            = "SELECT * FROM admin_access_token WHERE token = $1"
 	deleteAccessTokenQuery         = "DELETE FROM admin_access_token WHERE token = $1"
-	deleteExpiredAccessTokensQuery = "DELETE FROM admin_access_token WHERE epxires_at < current_date - interval '2 days'"
+	deleteExpiredAccessTokensQuery = "DELETE FROM admin_access_token WHERE expires_at < current_date - interval '2 days'"
 
 	defaultAccessTokenExpirationTime = 24 * time.Hour
 )
