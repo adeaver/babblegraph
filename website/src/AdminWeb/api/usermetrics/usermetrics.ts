@@ -1,21 +1,23 @@
 import { makePostRequestWithStandardEncoding } from 'util/bgfetch/bgfetch';
 
-export type GetUserAggregationByStatusRequest = {}
+export type GetUserStatusDataRequest = {}
 
-export type GetUserAggregationByStatusResponse = {
+export type GetUserStatusDataResponse = {
     verifiedUserCount: number;
     unsubscribedUserCount: number;
     unverifiedUserCount: number;
     blocklistedUserCount: number;
+    verifiedUserCountNetChangeOverWeek: number;
+    verifiedUserCountNetChangeOverMonth: number;
 }
 
-export function getUserAggregationByStatus(
-    req: GetUserAggregationByStatusRequest,
-    onSuccess: (resp: GetUserAggregationByStatusResponse) => void,
+export function getUserStatusData(
+    req: GetUserStatusDataRequest,
+    onSuccess: (resp: GetUserStatusDataResponse) => void,
     onError: (e: Error) => void,
 ) {
-    makePostRequestWithStandardEncoding<GetUserAggregationByStatusRequest, GetUserAggregationByStatusResponse>(
-        '/ops/api/usermetrics/get_user_aggregation_by_status_1',
+    makePostRequestWithStandardEncoding<GetUserStatusDataRequest, GetUserStatusDataResponse>(
+        '/ops/api/usermetrics/get_user_status_data_1',
         req,
         onSuccess,
         onError,

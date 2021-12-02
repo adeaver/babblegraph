@@ -14,7 +14,7 @@ var Routes = router.RouteGroup{
 	Prefix: "usermetrics",
 	Routes: []router.Route{
 		{
-			Path: "get_user_aggregation_by_status_1",
+			Path: "get_user_status_data_1",
 			Handler: middleware.WithPermission(
 				admin.PermissionViewUserMetrics,
 				getUserAggregationByStatus,
@@ -24,23 +24,28 @@ var Routes = router.RouteGroup{
 }
 
 type getUserAggregationByStatusResponse struct {
-	VerifiedUserCount     int64 `json:"verified_user_count"`
-	UnsubscribedUserCount int64 `json:"unsubscribed_user_count"`
-	UnverifiedUserCount   int64 `json:"unverified_user_count"`
-	BlocklistedUserCount  int64 `json:"blocklisted_user_count"`
+	VerifiedUserCount                   int64 `json:"verified_user_count"`
+	UnsubscribedUserCount               int64 `json:"unsubscribed_user_count"`
+	UnverifiedUserCount                 int64 `json:"unverified_user_count"`
+	BlocklistedUserCount                int64 `json:"blocklisted_user_count"`
+	VerifiedUserCountNetChangeOverWeek  int64 `json:"verified_user_count_net_change_over_week"`
+	VerifiedUserCountNetChangeOverMonth int64 `json:"verified_user_count_net_change_over_month"`
 }
 
 func getUserAggregationByStatus(adminID admin.ID, r *router.Request) (interface{}, error) {
-	resp := getUserAggregationByStatusResponse{}
-	var aggregations []users.UserStatusAggregation
+	var statusData *users.UserStatusData
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		var err error
-		aggregations, err = users.GetUserStatusAggregation(tx)
+		statusData, err = users.GetUserStatusData(tx)
 		return err
 	}); err != nil {
 		return nil, err
 	}
-	for _, statusCount := range aggregations {
+	resp := getUserAggregationByStatusResponse{
+		VerifiedUserCountNetChangeOverWeek:  statusData.VerifiedNetChangeOverLastWeek.ToInt64Truncated(),
+		VerifiedUserCountNetChangeOverMonth: statusData.VerifiedNetChangeOverLastMonth.ToInt64Truncated(),
+	}
+	for _, statusCount := range statusData.CurrentAggregation {
 		switch statusCount.Status {
 		case users.UserStatusVerified:
 			resp.VerifiedUserCount = statusCount.Count
