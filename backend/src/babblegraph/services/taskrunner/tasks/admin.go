@@ -22,7 +22,7 @@ func CreateAdminAndEmitToken(emailAddress string) error {
 		case adminUser == nil:
 			return fmt.Errorf("Not created")
 		}
-		token, err := routes.MakeAdminRegistrationToken(adminUser.AdminID)
+		token, err := routes.MakeAdminRegistrationToken(adminUser.ID)
 		switch {
 		case err != nil:
 			return err

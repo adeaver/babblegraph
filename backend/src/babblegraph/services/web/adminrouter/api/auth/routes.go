@@ -61,10 +61,10 @@ func validateLoginCredentials(r *router.Request) (interface{}, error) {
 		case adminUser == nil:
 			return nil
 		}
-		if err := admin.ValidateAdminUserPassword(tx, adminUser.AdminID, req.Password); err != nil {
+		if err := admin.ValidateAdminUserPassword(tx, adminUser.ID, req.Password); err != nil {
 			return nil
 		}
-		if err := admin.CreateTwoFactorAuthenticationAttempt(tx, adminUser.AdminID); err != nil {
+		if err := admin.CreateTwoFactorAuthenticationAttempt(tx, adminUser.ID); err != nil {
 			return err
 		}
 		success = true
@@ -106,7 +106,7 @@ func validateTwoFactorAuthenticationCode(r *router.Request) (interface{}, error)
 		switch envName {
 		case env.EnvironmentProd,
 			env.EnvironmentStage:
-			if err := admin.ValidateTwoFactorAuthenticationAttempt(tx, adminUser.AdminID, req.TwoFactorAuthenticationCode); err != nil {
+			if err := admin.ValidateTwoFactorAuthenticationAttempt(tx, adminUser.ID, req.TwoFactorAuthenticationCode); err != nil {
 				return err
 			}
 		case env.EnvironmentLocal,
@@ -116,7 +116,7 @@ func validateTwoFactorAuthenticationCode(r *router.Request) (interface{}, error)
 		default:
 			return fmt.Errorf("Unrecognized environment: %s", envName)
 		}
-		accessToken, expirationTime, err = admin.CreateAccessToken(tx, adminUser.AdminID)
+		accessToken, expirationTime, err = admin.CreateAccessToken(tx, adminUser.ID)
 		return err
 	}); err != nil {
 		return nil, err
@@ -203,10 +203,10 @@ func createAdminUserPassword(r *router.Request) (interface{}, error) {
 		case adminUser.EmailAddress != formattedEmailAddress:
 			return fmt.Errorf("Invalid")
 		}
-		if err := admin.CreateAdminUserPassword(tx, adminUser.AdminID, req.Password); err != nil {
+		if err := admin.CreateAdminUserPassword(tx, adminUser.ID, req.Password); err != nil {
 			return err
 		}
-		if err := admin.CreateTwoFactorAuthenticationAttempt(tx, adminUser.AdminID); err != nil {
+		if err := admin.CreateTwoFactorAuthenticationAttempt(tx, adminUser.ID); err != nil {
 			return err
 		}
 		return nil

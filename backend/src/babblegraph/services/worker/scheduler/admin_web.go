@@ -29,7 +29,7 @@ func handleSendAdminTwoFactorAuthenticationCode(localSentryHub *sentry.Hub, emai
 			if err != nil {
 				return err
 			}
-			if err := admin.FulfillTwoFactorAuthenticationAttempt(tx, adminUser.AdminID, code.Code); err != nil {
+			if err := admin.FulfillTwoFactorAuthenticationAttempt(tx, adminUser.ID, code.Code); err != nil {
 				return err
 			}
 			twoFactorEmailHTML, err := emailtemplates.MakeGenericEmailHTML(emailtemplates.MakeGenericEmailHTMLInput{
