@@ -1,8 +1,9 @@
 package adminrouter
 
 import (
-	auth_model "babblegraph/admin/model/auth"
+	"babblegraph/model/admin"
 	"babblegraph/services/web/adminrouter/api/auth"
+	"babblegraph/services/web/adminrouter/api/usermetrics"
 	"babblegraph/services/web/router"
 	"babblegraph/util/database"
 	"babblegraph/util/env"
@@ -19,6 +20,7 @@ func RegisterAdminRouter(r *mux.Router) error {
 	s := r.PathPrefix("/ops").Subrouter()
 	if err := router.WithAPIRouter(s, "api", []router.RouteGroup{
 		auth.Routes,
+		usermetrics.Routes,
 	}); err != nil {
 		return err
 	}
@@ -26,10 +28,10 @@ func RegisterAdminRouter(r *mux.Router) error {
 		if r.URL == nil || !(r.URL.Path == "/ops" || r.URL.Path == "/ops/" || strings.HasPrefix(r.URL.Path, "/ops/register")) {
 			var hasAuth bool
 			for _, cookie := range r.Cookies() {
-				if cookie.Name == auth_model.AccessTokenCookieName {
+				if cookie.Name == admin.AccessTokenCookieName {
 					token := cookie.Value
 					if err := database.WithTx(func(tx *sqlx.Tx) error {
-						if _, err := auth_model.ValidateAccessTokenAndGetUserID(tx, token); err != nil {
+						if _, err := admin.ValidateAccessTokenAndGetUserID(tx, token); err != nil {
 							return err
 						}
 						return nil

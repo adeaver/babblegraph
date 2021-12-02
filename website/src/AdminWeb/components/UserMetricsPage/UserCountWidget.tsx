@@ -5,25 +5,58 @@ import Grid from '@material-ui/core/Grid';
 import DisplayCard from 'common/components/DisplayCard/DisplayCard';
 import { TypographyColor } from 'common/typography/common';
 import Paragraph, { Size } from 'common/typography/Paragraph';
+import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
+
+import {
+    getUserAggregationByStatus,
+    GetUserAggregationByStatusResponse
+} from 'AdminWeb/api/usermetrics/usermetrics';
 
 const UserCountWidget = () => {
-    return (
-        <DisplayCard>
-            <Grid container>
+    const [ isLoadingUserMetrics, setIsLoadingUserMetrics ] = useState<boolean>(true);
+    const [ metrics, setMetrics ] = useState<GetUserAggregationByStatusResponse | null>(null);
+    const [ error, setError ] = useState<Error>(null);
+
+    useEffect(() => {
+        getUserAggregationByStatus({},
+            (resp: GetUserAggregationByStatusResponse) => {
+                setIsLoadingUserMetrics(false);
+                setMetrics(resp);
+            },
+            (err: Error) => {
+                setIsLoadingUserMetrics(false);
+                setError(err);
+            });
+    }, []);
+
+    let body = <LoadingSpinner />;
+    if (!!metrics) {
+        body = (
+            <div>
                 <NumberDisplay
-                    value={100}
+                    value={metrics.verifiedUserCount}
                     label="Verified Users"
                     color={TypographyColor.Confirmation} />
                 <NumberDisplay
-                    value={50}
+                    value={metrics.unsubscribedUserCount}
                     label="Unsubscribed Users"
                     color={TypographyColor.Warning} />
                 <NumberDisplay
-                    value={10}
+                    value={metrics.unverifiedUserCount}
                     label="Unverified Users" />
                 <NumberDisplay
-                    value={10}
+                    value={metrics.blocklistedUserCount}
                     label="Blocklisted Users" />
+            </div>
+        )
+    } else if (!!error) {
+        body = <Paragraph color={TypographyColor.Warning}>An error occurred. Make sure you have permission to view this.</Paragraph>;
+    }
+
+    return (
+        <DisplayCard>
+            <Grid container>
+                { body }
             </Grid>
         </DisplayCard>
     );

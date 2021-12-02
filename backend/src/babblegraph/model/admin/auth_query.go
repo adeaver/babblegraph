@@ -100,7 +100,7 @@ func CreateAccessToken(tx *sqlx.Tx, adminID ID) (*string, *time.Time, error) {
 }
 
 func ValidateAccessTokenAndGetUserID(tx *sqlx.Tx, accessToken string) (*ID, error) {
-	var accessTokens []dbAdminAccessToken
+	var accessTokens []dbAccessToken
 	err := tx.Select(&accessTokens, getAccessTokenQuery, accessToken)
 	switch {
 	case err != nil:
