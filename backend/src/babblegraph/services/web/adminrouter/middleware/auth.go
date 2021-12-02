@@ -4,6 +4,7 @@ import (
 	"babblegraph/model/admin"
 	"babblegraph/services/web/router"
 	"babblegraph/util/database"
+	"log"
 	"net/http"
 
 	"github.com/jmoiron/sqlx"
@@ -47,6 +48,7 @@ func WithPermission(requiredPermission admin.Permission, handler AuthenticatedRe
 					}
 					return admin.ValidateAdminUserPermission(tx, *adminID, requiredPermission)
 				}); err != nil {
+					log.Println(err.Error())
 					r.RespondWithStatus(http.StatusForbidden)
 					return nil, nil
 				}

@@ -32,7 +32,7 @@ const UserCountWidget = () => {
     let body = <LoadingSpinner />;
     if (!!metrics) {
         body = (
-            <div>
+            <Grid container>
                 <NumberDisplay
                     value={metrics.verifiedUserCount}
                     label="Verified Users"
@@ -47,7 +47,7 @@ const UserCountWidget = () => {
                 <NumberDisplay
                     value={metrics.blocklistedUserCount}
                     label="Blocklisted Users" />
-            </div>
+            </Grid>
         )
     } else if (!!error) {
         body = <Paragraph color={TypographyColor.Warning}>An error occurred. Make sure you have permission to view this.</Paragraph>;
@@ -55,9 +55,7 @@ const UserCountWidget = () => {
 
     return (
         <DisplayCard>
-            <Grid container>
-                { body }
-            </Grid>
+            { body }
         </DisplayCard>
     );
 }

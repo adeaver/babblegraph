@@ -370,5 +370,7 @@ func getUsersWithPermissions(adminID admin.ID, r *router.Request) (interface{}, 
 			Permissions:  adminPermissionsToID[u.ID],
 		})
 	}
-	return nil, nil
+	return getUsersWithPermissionsResponse{
+		Users: mappings,
+	}, nil
 }

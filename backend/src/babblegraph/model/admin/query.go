@@ -34,20 +34,20 @@ const (
     `
 
 	getAllActiveUserPermissionsQuery = `
-        SELECT * FROM admin_user_permission
+        SELECT * FROM admin_access_permission
         WHERE is_active = TRUE
     `
 	lookupAdminUserPermissionQuery = `
-        SELECT * FROM admin_user_permission
-        WHERE admin_user_id = $1 AND is_active = TRUE
+        SELECT * FROM admin_access_permission
+        WHERE admin_user_id = $1 AND permission = $2 AND is_active = TRUE
     `
 	updateAdminUserPermissionQuery = `
-        INSERT INTO admin_user_permission (
+        INSERT INTO admin_access_permission (
             admin_user_id, permission, is_active
         ) VALUES (
             $1, $2, $3
         ) ON CONFLICT (admin_user_id, permission)
-        SET is_active=$3
+        DO UPDATE SET is_active=$3
     `
 )
 

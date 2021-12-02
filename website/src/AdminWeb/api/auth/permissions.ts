@@ -35,7 +35,7 @@ export function manageUserPermissions(
 export type GetUsersWithPermissionsRequest = {};
 
 export type GetUsersWithPermissionsResponse = {
-	users: Array<userWithPermissions>;
+	users: Array<UserWithPermissions>;
 }
 
 export type UserWithPermissions = {
