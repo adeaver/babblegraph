@@ -9,6 +9,7 @@ import (
 )
 
 const (
+	getAllAdminUsersQuery           = "SELECT * FROM admin_user WHERE is_active = TRUE"
 	getAdminUserByEmailAddressQuery = "SELECT * FROM admin_user WHERE email_address = $1 AND is_active = TRUE"
 	getAdminUserByIDQuery           = "SELECT * FROM admin_user WHERE _id = $1 AND is_active = TRUE"
 	createUserQuery                 = "INSERT INTO admin_user (email_address) VALUES ($1)"
@@ -32,22 +33,35 @@ const (
         WHERE admin_user_id = $1 AND is_active = TRUE
     `
 
+	getAllActiveUserPermissionsQuery = `
+        SELECT * FROM admin_user_permission
+        WHERE is_active = TRUE
+    `
 	lookupAdminUserPermissionQuery = `
         SELECT * FROM admin_user_permission
         WHERE admin_user_id = $1 AND is_active = TRUE
     `
-	createAdminUserPermissionQuery = `
+	updateAdminUserPermissionQuery = `
         INSERT INTO admin_user_permission (
             admin_user_id, permission, is_active
-        ) VALUES ($1, $2, TRUE)
-    `
-	deactivateAdminUserPermissionQuery = `
-        UPDATE admin_user_permission SET
-            is_active = FALSE
-        WHERE
-            admin_user_id = $1 AND permission = TRUE
+        ) VALUES (
+            $1, $2, $3
+        ) ON CONFLICT (admin_user_id, permission)
+        SET is_active=$3
     `
 )
+
+func GetAllAdminUsers(tx *sqlx.Tx) ([]Admin, error) {
+	var adminUsers []dbAdmin
+	if err := tx.Select(&adminUsers, getAllAdminUsersQuery); err != nil {
+		return nil, err
+	}
+	var out []Admin
+	for _, u := range adminUsers {
+		out = append(out, u.ToNonDB())
+	}
+	return out, nil
+}
 
 func GetAdminUser(tx *sqlx.Tx, id ID) (*Admin, error) {
 	var adminUsers []dbAdmin
@@ -142,6 +156,28 @@ func ValidateAdminUserPermission(tx *sqlx.Tx, adminUserID ID, permission Permiss
 		return fmt.Errorf("no permission")
 	case len(permissions) > 1:
 		return fmt.Errorf("expected at most one permission")
+	}
+	return nil
+}
+
+func GetAllActiveUserPermissions(tx *sqlx.Tx) ([]UserPermissionMapping, error) {
+	var permissions []dbAccessPermission
+	if err := tx.Select(&permissions, getAllActiveUserPermissionsQuery); err != nil {
+		return nil, err
+	}
+	var out []UserPermissionMapping
+	for _, p := range permissions {
+		out = append(out, UserPermissionMapping{
+			AdminUserID: p.AdminUserID,
+			Permission:  p.Permission,
+		})
+	}
+	return out, nil
+}
+
+func UpsertUserPermission(tx *sqlx.Tx, adminID ID, permission Permission, isActive bool) error {
+	if _, err := tx.Exec(updateAdminUserPermissionQuery, adminID, permission, isActive); err != nil {
+		return err
 	}
 	return nil
 }

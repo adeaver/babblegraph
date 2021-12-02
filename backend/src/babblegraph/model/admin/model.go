@@ -47,6 +47,11 @@ type dbAccessPermission struct {
 	IsActive       bool         `db:"is_active"`
 }
 
+type UserPermissionMapping struct {
+	AdminUserID ID         `db:"admin_user_id"`
+	Permission  Permission `db:"permission"`
+}
+
 type Permission string
 
 const (
