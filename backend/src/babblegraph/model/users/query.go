@@ -9,9 +9,10 @@ import (
 const (
 	getAllUsersByStatusQuery = "SELECT * FROM users WHERE status='%s'"
 
-	updateUserStatusByQuery        = "UPDATE users SET status = $1 WHERE email_address = $2 and _id = $3"
-	updateUserStatusByID           = "UPDATE users SET status = $1 WHERE _id = $2"
-	updateUserStatusByEmailAddress = "UPDATE users SET status = $1 WHERE email_address = $2" // prefer update by query
+	// In order of preference
+	updateUserStatusByQuery        = "UPDATE users SET status = $1, last_modified_at = timezone('utc', now()) WHERE email_address = $2 and _id = $3"
+	updateUserStatusByID           = "UPDATE users SET status = $1, last_modified_at = timezone('utc', now()) WHERE _id = $2"
+	updateUserStatusByEmailAddress = "UPDATE users SET status = $1, last_modified_at = timezone('utc', now()) WHERE email_address = $2"
 
 	lookupUserByEmailAddressAndID = "SELECT * FROM users WHERE _id = $1 AND email_address = $2"
 	lookupUserByEmailAddressQuery = "SELECT * FROM users WHERE email_address = $1"

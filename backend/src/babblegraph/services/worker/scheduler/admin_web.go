@@ -1,8 +1,7 @@
 package scheduler
 
 import (
-	"babblegraph/admin/model/auth"
-	"babblegraph/admin/model/user"
+	"babblegraph/model/admin"
 	"babblegraph/model/email"
 	"babblegraph/model/emailtemplates"
 	"babblegraph/util/database"
@@ -15,10 +14,10 @@ import (
 )
 
 func handleSendAdminTwoFactorAuthenticationCode(localSentryHub *sentry.Hub, emailClient *ses.Client) error {
-	var unfulfilledCodes []auth.Admin2FACode
+	var unfulfilledCodes []admin.TwoFactorAuthenticationCode
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		var err error
-		unfulfilledCodes, err = auth.GetUnfulfilledTwoFactorAuthenticationAttempts(tx)
+		unfulfilledCodes, err = admin.GetUnfulfilledTwoFactorAuthenticationAttempts(tx)
 		return err
 	}); err != nil {
 		localSentryHub.CaptureException(err)
@@ -26,11 +25,11 @@ func handleSendAdminTwoFactorAuthenticationCode(localSentryHub *sentry.Hub, emai
 	}
 	for _, code := range unfulfilledCodes {
 		if err := database.WithTx(func(tx *sqlx.Tx) error {
-			adminUser, err := user.GetAdminUser(tx, code.AdminUserID)
+			adminUser, err := admin.GetAdminUser(tx, code.AdminUserID)
 			if err != nil {
 				return err
 			}
-			if err := auth.FulfillTwoFactorAuthenticationAttempt(tx, adminUser.AdminID, code.Code); err != nil {
+			if err := admin.FulfillTwoFactorAuthenticationAttempt(tx, adminUser.ID, code.Code); err != nil {
 				return err
 			}
 			twoFactorEmailHTML, err := emailtemplates.MakeGenericEmailHTML(emailtemplates.MakeGenericEmailHTMLInput{
@@ -60,9 +59,9 @@ func handleSendAdminTwoFactorAuthenticationCode(localSentryHub *sentry.Hub, emai
 
 func handleCleanUpAdminTwoFactorCodesAndAccessTokens() error {
 	return database.WithTx(func(tx *sqlx.Tx) error {
-		if err := auth.RemoveExpiredAccessTokens(tx); err != nil {
+		if err := admin.RemoveExpiredAccessTokens(tx); err != nil {
 			return err
 		}
-		return auth.RemoveExpiredTwoFactorCodes(tx)
+		return admin.RemoveExpiredTwoFactorCodes(tx)
 	})
 }

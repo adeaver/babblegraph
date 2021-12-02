@@ -1,7 +1,8 @@
-package user
+package admin
 
 import (
 	"babblegraph/util/ptr"
+	"babblegraph/util/random"
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
@@ -10,7 +11,11 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-const defaultSaltLength = 32
+const (
+	defaultSaltLength                        = 32
+	defaultTwoFactorAuthenticationCodeLength = 8
+	defaultAccessTokenLength                 = 64
+)
 
 func generatePasswordSalt() (*string, error) {
 	saltBytes := make([]byte, defaultSaltLength)
@@ -65,4 +70,12 @@ func validatePasswordMeetsRequirements(password string) bool {
 		total += i
 	}
 	return total >= 3
+}
+
+func generateTwoFactorAuthenticationCode() string {
+	return random.MustMakeRandomString(defaultTwoFactorAuthenticationCodeLength)
+}
+
+func generateAccessToken() string {
+	return random.MustMakeRandomString(defaultAccessTokenLength)
 }

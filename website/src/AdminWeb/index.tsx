@@ -10,6 +10,8 @@ import {
 import RegistrationPage from 'AdminWeb/components/RegistrationPage/RegistrationPage';
 import LoginPage from 'AdminWeb/components/LoginPage/LoginPage';
 import Dashboard from 'AdminWeb/components/Dashboard/Dashboard';
+import UserMetricsPage from 'AdminWeb/components/UserMetricsPage/UserMetricsPage';
+import PermissionManagerPage from 'AdminWeb/components/PermissionManagerPage/PermissionManagerPage';
 
 class App extends React.Component{
     render() {
@@ -17,6 +19,8 @@ class App extends React.Component{
             <Router basename="/ops">
                 <Switch>
                     <Route path="/dashboard" component={Dashboard} />
+                    <Route path="/user-metrics" component={UserMetricsPage} />
+                    <Route path="/permission-manager" component={PermissionManagerPage} />
 
                     <Route path="/register/:token" component={RegistrationPage} />
                     <Route exact path="/" component={LoginPage} />

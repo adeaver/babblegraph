@@ -1,7 +1,7 @@
 package tasks
 
 import (
-	"babblegraph/admin/model/user"
+	"babblegraph/model/admin"
 	"babblegraph/model/routes"
 	"babblegraph/util/database"
 	"fmt"
@@ -12,17 +12,17 @@ import (
 
 func CreateAdminAndEmitToken(emailAddress string) error {
 	return database.WithTx(func(tx *sqlx.Tx) error {
-		if err := user.CreateAdminUser(tx, emailAddress); err != nil {
+		if err := admin.CreateAdminUser(tx, emailAddress); err != nil {
 			return err
 		}
-		adminUser, err := user.LookupAdminUserByEmailAddress(tx, emailAddress)
+		adminUser, err := admin.LookupAdminUserByEmailAddress(tx, emailAddress)
 		switch {
 		case err != nil:
 			return err
 		case adminUser == nil:
 			return fmt.Errorf("Not created")
 		}
-		token, err := routes.MakeAdminRegistrationToken(adminUser.AdminID)
+		token, err := routes.MakeAdminRegistrationToken(adminUser.ID)
 		switch {
 		case err != nil:
 			return err

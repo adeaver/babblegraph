@@ -1,13 +1,14 @@
 package auth
 
 import (
-	"babblegraph/admin/model/auth"
-	"babblegraph/admin/model/user"
+	"babblegraph/model/admin"
 	"babblegraph/model/routes"
+	"babblegraph/services/web/adminrouter/middleware"
 	"babblegraph/services/web/router"
 	"babblegraph/util/database"
 	"babblegraph/util/email"
 	"babblegraph/util/encrypt"
+	"babblegraph/util/env"
 	"fmt"
 	"net/http"
 	"time"
@@ -33,6 +34,18 @@ var Routes = router.RouteGroup{
 		}, {
 			Path:    "validate_two_factor_code_for_create_1",
 			Handler: validateTwoFactorAuthenticationCodeForCreate,
+		}, {
+			Path: "manage_user_permissions_1",
+			Handler: middleware.WithPermission(
+				admin.PermissionManagePermissions,
+				manageUserPermissions,
+			),
+		}, {
+			Path: "get_users_with_permissions_1",
+			Handler: middleware.WithPermission(
+				admin.PermissionManagePermissions,
+				getUsersWithPermissions,
+			),
 		},
 	},
 }
@@ -54,17 +67,17 @@ func validateLoginCredentials(r *router.Request) (interface{}, error) {
 	var success bool
 	formattedEmailAddress := email.FormatEmailAddress(req.EmailAddress)
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
-		adminUser, err := user.LookupAdminUserByEmailAddress(tx, formattedEmailAddress)
+		adminUser, err := admin.LookupAdminUserByEmailAddress(tx, formattedEmailAddress)
 		switch {
 		case err != nil:
 			return err
 		case adminUser == nil:
 			return nil
 		}
-		if err := user.ValidateAdminUserPassword(tx, adminUser.AdminID, req.Password); err != nil {
+		if err := admin.ValidateAdminUserPassword(tx, adminUser.ID, req.Password); err != nil {
 			return nil
 		}
-		if err := auth.CreateTwoFactorAuthenticationAttempt(tx, adminUser.AdminID); err != nil {
+		if err := admin.CreateTwoFactorAuthenticationAttempt(tx, adminUser.ID); err != nil {
 			return err
 		}
 		success = true
@@ -95,17 +108,28 @@ func validateTwoFactorAuthenticationCode(r *router.Request) (interface{}, error)
 	var accessToken *string
 	var expirationTime *time.Time
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
-		adminUser, err := user.LookupAdminUserByEmailAddress(tx, formattedEmailAddress)
+		adminUser, err := admin.LookupAdminUserByEmailAddress(tx, formattedEmailAddress)
 		switch {
 		case err != nil:
 			return err
 		case adminUser == nil:
 			return nil
 		}
-		if err := auth.ValidateTwoFactorAuthenticationAttempt(tx, adminUser.AdminID, req.TwoFactorAuthenticationCode); err != nil {
-			return err
+		envName := env.MustEnvironmentName()
+		switch envName {
+		case env.EnvironmentProd,
+			env.EnvironmentStage:
+			if err := admin.ValidateTwoFactorAuthenticationAttempt(tx, adminUser.ID, req.TwoFactorAuthenticationCode); err != nil {
+				return err
+			}
+		case env.EnvironmentLocal,
+			env.EnvironmentLocalNoEmail,
+			env.EnvironmentLocalTestEmail:
+			// no-op
+		default:
+			return fmt.Errorf("Unrecognized environment: %s", envName)
 		}
-		accessToken, expirationTime, err = auth.CreateAccessToken(tx, adminUser.AdminID)
+		accessToken, expirationTime, err = admin.CreateAccessToken(tx, adminUser.ID)
 		return err
 	}); err != nil {
 		return nil, err
@@ -114,7 +138,7 @@ func validateTwoFactorAuthenticationCode(r *router.Request) (interface{}, error)
 		return nil, fmt.Errorf("Null access token")
 	}
 	r.RespondWithCookie(&http.Cookie{
-		Name:     auth.AccessTokenCookieName,
+		Name:     admin.AccessTokenCookieName,
 		Value:    *accessToken,
 		HttpOnly: true,
 		Path:     "/",
@@ -133,15 +157,15 @@ type invalidateCredentialsResponse struct {
 
 func invalidateCredentials(r *router.Request) (interface{}, error) {
 	for _, cookie := range r.GetCookies() {
-		if cookie.Name == auth.AccessTokenCookieName {
+		if cookie.Name == admin.AccessTokenCookieName {
 			token := cookie.Value
 			if err := database.WithTx(func(tx *sqlx.Tx) error {
-				return auth.InvalidateAccessToken(tx, token)
+				return admin.InvalidateAccessToken(tx, token)
 			}); err != nil {
 				return nil, err
 			}
 			r.RespondWithCookie(&http.Cookie{
-				Name:     auth.AccessTokenCookieName,
+				Name:     admin.AccessTokenCookieName,
 				Value:    "",
 				HttpOnly: true,
 				Path:     "/",
@@ -170,7 +194,7 @@ func createAdminUserPassword(r *router.Request) (interface{}, error) {
 		return nil, err
 	}
 	formattedEmailAddress := email.FormatEmailAddress(req.EmailAddress)
-	var adminUserID user.AdminID
+	var adminUserID admin.ID
 	if err := encrypt.WithDecodedToken(req.Token, func(t encrypt.TokenPair) error {
 		if t.Key != routes.AdminRegistrationKey.Str() {
 			return fmt.Errorf("incorrect key")
@@ -179,23 +203,23 @@ func createAdminUserPassword(r *router.Request) (interface{}, error) {
 		if !ok {
 			return fmt.Errorf("incorrect type")
 		}
-		adminUserID = user.AdminID(adminIDStr)
+		adminUserID = admin.ID(adminIDStr)
 		return nil
 	}); err != nil {
 		return nil, err
 	}
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
-		adminUser, err := user.GetAdminUser(tx, adminUserID)
+		adminUser, err := admin.GetAdminUser(tx, adminUserID)
 		switch {
 		case err != nil:
 			return err
 		case adminUser.EmailAddress != formattedEmailAddress:
 			return fmt.Errorf("Invalid")
 		}
-		if err := user.CreateAdminUserPassword(tx, adminUser.AdminID, req.Password); err != nil {
+		if err := admin.CreateAdminUserPassword(tx, adminUser.ID, req.Password); err != nil {
 			return err
 		}
-		if err := auth.CreateTwoFactorAuthenticationAttempt(tx, adminUser.AdminID); err != nil {
+		if err := admin.CreateTwoFactorAuthenticationAttempt(tx, adminUser.ID); err != nil {
 			return err
 		}
 		return nil
@@ -221,7 +245,7 @@ func validateTwoFactorAuthenticationCodeForCreate(r *router.Request) (interface{
 	if err := r.GetJSONBody(&req); err != nil {
 		return nil, err
 	}
-	var adminUserID user.AdminID
+	var adminUserID admin.ID
 	if err := encrypt.WithDecodedToken(req.Token, func(t encrypt.TokenPair) error {
 		if t.Key != routes.AdminRegistrationKey.Str() {
 			return fmt.Errorf("incorrect key")
@@ -230,7 +254,7 @@ func validateTwoFactorAuthenticationCodeForCreate(r *router.Request) (interface{
 		if !ok {
 			return fmt.Errorf("incorrect type")
 		}
-		adminUserID = user.AdminID(adminIDStr)
+		adminUserID = admin.ID(adminIDStr)
 		return nil
 	}); err != nil {
 		return nil, err
@@ -238,14 +262,25 @@ func validateTwoFactorAuthenticationCodeForCreate(r *router.Request) (interface{
 	var accessToken *string
 	var expirationTime *time.Time
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
-		if err := auth.ValidateTwoFactorAuthenticationAttempt(tx, adminUserID, req.TwoFactorAuthenticationCode); err != nil {
-			return err
+		envName := env.MustEnvironmentName()
+		switch envName {
+		case env.EnvironmentProd,
+			env.EnvironmentStage:
+			if err := admin.ValidateTwoFactorAuthenticationAttempt(tx, adminUserID, req.TwoFactorAuthenticationCode); err != nil {
+				return err
+			}
+		case env.EnvironmentLocal,
+			env.EnvironmentLocalNoEmail,
+			env.EnvironmentLocalTestEmail:
+			// no-op
+		default:
+			return fmt.Errorf("Unrecognized environment: %s", envName)
 		}
-		if err := user.ActivateAdminUserPassword(tx, adminUserID); err != nil {
+		if err := admin.ActivateAdminUserPassword(tx, adminUserID); err != nil {
 			return err
 		}
 		var err error
-		accessToken, expirationTime, err = auth.CreateAccessToken(tx, adminUserID)
+		accessToken, expirationTime, err = admin.CreateAccessToken(tx, adminUserID)
 		return err
 	}); err != nil {
 		return nil, err
@@ -254,7 +289,7 @@ func validateTwoFactorAuthenticationCodeForCreate(r *router.Request) (interface{
 		return nil, fmt.Errorf("No access token")
 	}
 	r.RespondWithCookie(&http.Cookie{
-		Name:     auth.AccessTokenCookieName,
+		Name:     admin.AccessTokenCookieName,
 		Value:    *accessToken,
 		HttpOnly: true,
 		Path:     "/",
@@ -262,5 +297,80 @@ func validateTwoFactorAuthenticationCodeForCreate(r *router.Request) (interface{
 	})
 	return validateTwoFactorAuthenticationCodeForCreateResponse{
 		Success: true,
+	}, nil
+}
+
+type manageUserPermissionsRequest struct {
+	AdminID admin.ID           `json:"admin_id"`
+	Updates []permissionUpdate `json:"updates"`
+}
+
+type permissionUpdate struct {
+	Permission admin.Permission `json:"permission"`
+	IsActive   bool             `json:"is_active"`
+}
+
+type manageUserPermissionResponse struct {
+	Success bool `json:"success"`
+}
+
+func manageUserPermissions(adminID admin.ID, r *router.Request) (interface{}, error) {
+	var req manageUserPermissionsRequest
+	if err := r.GetJSONBody(&req); err != nil {
+		return nil, err
+	}
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		for _, u := range req.Updates {
+			if err := admin.UpsertUserPermission(tx, req.AdminID, u.Permission, u.IsActive); err != nil {
+				return err
+			}
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	return manageUserPermissionResponse{
+		Success: true,
+	}, nil
+}
+
+type getUsersWithPermissionsResponse struct {
+	Users []userWithPermissions `json:"users"`
+}
+
+type userWithPermissions struct {
+	ID           admin.ID           `json:"id"`
+	EmailAddress string             `json:"email_address"`
+	Permissions  []admin.Permission `json:"permissions"`
+}
+
+func getUsersWithPermissions(adminID admin.ID, r *router.Request) (interface{}, error) {
+	var permissionMappings []admin.UserPermissionMapping
+	var adminUsers []admin.Admin
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		var err error
+		adminUsers, err = admin.GetAllAdminUsers(tx)
+		if err != nil {
+			return err
+		}
+		permissionMappings, err = admin.GetAllActiveUserPermissions(tx)
+		return err
+	}); err != nil {
+		return nil, err
+	}
+	adminPermissionsToID := make(map[admin.ID][]admin.Permission)
+	for _, p := range permissionMappings {
+		adminPermissionsToID[p.AdminUserID] = append(adminPermissionsToID[p.AdminUserID], p.Permission)
+	}
+	var mappings []userWithPermissions
+	for _, u := range adminUsers {
+		mappings = append(mappings, userWithPermissions{
+			ID:           u.ID,
+			EmailAddress: u.EmailAddress,
+			Permissions:  adminPermissionsToID[u.ID],
+		})
+	}
+	return getUsersWithPermissionsResponse{
+		Users: mappings,
 	}, nil
 }

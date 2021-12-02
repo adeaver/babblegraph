@@ -1,7 +1,7 @@
 package routes
 
 import (
-	admin_user "babblegraph/admin/model/user"
+	"babblegraph/model/admin"
 	"babblegraph/model/users"
 	"babblegraph/util/encrypt"
 )
@@ -69,7 +69,7 @@ func MakePremiumSubscriptionCheckoutToken(userID users.UserID) (*string, error) 
 	})
 }
 
-func MakeAdminRegistrationToken(adminID admin_user.AdminID) (*string, error) {
+func MakeAdminRegistrationToken(adminID admin.ID) (*string, error) {
 	return encrypt.GetToken(encrypt.TokenPair{
 		Key:   AdminRegistrationKey.Str(),
 		Value: adminID,
