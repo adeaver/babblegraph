@@ -8,6 +8,7 @@ import (
 	"babblegraph/util/database"
 	"babblegraph/util/email"
 	"babblegraph/util/encrypt"
+	"babblegraph/util/env"
 	"fmt"
 	"net/http"
 	"time"
@@ -102,8 +103,19 @@ func validateTwoFactorAuthenticationCode(r *router.Request) (interface{}, error)
 		case adminUser == nil:
 			return nil
 		}
-		if err := auth.ValidateTwoFactorAuthenticationAttempt(tx, adminUser.AdminID, req.TwoFactorAuthenticationCode); err != nil {
-			return err
+		envName := env.MustEnvironmentName()
+		switch envName {
+		case env.EnvironmentProd,
+			env.EnvironmentStage:
+			if err := auth.ValidateTwoFactorAuthenticationAttempt(tx, adminUser.AdminID, req.TwoFactorAuthenticationCode); err != nil {
+				return err
+			}
+		case env.EnvironmentLocal,
+			env.EnvironmentLocalNoEmail,
+			env.EnvironmentLocalTestEmail:
+			// no-op
+		default:
+			return fmt.Errorf("Unrecognized environment: %s", envName)
 		}
 		accessToken, expirationTime, err = auth.CreateAccessToken(tx, adminUser.AdminID)
 		return err
@@ -238,8 +250,19 @@ func validateTwoFactorAuthenticationCodeForCreate(r *router.Request) (interface{
 	var accessToken *string
 	var expirationTime *time.Time
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
-		if err := auth.ValidateTwoFactorAuthenticationAttempt(tx, adminUserID, req.TwoFactorAuthenticationCode); err != nil {
-			return err
+		envName := env.MustEnvironmentName()
+		switch envName {
+		case env.EnvironmentProd,
+			env.EnvironmentStage:
+			if err := auth.ValidateTwoFactorAuthenticationAttempt(tx, adminUserID, req.TwoFactorAuthenticationCode); err != nil {
+				return err
+			}
+		case env.EnvironmentLocal,
+			env.EnvironmentLocalNoEmail,
+			env.EnvironmentLocalTestEmail:
+			// no-op
+		default:
+			return fmt.Errorf("Unrecognized environment: %s", envName)
 		}
 		if err := user.ActivateAdminUserPassword(tx, adminUserID); err != nil {
 			return err

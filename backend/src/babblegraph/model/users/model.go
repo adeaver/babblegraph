@@ -1,5 +1,7 @@
 package users
 
+import "time"
+
 type UserID string
 
 type UserStatus string
@@ -13,9 +15,11 @@ const (
 )
 
 type dbUser struct {
-	ID           UserID     `db:"_id"`
-	EmailAddress string     `db:"email_address"`
-	Status       UserStatus `db:"status"`
+	CreatedAt      time.Time  `db:"created_at"`
+	LastModifiedAt time.Time  `db:"last_modified_at"`
+	ID             UserID     `db:"_id"`
+	EmailAddress   string     `db:"email_address"`
+	Status         UserStatus `db:"status"`
 }
 
 func (d dbUser) ToNonDB() User {
