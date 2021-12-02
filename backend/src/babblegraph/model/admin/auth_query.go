@@ -1,7 +1,6 @@
-package auth
+package admin
 
 import (
-	"babblegraph/admin/model/user"
 	"fmt"
 	"time"
 
@@ -36,7 +35,7 @@ const (
 
 // Public functions
 
-func CreateTwoFactorAuthenticationAttempt(tx *sqlx.Tx, adminUserID user.AdminID) error {
+func CreateTwoFactorAuthenticationAttempt(tx *sqlx.Tx, adminUserID ID) error {
 	code := generateTwoFactorAuthenticationCode()
 	if _, err := tx.Exec(expireNonActiveCodesQuery, adminUserID); err != nil {
 		return err
@@ -47,8 +46,8 @@ func CreateTwoFactorAuthenticationAttempt(tx *sqlx.Tx, adminUserID user.AdminID)
 	return nil
 }
 
-func ValidateTwoFactorAuthenticationAttempt(tx *sqlx.Tx, adminUserID user.AdminID, code string) error {
-	var codes []dbAdmin2FACode
+func ValidateTwoFactorAuthenticationAttempt(tx *sqlx.Tx, adminUserID ID, code string) error {
+	var codes []dbTwoFactorAuthenticationCode
 	err := tx.Select(&codes, get2FACodeQuery, adminUserID, code)
 	switch {
 	case err != nil:
@@ -65,19 +64,19 @@ func ValidateTwoFactorAuthenticationAttempt(tx *sqlx.Tx, adminUserID user.AdminI
 	return fmt.Errorf("Code expired")
 }
 
-func GetUnfulfilledTwoFactorAuthenticationAttempts(tx *sqlx.Tx) ([]Admin2FACode, error) {
-	var codes []dbAdmin2FACode
+func GetUnfulfilledTwoFactorAuthenticationAttempts(tx *sqlx.Tx) ([]TwoFactorAuthenticationCode, error) {
+	var codes []dbTwoFactorAuthenticationCode
 	if err := tx.Select(&codes, getUnfulfilled2FACodeQuery); err != nil {
 		return nil, err
 	}
-	var out []Admin2FACode
+	var out []TwoFactorAuthenticationCode
 	for _, c := range codes {
 		out = append(out, c.ToNonDB())
 	}
 	return out, nil
 }
 
-func FulfillTwoFactorAuthenticationAttempt(tx *sqlx.Tx, adminID user.AdminID, code string) error {
+func FulfillTwoFactorAuthenticationAttempt(tx *sqlx.Tx, adminID ID, code string) error {
 	if _, err := tx.Exec(update2FACodeExpirationQuery, time.Now().Add(default2FAExpirationTime), adminID, code); err != nil {
 		return err
 	}
@@ -91,7 +90,7 @@ func RemoveExpiredTwoFactorCodes(tx *sqlx.Tx) error {
 	return nil
 }
 
-func CreateAccessToken(tx *sqlx.Tx, adminID user.AdminID) (*string, *time.Time, error) {
+func CreateAccessToken(tx *sqlx.Tx, adminID ID) (*string, *time.Time, error) {
 	accessToken := generateAccessToken()
 	expirationTime := time.Now().Add(defaultAccessTokenExpirationTime)
 	if _, err := tx.Exec(createAccessTokenQuery, accessToken, expirationTime, adminID); err != nil {
@@ -100,7 +99,7 @@ func CreateAccessToken(tx *sqlx.Tx, adminID user.AdminID) (*string, *time.Time, 
 	return &accessToken, &expirationTime, nil
 }
 
-func ValidateAccessTokenAndGetUserID(tx *sqlx.Tx, accessToken string) (*user.AdminID, error) {
+func ValidateAccessTokenAndGetUserID(tx *sqlx.Tx, accessToken string) (*ID, error) {
 	var accessTokens []dbAdminAccessToken
 	err := tx.Select(&accessTokens, getAccessTokenQuery, accessToken)
 	switch {

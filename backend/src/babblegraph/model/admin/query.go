@@ -1,4 +1,4 @@
-package user
+package admin
 
 import (
 	"babblegraph/util/email"
@@ -49,8 +49,8 @@ const (
     `
 )
 
-func GetAdminUser(tx *sqlx.Tx, id AdminID) (*AdminUser, error) {
-	var adminUsers []dbAdminUser
+func GetAdminUser(tx *sqlx.Tx, id ID) (*Admin, error) {
+	var adminUsers []dbAdmin
 	err := tx.Select(&adminUsers, getAdminUserByIDQuery, id)
 	switch {
 	case err != nil:
@@ -65,8 +65,8 @@ func GetAdminUser(tx *sqlx.Tx, id AdminID) (*AdminUser, error) {
 	}
 }
 
-func LookupAdminUserByEmailAddress(tx *sqlx.Tx, emailAddress string) (*AdminUser, error) {
-	var adminUsers []dbAdminUser
+func LookupAdminUserByEmailAddress(tx *sqlx.Tx, emailAddress string) (*Admin, error) {
+	var adminUsers []dbAdmin
 	err := tx.Select(&adminUsers, getAdminUserByEmailAddressQuery, emailAddress)
 	switch {
 	case err != nil:
@@ -93,7 +93,7 @@ func CreateAdminUser(tx *sqlx.Tx, emailAddress string) error {
 	return nil
 }
 
-func CreateAdminUserPassword(tx *sqlx.Tx, adminUserID AdminID, password string) error {
+func CreateAdminUserPassword(tx *sqlx.Tx, adminUserID ID, password string) error {
 	if !validatePasswordMeetsRequirements(password) {
 		return fmt.Errorf("Invalid password")
 	}
@@ -111,15 +111,15 @@ func CreateAdminUserPassword(tx *sqlx.Tx, adminUserID AdminID, password string) 
 	return nil
 }
 
-func ActivateAdminUserPassword(tx *sqlx.Tx, adminUserID AdminID) error {
+func ActivateAdminUserPassword(tx *sqlx.Tx, adminUserID ID) error {
 	if _, err := tx.Exec(activeAdminPasswordQuery, adminUserID); err != nil {
 		return err
 	}
 	return nil
 }
 
-func ValidateAdminUserPassword(tx *sqlx.Tx, adminUserID AdminID, password string) error {
-	var passwords []dbAdminUserPassword
+func ValidateAdminUserPassword(tx *sqlx.Tx, adminUserID ID, password string) error {
+	var passwords []dbPassword
 	err := tx.Select(&passwords, validateAdminPasswordQuery, adminUserID)
 	switch {
 	case err != nil:
@@ -132,8 +132,8 @@ func ValidateAdminUserPassword(tx *sqlx.Tx, adminUserID AdminID, password string
 	return comparePasswords(passwords[0].PasswordHash, password, passwords[0].Salt)
 }
 
-func ValidateAdminUserPermission(tx *sqlx.Tx, adminUserID AdminID, permission Permission) error {
-	var permissions []dbAdminAccessPermission
+func ValidateAdminUserPermission(tx *sqlx.Tx, adminUserID ID, permission Permission) error {
+	var permissions []dbAccessPermission
 	err := tx.Select(&permissions, lookupAdminUserPermissionQuery, adminUserID, permission)
 	switch {
 	case err != nil:

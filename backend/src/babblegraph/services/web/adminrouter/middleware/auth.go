@@ -1,8 +1,7 @@
-package auth
+package middleware
 
 import (
-	"babblegraph/admin/model/auth"
-	"babblegraph/admin/model/user"
+	"babblegraph/model/admin"
 	"babblegraph/services/web/router"
 	"babblegraph/util/database"
 	"net/http"
@@ -10,17 +9,17 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type AuthenticatedRequestHandler func(adminID user.AdminID, r *router.Request) (interface{}, error)
+type AuthenticatedRequestHandler func(adminID admin.ID, r *router.Request) (interface{}, error)
 
 func WithAuthentication(handler AuthenticatedRequestHandler) router.RequestHandler {
 	return func(r *router.Request) (interface{}, error) {
 		for _, cookie := range r.GetCookies() {
-			if cookie.Name == auth.AccessTokenCookieName {
+			if cookie.Name == admin.AccessTokenCookieName {
 				token := cookie.Value
-				var adminID *user.AdminID
+				var adminID *admin.ID
 				if err := database.WithTx(func(tx *sqlx.Tx) error {
 					var err error
-					adminID, err = auth.ValidateAccessTokenAndGetUserID(tx, token)
+					adminID, err = admin.ValidateAccessTokenAndGetUserID(tx, token)
 					return err
 				}); err != nil {
 					r.RespondWithStatus(http.StatusForbidden)
@@ -34,19 +33,19 @@ func WithAuthentication(handler AuthenticatedRequestHandler) router.RequestHandl
 	}
 }
 
-func WithPermission(requiredPermission user.Permission, handler AuthenticatedRequestHandler) router.RequestHandler {
+func WithPermission(requiredPermission admin.Permission, handler AuthenticatedRequestHandler) router.RequestHandler {
 	return func(r *router.Request) (interface{}, error) {
 		for _, cookie := range r.GetCookies() {
-			if cookie.Name == auth.AccessTokenCookieName {
+			if cookie.Name == admin.AccessTokenCookieName {
 				token := cookie.Value
-				var adminID *user.AdminID
+				var adminID *admin.ID
 				if err := database.WithTx(func(tx *sqlx.Tx) error {
 					var err error
-					adminID, err = auth.ValidateAccessTokenAndGetUserID(tx, token)
+					adminID, err = admin.ValidateAccessTokenAndGetUserID(tx, token)
 					if err != nil {
 						return err
 					}
-					return user.ValidateAdminUserPermission(tx, *adminID, requiredPermission)
+					return admin.ValidateAdminUserPermission(tx, *adminID, requiredPermission)
 				}); err != nil {
 					r.RespondWithStatus(http.StatusForbidden)
 					return nil, nil
