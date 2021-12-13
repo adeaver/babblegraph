@@ -3,11 +3,11 @@ package main
 import (
 	"babblegraph/services/web/adminrouter"
 	"babblegraph/services/web/clientrouter"
+	"babblegraph/util/bglog"
 	"babblegraph/util/database"
 	"babblegraph/util/env"
 	"babblegraph/wordsmith"
 	"fmt"
-	"log"
 	"net/http"
 	"time"
 
@@ -16,24 +16,24 @@ import (
 )
 
 func main() {
-	log.Println("Starting babblegraph web server")
+	bglog.InitLogger()
+	bglog.Infof("Starting babblegraph web server")
 	r := mux.NewRouter()
-
 	if err := setupDatabases(); err != nil {
-		log.Fatal(err.Error())
+		bglog.Fatalf("Error initializing databases: %s", err.Error())
 	}
 	if err := sentry.Init(sentry.ClientOptions{
 		Dsn:         env.MustEnvironmentVariable("SENTRY_DSN"),
 		Environment: env.MustEnvironmentName().Str(),
 	}); err != nil {
-		log.Fatal(err.Error())
+		bglog.Fatalf("Error initializing sentry: %s", err.Error())
 	}
 	defer sentry.Flush(2 * time.Second)
 	if err := adminrouter.RegisterAdminRouter(r); err != nil {
-		log.Fatal(err.Error())
+		bglog.Fatalf("Error adding admin router: %s", err.Error())
 	}
 	if err := clientrouter.RegisterClientRouter(r); err != nil {
-		log.Fatal(err.Error())
+		bglog.Fatalf("Error adding client router router: %s", err.Error())
 	}
 
 	http.ListenAndServe(":8080", r)
