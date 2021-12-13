@@ -3,6 +3,7 @@ package bgstripe
 import (
 	"babblegraph/model/useraccounts"
 	"babblegraph/model/useraccountsnotifications"
+	"babblegraph/util/async"
 	"babblegraph/util/database"
 	"babblegraph/util/env"
 	"babblegraph/util/ptr"
@@ -16,7 +17,7 @@ import (
 	"github.com/stripe/stripe-go/v72/event"
 )
 
-func ForceSyncStripeEvents() {
+func ForceSyncStripeEvents(c async.Context) {
 	stripe.Key = env.MustEnvironmentVariable("STRIPE_KEY")
 	params := &stripe.EventListParams{
 		DeliverySuccess: ptr.Bool(false),
@@ -25,10 +26,10 @@ func ForceSyncStripeEvents() {
 	for events.Next() {
 		event := events.Event()
 		if err := database.WithTx(func(tx *sqlx.Tx) error {
-			log.Println(fmt.Sprintf("Handling event of type %s", event.Type))
+			c.Infof("Handling event of type %s", event.Type)
 			return HandleStripeEvent(tx, *event)
 		}); err != nil {
-			log.Println(fmt.Sprintf("Error processing event: %s", err.Error()))
+			c.Errorf("Error processing event: %s", err.Error())
 		}
 	}
 }

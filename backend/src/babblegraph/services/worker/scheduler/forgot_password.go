@@ -8,23 +8,28 @@ import (
 	"babblegraph/model/users"
 	"babblegraph/util/async"
 	"babblegraph/util/database"
+	"babblegraph/util/env"
 	"babblegraph/util/ses"
 	"fmt"
-	"log"
 
-	"github.com/getsentry/sentry-go"
 	"github.com/jmoiron/sqlx"
 )
 
-func handlePendingForgotPasswordAttempts(localSentryHub *sentry.Hub, emailClient *ses.Client) error {
+func handlePendingForgotPasswordAttempts(c async.Context) {
+	emailClient := ses.NewClient(ses.NewClientInput{
+		AWSAccessKey:       env.MustEnvironmentVariable("AWS_SES_ACCESS_KEY"),
+		AWSSecretAccessKey: env.MustEnvironmentVariable("AWS_SES_SECRET_KEY"),
+		AWSRegion:          "us-east-1",
+		FromAddress:        env.MustEnvironmentVariable("EMAIL_ADDRESS"),
+	})
 	var forgotPasswordAttempts []useraccounts.ForgotPasswordAttempt
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		var err error
 		forgotPasswordAttempts, err = useraccounts.GetAllUnfulfilledForgotPasswordAttempts(tx)
 		return err
 	}); err != nil {
-		localSentryHub.CaptureException(err)
-		return err
+		c.Errorf("Error getting forgot password attempts: %s", err.Error())
+		return
 	}
 	for _, attempt := range forgotPasswordAttempts {
 		// This is intentionally two different transactions
@@ -42,16 +47,15 @@ func handlePendingForgotPasswordAttempts(localSentryHub *sentry.Hub, emailClient
 			case user == nil:
 				return fmt.Errorf("Expected user from ID %s, but got none", attempt.UserID)
 			case user.Status != users.UserStatusVerified:
-				log.Println(fmt.Sprintf("User with ID %s does not have verified status. Skipping forgot password attempt", attempt.UserID))
+				c.Infof("User with ID %s does not have verified status. Skipping forgot password attempt", attempt.UserID)
 				return nil
 			}
 			return sendForgotPasswordEmailForUserAndAttemptID(tx, emailClient, *user, attempt.ID)
 		}); err != nil {
-			localSentryHub.CaptureException(fmt.Errorf("Error sending forgot password attempt for user %s: %s", attempt.UserID, err.Error()))
+			c.Errorf("Error sending forgot password attempt for user %s: %s", attempt.UserID, err.Error())
 			continue
 		}
 	}
-	return nil
 }
 
 func sendForgotPasswordEmailForUserAndAttemptID(tx *sqlx.Tx, sesClient *ses.Client, user users.User, forgotPasswordAttemptID useraccounts.ForgotPasswordAttemptID) error {

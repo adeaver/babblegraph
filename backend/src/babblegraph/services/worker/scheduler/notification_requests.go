@@ -7,24 +7,31 @@ import (
 	"babblegraph/model/routes"
 	"babblegraph/model/useraccountsnotifications"
 	"babblegraph/model/users"
+	"babblegraph/util/async"
 	"babblegraph/util/database"
+	"babblegraph/util/env"
 	"babblegraph/util/ses"
 	"fmt"
 	"log"
 
-	"github.com/getsentry/sentry-go"
 	"github.com/jmoiron/sqlx"
 )
 
-func handlePendingUserAccountNotificationRequests(localSentryHub *sentry.Hub, emailClient *ses.Client) error {
+func handlePendingUserAccountNotificationRequests(c async.Context) {
+	emailClient := ses.NewClient(ses.NewClientInput{
+		AWSAccessKey:       env.MustEnvironmentVariable("AWS_SES_ACCESS_KEY"),
+		AWSSecretAccessKey: env.MustEnvironmentVariable("AWS_SES_SECRET_KEY"),
+		AWSRegion:          "us-east-1",
+		FromAddress:        env.MustEnvironmentVariable("EMAIL_ADDRESS"),
+	})
 	var notificationRequests []useraccountsnotifications.NotificationRequest
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		var err error
 		notificationRequests, err = useraccountsnotifications.GetNotificationsToFulfill(tx)
 		return err
 	}); err != nil {
-		localSentryHub.CaptureException(err)
-		return err
+		c.Errorf("Error fetching notifications: %s", err.Error())
+		return
 	}
 	for _, req := range notificationRequests {
 		if err := database.WithTx(func(tx *sqlx.Tx) error {
@@ -51,10 +58,9 @@ func handlePendingUserAccountNotificationRequests(localSentryHub *sentry.Hub, em
 				return fmt.Errorf("Unknown notification type %s", req.Type)
 			}
 		}); err != nil {
-			localSentryHub.CaptureException(err)
+			c.Errorf("Error fulfilling request %s: %s", req.ID, err.Error())
 		}
 	}
-	return nil
 }
 
 func handleTrialEndingSoonNotification(tx *sqlx.Tx, cl *ses.Client, user users.User, req useraccountsnotifications.NotificationRequest) error {

@@ -6,23 +6,29 @@ import (
 	"babblegraph/model/emailtemplates"
 	"babblegraph/util/async"
 	"babblegraph/util/database"
+	"babblegraph/util/env"
 	"babblegraph/util/ptr"
 	"babblegraph/util/ses"
 	"fmt"
 
-	"github.com/getsentry/sentry-go"
 	"github.com/jmoiron/sqlx"
 )
 
-func handleSendAdminTwoFactorAuthenticationCode(localSentryHub *sentry.Hub, emailClient *ses.Client) error {
+func handleSendAdminTwoFactorAuthenticationCode(c async.Context) {
+	emailClient := ses.NewClient(ses.NewClientInput{
+		AWSAccessKey:       env.MustEnvironmentVariable("AWS_SES_ACCESS_KEY"),
+		AWSSecretAccessKey: env.MustEnvironmentVariable("AWS_SES_SECRET_KEY"),
+		AWSRegion:          "us-east-1",
+		FromAddress:        env.MustEnvironmentVariable("EMAIL_ADDRESS"),
+	})
 	var unfulfilledCodes []admin.TwoFactorAuthenticationCode
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		var err error
 		unfulfilledCodes, err = admin.GetUnfulfilledTwoFactorAuthenticationAttempts(tx)
 		return err
 	}); err != nil {
-		localSentryHub.CaptureException(err)
-		return err
+		c.Errorf("Error getting unfulfilled 2FA codes: %s", err.Error())
+		return
 	}
 	for _, code := range unfulfilledCodes {
 		if err := database.WithTx(func(tx *sqlx.Tx) error {
@@ -52,10 +58,10 @@ func handleSendAdminTwoFactorAuthenticationCode(localSentryHub *sentry.Hub, emai
 				Body:            *twoFactorEmailHTML,
 			})
 		}); err != nil {
-			localSentryHub.CaptureException(err)
+			c.Errorf("Error fulfilling attempt for admin ID %s: %s", code.AdminUserID, err.Error())
 		}
 	}
-	return nil
+	return
 }
 
 func handleCleanUpAdminTwoFactorCodesAndAccessTokens(c async.Context) {
