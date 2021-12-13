@@ -13,6 +13,28 @@ type Func struct {
 	fn func()
 }
 
+func WithLogContext(errs chan error, tag string, f func(c bglog.LogContext)) Func {
+	contextKey := random.MustMakeRandomString(10)
+	fn := func() {
+		ctx := Context{
+			ctx:    context.Background(),
+			logger: bglog.NewLoggerForContext(tag, contextKey, 3),
+		}
+		defer func() {
+			if x := recover(); x != nil {
+				_, fn, line, _ := runtime.Caller(2)
+				err := fmt.Errorf("Panic: %s: %d: %v\n%s", fn, line, x, string(debug.Stack()))
+				ctx.Errorf(err.Error())
+				errs <- err
+			}
+		}()
+		f(ctx)
+	}
+	return Func{
+		fn: fn,
+	}
+}
+
 func WithContext(errs chan error, tag string, f func(c Context)) Func {
 	contextKey := random.MustMakeRandomString(10)
 	fn := func() {
