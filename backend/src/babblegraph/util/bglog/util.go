@@ -20,5 +20,5 @@ func (l loggerType) Str() string {
 }
 
 func createLoggerForType(l loggerType) *log.Logger {
-	return log.New(log.Writer(), fmt.Sprintf("%s: ", strings.ToUpper(l.Str())), log.Ldate|log.Ltime|log.Lshortfile)
+	return log.New(log.Writer(), fmt.Sprintf("%s: ", strings.ToUpper(l.Str())), log.Ldate|log.Ltime)
 }

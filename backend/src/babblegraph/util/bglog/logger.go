@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"runtime"
 
 	"github.com/getsentry/sentry-go"
 )
@@ -34,7 +35,11 @@ func NewLoggerForContext(tag, contextKey string) *Logger {
 }
 
 func (l *Logger) logLineWithContext(format string, args ...interface{}) string {
-	return fmt.Sprintf("%s | %s", l.contextKey, fmt.Sprintf(format, args...))
+	_, file, _, ok := runtime.Caller(1)
+	if !ok {
+		file = "unknown"
+	}
+	return fmt.Sprintf("%s %s | %s", file, l.contextKey, fmt.Sprintf(format, args...))
 }
 
 func (l *Logger) Debugf(format string, args ...interface{}) {

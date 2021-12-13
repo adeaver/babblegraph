@@ -4,6 +4,7 @@ import (
 	"babblegraph/model/admin"
 	"babblegraph/model/email"
 	"babblegraph/model/emailtemplates"
+	"babblegraph/util/async"
 	"babblegraph/util/database"
 	"babblegraph/util/ptr"
 	"babblegraph/util/ses"
@@ -57,11 +58,13 @@ func handleSendAdminTwoFactorAuthenticationCode(localSentryHub *sentry.Hub, emai
 	return nil
 }
 
-func handleCleanUpAdminTwoFactorCodesAndAccessTokens() error {
-	return database.WithTx(func(tx *sqlx.Tx) error {
+func handleCleanUpAdminTwoFactorCodesAndAccessTokens(c async.Context) {
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		if err := admin.RemoveExpiredAccessTokens(tx); err != nil {
 			return err
 		}
 		return admin.RemoveExpiredTwoFactorCodes(tx)
-	})
+	}); err != nil {
+		c.Errorf("Error cleaning up admin two factor codes and access tokens: %s", err.Error())
+	}
 }

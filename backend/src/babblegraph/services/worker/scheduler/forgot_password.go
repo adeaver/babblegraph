@@ -6,6 +6,7 @@ import (
 	"babblegraph/model/routes"
 	"babblegraph/model/useraccounts"
 	"babblegraph/model/users"
+	"babblegraph/util/async"
 	"babblegraph/util/database"
 	"babblegraph/util/ses"
 	"fmt"
@@ -86,8 +87,10 @@ func sendForgotPasswordEmailForUserAndAttemptID(tx *sqlx.Tx, sesClient *ses.Clie
 	return nil
 }
 
-func handleArchiveForgotPasswordAttempts() error {
-	return database.WithTx(func(tx *sqlx.Tx) error {
+func handleArchiveForgotPasswordAttempts(c async.Context) {
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		return useraccounts.ArchiveAllForgotPasswordAttemptsOlderThan20Minutes(tx)
-	})
+	}); err != nil {
+		c.Errorf("Error archiving forgot password attempts: %s", err.Error())
+	}
 }
