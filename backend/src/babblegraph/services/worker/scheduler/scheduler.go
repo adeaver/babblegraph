@@ -28,7 +28,7 @@ func StartScheduler(linkProcessor *linkprocessing.LinkProcessor, errs chan error
 		c.AddFunc("30 0 * * *", async.WithContext(errs, "archive-forgot-passwords", handleArchiveForgotPasswordAttempts).Func())
 		c.AddFunc("30 2 * * *", makeRefetchSeedDomainJob(linkProcessor, errs))
 		c.AddFunc("30 3 * * *", async.WithContext(errs, "admin-2fa-cleanup", handleCleanUpAdminTwoFactorCodesAndAccessTokens).Func())
-		c.AddFunc("30 4 * * *", makeCleanupOldNewsletterJob(errs))
+		c.AddFunc("30 4 * * *", async.WithContext(errs, "cleanup-newsletters", handleCleanupOldNewsletter).Func())
 		c.AddFunc("30 12 * * *", makeUserFeedbackJob(errs))
 		c.AddFunc("11 */3 * * *", makeExpireUserAccountsJob(errs))
 		c.AddFunc("*/1 * * * *", makeVerificationJob(errs))
@@ -38,7 +38,7 @@ func StartScheduler(linkProcessor *linkprocessing.LinkProcessor, errs chan error
 		c.AddFunc("*/1 * * * *", makeHandleTwoFactorAuthenticationCode(errs))
 	case "local-test-emails",
 		"local":
-		c.AddFunc("*/1 * * * *", makeCleanupOldNewsletterJob(errs))
+		c.AddFunc("*/1 * * * *", async.WithContext(errs, "cleanup-newsletters", handleCleanupOldNewsletter).Func())
 		c.AddFunc("*/1 * * * *", async.WithContext(errs, "admin-2fa-cleanup", handleCleanUpAdminTwoFactorCodesAndAccessTokens).Func())
 		c.AddFunc("*/1 * * * *", makeUserAccountNotificationsJob(errs))
 		c.AddFunc("*/1 * * * *", makeVerificationJob(errs))

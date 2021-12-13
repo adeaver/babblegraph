@@ -35,11 +35,12 @@ func NewLoggerForContext(tag, contextKey string) *Logger {
 }
 
 func (l *Logger) logLineWithContext(format string, args ...interface{}) string {
-	_, file, _, ok := runtime.Caller(1)
+	_, file, line, ok := runtime.Caller(3)
 	if !ok {
 		file = "unknown"
+		line = -1
 	}
-	return fmt.Sprintf("%s %s | %s", file, l.contextKey, fmt.Sprintf(format, args...))
+	return fmt.Sprintf("%s:%d %s | %s", file, line, l.contextKey, fmt.Sprintf(format, args...))
 }
 
 func (l *Logger) Debugf(format string, args ...interface{}) {
