@@ -27,6 +27,7 @@ func TestFuncWithPanic(t *testing.T) {
 	i := 0
 	errs := make(chan error)
 	WithContext(errs, "test", func(c Context) {
+		c.Infof("Starting test")
 		i++
 		panic("This is a panic")
 	}).Start()

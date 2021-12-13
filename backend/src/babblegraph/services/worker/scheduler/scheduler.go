@@ -39,7 +39,7 @@ func StartScheduler(linkProcessor *linkprocessing.LinkProcessor, errs chan error
 		"local":
 		c.AddFunc("*/1 * * * *", async.WithContext(errs, "cleanup-newsletters", handleCleanupOldNewsletter).Func())
 		c.AddFunc("*/1 * * * *", async.WithContext(errs, "admin-2fa-cleanup", handleCleanUpAdminTwoFactorCodesAndAccessTokens).Func())
-		c.AddFunc("*/1 * * * *", makeUserAccountNotificationsJob(errs))
+		c.AddFunc("*/1 * * * *", async.WithContext(errs, "user-feedback", sendUserFeedbackEmails).Func())
 		c.AddFunc("*/1 * * * *", makeVerificationJob(errs))
 		c.AddFunc("*/1 * * * *", makeForgotPasswordJob(errs))
 		c.AddFunc("*/3 * * * *", makeExpireUserAccountsJob(errs))
