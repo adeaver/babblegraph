@@ -13,6 +13,7 @@ const (
 	EnvironmentLocal          Environment = "local"
 	EnvironmentLocalNoEmail   Environment = "local-no-emails"
 	EnvironmentLocalTestEmail Environment = "local-test-emails"
+	EnvironmentTest           Environment = "test"
 )
 
 func (e Environment) Str() string {
@@ -35,6 +36,8 @@ func mustEnvironmentFromString(s string) Environment {
 		return EnvironmentLocalNoEmail
 	case "local-test-emails":
 		return EnvironmentLocalTestEmail
+	case "test":
+		return EnvironmentTest
 	default:
 		panic(fmt.Sprintf("Unrecognized environment: %s", s))
 	}

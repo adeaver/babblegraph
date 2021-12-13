@@ -2,6 +2,7 @@ package bglog
 
 import (
 	"babblegraph/util/env"
+	"errors"
 	"fmt"
 	"log"
 
@@ -40,6 +41,7 @@ func (l *Logger) Debugf(format string, args ...interface{}) {
 	switch env.MustEnvironmentName() {
 	case env.EnvironmentLocal,
 		env.EnvironmentLocalNoEmail,
+		env.EnvironmentTest,
 		env.EnvironmentLocalTestEmail:
 		l.debugLogger.Println(l.logLineWithContext(format, args...))
 	case env.EnvironmentStage,
@@ -55,27 +57,29 @@ func (l *Logger) Infof(format string, args ...interface{}) {
 func (l *Logger) Warnf(format string, args ...interface{}) {
 	logLineWithContext := l.logLineWithContext(format, args...)
 	l.warningLogger.Println(logLineWithContext)
-	switch *environmentName {
+	switch env.MustEnvironmentName() {
 	case env.EnvironmentLocal,
 		env.EnvironmentLocalNoEmail,
+		env.EnvironmentTest,
 		env.EnvironmentLocalTestEmail:
 		// no-op
 	case env.EnvironmentStage,
 		env.EnvironmentProd:
-		// TODO: add sentry here
+		l.sentryHub.CaptureException(errors.New(logLineWithContext))
 	}
 }
 
 func (l *Logger) Errorf(format string, args ...interface{}) {
 	logLineWithContext := l.logLineWithContext(format, args...)
 	l.errorLogger.Println(logLineWithContext)
-	switch *environmentName {
+	switch env.MustEnvironmentName() {
 	case env.EnvironmentLocal,
 		env.EnvironmentLocalNoEmail,
+		env.EnvironmentTest,
 		env.EnvironmentLocalTestEmail:
 		// no-op
 	case env.EnvironmentStage,
 		env.EnvironmentProd:
-		// TODO: add sentry here
+		l.sentryHub.CaptureException(errors.New(logLineWithContext))
 	}
 }

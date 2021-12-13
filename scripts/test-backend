@@ -2,6 +2,7 @@
 docker build -f ops/babblegraph/Dockerfile.test -t babblegraph/test ./backend/src/babblegraph
 docker run \
     -v $(pwd)/backend/src/babblegraph:/usr/local/go/src/babblegraph \
+    --env ENV=test \
     --env AES_KEY=ryDMLNhwEqPBHMgu6YOsCZ0ihx4WgvqE \
     --env EMAIL_TEMPLATES_PATH=/templates/ \
     babblegraph/test
