@@ -8,3 +8,8 @@ type LogContext interface {
 	Warnf(format string, args ...interface{})
 	Errorf(format string, args ...interface{})
 }
+
+// This is a hack
+func GetDefaultLogContext() LogContext {
+	return NewLoggerForContext("default", "default", 2)
+}
