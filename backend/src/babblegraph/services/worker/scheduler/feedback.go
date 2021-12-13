@@ -4,12 +4,11 @@ import (
 	email_actions "babblegraph/actions/email"
 	"babblegraph/model/email"
 	"babblegraph/model/users"
+	"babblegraph/util/async"
 	"babblegraph/util/database"
+	"babblegraph/util/env"
 	"babblegraph/util/ses"
-	"fmt"
-	"log"
 
-	"github.com/getsentry/sentry-go"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -17,7 +16,13 @@ const (
 	numberOfEmailsToSendAt = 7
 )
 
-func sendUserFeedbackEmails(localSentryHub *sentry.Hub, emailClient *ses.Client) error {
+func sendUserFeedbackEmails(c async.Context) {
+	emailClient := ses.NewClient(ses.NewClientInput{
+		AWSAccessKey:       env.MustEnvironmentVariable("AWS_SES_ACCESS_KEY"),
+		AWSSecretAccessKey: env.MustEnvironmentVariable("AWS_SES_SECRET_KEY"),
+		AWSRegion:          "us-east-1",
+		FromAddress:        env.MustEnvironmentVariable("EMAIL_ADDRESS"),
+	})
 	var activeUsers []users.User
 	var dailyEmailUsages []email.EmailUsage
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
@@ -29,7 +34,8 @@ func sendUserFeedbackEmails(localSentryHub *sentry.Hub, emailClient *ses.Client)
 		dailyEmailUsages, err = email.GetEmailUsageForType(tx, email.EmailTypeDaily)
 		return err
 	}); err != nil {
-		return err
+		c.Errorf("Error getting users and usage: %s", err.Error())
+		return
 	}
 	verifiedUsersByIDHash := make(map[users.UserID]string)
 	for _, user := range activeUsers {
@@ -38,14 +44,14 @@ func sendUserFeedbackEmails(localSentryHub *sentry.Hub, emailClient *ses.Client)
 	for _, usage := range dailyEmailUsages {
 		emailAddress, ok := verifiedUsersByIDHash[usage.UserID]
 		if !ok {
-			log.Println(fmt.Sprintf("User %s is no longer verified. Continuing...", usage.UserID))
+			c.Infof("User %s is no longer verified. Continuing...", usage.UserID)
 			continue
 		}
 		switch {
 		case usage.NumberOfSentEmails != numberOfEmailsToSendAt:
-			log.Println(fmt.Sprintf("User %s has been sent the correct number of emails. Continuing...", usage.UserID))
+			c.Infof("User %s has been sent the correct number of emails. Continuing...", usage.UserID)
 		case !usage.HasOpenedOneEmail:
-			log.Println(fmt.Sprintf("User %s has not opened an email. Continuing...", usage.UserID))
+			c.Infof("User %s has not opened an email. Continuing...", usage.UserID)
 		default:
 			if err := database.WithTx(func(tx *sqlx.Tx) error {
 				_, err := email_actions.SendUserFeedbackEmailForRecipient(tx, emailClient, email.Recipient{
@@ -54,10 +60,8 @@ func sendUserFeedbackEmails(localSentryHub *sentry.Hub, emailClient *ses.Client)
 				})
 				return err
 			}); err != nil {
-				log.Println(fmt.Sprintf("Error fulfilling user feedback attempt for user %s: %s. Continuing...", usage.UserID, err.Error()))
-				localSentryHub.CaptureException(err)
+				c.Errorf("Error fulfilling user feedback attempt for user %s: %s. Continuing...", usage.UserID, err.Error())
 			}
 		}
 	}
-	return nil
 }

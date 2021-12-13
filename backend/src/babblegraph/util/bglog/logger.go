@@ -11,6 +11,7 @@ import (
 )
 
 type Logger struct {
+	stackHeight   int
 	contextKey    string
 	sentryHub     *sentry.Hub
 	debugLogger   *log.Logger
@@ -19,12 +20,13 @@ type Logger struct {
 	warningLogger *log.Logger
 }
 
-func NewLoggerForContext(tag, contextKey string) *Logger {
+func NewLoggerForContext(tag, contextKey string, stackHeight int) *Logger {
 	localHub := sentry.CurrentHub().Clone()
 	localHub.ConfigureScope(func(scope *sentry.Scope) {
 		scope.SetTag(tag, contextKey)
 	})
 	return &Logger{
+		stackHeight:   stackHeight,
 		contextKey:    contextKey,
 		sentryHub:     localHub,
 		debugLogger:   createLoggerForType(loggerTypeDebug),
@@ -35,12 +37,12 @@ func NewLoggerForContext(tag, contextKey string) *Logger {
 }
 
 func (l *Logger) logLineWithContext(format string, args ...interface{}) string {
-	_, file, line, ok := runtime.Caller(3)
+	_, file, line, ok := runtime.Caller(l.stackHeight)
 	if !ok {
 		file = "unknown"
 		line = -1
 	}
-	return fmt.Sprintf("%s:%d %s | %s", file, line, l.contextKey, fmt.Sprintf(format, args...))
+	return fmt.Sprintf("%s:%d | %s | %s", file, line, l.contextKey, fmt.Sprintf(format, args...))
 }
 
 func (l *Logger) Debugf(format string, args ...interface{}) {

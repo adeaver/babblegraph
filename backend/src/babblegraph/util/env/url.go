@@ -13,6 +13,8 @@ func GetAbsoluteURLForEnvironment(path string) string {
 		EnvironmentLocalTestEmail,
 		EnvironmentLocalNoEmail:
 		return fmt.Sprintf("http://localhost:8080/%s", path)
+	case EnvironmentTest:
+		return fmt.Sprintf("http://babblegraph.test/%s", path)
 	default:
 		panic(fmt.Sprintf("Unrecognized environment: %s", environment.Str()))
 	}

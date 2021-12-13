@@ -6,7 +6,6 @@ import (
 	"babblegraph/util/async"
 	"babblegraph/util/env"
 	"babblegraph/util/ses"
-	"babblegraph/util/storage"
 	"fmt"
 	"log"
 	"runtime"
@@ -29,7 +28,7 @@ func StartScheduler(linkProcessor *linkprocessing.LinkProcessor, errs chan error
 		c.AddFunc("30 2 * * *", makeRefetchSeedDomainJob(linkProcessor, errs))
 		c.AddFunc("30 3 * * *", async.WithContext(errs, "admin-2fa-cleanup", handleCleanUpAdminTwoFactorCodesAndAccessTokens).Func())
 		c.AddFunc("30 4 * * *", async.WithContext(errs, "cleanup-newsletters", handleCleanupOldNewsletter).Func())
-		c.AddFunc("30 12 * * *", makeUserFeedbackJob(errs))
+		c.AddFunc("30 12 * * *", async.WithContext(errs, "user-feedback", sendUserFeedbackEmails).Func())
 		c.AddFunc("11 */3 * * *", makeExpireUserAccountsJob(errs))
 		c.AddFunc("*/1 * * * *", makeVerificationJob(errs))
 		c.AddFunc("*/3 * * * *", makeForgotPasswordJob(errs))
@@ -263,29 +262,6 @@ func makeHandleTwoFactorAuthenticationCode(errs chan error) func() {
 			FromAddress:        env.MustEnvironmentVariable("EMAIL_ADDRESS"),
 		})
 		if err := handleSendAdminTwoFactorAuthenticationCode(localHub, emailClient); err != nil {
-			localHub.CaptureException(err)
-			errs <- err
-		}
-	}
-}
-
-func makeCleanupOldNewsletterJob(errs chan error) func() {
-	return func() {
-		today := time.Now()
-		localHub := sentry.CurrentHub().Clone()
-		localHub.ConfigureScope(func(scope *sentry.Scope) {
-			scope.SetTag("newsletter-cleanup-job", fmt.Sprintf("newsletter-cleanup-job-%s-%d-%d-%d-%d", today.Month().String(), today.Day(), today.Year(), today.Hour(), today.Minute()))
-		})
-		defer func() {
-			if x := recover(); x != nil {
-				_, fn, line, _ := runtime.Caller(1)
-				err := fmt.Errorf("Newsletter Cleanup Job: %s: %d: %v\n%s", fn, line, x, string(debug.Stack()))
-				localHub.CaptureException(err)
-				errs <- err
-			}
-		}()
-		log.Println("Starting newsletter cleanup job...")
-		if err := handleCleanupOldNewsletter(localHub, storage.NewS3StorageForEnvironment()); err != nil {
 			localHub.CaptureException(err)
 			errs <- err
 		}

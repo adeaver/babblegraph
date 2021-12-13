@@ -18,11 +18,11 @@ func WithContext(errs chan error, tag string, f func(c Context)) Func {
 	fn := func() {
 		ctx := Context{
 			ctx:    context.Background(),
-			logger: bglog.NewLoggerForContext(tag, contextKey),
+			logger: bglog.NewLoggerForContext(tag, contextKey, 3),
 		}
 		defer func() {
 			if x := recover(); x != nil {
-				_, fn, line, _ := runtime.Caller(1)
+				_, fn, line, _ := runtime.Caller(2)
 				err := fmt.Errorf("Panic: %s: %d: %v\n%s", fn, line, x, string(debug.Stack()))
 				ctx.Errorf(err.Error())
 				errs <- err
