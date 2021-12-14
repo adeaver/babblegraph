@@ -7,6 +7,7 @@ import (
 	"babblegraph/services/worker/newsletterprocessing"
 	"babblegraph/services/worker/process"
 	"babblegraph/services/worker/scheduler"
+	"babblegraph/util/async"
 	"babblegraph/util/bglog"
 	"babblegraph/util/database"
 	"babblegraph/util/elastic"
@@ -50,8 +51,7 @@ func main() {
 	ingestErrs := make(chan error, 1)
 	if currentEnvironmentName != env.EnvironmentLocalTestEmail {
 		for i := 0; i < numIngestWorkerThreads; i++ {
-			workerThread := process.StartIngestWorkerThread(workerNum, linkProcessor, ingestErrs)
-			go workerThread()
+			async.WithContext(ingestErrs, fmt.Sprintf("ingest-html-%d", workerNum), process.StartIngestWorkerThread(linkProcessor)).Start()
 			workerNum++
 		}
 	}
@@ -66,37 +66,29 @@ func main() {
 	preloadNewsletterErrs := make(chan error, 1)
 	preloadWorkerNum := 0
 	for i := 0; i < numNewsletterPreloadThreads; i++ {
-		preloadThread := process.StartNewsletterPreloadWorkerThread(preloadWorkerNum, newsletterProcessor, preloadNewsletterErrs)
-		go preloadThread()
+		async.WithContext(preloadNewsletterErrs, fmt.Sprintf("preload-worker-%d", preloadWorkerNum), process.StartNewsletterPreloadWorkerThread(newsletterProcessor)).Start()
 		preloadWorkerNum++
 	}
 	fulfillNewsletterErrs := make(chan error, 1)
 	fulfillWorkerNum := 0
 	for i := 0; i < numNewsletterFulfillmentThreads; i++ {
-		fulfillThread := process.StartNewsletterFulfillmentWorkerThread(fulfillWorkerNum, newsletterProcessor, fulfillNewsletterErrs)
-		go fulfillThread()
+		async.WithContext(fulfillNewsletterErrs, fmt.Sprintf("fulfillment-worker-%d", fulfillWorkerNum), process.StartNewsletterFulfillmentWorkerThread(newsletterProcessor)).Start()
 		fulfillWorkerNum++
 	}
 	for {
 		select {
-		case err := <-ingestErrs:
-			bglog.Infof("Saw panic: %s. Starting new worker thread.", err.Error())
+		case _ = <-ingestErrs:
 			if currentEnvironmentName != env.EnvironmentLocalTestEmail {
-				workerThread := process.StartIngestWorkerThread(workerNum, linkProcessor, ingestErrs)
-				go workerThread()
+				async.WithContext(ingestErrs, fmt.Sprintf("ingest-html-%d", workerNum), process.StartIngestWorkerThread(linkProcessor)).Start()
 				workerNum++
 			}
-		case err := <-schedulerErrs:
+		case err = <-schedulerErrs:
 			bglog.Infof("Saw panic: %s in scheduler.", err.Error())
-		case err := <-preloadNewsletterErrs:
-			bglog.Infof("Saw panic: %s. Starting new newsletter preload thread.", err.Error())
-			preloadThread := process.StartNewsletterPreloadWorkerThread(preloadWorkerNum, newsletterProcessor, preloadNewsletterErrs)
-			go preloadThread()
+		case _ = <-preloadNewsletterErrs:
+			async.WithContext(preloadNewsletterErrs, fmt.Sprintf("preload-worker-%d", preloadWorkerNum), process.StartNewsletterPreloadWorkerThread(newsletterProcessor)).Start()
 			preloadWorkerNum++
-		case err := <-fulfillNewsletterErrs:
-			bglog.Infof("Saw panic: %s. Starting new newsletter fulfillment thread.", err.Error())
-			fulfillThread := process.StartNewsletterFulfillmentWorkerThread(fulfillWorkerNum, newsletterProcessor, fulfillNewsletterErrs)
-			go fulfillThread()
+		case _ = <-fulfillNewsletterErrs:
+			async.WithContext(fulfillNewsletterErrs, fmt.Sprintf("fulfillment-worker-%d", fulfillWorkerNum), process.StartNewsletterFulfillmentWorkerThread(newsletterProcessor)).Start()
 			fulfillWorkerNum++
 		}
 	}
