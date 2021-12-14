@@ -69,6 +69,6 @@ func IndexDocument(c ctx.LogContext, index Index, document interface{}) error {
 		return err
 	}
 	defer res.Body.Close()
-	c.Infof(res)
+	c.Infof("Got response: %v", res)
 	return nil
 }
