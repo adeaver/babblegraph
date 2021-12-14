@@ -137,7 +137,7 @@ func (l *LinkProcessor) startWorkerManager(maxWorkers int, addURLs chan []string
 		for {
 			select {
 			case _ = <-threadComplete:
-				c.Infof("Thread is complete")
+				c.Debugf("Thread is complete")
 				numWorkers--
 				if link != nil {
 					async.WithContext(workerErrs, "ingest-worker", processSingleLink(threadComplete, addURLs, link)).Start()
@@ -156,7 +156,7 @@ func (l *LinkProcessor) startWorkerManager(maxWorkers int, addURLs chan []string
 					}
 				}
 			case _ = <-workerErrs:
-				c.Infof("Thread had error")
+				c.Debugf("Thread is complete")
 				numWorkers--
 				if link != nil {
 					async.WithContext(workerErrs, "ingest-worker", processSingleLink(threadComplete, addURLs, link)).Start()
@@ -175,7 +175,7 @@ func (l *LinkProcessor) startWorkerManager(maxWorkers int, addURLs chan []string
 					}
 				}
 			case _ = <-timer.C:
-				c.Infof("Timer done")
+				c.Debugf("Timer done")
 				switch {
 				case numWorkers == maxWorkers && link != nil:
 					c.Infof("All workers are busy, and link is non-nil, continuing...")
@@ -216,7 +216,7 @@ func (l *LinkProcessor) startURLManager(addURLs chan []string) func(c async.Cont
 				domainSet[parsedURL.Domain] = true
 				domainMetadata, err := domains.GetDomainMetadata(parsedURL.Domain)
 				if err != nil {
-					c.Infof("Got error getting metadata for domain %s on url %s: %s. Continuing...", parsedURL.Domain, u, err.Error())
+					c.Warnf("Got error getting metadata for domain %s on url %s: %s. Continuing...", parsedURL.Domain, u, err.Error())
 					continue
 				}
 				parsedURLs = append(parsedURLs, *parsedURL)
@@ -268,7 +268,7 @@ func processSingleLink(threadComplete chan *links2.Link, addURLs chan []string, 
 		u := link.URL
 		domain := link.Domain
 		if p := urlparser.ParseURL(u); p != nil && domains.IsSeedURL(*p) {
-			c.Infof("Received url %s, which is a seed url. Skipping...", u)
+			c.Debugf("Received url %s, which is a seed url. Skipping...", u)
 			threadComplete <- nil
 			return
 		}
@@ -281,13 +281,13 @@ func processSingleLink(threadComplete chan *links2.Link, addURLs chan []string, 
 		}
 		domainMetadata, err := domains.GetDomainMetadata(domain)
 		if err != nil {
-			c.Infof("Got error getting metadata for domain %s on url %s: %s. Continuing...", domain, u, err.Error())
+			c.Warnf("Got error getting metadata for domain %s on url %s: %s. Continuing...", domain, u, err.Error())
 			threadComplete <- link
 			return
 		}
 		languageCode := domainMetadata.LanguageCode
 		addURLs <- parsedHTMLPage.Links
-		c.Infof("Processing text for url %s", u)
+		c.Debugf("Processing text for url %s", u)
 		var description *string
 		if d, ok := parsedHTMLPage.Metadata[opengraph.DescriptionTag.Str()]; ok {
 			description = ptr.String(d)
@@ -298,7 +298,7 @@ func processSingleLink(threadComplete chan *links2.Link, addURLs chan []string, 
 			LanguageCode: languageCode,
 		})
 		if err != nil {
-			c.Infof("Got error processing text for url %s: %s. Continuing...", u, err.Error())
+			c.Warnf("Got error processing text for url %s: %s. Continuing...", u, err.Error())
 			threadComplete <- link
 			return
 		}
@@ -308,11 +308,11 @@ func processSingleLink(threadComplete chan *links2.Link, addURLs chan []string, 
 			topicsForURL, err = contenttopics.GetTopicsForURL(tx, u)
 			return err
 		}); err != nil {
-			c.Infof("Error getting topics for url %s: %s. Continuing...", u, err.Error())
+			c.Warnf("Error getting topics for url %s: %s. Continuing...", u, err.Error())
 			threadComplete <- link
 			return
 		}
-		c.Infof("Indexing text for URL %s", u)
+		c.Debugf("Indexing text for URL %s", u)
 		err = indexing.IndexDocument(c, indexing.IndexDocumentInput{
 			ParsedHTMLPage:         *parsedHTMLPage,
 			TextMetadata:           *textMetadata,
@@ -323,12 +323,12 @@ func processSingleLink(threadComplete chan *links2.Link, addURLs chan []string, 
 			SeedJobIngestTimestamp: link.SeedJobIngestTimestamp,
 		})
 		if err != nil {
-			c.Errorf("Got error indexing document for url %s: %s. Continuing...", u, err.Error())
+			c.Warnf("Got error indexing document for url %s: %s. Continuing...", u, err.Error())
 			threadComplete <- link
 			return
 		}
 		threadComplete <- nil
-		c.Infof("Finished")
+		c.Debugf("Finished")
 	}
 }
 
