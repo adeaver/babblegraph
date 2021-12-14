@@ -22,14 +22,14 @@ type Logger struct {
 }
 
 func NewLoggerForContext(tag, contextKey string, stackHeight int) *Logger {
-	localHub := sentry.CurrentHub().Clone()
-	localHub.ConfigureScope(func(scope *sentry.Scope) {
+	contextHub := sentry.CurrentHub().Clone()
+	contextHub.ConfigureScope(func(scope *sentry.Scope) {
 		scope.SetTag(tag, contextKey)
 	})
 	return &Logger{
 		stackHeight:   stackHeight,
 		contextKey:    contextKey,
-		sentryHub:     localHub,
+		sentryHub:     contextHub,
 		debugLogger:   createLoggerForType(loggerTypeDebug),
 		infoLogger:    createLoggerForType(loggerTypeInfo),
 		warningLogger: createLoggerForType(loggerTypeWarning),
@@ -75,7 +75,10 @@ func (l *Logger) Warnf(format string, args ...interface{}) {
 		// no-op
 	case env.EnvironmentStage,
 		env.EnvironmentProd:
-		l.sentryHub.CaptureException(errors.New(logLineWithContext))
+		l.sentryHub.WithScope(func(scope *sentry.Scope) {
+			scope.SetLevel(sentry.LevelWarning)
+			l.sentryHub.CaptureException(errors.New(logLineWithContext))
+		})
 	}
 }
 
