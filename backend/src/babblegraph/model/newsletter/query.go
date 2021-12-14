@@ -74,7 +74,7 @@ func CreateNewsletter(c ctx.LogContext, wordsmithAccessor wordsmithAccessor, ema
 			return nil, err
 		}
 	}
-	spotlightRecord, err := getSpotlightLemmaForNewsletter(getSpotlightLemmaForNewsletterInput{
+	spotlightRecord, err := getSpotlightLemmaForNewsletter(c, getSpotlightLemmaForNewsletterInput{
 		emailRecordID:     emailRecordID,
 		categories:        categories,
 		userAccessor:      userAccessor,
