@@ -2,6 +2,7 @@ package async
 
 import (
 	"babblegraph/util/bglog"
+	"babblegraph/util/ctx"
 	"babblegraph/util/random"
 	"context"
 	"fmt"
@@ -13,7 +14,7 @@ type Func struct {
 	fn func()
 }
 
-func WithLogContext(errs chan error, tag string, f func(c bglog.LogContext)) Func {
+func WithLogContext(errs chan error, tag string, f func(c ctx.LogContext)) Func {
 	return WithContext(errs, tag, func(c Context) {
 		f(c)
 	})

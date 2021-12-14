@@ -1,4 +1,6 @@
-package bglog
+package ctx
+
+import "babblegraph/util/bglog"
 
 // If a function can potentially be used by web and async,
 // then you can pass in a LogContext
@@ -11,5 +13,5 @@ type LogContext interface {
 
 // This is a hack
 func GetDefaultLogContext() LogContext {
-	return NewLoggerForContext("default", "default", 2)
+	return bglog.NewLoggerForContext("default", "default", 2)
 }

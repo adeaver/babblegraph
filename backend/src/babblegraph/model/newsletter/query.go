@@ -6,10 +6,10 @@ import (
 	"babblegraph/model/email"
 	"babblegraph/model/routes"
 	"babblegraph/model/useraccounts"
+	"babblegraph/util/ctx"
 	"babblegraph/util/deref"
 	"babblegraph/util/ptr"
 	"fmt"
-	"log"
 	"math/rand"
 	"time"
 )
@@ -21,7 +21,7 @@ const (
 	minimumDaysSinceLastSpotlight = 3
 )
 
-func CreateNewsletter(wordsmithAccessor wordsmithAccessor, emailAccessor emailAccessor, userAccessor userPreferencesAccessor, docsAccessor documentAccessor) (*Newsletter, error) {
+func CreateNewsletter(c ctx.LogContext, wordsmithAccessor wordsmithAccessor, emailAccessor emailAccessor, userAccessor userPreferencesAccessor, docsAccessor documentAccessor) (*Newsletter, error) {
 	emailRecordID := email.NewEmailRecordID()
 	if err := emailAccessor.InsertEmailRecord(emailRecordID, userAccessor.getUserID()); err != nil {
 		return nil, err
@@ -43,7 +43,7 @@ func CreateNewsletter(wordsmithAccessor wordsmithAccessor, emailAccessor emailAc
 	default:
 		return nil, fmt.Errorf("Unrecognized subscription level: %s", *userSubscriptionLevel)
 	}
-	categories, err := getDocumentCategories(getDocumentCategoriesInput{
+	categories, err := getDocumentCategories(c, getDocumentCategoriesInput{
 		emailRecordID:                 emailRecordID,
 		languageCode:                  userAccessor.getLanguageCode(),
 		userAccessor:                  userAccessor,
@@ -137,7 +137,7 @@ func pickUpToNRandomIndices(listLength, pickN int) []int {
 	return out
 }
 
-func makeLinkFromDocument(emailRecordID email.ID, userAccessor userPreferencesAccessor, doc documents.Document) (*Link, error) {
+func makeLinkFromDocument(c ctx.LogContext, emailRecordID email.ID, userAccessor userPreferencesAccessor, doc documents.Document) (*Link, error) {
 	var title, imageURL, description *string
 	if isNotEmpty(doc.Metadata.Title) {
 		title = doc.Metadata.Title
@@ -150,7 +150,7 @@ func makeLinkFromDocument(emailRecordID email.ID, userAccessor userPreferencesAc
 	}
 	domain, err := domains.GetDomainMetadata(doc.Domain)
 	if err != nil {
-		log.Println(fmt.Sprintf("Error getting domain: %s", err.Error()))
+		c.Errorf("Error getting domain: %s", err.Error())
 		return nil, nil
 	}
 	userDocumentID, err := userAccessor.insertDocumentForUserAndReturnID(emailRecordID, doc)
@@ -159,12 +159,12 @@ func makeLinkFromDocument(emailRecordID email.ID, userAccessor userPreferencesAc
 	}
 	articleLink, err := routes.MakeArticleLink(*userDocumentID)
 	if err != nil {
-		log.Println(fmt.Sprintf("Error making article link: %s", err.Error()))
+		c.Errorf("Error making article link: %s", err.Error())
 		return nil, nil
 	}
 	paywallReportLink, err := routes.MakePaywallReportLink(*userDocumentID)
 	if err != nil {
-		log.Println(fmt.Sprintf("Error making paywall report link: %s", err.Error()))
+		c.Errorf("Error making paywall report link: %s", err.Error())
 		return nil, nil
 	}
 	return &Link{

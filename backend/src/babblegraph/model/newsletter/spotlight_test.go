@@ -7,6 +7,7 @@ import (
 	"babblegraph/model/userlemma"
 	"babblegraph/model/usernewsletterpreferences"
 	"babblegraph/model/users"
+	"babblegraph/util/ctx"
 	"babblegraph/util/ptr"
 	"babblegraph/wordsmith"
 	"fmt"
@@ -16,6 +17,7 @@ import (
 )
 
 func TestSpotlightRecordsForUserWithAccount(t *testing.T) {
+	c := ctx.GetDefaultLogContext()
 	expectedLemma := wordsmith.LemmaID("word3")
 	emailAccessor := getTestEmailAccessor()
 	userAccessor := &testUserAccessor{
@@ -79,7 +81,7 @@ func TestSpotlightRecordsForUserWithAccount(t *testing.T) {
 		lemmasByID: lemmasByID,
 	}
 	docsAccessor := &testDocsAccessor{documents: docs}
-	testNewsletter, err := CreateNewsletter(wordsmithAccessor, emailAccessor, userAccessor, docsAccessor)
+	testNewsletter, err := CreateNewsletter(c, wordsmithAccessor, emailAccessor, userAccessor, docsAccessor)
 	switch {
 	case err != nil:
 		t.Fatalf(err.Error())
@@ -105,6 +107,7 @@ func TestSpotlightRecordsForUserWithAccount(t *testing.T) {
 }
 
 func TestSpotlightRecordsForUserWithoutAccount(t *testing.T) {
+	c := ctx.GetDefaultLogContext()
 	expectedLemma := wordsmith.LemmaID("word3")
 	emailAccessor := getTestEmailAccessor()
 	userAccessor := &testUserAccessor{
@@ -169,7 +172,7 @@ func TestSpotlightRecordsForUserWithoutAccount(t *testing.T) {
 		lemmasByID: lemmasByID,
 	}
 	docsAccessor := &testDocsAccessor{documents: docs}
-	testNewsletter, err := CreateNewsletter(wordsmithAccessor, emailAccessor, userAccessor, docsAccessor)
+	testNewsletter, err := CreateNewsletter(c, wordsmithAccessor, emailAccessor, userAccessor, docsAccessor)
 	switch {
 	case err != nil:
 		t.Fatalf(err.Error())
@@ -198,6 +201,7 @@ func TestSpotlightRecordsForUserWithoutAccount(t *testing.T) {
 }
 
 func TestSpotlightRecordsForTrackedLemmaWithoutSpotlight(t *testing.T) {
+	c := ctx.GetDefaultLogContext()
 	expectedLemma := wordsmith.LemmaID("word4")
 	emailAccessor := getTestEmailAccessor()
 	userAccessor := &testUserAccessor{
@@ -262,7 +266,7 @@ func TestSpotlightRecordsForTrackedLemmaWithoutSpotlight(t *testing.T) {
 		lemmasByID: lemmasByID,
 	}
 	docsAccessor := &testDocsAccessor{documents: docs}
-	testNewsletter, err := CreateNewsletter(wordsmithAccessor, emailAccessor, userAccessor, docsAccessor)
+	testNewsletter, err := CreateNewsletter(c, wordsmithAccessor, emailAccessor, userAccessor, docsAccessor)
 	switch {
 	case err != nil:
 		t.Fatalf(err.Error())

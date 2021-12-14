@@ -5,13 +5,12 @@ import (
 	"babblegraph/model/documents"
 	"babblegraph/model/email"
 	"babblegraph/model/useraccounts"
+	"babblegraph/util/ctx"
 	"babblegraph/util/deref"
 	"babblegraph/util/ptr"
 	"babblegraph/util/text"
 	"babblegraph/util/urlparser"
 	"babblegraph/wordsmith"
-	"fmt"
-	"log"
 	"sort"
 )
 
@@ -23,14 +22,14 @@ type getDocumentCategoriesInput struct {
 	numberOfDocumentsInNewsletter *int
 }
 
-func getDocumentCategories(input getDocumentCategoriesInput) ([]Category, error) {
+func getDocumentCategories(c ctx.LogContext, input getDocumentCategoriesInput) ([]Category, error) {
 	topics := getTopicsForNewsletter(input.userAccessor)
-	log.Println(fmt.Sprintf("Topics %+v", topics))
+	c.Debugf("Topics %+v", topics)
 	allowableDomains, err := getAllowableDomains(input.userAccessor)
 	if err != nil {
 		return nil, err
 	}
-	log.Println(fmt.Sprintf("Allowable domains %+v", allowableDomains))
+	c.Debugf("Allowable domains %+v", allowableDomains)
 	genericDocuments, err := input.docsAccessor.GetDocumentsForUser(getDocumentsForUserInput{
 		getDocumentsBaseInput: getDocumentsBaseInput{
 			LanguageCode:        input.languageCode,
@@ -61,13 +60,13 @@ func getDocumentCategories(input getDocumentCategoriesInput) ([]Category, error)
 		case err != nil:
 			return nil, err
 		case len(documentsForTopic.RecentDocuments)+len(documentsForTopic.NonRecentDocuments) == 0:
-			log.Println(fmt.Sprintf("No documents for topic %s", t.Str()))
+			c.Infof("No documents for topic %s", t.Str())
 		default:
 			documentsByTopic[t] = append(documentsForTopic.RecentDocuments, documentsForTopic.NonRecentDocuments...)
-			log.Println(fmt.Sprintf("Documents for topic %s: %+v", t.Str(), documentsForTopic))
+			c.Infof("Documents for topic %s: %+v", t.Str(), documentsForTopic)
 		}
 	}
-	return joinDocumentsIntoCategories(joinDocumentsIntoCategoriesInput{
+	return joinDocumentsIntoCategories(c, joinDocumentsIntoCategoriesInput{
 		emailRecordID:                 input.emailRecordID,
 		userAccessor:                  input.userAccessor,
 		languageCode:                  input.languageCode,
@@ -86,7 +85,7 @@ type joinDocumentsIntoCategoriesInput struct {
 	genericDocuments              []documents.DocumentWithScore
 }
 
-func joinDocumentsIntoCategories(input joinDocumentsIntoCategoriesInput) ([]Category, error) {
+func joinDocumentsIntoCategories(c ctx.LogContext, input joinDocumentsIntoCategoriesInput) ([]Category, error) {
 	type scoredDocumentsWithTopic struct {
 		documentsWithScore []documents.DocumentWithScore
 		topic              contenttopics.ContentTopic
@@ -114,7 +113,7 @@ func joinDocumentsIntoCategories(input joinDocumentsIntoCategoriesInput) ([]Cate
 			doc := documentGroup.documentsWithScore[i].Document
 			u := urlparser.MustParseURL(doc.URL)
 			if _, ok := documentsInEmailByURLIdentifier[u.URLIdentifier]; !ok {
-				link, err := makeLinkFromDocument(input.emailRecordID, input.userAccessor, doc)
+				link, err := makeLinkFromDocument(c, input.emailRecordID, input.userAccessor, doc)
 				switch {
 				case err != nil:
 					return nil, err
@@ -130,7 +129,7 @@ func joinDocumentsIntoCategories(input joinDocumentsIntoCategoriesInput) ([]Cate
 			var categoryName *string
 			displayName, err := contenttopics.ContentTopicNameToDisplayName(documentGroup.topic)
 			if err != nil {
-				log.Println(fmt.Sprintf("Error generating display name: %s", err.Error()))
+				c.Errorf("Error generating display name: %s", err.Error())
 			} else {
 				categoryName = ptr.String(text.ToTitleCaseForLanguage(displayName.Str(), input.languageCode))
 			}
