@@ -30,7 +30,7 @@ func getDocumentCategories(c ctx.LogContext, input getDocumentCategoriesInput) (
 		return nil, err
 	}
 	c.Debugf("Allowable domains %+v", allowableDomains)
-	genericDocuments, err := input.docsAccessor.GetDocumentsForUser(getDocumentsForUserInput{
+	genericDocuments, err := input.docsAccessor.GetDocumentsForUser(c, getDocumentsForUserInput{
 		getDocumentsBaseInput: getDocumentsBaseInput{
 			LanguageCode:        input.languageCode,
 			ExcludedDocumentIDs: input.userAccessor.getSentDocumentIDs(),
@@ -45,7 +45,7 @@ func getDocumentCategories(c ctx.LogContext, input getDocumentCategoriesInput) (
 	}
 	documentsByTopic := make(map[contenttopics.ContentTopic][]documents.DocumentWithScore)
 	for _, t := range topics {
-		documentsForTopic, err := input.docsAccessor.GetDocumentsForUser(getDocumentsForUserInput{
+		documentsForTopic, err := input.docsAccessor.GetDocumentsForUser(c, getDocumentsForUserInput{
 			getDocumentsBaseInput: getDocumentsBaseInput{
 				LanguageCode:        input.languageCode,
 				ExcludedDocumentIDs: input.userAccessor.getSentDocumentIDs(),
@@ -147,7 +147,7 @@ func joinDocumentsIntoCategories(c ctx.LogContext, input joinDocumentsIntoCatego
 			doc := input.genericDocuments[i].Document
 			u := urlparser.MustParseURL(doc.URL)
 			if _, ok := documentsInEmailByURLIdentifier[u.URLIdentifier]; !ok {
-				link, err := makeLinkFromDocument(input.emailRecordID, input.userAccessor, doc)
+				link, err := makeLinkFromDocument(c, input.emailRecordID, input.userAccessor, doc)
 				switch {
 				case err != nil:
 					return nil, err
