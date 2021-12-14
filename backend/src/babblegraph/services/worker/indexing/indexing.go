@@ -5,11 +5,10 @@ import (
 	"babblegraph/model/documents"
 	"babblegraph/services/worker/ingesthtml"
 	"babblegraph/services/worker/textprocessing"
+	"babblegraph/util/ctx"
 	"babblegraph/util/ptr"
 	"babblegraph/util/urlparser"
 	"babblegraph/wordsmith"
-	"fmt"
-	"log"
 )
 
 type IndexDocumentInput struct {
@@ -22,14 +21,14 @@ type IndexDocumentInput struct {
 	SeedJobIngestTimestamp *int64
 }
 
-func IndexDocument(input IndexDocumentInput) error {
+func IndexDocument(c ctx.LogContext, input IndexDocumentInput) error {
 	var lemmatizedDescriptionText *string
 	var lemmatizedDescriptionIndexMappings []int
 	if input.TextMetadata.LemmatizedDescription != nil {
 		lemmatizedDescriptionText = ptr.String(input.TextMetadata.LemmatizedDescription.LemmatizedText)
 		lemmatizedDescriptionIndexMappings = input.TextMetadata.LemmatizedDescription.IndexMappings
 	}
-	docID, err := documents.AssignIDAndIndexDocument(documents.IndexDocumentInput{
+	docID, err := documents.AssignIDAndIndexDocument(c, documents.IndexDocumentInput{
 		URL:                                input.URL,
 		ReadabilityScore:                   input.TextMetadata.ReadabilityScore.ToInt64Rounded(),
 		LanguageCode:                       input.LanguageCode,
@@ -47,6 +46,6 @@ func IndexDocument(input IndexDocumentInput) error {
 	if err != nil {
 		return err
 	}
-	log.Println(fmt.Sprintf("Indexed url %s with ID: %s", input.URL, string(*docID)))
+	c.Infof("Indexed url %s with ID: %s", input.URL, string(*docID))
 	return nil
 }

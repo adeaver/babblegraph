@@ -2,6 +2,7 @@ package documents
 
 import (
 	"babblegraph/model/contenttopics"
+	"babblegraph/util/ctx"
 	"babblegraph/util/elastic"
 	"babblegraph/util/opengraph"
 	"babblegraph/util/ptr"
@@ -49,10 +50,10 @@ type IndexDocumentInput struct {
 	LemmatizedDescriptionIndexMappings []int
 }
 
-func AssignIDAndIndexDocument(input IndexDocumentInput) (*DocumentID, error) {
+func AssignIDAndIndexDocument(c ctx.LogContext, input IndexDocumentInput) (*DocumentID, error) {
 	documentID := makeDocumentIndexForURL(input.URL)
 	ogMetadata := opengraph.GetBasicMetadata(input.Metadata)
-	if err := elastic.IndexDocument(documentIndex{}, Document{
+	if err := elastic.IndexDocument(c, documentIndex{}, Document{
 		ID:                                 documentID,
 		Version:                            input.Version,
 		URL:                                input.URL.URL,

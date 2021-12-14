@@ -2,10 +2,17 @@ package linkprocessing
 
 import (
 	"babblegraph/model/contenttopics"
+	"babblegraph/model/documents"
 	"babblegraph/model/domains"
 	"babblegraph/model/links2"
+	"babblegraph/services/worker/indexing"
+	"babblegraph/services/worker/ingesthtml"
+	"babblegraph/services/worker/textprocessing"
+	"babblegraph/util/async"
 	"babblegraph/util/bufferedfetch"
 	"babblegraph/util/database"
+	"babblegraph/util/opengraph"
+	"babblegraph/util/ptr"
 	"babblegraph/util/urlparser"
 	"fmt"
 	"log"
@@ -70,7 +77,262 @@ func getBufferedFetchKeyForDomain(domain string) string {
 	return fmt.Sprintf("linkprocessing-%s", domain)
 }
 
-func (l *LinkProcessor) GetLink() (*links2.Link, *time.Duration, error) {
+func (l *LinkProcessor) ProcessLinks(maxWorkers int) func(c async.Context) {
+	return func(c async.Context) {
+		c.Infof("Starting link processor")
+		addURLs := make(chan []string)
+		workerManagerErrs := make(chan error)
+		urlManagerErrs := make(chan error)
+		async.WithContext(workerManagerErrs, "worker-manager", l.startWorkerManager(maxWorkers, addURLs)).Start()
+		async.WithContext(urlManagerErrs, "url-manager", l.startURLManager(addURLs)).Start()
+		for {
+			select {
+			case _ = <-workerManagerErrs:
+				async.WithContext(workerManagerErrs, "worker-manager", l.startWorkerManager(maxWorkers, addURLs)).Start()
+			case _ = <-urlManagerErrs:
+				async.WithContext(urlManagerErrs, "url-manager", l.startURLManager(addURLs)).Start()
+			}
+		}
+	}
+}
+
+func (l *LinkProcessor) startWorkerManager(maxWorkers int, addURLs chan []string) func(c async.Context) {
+	return func(c async.Context) {
+		threadComplete := make(chan *links2.Link, 1)
+		workerErrs := make(chan error)
+		timer := time.NewTimer(1 * time.Second)
+		var link *links2.Link
+		var numWorkers int
+		spinOffWorkerOrWait := func() (_shouldBreak bool) {
+			link, duration, err := l.getLink()
+			switch {
+			case err != nil:
+				c.Errorf("Error getting links: %s, will retry", err.Error())
+				timer = time.NewTimer(2 * time.Minute)
+				return true
+			case duration != nil:
+				c.Infof("Waiting")
+				timer = time.NewTimer(*duration)
+				return true
+			case link != nil:
+				numWorkers++
+				async.WithContext(workerErrs, "ingest-worker", processSingleLink(threadComplete, addURLs, link)).Start()
+			}
+			return false
+		}
+		// Start initial workers
+		for i := 0; i < maxWorkers; i++ {
+			if shouldBreak := spinOffWorkerOrWait(); shouldBreak {
+				break
+			}
+		}
+		// At this point, there should either be:
+		// maxWorkers # of workers, in which case we wait for errors or thread completes
+		// or a timer, in which case, we wait for a timer
+		var duration *time.Duration
+		link, _, err := l.getLink()
+		if err != nil {
+			c.Errorf("Error getting links: %s", err.Error())
+		}
+		for {
+			select {
+			case _ = <-threadComplete:
+				c.Debugf("Thread is complete")
+				numWorkers--
+				if link != nil {
+					async.WithContext(workerErrs, "ingest-worker", processSingleLink(threadComplete, addURLs, link)).Start()
+					link = nil
+				} else {
+					link, duration, err = l.getLink()
+					switch {
+					case err != nil:
+						c.Errorf("Error getting links: %s", err.Error())
+						timer = time.NewTimer(2 * time.Minute)
+					case duration != nil:
+						timer = time.NewTimer(*duration)
+					case link != nil:
+						async.WithContext(workerErrs, "ingest-worker", processSingleLink(threadComplete, addURLs, link)).Start()
+						link = nil
+					}
+				}
+			case _ = <-workerErrs:
+				c.Debugf("Thread is complete")
+				numWorkers--
+				if link != nil {
+					async.WithContext(workerErrs, "ingest-worker", processSingleLink(threadComplete, addURLs, link)).Start()
+					link = nil
+				} else {
+					link, duration, err = l.getLink()
+					switch {
+					case err != nil:
+						c.Errorf("Error getting links: %s", err.Error())
+						timer = time.NewTimer(2 * time.Minute)
+					case duration != nil:
+						timer = time.NewTimer(*duration)
+					case link != nil:
+						async.WithContext(workerErrs, "ingest-worker", processSingleLink(threadComplete, addURLs, link)).Start()
+						link = nil
+					}
+				}
+			case _ = <-timer.C:
+				c.Debugf("Timer done")
+				switch {
+				case numWorkers == maxWorkers && link != nil:
+					c.Infof("All workers are busy, and link is non-nil, continuing...")
+				case numWorkers == maxWorkers && link == nil:
+					c.Infof("All workers are busy, but link needs replenshing")
+					link, duration, err = l.getLink()
+					if err != nil {
+						c.Errorf("Error getting link: %s", err.Error())
+						timer = time.NewTimer(2 * time.Minute)
+					}
+				case numWorkers < maxWorkers && link == nil:
+					link, duration, err = l.getLink()
+					switch {
+					case err != nil:
+						c.Errorf("Error getting links: %s", err.Error())
+						timer = time.NewTimer(2 * time.Minute)
+					case duration != nil:
+						timer = time.NewTimer(*duration)
+					case link != nil:
+						async.WithContext(workerErrs, "ingest-worker", processSingleLink(threadComplete, addURLs, link)).Start()
+					}
+				case numWorkers < maxWorkers && link != nil:
+					async.WithContext(workerErrs, "ingest-worker", processSingleLink(threadComplete, addURLs, link)).Start()
+					link = nil
+				}
+			}
+		}
+	}
+}
+
+func (l *LinkProcessor) startURLManager(addURLs chan []string) func(c async.Context) {
+	handleURLs := func(c async.Context, urls []string) {
+		domainSet := make(map[string]bool)
+		var parsedURLs []urlparser.ParsedURL
+		var contentTopics [][]contenttopics.ContentTopic
+		for _, u := range urls {
+			if parsedURL := urlparser.ParseURL(u); parsedURL != nil && domains.IsURLAllowed(*parsedURL) {
+				domainSet[parsedURL.Domain] = true
+				domainMetadata, err := domains.GetDomainMetadata(parsedURL.Domain)
+				if err != nil {
+					c.Warnf("Got error getting metadata for domain %s on url %s: %s. Continuing...", parsedURL.Domain, u, err.Error())
+					continue
+				}
+				parsedURLs = append(parsedURLs, *parsedURL)
+				contentTopics = append(contentTopics, domainMetadata.Topics)
+			}
+		}
+		if len(parsedURLs) == 0 {
+			return
+		}
+		l.mu.Lock()
+		defer l.mu.Unlock()
+		for domain := range domainSet {
+			if _, ok := l.DomainSet[domain]; !ok {
+				l.DomainSet[domain] = true
+				l.OrderedDomains = append(l.OrderedDomains, Domain{
+					Domain: domain,
+					FreeAt: time.Now().Add(defaultTimeUntilFree),
+				})
+			}
+		}
+		if err := database.WithTx(func(tx *sqlx.Tx) error {
+			if err := links2.InsertLinks(tx, parsedURLs); err != nil {
+				return err
+			}
+			for idx, u := range parsedURLs {
+				if len(contentTopics[idx]) > 0 {
+					if err := contenttopics.ApplyContentTopicsToURL(tx, u.URL, contentTopics[idx]); err != nil {
+						return err
+					}
+				}
+			}
+			return nil
+		}); err != nil {
+			c.Warnf("Error saving URLs: %s", err.Error())
+		}
+	}
+	return func(c async.Context) {
+		for {
+			select {
+			case urls := <-addURLs:
+				handleURLs(c, urls)
+			}
+		}
+	}
+}
+
+func processSingleLink(threadComplete chan *links2.Link, addURLs chan []string, link *links2.Link) func(c async.Context) {
+	return func(c async.Context) {
+		u := link.URL
+		domain := link.Domain
+		if p := urlparser.ParseURL(u); p != nil && domains.IsSeedURL(*p) {
+			c.Debugf("Received url %s, which is a seed url. Skipping...", u)
+			threadComplete <- nil
+			return
+		}
+		c.Infof("Processing URL %s with identifier %s", u, link.URLIdentifier)
+		parsedHTMLPage, err := ingesthtml.ProcessURL(u, domain)
+		if err != nil {
+			c.Infof("Got error ingesting html for url %s: %s. Continuing...", u, err.Error())
+			threadComplete <- link
+			return
+		}
+		domainMetadata, err := domains.GetDomainMetadata(domain)
+		if err != nil {
+			c.Warnf("Got error getting metadata for domain %s on url %s: %s. Continuing...", domain, u, err.Error())
+			threadComplete <- link
+			return
+		}
+		languageCode := domainMetadata.LanguageCode
+		addURLs <- parsedHTMLPage.Links
+		c.Debugf("Processing text for url %s", u)
+		var description *string
+		if d, ok := parsedHTMLPage.Metadata[opengraph.DescriptionTag.Str()]; ok {
+			description = ptr.String(d)
+		}
+		textMetadata, err := textprocessing.ProcessText(textprocessing.ProcessTextInput{
+			BodyText:     parsedHTMLPage.BodyText,
+			Description:  description,
+			LanguageCode: languageCode,
+		})
+		if err != nil {
+			c.Warnf("Got error processing text for url %s: %s. Continuing...", u, err.Error())
+			threadComplete <- link
+			return
+		}
+		var topicsForURL []contenttopics.ContentTopic
+		if err := database.WithTx(func(tx *sqlx.Tx) error {
+			var err error
+			topicsForURL, err = contenttopics.GetTopicsForURL(tx, u)
+			return err
+		}); err != nil {
+			c.Warnf("Error getting topics for url %s: %s. Continuing...", u, err.Error())
+			threadComplete <- link
+			return
+		}
+		c.Debugf("Indexing text for URL %s", u)
+		err = indexing.IndexDocument(c, indexing.IndexDocumentInput{
+			ParsedHTMLPage:         *parsedHTMLPage,
+			TextMetadata:           *textMetadata,
+			LanguageCode:           languageCode,
+			DocumentVersion:        documents.CurrentDocumentVersion,
+			URL:                    urlparser.MustParseURL(u),
+			TopicsForURL:           topicsForURL,
+			SeedJobIngestTimestamp: link.SeedJobIngestTimestamp,
+		})
+		if err != nil {
+			c.Warnf("Got error indexing document for url %s: %s. Continuing...", u, err.Error())
+			threadComplete <- link
+			return
+		}
+		threadComplete <- nil
+		c.Debugf("Finished")
+	}
+}
+
+func (l *LinkProcessor) getLink() (*links2.Link, *time.Duration, error) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	firstDomain := l.OrderedDomains[0]

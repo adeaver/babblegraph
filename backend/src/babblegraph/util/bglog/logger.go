@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"runtime"
+	"strings"
 
 	"github.com/getsentry/sentry-go"
 )
@@ -21,14 +22,14 @@ type Logger struct {
 }
 
 func NewLoggerForContext(tag, contextKey string, stackHeight int) *Logger {
-	localHub := sentry.CurrentHub().Clone()
-	localHub.ConfigureScope(func(scope *sentry.Scope) {
+	contextHub := sentry.CurrentHub().Clone()
+	contextHub.ConfigureScope(func(scope *sentry.Scope) {
 		scope.SetTag(tag, contextKey)
 	})
 	return &Logger{
 		stackHeight:   stackHeight,
 		contextKey:    contextKey,
-		sentryHub:     localHub,
+		sentryHub:     contextHub,
 		debugLogger:   createLoggerForType(loggerTypeDebug),
 		infoLogger:    createLoggerForType(loggerTypeInfo),
 		warningLogger: createLoggerForType(loggerTypeWarning),
@@ -42,7 +43,8 @@ func (l *Logger) logLineWithContext(format string, args ...interface{}) string {
 		file = "unknown"
 		line = -1
 	}
-	return fmt.Sprintf("%s:%d | %s | %s", file, line, l.contextKey, fmt.Sprintf(format, args...))
+	fileParts := strings.Split(file, env.GetEnvironmentVariableOrDefault("GOPATH", "/usr/local/go/src/"))
+	return fmt.Sprintf("%s:%d | %s | %s", fileParts[1], line, l.contextKey, fmt.Sprintf(format, args...))
 }
 
 func (l *Logger) Debugf(format string, args ...interface{}) {
@@ -73,7 +75,10 @@ func (l *Logger) Warnf(format string, args ...interface{}) {
 		// no-op
 	case env.EnvironmentStage,
 		env.EnvironmentProd:
-		l.sentryHub.CaptureException(errors.New(logLineWithContext))
+		l.sentryHub.WithScope(func(scope *sentry.Scope) {
+			scope.SetLevel(sentry.LevelWarning)
+			l.sentryHub.CaptureException(errors.New(logLineWithContext))
+		})
 	}
 }
 

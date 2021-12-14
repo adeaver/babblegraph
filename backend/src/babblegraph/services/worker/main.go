@@ -27,12 +27,13 @@ const (
 
 func main() {
 	bglog.InitLogger()
+	currentEnvironmentName := env.MustEnvironmentName()
 	if err := setupDatabases(); err != nil {
 		bglog.Fatalf("Error initializing databases: %s", err.Error())
 	}
 	if err := sentry.Init(sentry.ClientOptions{
 		Dsn:         env.MustEnvironmentVariable("SENTRY_DSN"),
-		Environment: env.MustEnvironmentName().Str(),
+		Environment: currentEnvironmentName.Str(),
 	}); err != nil {
 		bglog.Fatalf("Error initializing sentry: %s", err.Error())
 	}
@@ -46,14 +47,9 @@ func main() {
 			bglog.Fatalf("Error initializing link processor seed domains: %s", err.Error())
 		}
 	}
-	currentEnvironmentName := env.MustEnvironmentName()
-	workerNum := 0
 	ingestErrs := make(chan error, 1)
 	if currentEnvironmentName != env.EnvironmentLocalTestEmail {
-		for i := 0; i < numIngestWorkerThreads; i++ {
-			async.WithContext(ingestErrs, fmt.Sprintf("ingest-html-%d", workerNum), process.StartIngestWorkerThread(linkProcessor)).Start()
-			workerNum++
-		}
+		async.WithContext(ingestErrs, "link-processor", linkProcessor.ProcessLinks(numIngestWorkerThreads)).Start()
 	}
 	schedulerErrs := make(chan error, 1)
 	if err := scheduler.StartScheduler(linkProcessor, schedulerErrs); err != nil {
@@ -79,8 +75,7 @@ func main() {
 		select {
 		case _ = <-ingestErrs:
 			if currentEnvironmentName != env.EnvironmentLocalTestEmail {
-				async.WithContext(ingestErrs, fmt.Sprintf("ingest-html-%d", workerNum), process.StartIngestWorkerThread(linkProcessor)).Start()
-				workerNum++
+				async.WithContext(ingestErrs, "link-processor", linkProcessor.ProcessLinks(numIngestWorkerThreads)).Start()
 			}
 		case err = <-schedulerErrs:
 			bglog.Infof("Saw panic: %s in scheduler.", err.Error())

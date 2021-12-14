@@ -1,6 +1,7 @@
 package elastic
 
 import (
+	"babblegraph/util/ctx"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -45,7 +46,7 @@ func CreateIndex(index Index, settings *CreateIndexSettings) error {
 	return nil
 }
 
-func IndexDocument(index Index, document interface{}) error {
+func IndexDocument(c ctx.LogContext, index Index, document interface{}) error {
 	if err := index.ValidateDocument(document); err != nil {
 		return fmt.Errorf("Document validation error for index %s: %s", index.GetName(), err.Error())
 	}
@@ -68,6 +69,6 @@ func IndexDocument(index Index, document interface{}) error {
 		return err
 	}
 	defer res.Body.Close()
-	log.Println(res)
+	c.Infof("Got response: %v", res)
 	return nil
 }
