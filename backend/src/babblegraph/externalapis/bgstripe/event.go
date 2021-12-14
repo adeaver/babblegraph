@@ -3,7 +3,7 @@ package bgstripe
 import (
 	"babblegraph/model/useraccounts"
 	"babblegraph/model/useraccountsnotifications"
-	"babblegraph/util/bglog"
+	"babblegraph/util/ctx"
 	"babblegraph/util/database"
 	"babblegraph/util/env"
 	"babblegraph/util/ptr"
@@ -17,7 +17,7 @@ import (
 	"github.com/stripe/stripe-go/v72/event"
 )
 
-func ForceSyncStripeEvents(c bglog.LogContext) {
+func ForceSyncStripeEvents(c ctx.LogContext) {
 	stripe.Key = env.MustEnvironmentVariable("STRIPE_KEY")
 	params := &stripe.EventListParams{
 		DeliverySuccess: ptr.Bool(false),

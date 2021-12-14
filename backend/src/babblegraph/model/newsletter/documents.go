@@ -3,6 +3,7 @@ package newsletter
 import (
 	"babblegraph/model/contenttopics"
 	"babblegraph/model/documents"
+	"babblegraph/util/ctx"
 	"babblegraph/wordsmith"
 )
 
@@ -28,8 +29,8 @@ type getDocumentsForUserForLemmaInput struct {
 }
 
 type documentAccessor interface {
-	GetDocumentsForUser(input getDocumentsForUserInput) (*documentsOutput, error)
-	GetDocumentsForUserForLemma(input getDocumentsForUserForLemmaInput) ([]documents.DocumentWithScore, error)
+	GetDocumentsForUser(c ctx.LogContext, input getDocumentsForUserInput) (*documentsOutput, error)
+	GetDocumentsForUserForLemma(c ctx.LogContext, input getDocumentsForUserForLemmaInput) ([]documents.DocumentWithScore, error)
 }
 
 type documentsOutput struct {
@@ -43,12 +44,12 @@ func GetDefaultDocumentsAccessor() *DefaultDocumentsAccessor {
 	return &DefaultDocumentsAccessor{}
 }
 
-func (d *DefaultDocumentsAccessor) GetDocumentsForUser(input getDocumentsForUserInput) (*documentsOutput, error) {
+func (d *DefaultDocumentsAccessor) GetDocumentsForUser(c ctx.LogContext, input getDocumentsForUserInput) (*documentsOutput, error) {
 	dailyEmailDocQueryBuilder := documents.NewDailyEmailDocumentsQueryBuilder()
 	dailyEmailDocQueryBuilder.ContainingLemmas(input.Lemmas)
 	dailyEmailDocQueryBuilder.ForTopic(input.Topic)
 	dailyEmailDocQueryBuilder.WithRecencyBias(documents.RecencyBiasMostRecent)
-	recentDocuments, err := documents.ExecuteDocumentQuery(dailyEmailDocQueryBuilder, documents.ExecuteDocumentQueryInput{
+	recentDocuments, err := documents.ExecuteDocumentQuery(c, dailyEmailDocQueryBuilder, documents.ExecuteDocumentQueryInput{
 		LanguageCode:        input.getDocumentsBaseInput.LanguageCode,
 		ValidDomains:        input.getDocumentsBaseInput.ValidDomains,
 		ExcludedDocumentIDs: input.getDocumentsBaseInput.ExcludedDocumentIDs,
@@ -59,7 +60,7 @@ func (d *DefaultDocumentsAccessor) GetDocumentsForUser(input getDocumentsForUser
 		return nil, err
 	}
 	dailyEmailDocQueryBuilder.WithRecencyBias(documents.RecencyBiasNotRecent)
-	notRecentDocuments, err := documents.ExecuteDocumentQuery(dailyEmailDocQueryBuilder, documents.ExecuteDocumentQueryInput{
+	notRecentDocuments, err := documents.ExecuteDocumentQuery(c, dailyEmailDocQueryBuilder, documents.ExecuteDocumentQueryInput{
 		LanguageCode:        input.getDocumentsBaseInput.LanguageCode,
 		ValidDomains:        input.getDocumentsBaseInput.ValidDomains,
 		ExcludedDocumentIDs: input.getDocumentsBaseInput.ExcludedDocumentIDs,
@@ -75,7 +76,7 @@ func (d *DefaultDocumentsAccessor) GetDocumentsForUser(input getDocumentsForUser
 	}, nil
 }
 
-func (d *DefaultDocumentsAccessor) GetDocumentsForUserForLemma(input getDocumentsForUserForLemmaInput) ([]documents.DocumentWithScore, error) {
+func (d *DefaultDocumentsAccessor) GetDocumentsForUserForLemma(c ctx.LogContext, input getDocumentsForUserForLemmaInput) ([]documents.DocumentWithScore, error) {
 	spotlightQueryBuilder := documents.NewLemmaSpotlightQueryBuilder(input.Lemma)
 	spotlightQueryBuilder.AddTopics(input.Topics)
 	recencyBias := documents.RecencyBiasMostRecent
@@ -83,7 +84,7 @@ func (d *DefaultDocumentsAccessor) GetDocumentsForUserForLemma(input getDocument
 		recencyBias = documents.RecencyBiasNotRecent
 	}
 	spotlightQueryBuilder.WithRecencyBias(recencyBias)
-	return documents.ExecuteDocumentQuery(spotlightQueryBuilder, documents.ExecuteDocumentQueryInput{
+	return documents.ExecuteDocumentQuery(c, spotlightQueryBuilder, documents.ExecuteDocumentQueryInput{
 		LanguageCode:        input.getDocumentsBaseInput.LanguageCode,
 		ValidDomains:        input.getDocumentsBaseInput.ValidDomains,
 		ExcludedDocumentIDs: input.getDocumentsBaseInput.ExcludedDocumentIDs,

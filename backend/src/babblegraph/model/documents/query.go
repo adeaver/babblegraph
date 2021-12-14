@@ -1,13 +1,12 @@
 package documents
 
 import (
+	"babblegraph/util/ctx"
 	"babblegraph/util/elastic/esquery"
 	"babblegraph/util/math/decimal"
 	"babblegraph/util/urlparser"
 	"babblegraph/wordsmith"
 	"encoding/json"
-	"fmt"
-	"log"
 	"time"
 )
 
@@ -59,7 +58,7 @@ type DocumentWithScore struct {
 	Score    decimal.Number
 }
 
-func ExecuteDocumentQuery(query executableQuery, input ExecuteDocumentQueryInput) ([]DocumentWithScore, error) {
+func ExecuteDocumentQuery(c ctx.LogContext, query executableQuery, input ExecuteDocumentQueryInput) ([]DocumentWithScore, error) {
 	queryBuilder := esquery.NewBoolQueryBuilder()
 	queryBuilder.AddMust(esquery.Match("language_code", input.LanguageCode.Str()))
 	queryBuilder.AddMust(esquery.Terms("domain.keyword", input.ValidDomains))
@@ -94,7 +93,7 @@ func ExecuteDocumentQuery(query executableQuery, input ExecuteDocumentQueryInput
 		versionRangeQueryBuilder.LessThanOrEqualToInt64(int64(versions[1]))
 		queryBuilder.AddMust(versionRangeQueryBuilder.BuildRangeQuery())
 	} else {
-		log.Println(fmt.Sprintf("No valid document versions found for language code: %s", input.LanguageCode))
+		c.Infof("No valid document versions found for language code: %s", input.LanguageCode)
 	}
 	if err := query.ExtendBaseQuery(queryBuilder); err != nil {
 		return nil, err
@@ -107,7 +106,7 @@ func ExecuteDocumentQuery(query executableQuery, input ExecuteDocumentQueryInput
 	orderedSort := esquery.NewOrderedSort(scoreSort, timestampSortBuilder.AsSort())
 	var docs []DocumentWithScore
 	if err := esquery.ExecuteSearch(documentIndex{}, queryBuilder.BuildBoolQuery(), orderedSort, func(source []byte, score decimal.Number) error {
-		log.Println(fmt.Sprintf("Document search got body %s", string(source)))
+		c.Infof("Document search got body %s", string(source))
 		var doc Document
 		if err := json.Unmarshal(source, &doc); err != nil {
 			return err

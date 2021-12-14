@@ -5,6 +5,7 @@ import (
 	"babblegraph/model/routes"
 	"babblegraph/model/useraccounts"
 	"babblegraph/model/usernewsletterschedule"
+	"babblegraph/util/ctx"
 	"babblegraph/util/ptr"
 	"babblegraph/util/testutils"
 	"babblegraph/wordsmith"
@@ -13,6 +14,7 @@ import (
 )
 
 func TestUserHasAccount(t *testing.T) {
+	c := ctx.GetDefaultLogContext()
 	wordsmithAccessor := &testWordsmithAccessor{}
 	emailAccessor := getTestEmailAccessor()
 	userAccessor := &testUserAccessor{
@@ -24,7 +26,7 @@ func TestUserHasAccount(t *testing.T) {
 		},
 	}
 	docsAccessor := &testDocsAccessor{}
-	testNewsletter, err := CreateNewsletter(wordsmithAccessor, emailAccessor, userAccessor, docsAccessor)
+	testNewsletter, err := CreateNewsletter(c, wordsmithAccessor, emailAccessor, userAccessor, docsAccessor)
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
@@ -38,6 +40,7 @@ func TestUserHasAccount(t *testing.T) {
 }
 
 func TestUserDoesNotHaveAccount(t *testing.T) {
+	c := ctx.GetDefaultLogContext()
 	wordsmithAccessor := &testWordsmithAccessor{}
 	emailAccessor := getTestEmailAccessor()
 	userAccessor := &testUserAccessor{
@@ -48,7 +51,7 @@ func TestUserDoesNotHaveAccount(t *testing.T) {
 		},
 	}
 	docsAccessor := &testDocsAccessor{}
-	testNewsletter, err := CreateNewsletter(wordsmithAccessor, emailAccessor, userAccessor, docsAccessor)
+	testNewsletter, err := CreateNewsletter(c, wordsmithAccessor, emailAccessor, userAccessor, docsAccessor)
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
@@ -62,6 +65,7 @@ func TestUserDoesNotHaveAccount(t *testing.T) {
 }
 
 func TestNoSetTopicsLink(t *testing.T) {
+	c := ctx.GetDefaultLogContext()
 	wordsmithAccessor := &testWordsmithAccessor{}
 	emailAccessor := getTestEmailAccessor()
 	userAccessor := &testUserAccessor{
@@ -76,7 +80,7 @@ func TestNoSetTopicsLink(t *testing.T) {
 		},
 	}
 	docsAccessor := &testDocsAccessor{}
-	testNewsletter, err := CreateNewsletter(wordsmithAccessor, emailAccessor, userAccessor, docsAccessor)
+	testNewsletter, err := CreateNewsletter(c, wordsmithAccessor, emailAccessor, userAccessor, docsAccessor)
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
@@ -90,6 +94,7 @@ func TestNoSetTopicsLink(t *testing.T) {
 }
 
 func TestUserScheduleDay(t *testing.T) {
+	c := ctx.GetDefaultLogContext()
 	wordsmithAccessor := &testWordsmithAccessor{}
 	emailAccessor := getTestEmailAccessor()
 	userAccessor := &testUserAccessor{
@@ -108,7 +113,7 @@ func TestUserScheduleDay(t *testing.T) {
 		},
 	}
 	docsAccessor := &testDocsAccessor{}
-	testNewsletter, err := CreateNewsletter(wordsmithAccessor, emailAccessor, userAccessor, docsAccessor)
+	testNewsletter, err := CreateNewsletter(c, wordsmithAccessor, emailAccessor, userAccessor, docsAccessor)
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
@@ -118,6 +123,7 @@ func TestUserScheduleDay(t *testing.T) {
 }
 
 func TestUserScheduleDayNoSubscription(t *testing.T) {
+	c := ctx.GetDefaultLogContext()
 	wordsmithAccessor := &testWordsmithAccessor{}
 	emailAccessor := getTestEmailAccessor()
 	userAccessor := &testUserAccessor{
@@ -135,7 +141,7 @@ func TestUserScheduleDayNoSubscription(t *testing.T) {
 		},
 	}
 	docsAccessor := &testDocsAccessor{}
-	testNewsletter, err := CreateNewsletter(wordsmithAccessor, emailAccessor, userAccessor, docsAccessor)
+	testNewsletter, err := CreateNewsletter(c, wordsmithAccessor, emailAccessor, userAccessor, docsAccessor)
 	if err != nil {
 		t.Fatalf(err.Error())
 	}

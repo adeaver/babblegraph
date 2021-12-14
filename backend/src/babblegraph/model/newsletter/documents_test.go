@@ -2,8 +2,7 @@ package newsletter
 
 import (
 	"babblegraph/model/documents"
-	"fmt"
-	"log"
+	"babblegraph/util/ctx"
 	"time"
 )
 
@@ -11,7 +10,7 @@ type testDocsAccessor struct {
 	documents []documents.DocumentWithScore
 }
 
-func (t *testDocsAccessor) GetDocumentsForUser(input getDocumentsForUserInput) (*documentsOutput, error) {
+func (t *testDocsAccessor) GetDocumentsForUser(c ctx.LogContext, input getDocumentsForUserInput) (*documentsOutput, error) {
 	var recentDocuments, nonRecentDocuments []documents.DocumentWithScore
 	for _, docWithScore := range t.documents {
 		doc := docWithScore.Document
@@ -40,23 +39,23 @@ func (t *testDocsAccessor) GetDocumentsForUser(input getDocumentsForUserInput) (
 	}, nil
 }
 
-func (t *testDocsAccessor) GetDocumentsForUserForLemma(input getDocumentsForUserForLemmaInput) ([]documents.DocumentWithScore, error) {
+func (t *testDocsAccessor) GetDocumentsForUserForLemma(c ctx.LogContext, input getDocumentsForUserForLemmaInput) ([]documents.DocumentWithScore, error) {
 	var docs []documents.DocumentWithScore
 	for _, docWithScore := range t.documents {
 		doc := docWithScore.Document
 		switch {
 		case doc.LanguageCode != input.LanguageCode:
-			log.Println(fmt.Sprintf("Language code does not match, %s", doc.LanguageCode))
+			c.Debugf("Language code does not match, %s", doc.LanguageCode)
 		case isIDExcluded(doc.ID, input.ExcludedDocumentIDs):
-			log.Println(fmt.Sprintf("ID does not match: %s", doc.ID))
+			c.Debugf("ID does not match: %s", doc.ID)
 		case !isDomainValid(doc.Domain, input.ValidDomains):
-			log.Println(fmt.Sprintf("Domain not valid: %s", doc.Domain))
+			c.Debugf("Domain not valid: %s", doc.Domain)
 		case input.MinimumReadingLevel != nil && *input.MinimumReadingLevel > doc.ReadabilityScore:
-			log.Println(fmt.Sprintf("Reading score too high: %+v", doc.ReadabilityScore))
+			c.Debugf("Reading score too high: %+v", doc.ReadabilityScore)
 		case input.MaximumReadingLevel != nil && *input.MaximumReadingLevel < doc.ReadabilityScore:
-			log.Println(fmt.Sprintf("Reading score too low: %+v", doc.ReadabilityScore))
+			c.Debugf("Reading score too low: %+v", doc.ReadabilityScore)
 		case doc.LemmatizedDescription == nil || !containsLemma(input.Lemma, *doc.LemmatizedDescription):
-			log.Println(fmt.Sprintf("No description: %+v", doc.LemmatizedDescription))
+			c.Debugf("No description: %+v", doc.LemmatizedDescription)
 		default:
 			docs = append(docs, docWithScore)
 		}

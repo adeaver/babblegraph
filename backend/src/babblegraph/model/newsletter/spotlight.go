@@ -4,11 +4,10 @@ import (
 	"babblegraph/model/documents"
 	"babblegraph/model/email"
 	"babblegraph/model/routes"
+	"babblegraph/util/ctx"
 	"babblegraph/util/deref"
 	"babblegraph/util/ptr"
 	"babblegraph/wordsmith"
-	"fmt"
-	"log"
 	"sort"
 	"strings"
 	"time"
@@ -22,11 +21,11 @@ type getSpotlightLemmaForNewsletterInput struct {
 	wordsmithAccessor wordsmithAccessor
 }
 
-func getSpotlightLemmaForNewsletter(input getSpotlightLemmaForNewsletterInput) (*LemmaReinforcementSpotlight, error) {
+func getSpotlightLemmaForNewsletter(c ctx.LogContext, input getSpotlightLemmaForNewsletterInput) (*LemmaReinforcementSpotlight, error) {
 	if newsletterPreferences := input.userAccessor.getUserNewsletterPreferences(); newsletterPreferences == nil || !newsletterPreferences.ShouldIncludeLemmaReinforcementSpotlight {
 		return nil, nil
 	}
-	log.Println("Getting spotlight")
+	c.Infof("Getting spotlight")
 	documentIDsToExclude := input.userAccessor.getSentDocumentIDs()
 	for _, category := range input.categories {
 		for _, l := range category.Links {
@@ -38,7 +37,7 @@ func getSpotlightLemmaForNewsletter(input getSpotlightLemmaForNewsletterInput) (
 		return nil, err
 	}
 	orderedListOfSpotlightRecords := getOrderedListOfPotentialSpotlightLemmas(input.userAccessor)
-	log.Println(fmt.Sprintf("Ordered spotlight records %+v", orderedListOfSpotlightRecords))
+	c.Debugf("Ordered spotlight records %+v", orderedListOfSpotlightRecords)
 	var preferencesLink string
 	if input.userAccessor.getDoesUserHaveAccount() {
 		preferencesLink = routes.MakeLoginLinkWithNewsletterPreferencesRedirect()
@@ -49,7 +48,7 @@ func getSpotlightLemmaForNewsletter(input getSpotlightLemmaForNewsletterInput) (
 		}
 		preferencesLink = *prefLink
 	}
-	reinforcementSpotlight, err := lookupSpotlightForAllPotentialSpotlights(lookupSpotlightForAllPotentialSpotlightsInput{
+	reinforcementSpotlight, err := lookupSpotlightForAllPotentialSpotlights(c, lookupSpotlightForAllPotentialSpotlightsInput{
 		getSpotlightLemmaForNewsletterInput: input,
 		documentIDsToExclude:                documentIDsToExclude,
 		potentialSpotlights:                 orderedListOfSpotlightRecords,
@@ -62,9 +61,9 @@ func getSpotlightLemmaForNewsletter(input getSpotlightLemmaForNewsletterInput) (
 	case reinforcementSpotlight != nil:
 		return reinforcementSpotlight, nil
 	}
-	log.Println("Trying older documents")
+	c.Infof("Trying older documents")
 	// TODO: create metric here
-	return lookupSpotlightForAllPotentialSpotlights(lookupSpotlightForAllPotentialSpotlightsInput{
+	return lookupSpotlightForAllPotentialSpotlights(c, lookupSpotlightForAllPotentialSpotlightsInput{
 		getSpotlightLemmaForNewsletterInput: input,
 		documentIDsToExclude:                documentIDsToExclude,
 		potentialSpotlights:                 orderedListOfSpotlightRecords,
@@ -83,9 +82,9 @@ type lookupSpotlightForAllPotentialSpotlightsInput struct {
 	allowableDomains               []string
 }
 
-func lookupSpotlightForAllPotentialSpotlights(input lookupSpotlightForAllPotentialSpotlightsInput) (*LemmaReinforcementSpotlight, error) {
+func lookupSpotlightForAllPotentialSpotlights(c ctx.LogContext, input lookupSpotlightForAllPotentialSpotlightsInput) (*LemmaReinforcementSpotlight, error) {
 	for _, potentialSpotlight := range input.potentialSpotlights {
-		documents, err := input.docsAccessor.GetDocumentsForUserForLemma(getDocumentsForUserForLemmaInput{
+		documents, err := input.docsAccessor.GetDocumentsForUserForLemma(c, getDocumentsForUserForLemmaInput{
 			getDocumentsBaseInput: getDocumentsBaseInput{
 				LanguageCode:        input.userAccessor.getLanguageCode(),
 				ExcludedDocumentIDs: input.documentIDsToExclude,
@@ -104,7 +103,7 @@ func lookupSpotlightForAllPotentialSpotlights(input lookupSpotlightForAllPotenti
 			description := deref.String(d.Document.LemmatizedDescription, "")
 			for _, lemmaID := range strings.Split(description, " ") {
 				if lemmaID == string(potentialSpotlight) {
-					link, err := makeLinkFromDocument(input.emailRecordID, input.userAccessor, d.Document)
+					link, err := makeLinkFromDocument(c, input.emailRecordID, input.userAccessor, d.Document)
 					switch {
 					case err != nil:
 						return nil, err

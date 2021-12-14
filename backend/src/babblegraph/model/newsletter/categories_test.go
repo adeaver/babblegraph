@@ -4,6 +4,7 @@ import (
 	"babblegraph/model/contenttopics"
 	"babblegraph/model/documents"
 	"babblegraph/model/email"
+	"babblegraph/util/ctx"
 	"babblegraph/util/ptr"
 	"babblegraph/util/testutils"
 	"babblegraph/util/text"
@@ -16,6 +17,7 @@ import (
 )
 
 func TestDefaultCategories(t *testing.T) {
+	c := ctx.GetDefaultLogContext()
 	emailRecordID := email.NewEmailRecordID()
 	documentTopics := []contenttopics.ContentTopic{
 		contenttopics.ContentTopicArt,
@@ -59,7 +61,7 @@ func TestDefaultCategories(t *testing.T) {
 		}
 		docs = append(docs, *doc)
 	}
-	categories, err := getDocumentCategories(getDocumentCategoriesInput{
+	categories, err := getDocumentCategories(c, getDocumentCategoriesInput{
 		emailRecordID: emailRecordID,
 		languageCode:  wordsmith.LanguageCodeSpanish,
 		userAccessor:  userAccessor,
@@ -108,6 +110,7 @@ func TestDefaultCategories(t *testing.T) {
 }
 
 func TestGenericCategory(t *testing.T) {
+	c := ctx.GetDefaultLogContext()
 	emailRecordID := email.NewEmailRecordID()
 	documentTopics := []contenttopics.ContentTopic{
 		contenttopics.ContentTopicArt,
@@ -135,7 +138,7 @@ func TestGenericCategory(t *testing.T) {
 		expectedLinks = append(expectedLinks, *link)
 		docs = append(docs, *doc)
 	}
-	categories, err := getDocumentCategories(getDocumentCategoriesInput{
+	categories, err := getDocumentCategories(c, getDocumentCategoriesInput{
 		emailRecordID: emailRecordID,
 		languageCode:  wordsmith.LanguageCodeSpanish,
 		userAccessor:  userAccessor,
@@ -158,6 +161,7 @@ func TestGenericCategory(t *testing.T) {
 }
 
 func TestCategoryWithGeneric(t *testing.T) {
+	c := ctx.GetDefaultLogContext()
 	emailRecordID := email.NewEmailRecordID()
 	documentTopics := []contenttopics.ContentTopic{
 		contenttopics.ContentTopicArt,
@@ -198,7 +202,7 @@ func TestCategoryWithGeneric(t *testing.T) {
 		}
 		docs = append(docs, *doc)
 	}
-	categories, err := getDocumentCategories(getDocumentCategoriesInput{
+	categories, err := getDocumentCategories(c, getDocumentCategoriesInput{
 		emailRecordID: emailRecordID,
 		languageCode:  wordsmith.LanguageCodeSpanish,
 		userAccessor:  userAccessor,
@@ -229,6 +233,7 @@ func TestCategoryWithGeneric(t *testing.T) {
 }
 
 func TestFavorRecentDocuments(t *testing.T) {
+	c := ctx.GetDefaultLogContext()
 	emailRecordID := email.NewEmailRecordID()
 	userAccessor := &testUserAccessor{
 		readingLevel: &userReadingLevel{
@@ -250,7 +255,7 @@ func TestFavorRecentDocuments(t *testing.T) {
 		expectedLinks = append(expectedLinks, *link)
 		docs = append(docs, *doc)
 	}
-	categories, err := getDocumentCategories(getDocumentCategoriesInput{
+	categories, err := getDocumentCategories(c, getDocumentCategoriesInput{
 		emailRecordID: emailRecordID,
 		languageCode:  wordsmith.LanguageCodeSpanish,
 		userAccessor:  userAccessor,

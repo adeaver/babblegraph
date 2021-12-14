@@ -69,7 +69,7 @@ func StartNewsletterPreloadWorkerThread(newsletterProcessor *newsletterprocessin
 					return err
 				}
 				c.Infof("Creating newsletter for send request with ID %s", sendRequest.ID)
-				newsletter, err := newsletter.CreateNewsletter(wordsmithAccessor, emailAccessor, userAccessor, docsAccessor)
+				newsletter, err := newsletter.CreateNewsletter(c, wordsmithAccessor, emailAccessor, userAccessor, docsAccessor)
 				switch {
 				case err != nil:
 					return err
