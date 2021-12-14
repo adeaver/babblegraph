@@ -104,7 +104,7 @@ func (l *LinkProcessor) startWorkerManager(maxWorkers int, addURLs chan []string
 		var link *links2.Link
 		var numWorkers int
 		spinOffWorkerOrWait := func() (_shouldBreak bool) {
-			link, duration, err := l.GetLink()
+			link, duration, err := l.getLink()
 			switch {
 			case err != nil:
 				c.Errorf("Error getting links: %s, will retry", err.Error())
@@ -130,7 +130,7 @@ func (l *LinkProcessor) startWorkerManager(maxWorkers int, addURLs chan []string
 		// maxWorkers # of workers, in which case we wait for errors or thread completes
 		// or a timer, in which case, we wait for a timer
 		var duration *time.Duration
-		link, _, err := l.GetLink()
+		link, _, err := l.getLink()
 		if err != nil {
 			c.Errorf("Error getting links: %s", err.Error())
 		}
@@ -143,7 +143,7 @@ func (l *LinkProcessor) startWorkerManager(maxWorkers int, addURLs chan []string
 					async.WithContext(workerErrs, "ingest-worker", processSingleLink(threadComplete, addURLs, link)).Start()
 					link = nil
 				} else {
-					link, duration, err = l.GetLink()
+					link, duration, err = l.getLink()
 					switch {
 					case err != nil:
 						c.Errorf("Error getting links: %s", err.Error())
@@ -162,7 +162,7 @@ func (l *LinkProcessor) startWorkerManager(maxWorkers int, addURLs chan []string
 					async.WithContext(workerErrs, "ingest-worker", processSingleLink(threadComplete, addURLs, link)).Start()
 					link = nil
 				} else {
-					link, duration, err = l.GetLink()
+					link, duration, err = l.getLink()
 					switch {
 					case err != nil:
 						c.Errorf("Error getting links: %s", err.Error())
@@ -181,13 +181,13 @@ func (l *LinkProcessor) startWorkerManager(maxWorkers int, addURLs chan []string
 					c.Infof("All workers are busy, and link is non-nil, continuing...")
 				case numWorkers == maxWorkers && link == nil:
 					c.Infof("All workers are busy, but link needs replenshing")
-					link, duration, err = l.GetLink()
+					link, duration, err = l.getLink()
 					if err != nil {
-						c.Errorf("Error getting link: %s", err.Error)
+						c.Errorf("Error getting link: %s", err.Error())
 						timer = time.NewTimer(2 * time.Minute)
 					}
 				case numWorkers < maxWorkers && link == nil:
-					link, duration, err = l.GetLink()
+					link, duration, err = l.getLink()
 					switch {
 					case err != nil:
 						c.Errorf("Error getting links: %s", err.Error())
@@ -332,7 +332,7 @@ func processSingleLink(threadComplete chan *links2.Link, addURLs chan []string, 
 	}
 }
 
-func (l *LinkProcessor) GetLink() (*links2.Link, *time.Duration, error) {
+func (l *LinkProcessor) getLink() (*links2.Link, *time.Duration, error) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	firstDomain := l.OrderedDomains[0]

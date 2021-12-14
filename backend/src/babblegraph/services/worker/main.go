@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	numIngestWorkerThreads          = 3
+	numIngestWorkerThreads          = 5
 	numNewsletterPreloadThreads     = 2
 	numNewsletterFulfillmentThreads = 1
 )

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"runtime"
+	"strings"
 
 	"github.com/getsentry/sentry-go"
 )
@@ -42,7 +43,8 @@ func (l *Logger) logLineWithContext(format string, args ...interface{}) string {
 		file = "unknown"
 		line = -1
 	}
-	return fmt.Sprintf("%s:%d | %s | %s", file, line, l.contextKey, fmt.Sprintf(format, args...))
+	fileParts := strings.Split(file, env.GetEnvironmentVariableOrDefault("GOPATH", "/usr/local/go/src/"))
+	return fmt.Sprintf("%s:%d | %s | %s", fileParts[1], line, l.contextKey, fmt.Sprintf(format, args...))
 }
 
 func (l *Logger) Debugf(format string, args ...interface{}) {
