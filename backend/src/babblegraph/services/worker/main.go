@@ -7,12 +7,13 @@ import (
 	"babblegraph/services/worker/newsletterprocessing"
 	"babblegraph/services/worker/process"
 	"babblegraph/services/worker/scheduler"
+	"babblegraph/util/async"
+	"babblegraph/util/bglog"
 	"babblegraph/util/database"
 	"babblegraph/util/elastic"
 	"babblegraph/util/env"
 	"babblegraph/wordsmith"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/getsentry/sentry-go"
@@ -25,24 +26,24 @@ const (
 )
 
 func main() {
+	bglog.InitLogger()
 	if err := setupDatabases(); err != nil {
-		log.Fatal(err.Error())
+		bglog.Fatalf("Error initializing databases: %s", err.Error())
 	}
 	if err := sentry.Init(sentry.ClientOptions{
 		Dsn:         env.MustEnvironmentVariable("SENTRY_DSN"),
 		Environment: env.MustEnvironmentName().Str(),
 	}); err != nil {
-		log.Fatal(err.Error())
+		bglog.Fatalf("Error initializing sentry: %s", err.Error())
 	}
 	defer sentry.Flush(2 * time.Second)
-
 	linkProcessor, err := linkprocessing.CreateLinkProcessor()
 	if err != nil {
-		log.Fatal(err.Error())
+		bglog.Fatalf("Error initializing link processor: %s", err.Error())
 	}
 	for u, topics := range domains.GetSeedURLs() {
 		if err := linkProcessor.AddURLs([]string{u}, topics); err != nil {
-			log.Fatal(err.Error())
+			bglog.Fatalf("Error initializing link processor seed domains: %s", err.Error())
 		}
 	}
 	currentEnvironmentName := env.MustEnvironmentName()
@@ -50,53 +51,44 @@ func main() {
 	ingestErrs := make(chan error, 1)
 	if currentEnvironmentName != env.EnvironmentLocalTestEmail {
 		for i := 0; i < numIngestWorkerThreads; i++ {
-			workerThread := process.StartIngestWorkerThread(workerNum, linkProcessor, ingestErrs)
-			go workerThread()
+			async.WithContext(ingestErrs, fmt.Sprintf("ingest-html-%d", workerNum), process.StartIngestWorkerThread(linkProcessor)).Start()
 			workerNum++
 		}
 	}
 	schedulerErrs := make(chan error, 1)
 	if err := scheduler.StartScheduler(linkProcessor, schedulerErrs); err != nil {
-		log.Fatal(err.Error())
+		bglog.Fatalf("Error initializing scheduler: %s", err.Error())
 	}
 	newsletterProcessor, err := newsletterprocessing.CreateNewsletterProcessor()
 	if err != nil {
-		log.Fatal(err.Error())
+		bglog.Fatalf("Error initializing newsletter processor: %s", err.Error())
 	}
 	preloadNewsletterErrs := make(chan error, 1)
 	preloadWorkerNum := 0
 	for i := 0; i < numNewsletterPreloadThreads; i++ {
-		preloadThread := process.StartNewsletterPreloadWorkerThread(preloadWorkerNum, newsletterProcessor, preloadNewsletterErrs)
-		go preloadThread()
+		async.WithContext(preloadNewsletterErrs, fmt.Sprintf("preload-worker-%d", preloadWorkerNum), process.StartNewsletterPreloadWorkerThread(newsletterProcessor)).Start()
 		preloadWorkerNum++
 	}
 	fulfillNewsletterErrs := make(chan error, 1)
 	fulfillWorkerNum := 0
 	for i := 0; i < numNewsletterFulfillmentThreads; i++ {
-		fulfillThread := process.StartNewsletterFulfillmentWorkerThread(fulfillWorkerNum, newsletterProcessor, fulfillNewsletterErrs)
-		go fulfillThread()
+		async.WithContext(fulfillNewsletterErrs, fmt.Sprintf("fulfillment-worker-%d", fulfillWorkerNum), process.StartNewsletterFulfillmentWorkerThread(newsletterProcessor)).Start()
 		fulfillWorkerNum++
 	}
 	for {
 		select {
-		case err := <-ingestErrs:
-			log.Println(fmt.Sprintf("Saw panic: %s. Starting new worker thread.", err.Error()))
+		case _ = <-ingestErrs:
 			if currentEnvironmentName != env.EnvironmentLocalTestEmail {
-				workerThread := process.StartIngestWorkerThread(workerNum, linkProcessor, ingestErrs)
-				go workerThread()
+				async.WithContext(ingestErrs, fmt.Sprintf("ingest-html-%d", workerNum), process.StartIngestWorkerThread(linkProcessor)).Start()
 				workerNum++
 			}
-		case err := <-schedulerErrs:
-			log.Println(fmt.Sprintf("Saw panic: %s in scheduler.", err.Error()))
-		case err := <-preloadNewsletterErrs:
-			log.Println(fmt.Sprintf("Saw panic: %s. Starting new newsletter preload thread.", err.Error()))
-			preloadThread := process.StartNewsletterPreloadWorkerThread(preloadWorkerNum, newsletterProcessor, preloadNewsletterErrs)
-			go preloadThread()
+		case err = <-schedulerErrs:
+			bglog.Infof("Saw panic: %s in scheduler.", err.Error())
+		case _ = <-preloadNewsletterErrs:
+			async.WithContext(preloadNewsletterErrs, fmt.Sprintf("preload-worker-%d", preloadWorkerNum), process.StartNewsletterPreloadWorkerThread(newsletterProcessor)).Start()
 			preloadWorkerNum++
-		case err := <-fulfillNewsletterErrs:
-			log.Println(fmt.Sprintf("Saw panic: %s. Starting new newsletter fulfillment thread.", err.Error()))
-			fulfillThread := process.StartNewsletterFulfillmentWorkerThread(fulfillWorkerNum, newsletterProcessor, fulfillNewsletterErrs)
-			go fulfillThread()
+		case _ = <-fulfillNewsletterErrs:
+			async.WithContext(fulfillNewsletterErrs, fmt.Sprintf("fulfillment-worker-%d", fulfillWorkerNum), process.StartNewsletterFulfillmentWorkerThread(newsletterProcessor)).Start()
 			fulfillWorkerNum++
 		}
 	}

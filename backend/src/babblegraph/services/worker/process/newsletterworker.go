@@ -9,18 +9,15 @@ import (
 	"babblegraph/model/usernewsletterschedule"
 	"babblegraph/model/users"
 	"babblegraph/services/worker/newsletterprocessing"
+	"babblegraph/util/async"
 	"babblegraph/util/database"
 	"babblegraph/util/env"
 	"babblegraph/util/ses"
 	"babblegraph/util/storage"
 	"encoding/json"
 	"fmt"
-	"log"
-	"runtime"
-	"runtime/debug"
 	"time"
 
-	"github.com/getsentry/sentry-go"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -28,34 +25,22 @@ const (
 	defaultPreloadWaitInterval = 1 * time.Minute
 )
 
-func StartNewsletterPreloadWorkerThread(workerNumber int, newsletterProcessor *newsletterprocessing.NewsletterProcessor, errs chan error) func() {
-	return func() {
-		localHub := sentry.CurrentHub().Clone()
-		localHub.ConfigureScope(func(scope *sentry.Scope) {
-			scope.SetTag("newsletter-preload-thread", fmt.Sprintf("init#%d", workerNumber))
-		})
-		defer func() {
-			if x := recover(); x != nil {
-				_, fn, line, _ := runtime.Caller(1)
-				err := fmt.Errorf("Newsletter Preload Worker Panic: %s: %d: %v\n%s", fn, line, x, string(debug.Stack()))
-				localHub.CaptureException(err)
-				errs <- err
-			}
-		}()
-		log.Println("Starting Newsletter Preload Process")
+func StartNewsletterPreloadWorkerThread(newsletterProcessor *newsletterprocessing.NewsletterProcessor) func(c async.Context) {
+	return func(c async.Context) {
+		c.Infof("Starting Newsletter Preload Process")
 		s3Storage := storage.NewS3StorageForEnvironment()
 		for {
 			sendRequest, err := newsletterProcessor.GetNextSendRequestToPreload()
 			switch {
 			case err != nil:
-				localHub.CaptureException(err)
+				c.Errorf("Error getting send request: %s", err.Error())
 				continue
 			case sendRequest == nil:
-				log.Println("No send request available, waiting")
+				c.Infof("No send request available, waiting")
 				time.Sleep(defaultPreloadWaitInterval)
 				continue
 			}
-			log.Println(fmt.Sprintf("Got send request with ID %s", sendRequest.ID))
+			c.Infof("Got send request with ID %s", sendRequest.ID)
 			if err := database.WithTx(func(tx *sqlx.Tx) error {
 				subscriptionLevel, err := useraccounts.LookupSubscriptionLevelForUser(tx, sendRequest.UserID)
 				switch {
@@ -83,8 +68,8 @@ func StartNewsletterPreloadWorkerThread(workerNumber int, newsletterProcessor *n
 				if err != nil {
 					return err
 				}
-				log.Println(fmt.Sprintf("Creating newsletter for send request with ID %s", sendRequest.ID))
-				newsletter, err := newsletter.CreateNewsletter(wordsmithAccessor, emailAccessor, userAccessor, docsAccessor)
+				c.Infof("Creating newsletter for send request with ID %s", sendRequest.ID)
+				newsletter, err := newsletter.CreateNewsletter(c, wordsmithAccessor, emailAccessor, userAccessor, docsAccessor)
 				switch {
 				case err != nil:
 					return err
@@ -100,7 +85,7 @@ func StartNewsletterPreloadWorkerThread(workerNumber int, newsletterProcessor *n
 				if err != nil {
 					return err
 				}
-				log.Println(fmt.Sprintf("Storing newsletter data for send request with ID %s", sendRequest.ID))
+				c.Infof("Storing newsletter data for send request with ID %s", sendRequest.ID)
 				return s3Storage.UploadData(storage.UploadDataInput{
 					ContentType: storage.ContentTypeApplicationJSON,
 					BucketName:  "prod-spaces-1",
@@ -108,30 +93,17 @@ func StartNewsletterPreloadWorkerThread(workerNumber int, newsletterProcessor *n
 					Data:        string(newsletterBytes),
 				})
 			}); err != nil {
-				log.Println(fmt.Sprintf("Got error processing send request with ID %s: %s", sendRequest.ID, err.Error()))
-				localHub.CaptureException(err)
+				c.Errorf("Got error processing send request with ID %s: %s", sendRequest.ID, err.Error())
 				continue
 			}
-			log.Println(fmt.Sprintf("finished processing send request with ID %s", sendRequest.ID))
+			c.Infof("finished processing send request with ID %s", sendRequest.ID)
 		}
 	}
 }
 
-func StartNewsletterFulfillmentWorkerThread(workerNumber int, newsletterProcessor *newsletterprocessing.NewsletterProcessor, errs chan error) func() {
-	return func() {
-		localHub := sentry.CurrentHub().Clone()
-		localHub.ConfigureScope(func(scope *sentry.Scope) {
-			scope.SetTag("newsletter-fulfillment-thread", fmt.Sprintf("init#%d", workerNumber))
-		})
-		defer func() {
-			if x := recover(); x != nil {
-				_, fn, line, _ := runtime.Caller(1)
-				err := fmt.Errorf("Newsletter Fulfillment Worker Panic: %s: %d: %v\n%s", fn, line, x, string(debug.Stack()))
-				localHub.CaptureException(err)
-				errs <- err
-			}
-		}()
-		log.Println("Starting Newsletter Fulfillment Process")
+func StartNewsletterFulfillmentWorkerThread(newsletterProcessor *newsletterprocessing.NewsletterProcessor) func(c async.Context) {
+	return func(c async.Context) {
+		c.Infof("Starting Newsletter Fulfillment Process")
 		s3Storage := storage.NewS3StorageForEnvironment()
 		emailClient := ses.NewClient(ses.NewClientInput{
 			AWSAccessKey:       env.MustEnvironmentVariable("AWS_SES_ACCESS_KEY"),
@@ -143,10 +115,10 @@ func StartNewsletterFulfillmentWorkerThread(workerNumber int, newsletterProcesso
 			sendRequest, err := newsletterProcessor.GetNextSendRequestToFulfill()
 			switch {
 			case err != nil:
-				localHub.CaptureException(err)
+				c.Errorf("Error getting fulfillment request: %s", err.Error())
 				continue
 			case sendRequest == nil:
-				log.Println("No send request available, waiting")
+				c.Infof("No send request available, waiting")
 				time.Sleep(defaultPreloadWaitInterval)
 				continue
 			}
@@ -158,7 +130,7 @@ func StartNewsletterFulfillmentWorkerThread(workerNumber int, newsletterProcesso
 				case user.Status != users.UserStatusVerified:
 					return newslettersendrequests.UpdateSendRequestStatus(tx, sendRequest.ID, newslettersendrequests.PayloadStatusUnverifiedUser)
 				}
-				log.Println(fmt.Sprintf("Found user %s", user.ID))
+				c.Infof("Found user %s", user.ID)
 				if err := newslettersendrequests.UpdateSendRequestStatus(tx, sendRequest.ID, newslettersendrequests.PayloadStatusSent); err != nil {
 					return err
 				}
@@ -166,12 +138,12 @@ func StartNewsletterFulfillmentWorkerThread(workerNumber int, newsletterProcesso
 				if err != nil {
 					return err
 				}
-				log.Println(fmt.Sprintf("Found data %s", *data))
+				c.Debugf("Found data %s", *data)
 				var newsletter newsletter.Newsletter
 				if err := json.Unmarshal([]byte(*data), &newsletter); err != nil {
 					return err
 				}
-				log.Println(fmt.Sprintf("Unmarshalled %+v", newsletter))
+				c.Debugf("Unmarshalled %+v", newsletter)
 				userAccessor, err := emailtemplates.GetDefaultUserAccessor(tx, sendRequest.UserID)
 				if err != nil {
 					return err
@@ -184,7 +156,7 @@ func StartNewsletterFulfillmentWorkerThread(workerNumber int, newsletterProcesso
 				if err != nil {
 					return err
 				}
-				log.Println(fmt.Sprintf("Created HTML %s", *newsletterHTML))
+				c.Debugf("Created HTML %s", *newsletterHTML)
 				today := time.Now()
 				subject := fmt.Sprintf("Babblegraph Newsletter - %s %d, %d", today.Month().String(), today.Day(), today.Year())
 				return email.SendEmailWithHTMLBody(tx, emailClient, email.SendEmailWithHTMLBodyInput{
@@ -194,11 +166,10 @@ func StartNewsletterFulfillmentWorkerThread(workerNumber int, newsletterProcesso
 					Subject:      subject,
 				})
 			}); err != nil {
-				log.Println(fmt.Sprintf("Got error fulfilling send request with ID %s: %s", sendRequest.ID, err.Error()))
-				localHub.CaptureException(err)
+				c.Errorf("Got error fulfilling send request with ID %s: %s", sendRequest.ID, err.Error())
 				continue
 			}
-			log.Println(fmt.Sprintf("finished fulfilling send request with ID %s", sendRequest.ID))
+			c.Infof("finished fulfilling send request with ID %s", sendRequest.ID)
 		}
 	}
 }

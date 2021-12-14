@@ -1,7 +1,10 @@
 package tasks
 
-import "babblegraph/externalapis/bgstripe"
+import (
+	"babblegraph/externalapis/bgstripe"
+	"babblegraph/util/ctx"
+)
 
-func ForceSyncStripeEvents() {
-	bgstripe.ForceSyncStripeEvents()
+func ForceSyncStripeEvents(c ctx.LogContext) {
+	bgstripe.ForceSyncStripeEvents(c)
 }

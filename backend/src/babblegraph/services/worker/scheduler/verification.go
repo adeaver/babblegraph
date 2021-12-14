@@ -5,23 +5,29 @@ import (
 	"babblegraph/model/email"
 	"babblegraph/model/users"
 	"babblegraph/model/userverificationattempt"
+	"babblegraph/util/async"
 	"babblegraph/util/database"
+	"babblegraph/util/env"
 	"babblegraph/util/ses"
-	"fmt"
-	"log"
 
-	"github.com/getsentry/sentry-go"
 	"github.com/jmoiron/sqlx"
 )
 
-func handlePendingVerifications(localSentryHub *sentry.Hub, emailClient *ses.Client) error {
+func handlePendingVerifications(c async.Context) {
+	emailClient := ses.NewClient(ses.NewClientInput{
+		AWSAccessKey:       env.MustEnvironmentVariable("AWS_SES_ACCESS_KEY"),
+		AWSSecretAccessKey: env.MustEnvironmentVariable("AWS_SES_SECRET_KEY"),
+		AWSRegion:          "us-east-1",
+		FromAddress:        env.MustEnvironmentVariable("EMAIL_ADDRESS"),
+	})
 	var userIDs []users.UserID
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		var err error
 		userIDs, err = userverificationattempt.GetUserIDsWithPendingVerificationAttempts(tx)
 		return err
 	}); err != nil {
-		return err
+		c.Errorf("Error getting pending verification attempts: %s", err.Error())
+		return
 	}
 	for _, userID := range userIDs {
 		if err := database.WithTx(func(tx *sqlx.Tx) error {
@@ -42,9 +48,7 @@ func handlePendingVerifications(localSentryHub *sentry.Hub, emailClient *ses.Cli
 			})
 			return err
 		}); err != nil {
-			log.Println(fmt.Sprintf("Error fulfilling verification attempt for user %s: %s. Continuing...", userID, err.Error()))
-			localSentryHub.CaptureException(err)
+			c.Errorf("Error fulfilling verification attempt for user %s: %s. Continuing...", userID, err.Error())
 		}
 	}
-	return nil
 }

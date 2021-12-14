@@ -7,6 +7,7 @@ import (
 	"babblegraph/model/userlemma"
 	"babblegraph/model/usernewsletterpreferences"
 	"babblegraph/model/users"
+	"babblegraph/util/ctx"
 	"babblegraph/util/ptr"
 	"babblegraph/wordsmith"
 	"fmt"
@@ -16,6 +17,7 @@ import (
 )
 
 func TestSpotlightRecordsForUserWithAccount(t *testing.T) {
+	c := ctx.GetDefaultLogContext()
 	expectedLemma := wordsmith.LemmaID("word3")
 	emailAccessor := getTestEmailAccessor()
 	userAccessor := &testUserAccessor{
@@ -62,7 +64,7 @@ func TestSpotlightRecordsForUserWithAccount(t *testing.T) {
 			Language:  wordsmith.LanguageCodeSpanish,
 			LemmaText: lemma.Str(),
 		}
-		doc, link, err := getDefaultDocumentWithLink(i, emailRecordID, userAccessor, getDefaultDocumentInput{
+		doc, link, err := getDefaultDocumentWithLink(c, i, emailRecordID, userAccessor, getDefaultDocumentInput{
 			Topics:                 []contenttopics.ContentTopic{contenttopics.ContentTopicArt},
 			SeedJobIngestTimestamp: ptr.Int64(time.Now().Add(-1 * time.Duration(15-i) * 24 * time.Hour).Unix()),
 			Lemmas:                 []wordsmith.LemmaID{lemma},
@@ -79,7 +81,7 @@ func TestSpotlightRecordsForUserWithAccount(t *testing.T) {
 		lemmasByID: lemmasByID,
 	}
 	docsAccessor := &testDocsAccessor{documents: docs}
-	testNewsletter, err := CreateNewsletter(wordsmithAccessor, emailAccessor, userAccessor, docsAccessor)
+	testNewsletter, err := CreateNewsletter(c, wordsmithAccessor, emailAccessor, userAccessor, docsAccessor)
 	switch {
 	case err != nil:
 		t.Fatalf(err.Error())
@@ -105,6 +107,7 @@ func TestSpotlightRecordsForUserWithAccount(t *testing.T) {
 }
 
 func TestSpotlightRecordsForUserWithoutAccount(t *testing.T) {
+	c := ctx.GetDefaultLogContext()
 	expectedLemma := wordsmith.LemmaID("word3")
 	emailAccessor := getTestEmailAccessor()
 	userAccessor := &testUserAccessor{
@@ -152,7 +155,7 @@ func TestSpotlightRecordsForUserWithoutAccount(t *testing.T) {
 			Language:  wordsmith.LanguageCodeSpanish,
 			LemmaText: lemma.Str(),
 		}
-		doc, link, err := getDefaultDocumentWithLink(i, emailRecordID, userAccessor, getDefaultDocumentInput{
+		doc, link, err := getDefaultDocumentWithLink(c, i, emailRecordID, userAccessor, getDefaultDocumentInput{
 			Topics:                 []contenttopics.ContentTopic{contenttopics.ContentTopicArt},
 			SeedJobIngestTimestamp: ptr.Int64(time.Now().Add(-1 * time.Duration(15-i) * 24 * time.Hour).Unix()),
 			Lemmas:                 []wordsmith.LemmaID{lemma},
@@ -169,7 +172,7 @@ func TestSpotlightRecordsForUserWithoutAccount(t *testing.T) {
 		lemmasByID: lemmasByID,
 	}
 	docsAccessor := &testDocsAccessor{documents: docs}
-	testNewsletter, err := CreateNewsletter(wordsmithAccessor, emailAccessor, userAccessor, docsAccessor)
+	testNewsletter, err := CreateNewsletter(c, wordsmithAccessor, emailAccessor, userAccessor, docsAccessor)
 	switch {
 	case err != nil:
 		t.Fatalf(err.Error())
@@ -198,6 +201,7 @@ func TestSpotlightRecordsForUserWithoutAccount(t *testing.T) {
 }
 
 func TestSpotlightRecordsForTrackedLemmaWithoutSpotlight(t *testing.T) {
+	c := ctx.GetDefaultLogContext()
 	expectedLemma := wordsmith.LemmaID("word4")
 	emailAccessor := getTestEmailAccessor()
 	userAccessor := &testUserAccessor{
@@ -245,7 +249,7 @@ func TestSpotlightRecordsForTrackedLemmaWithoutSpotlight(t *testing.T) {
 			Language:  wordsmith.LanguageCodeSpanish,
 			LemmaText: lemma.Str(),
 		}
-		doc, link, err := getDefaultDocumentWithLink(i, emailRecordID, userAccessor, getDefaultDocumentInput{
+		doc, link, err := getDefaultDocumentWithLink(c, i, emailRecordID, userAccessor, getDefaultDocumentInput{
 			Topics:                 []contenttopics.ContentTopic{contenttopics.ContentTopicArt},
 			SeedJobIngestTimestamp: ptr.Int64(time.Now().Add(-1 * time.Duration(15-i) * 24 * time.Hour).Unix()),
 			Lemmas:                 []wordsmith.LemmaID{lemma},
@@ -262,7 +266,7 @@ func TestSpotlightRecordsForTrackedLemmaWithoutSpotlight(t *testing.T) {
 		lemmasByID: lemmasByID,
 	}
 	docsAccessor := &testDocsAccessor{documents: docs}
-	testNewsletter, err := CreateNewsletter(wordsmithAccessor, emailAccessor, userAccessor, docsAccessor)
+	testNewsletter, err := CreateNewsletter(c, wordsmithAccessor, emailAccessor, userAccessor, docsAccessor)
 	switch {
 	case err != nil:
 		t.Fatalf(err.Error())

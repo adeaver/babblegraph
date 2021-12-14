@@ -4,6 +4,7 @@ import (
 	"babblegraph/model/contenttopics"
 	"babblegraph/model/documents"
 	"babblegraph/model/email"
+	"babblegraph/util/ctx"
 	"babblegraph/util/math/decimal"
 	"babblegraph/util/ptr"
 	"babblegraph/util/testutils"
@@ -56,7 +57,7 @@ type getDefaultDocumentInput struct {
 	SeedJobIngestTimestamp *int64
 }
 
-func getDefaultDocumentWithLink(idx int, emailRecordID email.ID, userAccessor userPreferencesAccessor, input getDefaultDocumentInput) (*documents.DocumentWithScore, *Link, error) {
+func getDefaultDocumentWithLink(c ctx.LogContext, idx int, emailRecordID email.ID, userAccessor userPreferencesAccessor, input getDefaultDocumentInput) (*documents.DocumentWithScore, *Link, error) {
 	var lemmatizedDescription *string
 	if len(input.Lemmas) > 0 {
 		var descriptionParts []string
@@ -84,7 +85,7 @@ func getDefaultDocumentWithLink(idx int, emailRecordID email.ID, userAccessor us
 		LemmatizedDescription:  lemmatizedDescription,
 		SeedJobIngestTimestamp: input.SeedJobIngestTimestamp,
 	}
-	link, err := makeLinkFromDocument(emailRecordID, userAccessor, doc)
+	link, err := makeLinkFromDocument(c, emailRecordID, userAccessor, doc)
 	if err != nil {
 		return nil, nil, err
 	}

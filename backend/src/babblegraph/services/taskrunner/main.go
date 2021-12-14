@@ -2,6 +2,7 @@ package main
 
 import (
 	"babblegraph/services/taskrunner/tasks"
+	"babblegraph/util/ctx"
 	"babblegraph/util/database"
 	"babblegraph/util/elastic"
 	"babblegraph/util/env"
@@ -71,7 +72,7 @@ func main() {
 			log.Fatal(err.Error())
 		}
 	case "sync-stripe":
-		tasks.ForceSyncStripeEvents()
+		tasks.ForceSyncStripeEvents(ctx.GetDefaultLogContext())
 	case "product-updates":
 		tasks.SendProductUpdates()
 	case "content-topics-length-backfill":
