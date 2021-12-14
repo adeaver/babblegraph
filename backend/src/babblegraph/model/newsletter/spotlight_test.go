@@ -64,7 +64,7 @@ func TestSpotlightRecordsForUserWithAccount(t *testing.T) {
 			Language:  wordsmith.LanguageCodeSpanish,
 			LemmaText: lemma.Str(),
 		}
-		doc, link, err := getDefaultDocumentWithLink(i, emailRecordID, userAccessor, getDefaultDocumentInput{
+		doc, link, err := getDefaultDocumentWithLink(c, i, emailRecordID, userAccessor, getDefaultDocumentInput{
 			Topics:                 []contenttopics.ContentTopic{contenttopics.ContentTopicArt},
 			SeedJobIngestTimestamp: ptr.Int64(time.Now().Add(-1 * time.Duration(15-i) * 24 * time.Hour).Unix()),
 			Lemmas:                 []wordsmith.LemmaID{lemma},
@@ -155,7 +155,7 @@ func TestSpotlightRecordsForUserWithoutAccount(t *testing.T) {
 			Language:  wordsmith.LanguageCodeSpanish,
 			LemmaText: lemma.Str(),
 		}
-		doc, link, err := getDefaultDocumentWithLink(i, emailRecordID, userAccessor, getDefaultDocumentInput{
+		doc, link, err := getDefaultDocumentWithLink(c, i, emailRecordID, userAccessor, getDefaultDocumentInput{
 			Topics:                 []contenttopics.ContentTopic{contenttopics.ContentTopicArt},
 			SeedJobIngestTimestamp: ptr.Int64(time.Now().Add(-1 * time.Duration(15-i) * 24 * time.Hour).Unix()),
 			Lemmas:                 []wordsmith.LemmaID{lemma},
@@ -249,7 +249,7 @@ func TestSpotlightRecordsForTrackedLemmaWithoutSpotlight(t *testing.T) {
 			Language:  wordsmith.LanguageCodeSpanish,
 			LemmaText: lemma.Str(),
 		}
-		doc, link, err := getDefaultDocumentWithLink(i, emailRecordID, userAccessor, getDefaultDocumentInput{
+		doc, link, err := getDefaultDocumentWithLink(c, i, emailRecordID, userAccessor, getDefaultDocumentInput{
 			Topics:                 []contenttopics.ContentTopic{contenttopics.ContentTopicArt},
 			SeedJobIngestTimestamp: ptr.Int64(time.Now().Add(-1 * time.Duration(15-i) * 24 * time.Hour).Unix()),
 			Lemmas:                 []wordsmith.LemmaID{lemma},

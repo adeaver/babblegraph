@@ -41,7 +41,7 @@ func TestDefaultCategories(t *testing.T) {
 	var expectedCategories []Category
 	var docs []documents.DocumentWithScore
 	for idx, topic := range documentTopics {
-		doc, link, err := getDefaultDocumentWithLink(idx, emailRecordID, userAccessor, getDefaultDocumentInput{
+		doc, link, err := getDefaultDocumentWithLink(c, idx, emailRecordID, userAccessor, getDefaultDocumentInput{
 			Topics: []contenttopics.ContentTopic{topic},
 		})
 		if err != nil {
@@ -129,7 +129,7 @@ func TestGenericCategory(t *testing.T) {
 	var expectedLinks []Link
 	var docs []documents.DocumentWithScore
 	for idx, topic := range documentTopics {
-		doc, link, err := getDefaultDocumentWithLink(idx, emailRecordID, userAccessor, getDefaultDocumentInput{
+		doc, link, err := getDefaultDocumentWithLink(c, idx, emailRecordID, userAccessor, getDefaultDocumentInput{
 			Topics: []contenttopics.ContentTopic{topic},
 		})
 		if err != nil {
@@ -182,7 +182,7 @@ func TestCategoryWithGeneric(t *testing.T) {
 	var expectedCategories []Category
 	var docs []documents.DocumentWithScore
 	for idx, topic := range documentTopics {
-		doc, link, err := getDefaultDocumentWithLink(idx, emailRecordID, userAccessor, getDefaultDocumentInput{
+		doc, link, err := getDefaultDocumentWithLink(c, idx, emailRecordID, userAccessor, getDefaultDocumentInput{
 			Topics: []contenttopics.ContentTopic{topic},
 		})
 		if err != nil {
@@ -245,7 +245,7 @@ func TestFavorRecentDocuments(t *testing.T) {
 	var expectedLinks []Link
 	var docs []documents.DocumentWithScore
 	for idx := 0; idx <= 8; idx++ {
-		doc, link, err := getDefaultDocumentWithLink(idx, emailRecordID, userAccessor, getDefaultDocumentInput{
+		doc, link, err := getDefaultDocumentWithLink(c, idx, emailRecordID, userAccessor, getDefaultDocumentInput{
 			Topics: []contenttopics.ContentTopic{contenttopics.ContentTopicArt},
 		})
 		doc.Document.SeedJobIngestTimestamp = ptr.Int64(time.Now().Add(time.Duration(-2*(8-idx)*24) * time.Hour).Unix())
