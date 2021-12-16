@@ -20,8 +20,8 @@ func resolveUTCMidnightWithNewsletterSchedule(c ctx.LogContext, utcMidnight time
 		return nil, err
 	}
 	beforeNextMidnight := utcMidnight.Add(24*time.Hour - time.Second)
-	minute := userNewsletterSchedule.SendQuarterHourIndex * 15
-	userSendTime := time.Date(utcMidnight.Year(), utcMidnight.Month(), utcMidnight.Day(), userNewsletterSchedule.SendHourIndex, minute, 0, 0, userTimezone)
+	minute := userNewsletterSchedule.QuarterHourIndex * 15
+	userSendTime := time.Date(utcMidnight.Year(), utcMidnight.Month(), utcMidnight.Day(), userNewsletterSchedule.HourIndex, minute, 0, 0, userTimezone)
 	switch {
 	case userSendTime.After(beforeNextMidnight):
 		nextPossibleSendTime := userSendTime.Add(-24 * time.Hour)
