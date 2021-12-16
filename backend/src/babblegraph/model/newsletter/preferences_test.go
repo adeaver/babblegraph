@@ -20,7 +20,7 @@ type testUserAccessor struct {
 	doesUserHaveAccount       bool
 	userSubscriptionLevel     *useraccounts.SubscriptionLevel
 	userNewsletterPreferences *usernewsletterpreferences.UserNewsletterPreferences
-	userScheduleForDay        *usernewsletterschedule.UserNewsletterScheduleDayMetadata
+	userNewsletterSchedule    usernewsletterschedule.UserNewsletterSchedule
 	readingLevel              *userReadingLevel
 	sentDocumentIDs           []documents.DocumentID
 	userTopics                []contenttopics.ContentTopic
@@ -52,8 +52,8 @@ func (t *testUserAccessor) getUserNewsletterPreferences() *usernewsletterprefere
 	return t.userNewsletterPreferences
 }
 
-func (t *testUserAccessor) getUserScheduleForDay() *usernewsletterschedule.UserNewsletterScheduleDayMetadata {
-	return t.userScheduleForDay
+func (t *testUserAccessor) getUserNewsletterSchedule() usernewsletterschedule.UserNewsletterSchedule {
+	return t.userNewsletterSchedule
 }
 
 func (t *testUserAccessor) getReadingLevel() *userReadingLevel {

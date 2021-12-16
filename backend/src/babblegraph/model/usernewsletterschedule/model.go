@@ -76,7 +76,14 @@ type dbUserNewsletterSchedule struct {
 	QuarterHourIndex int                    `db:"quarter_hour_index"`
 }
 
-type UserNewsletterSchedule struct {
+type UserNewsletterSchedule interface {
+	IsSendRequested() bool
+	GetUTCSendTime() time.Time
+	GetContentTopicsForDay() []contenttopics.ContentTopic
+	GetNumberOfDocuments() int
+}
+
+type ScheduleWithMetadata struct {
 	sendTimeAtUserTimezone time.Time
 	userScheduleDay        *UserNewsletterScheduleDayMetadata
 }
@@ -87,7 +94,7 @@ type GetUserNewsletterScheduleForUTCMidnightInput struct {
 	DayAtUTCMidnight time.Time
 }
 
-func GetUserNewsletterScheduleForUTCMidnight(c ctx.LogContext, tx *sqlx.Tx, input GetUserNewsletterScheduleForUTCMidnightInput) (*UserNewsletterSchedule, error) {
+func GetUserNewsletterScheduleForUTCMidnight(c ctx.LogContext, tx *sqlx.Tx, input GetUserNewsletterScheduleForUTCMidnightInput) (*ScheduleWithMetadata, error) {
 	var userScheduleTime *time.Time
 	userSchedule, err := lookupUserNewsletterScheduleForUser(tx, input.UserID, input.LanguageCode)
 	switch {
@@ -116,28 +123,28 @@ func GetUserNewsletterScheduleForUTCMidnight(c ctx.LogContext, tx *sqlx.Tx, inpu
 			return nil, err
 		}
 	}
-	return &UserNewsletterSchedule{
+	return &ScheduleWithMetadata{
 		sendTimeAtUserTimezone: *userScheduleTime,
 		userScheduleDay:        userScheduleDay,
 	}, nil
 }
 
-func (u UserNewsletterSchedule) IsSendRequested() bool {
+func (u ScheduleWithMetadata) IsSendRequested() bool {
 	return u.userScheduleDay == nil || u.userScheduleDay.IsActive
 }
 
-func (u UserNewsletterSchedule) GetSendUTCSendTime() time.Time {
+func (u ScheduleWithMetadata) GetUTCSendTime() time.Time {
 	return u.sendTimeAtUserTimezone.UTC()
 }
 
-func (u UserNewsletterSchedule) GetContentTopicsForDay() []contenttopics.ContentTopic {
+func (u ScheduleWithMetadata) GetContentTopicsForDay() []contenttopics.ContentTopic {
 	if u.userScheduleDay == nil {
 		return nil
 	}
 	return u.userScheduleDay.ContentTopics
 }
 
-func (u UserNewsletterSchedule) GetNumberOfDocuments() int {
+func (u ScheduleWithMetadata) GetNumberOfDocuments() int {
 	if u.userScheduleDay == nil {
 		return maximumNumberOfArticles
 	}
