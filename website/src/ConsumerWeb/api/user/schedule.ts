@@ -45,8 +45,6 @@ export type ScheduleByLanguageCode = {
 
 export type ScheduleDay = {
     dayOfWeekIndex: number;
-    hourOfDayIndex: number;
-    quarterHourIndex: number;
     contentTopics: string[];
     numberOfArticles: number;
     isActive: boolean;

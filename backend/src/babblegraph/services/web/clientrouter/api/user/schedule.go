@@ -38,19 +38,13 @@ func handleAddUserNewsletterSchedule(userID users.UserID, body []byte) (interfac
 	}
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		for _, day := range req.UserScheduleDayRequests {
-			dayIndexUTC, hourIndexUTC, quarterHourIndexUTC, err := usernewsletterschedule.GetClosetSendTimeInUTC(day.DayOfWeekIndex, req.IANATimezone)
-			if err != nil {
-				return err
-			}
 			if err := usernewsletterschedule.UpsertNewsletterDayMetadataForUser(tx, usernewsletterschedule.UpsertNewsletterDayMetadataForUserInput{
-				UserID:              userID,
-				DayOfWeekIndexUTC:   *dayIndexUTC,
-				HourOfDayIndexUTC:   *hourIndexUTC,
-				QuarterHourIndexUTC: *quarterHourIndexUTC,
-				LanguageCode:        req.LanguageCode,
-				NumberOfArticles:    day.NumberOfArticles,
-				ContentTopics:       day.ContentTopics,
-				IsActive:            day.IsActive,
+				UserID:           userID,
+				DayOfWeekIndex:   day.DayOfWeekIndex,
+				LanguageCode:     req.LanguageCode,
+				NumberOfArticles: day.NumberOfArticles,
+				ContentTopics:    day.ContentTopics,
+				IsActive:         day.IsActive,
 			}); err != nil {
 				return err
 			}
@@ -83,8 +77,6 @@ type scheduleByLanguageCode struct {
 
 type scheduleDay struct {
 	DayOfWeekIndex   int                          `json:"day_of_week_index"`
-	HourOfDayIndex   int                          `json:"hour_of_day_index"`
-	QuarterHourIndex int                          `json:"quarter_hour_index"`
 	ContentTopics    []contenttopics.ContentTopic `json:"content_topics"`
 	NumberOfArticles int                          `json:"number_of_articles"`
 	IsActive         bool                         `json:"is_active"`
@@ -106,16 +98,9 @@ func handleGetUserNewsletterSchedule(userID users.UserID, body []byte) (interfac
 	}
 	daySchedulesByLanguageCode := make(map[wordsmith.LanguageCode][]scheduleDay)
 	for _, d := range daySchedules {
-		requestDayIndex, requestHourIndex, requestQuarterHourIndex, err := usernewsletterschedule.ConvertIndexedTimeUTCToUserTimezone(d.DayOfWeekIndexUTC, d.HourOfDayIndexUTC, d.QuarterHourIndexUTC, req.IANATimezone)
-		if err != nil {
-			sentry.CaptureException(err)
-			return nil, err
-		}
 		daysForLanguageCode, _ := daySchedulesByLanguageCode[d.LanguageCode]
 		daySchedulesByLanguageCode[d.LanguageCode] = append(daysForLanguageCode, scheduleDay{
-			DayOfWeekIndex:   *requestDayIndex,
-			HourOfDayIndex:   *requestHourIndex,
-			QuarterHourIndex: *requestQuarterHourIndex,
+			DayOfWeekIndex:   d.DayOfWeekIndex,
 			ContentTopics:    d.ContentTopics,
 			NumberOfArticles: d.NumberOfArticles,
 			IsActive:         d.IsActive,
