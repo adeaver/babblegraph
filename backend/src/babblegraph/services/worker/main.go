@@ -9,6 +9,7 @@ import (
 	"babblegraph/services/worker/scheduler"
 	"babblegraph/util/async"
 	"babblegraph/util/bglog"
+	"babblegraph/util/ctx"
 	"babblegraph/util/database"
 	"babblegraph/util/elastic"
 	"babblegraph/util/env"
@@ -55,7 +56,7 @@ func main() {
 	if err := scheduler.StartScheduler(linkProcessor, schedulerErrs); err != nil {
 		bglog.Fatalf("Error initializing scheduler: %s", err.Error())
 	}
-	newsletterProcessor, err := newsletterprocessing.CreateNewsletterProcessor()
+	newsletterProcessor, err := newsletterprocessing.CreateNewsletterProcessor(ctx.GetDefaultLogContext())
 	if err != nil {
 		bglog.Fatalf("Error initializing newsletter processor: %s", err.Error())
 	}

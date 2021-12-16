@@ -8,8 +8,7 @@ import (
 	"time"
 )
 
-func getDateOfSendForTime(t time.Time) string {
-	utcTime := t.UTC()
+func getDateOfSendForTime(utcTime time.Time) string {
 	return fmt.Sprintf("%02d%02d%04d", utcTime.Month(), utcTime.Day(), utcTime.Year())
 }
 

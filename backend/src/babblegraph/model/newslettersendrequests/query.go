@@ -1,7 +1,10 @@
 package newslettersendrequests
 
 import (
+	"babblegraph/model/usernewsletterschedule"
 	"babblegraph/model/users"
+	"babblegraph/util/ctx"
+	"babblegraph/util/timeutils"
 	"babblegraph/wordsmith"
 	"fmt"
 	"time"
@@ -35,12 +38,9 @@ const (
 	defaultUSEasternQuarterHourToSend = 0
 )
 
-func GetOrCreateSendRequestsForUsersForDay(tx *sqlx.Tx, userIDs []users.UserID, languageCode wordsmith.LanguageCode, day time.Time) ([]NewsletterSendRequest, error) {
-	usEastern, err := time.LoadLocation("US/Eastern")
-	if err != nil {
-		return nil, err
-	}
-	dateOfSendString := getDateOfSendForTime(day)
+func GetOrCreateSendRequestsForUsersForDay(c ctx.LogContext, tx *sqlx.Tx, userIDs []users.UserID, languageCode wordsmith.LanguageCode, day time.Time) ([]NewsletterSendRequest, error) {
+	utcMidnightForRequestDay := timeutils.ConvertToMidnight(day.UTC())
+	dateOfSendString := getDateOfSendForTime(utcMidnightForRequestDay)
 	query, args, err := sqlx.In(fmt.Sprintf(getSendRequestsForUsersForDayQuery, dateOfSendString, languageCode), userIDs)
 	if err != nil {
 		return nil, nil
@@ -62,7 +62,16 @@ func GetOrCreateSendRequestsForUsersForDay(tx *sqlx.Tx, userIDs []users.UserID, 
 	}
 	for _, u := range userIDs {
 		if _, ok := usersWithSendRequests[u]; !ok {
-			dateOfSend := time.Date(day.Year(), day.Month(), day.Day(), defaultUSEasternHourToSend, defaultUSEasternQuarterHourToSend, 0, 0, usEastern).UTC()
+			userNewsletterSchedule, err := usernewsletterschedule.GetUserNewsletterScheduleForUTCMidnight(c, tx, usernewsletterschedule.GetUserNewsletterScheduleForUTCMidnightInput{
+				UserID:           u,
+				LanguageCode:     languageCode,
+				DayAtUTCMidnight: utcMidnightForRequestDay,
+			})
+			if err != nil {
+				c.Errorf("Error getting user newsletter schedule for user %s: %s", u, err.Error())
+				continue
+			}
+			dateOfSend := userNewsletterSchedule.GetUTCSendTime()
 			id := makeSendRequestID(u, languageCode, dateOfSendString)
 			if _, err := tx.Exec(insertSendRequestForUserQuery, id, u, languageCode, dateOfSendString, PayloadStatusNeedsPreload, dateOfSend.Hour(), dateOfSend.Minute()/15); err != nil {
 				return nil, err
