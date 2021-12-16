@@ -55,9 +55,9 @@ func TestResolveUTCMidnightWithNewsletterSchedule(t *testing.T) {
 	for idx, tc := range testCases {
 		utcMidnight := time.Date(tc.utcYear, tc.utcMonth, tc.utcDayIndex, 0, 0, 0, 0, time.UTC)
 		result, err := resolveUTCMidnightWithNewsletterSchedule(c, utcMidnight, dbUserNewsletterSchedule{
-			IANATimezone:         tc.userTimezone,
-			SendHourIndex:        tc.userHourIndex,
-			SendQuarterHourIndex: tc.userQuarterHourIndex,
+			IANATimezone:     tc.userTimezone,
+			HourIndex:        tc.userHourIndex,
+			QuarterHourIndex: tc.userQuarterHourIndex,
 		})
 		switch {
 		case err != nil:
