@@ -81,6 +81,7 @@ type UserNewsletterSchedule interface {
 	GetUTCSendTime() time.Time
 	GetContentTopicsForDay() []contenttopics.ContentTopic
 	GetNumberOfDocuments() int
+	GetSendTimeInUserTimezone() time.Time
 }
 
 type ScheduleWithMetadata struct {
@@ -149,4 +150,8 @@ func (u ScheduleWithMetadata) GetNumberOfDocuments() int {
 		return maximumNumberOfArticles
 	}
 	return u.userScheduleDay.NumberOfArticles
+}
+
+func (u ScheduleWithMetadata) GetSendTimeInUserTimezone() time.Time {
+	return u.sendTimeAtUserTimezone
 }

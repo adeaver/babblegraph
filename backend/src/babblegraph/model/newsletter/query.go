@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	defaultNumberOfArticlesPerEmail = 12
+	DefaultNumberOfArticlesPerEmail = 12
 	defaultNumberOfTopicsPerEmail   = 4
 
 	minimumDaysSinceLastSpotlight = 3

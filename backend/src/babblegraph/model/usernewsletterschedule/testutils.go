@@ -7,7 +7,7 @@ import (
 
 type TestNewsletterSchedule struct {
 	SendRequested     bool
-	UTCSendTime       time.Time
+	UserSendTime      time.Time
 	ContentTopics     []contenttopics.ContentTopic
 	NumberOfDocuments int
 }
@@ -17,7 +17,7 @@ func (t TestNewsletterSchedule) IsSendRequested() bool {
 }
 
 func (t TestNewsletterSchedule) GetUTCSendTime() time.Time {
-	return t.UTCSendTime
+	return t.UserSendTime.UTC()
 }
 
 func (t TestNewsletterSchedule) GetContentTopicsForDay() []contenttopics.ContentTopic {
@@ -26,4 +26,8 @@ func (t TestNewsletterSchedule) GetContentTopicsForDay() []contenttopics.Content
 
 func (t TestNewsletterSchedule) GetNumberOfDocuments() int {
 	return t.NumberOfDocuments
+}
+
+func (t TestNewsletterSchedule) GetSendTimeInUserTimezone() time.Time {
+	return t.UserSendTime
 }

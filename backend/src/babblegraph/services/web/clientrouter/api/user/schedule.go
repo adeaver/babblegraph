@@ -2,118 +2,100 @@ package user
 
 import (
 	"babblegraph/model/contenttopics"
+	"babblegraph/model/newsletter"
+	"babblegraph/model/routes"
+	"babblegraph/model/useraccounts"
 	"babblegraph/model/usernewsletterschedule"
-	"babblegraph/model/users"
+	"babblegraph/services/web/clientrouter/util/routetoken"
+	"babblegraph/util/ctx"
 	"babblegraph/util/database"
+	"babblegraph/util/timeutils"
 	"babblegraph/wordsmith"
 	"encoding/json"
-	"fmt"
-	"log"
+	"time"
 
-	"github.com/getsentry/sentry-go"
 	"github.com/jmoiron/sqlx"
 )
 
-type handleAddUserNewsletterScheduleRequest struct {
-	UserScheduleDayRequests []userScheduleDayRequest `json:"user_schedule_day_requests"`
-	LanguageCode            wordsmith.LanguageCode   `json:"language_code"`
-	IANATimezone            string                   `json:"iana_timezone"`
-}
-
-type userScheduleDayRequest struct {
-	DayOfWeekIndex   int      `json:"day_of_week_index"`
-	ContentTopics    []string `json:"content_topics"`
-	NumberOfArticles int      `json:"number_of_articles"`
-	IsActive         bool     `json:"is_active"`
-}
-
-type handleAddUserNewsletterScheduleResponse struct {
-	Success bool `json:"success"`
-}
-
-func handleAddUserNewsletterSchedule(userID users.UserID, body []byte) (interface{}, error) {
-	var req handleAddUserNewsletterScheduleRequest
-	if err := json.Unmarshal(body, &req); err != nil {
-		return nil, err
-	}
-	if err := database.WithTx(func(tx *sqlx.Tx) error {
-		for _, day := range req.UserScheduleDayRequests {
-			if err := usernewsletterschedule.UpsertNewsletterDayMetadataForUser(tx, usernewsletterschedule.UpsertNewsletterDayMetadataForUserInput{
-				UserID:           userID,
-				DayOfWeekIndex:   day.DayOfWeekIndex,
-				LanguageCode:     req.LanguageCode,
-				NumberOfArticles: day.NumberOfArticles,
-				ContentTopics:    day.ContentTopics,
-				IsActive:         day.IsActive,
-			}); err != nil {
-				return err
-			}
-		}
-		return nil
-	}); err != nil {
-		log.Println(fmt.Sprintf("Got error upserting schedule for user %s: %s", userID, err.Error()))
-		sentry.CaptureException(fmt.Errorf("Got error upserting schedule for user %s: %s", userID, err.Error()))
-		return handleAddUserNewsletterScheduleResponse{
-			Success: false,
-		}, nil
-	}
-	return handleAddUserNewsletterScheduleResponse{
-		Success: true,
-	}, nil
-}
-
-type handleGetUserNewsletterScheduleRequest struct {
-	IANATimezone string `json:"iana_timezone"`
-}
-
-type handleGetUserNewsletterScheduleResponse struct {
-	ScheduleByLanguageCode []scheduleByLanguageCode `json:"schedule_by_language_code"`
-}
-
-type scheduleByLanguageCode struct {
+type getUserScheduleRequest struct {
+	EmailAddress string                 `json:"email_address"`
+	Token        string                 `json:"token"`
 	LanguageCode wordsmith.LanguageCode `json:"language_code"`
-	ScheduleDays []scheduleDay          `json:"schedule_days"`
 }
 
-type scheduleDay struct {
-	DayOfWeekIndex   int                          `json:"day_of_week_index"`
-	ContentTopics    []contenttopics.ContentTopic `json:"content_topics"`
-	NumberOfArticles int                          `json:"number_of_articles"`
+type getUserScheduleResponse struct {
+	UserIANATimezone string           `json:"user_iana_timezone"`
+	HourIndex        int              `json:"hour_index"`
+	QuarterHourIndex int              `json:"quarter_hour_index"`
+	PreferencesByDay []dayPreferences `json:"preferences_by_day,omitempty"`
+}
+
+type dayPreferences struct {
 	IsActive         bool                         `json:"is_active"`
+	NumberOfArticles int                          `json:"number_of_articles"`
+	ContentTopics    []contenttopics.ContentTopic `json:"content_topics"`
+	DayIndex         int                          `json:"day_index"`
 }
 
-func handleGetUserNewsletterSchedule(userID users.UserID, body []byte) (interface{}, error) {
-	var req handleGetUserNewsletterScheduleRequest
-	if err := json.Unmarshal(body, &req); err != nil {
+func handleGetUserSchedule(body []byte) (interface{}, error) {
+	var req getUserScheduleRequest
+	if err := json.Unmarshal(body, req); err != nil {
 		return nil, err
 	}
-	var daySchedules []usernewsletterschedule.UserNewsletterScheduleDayMetadata
+	userID, err := routetoken.ValidateTokenAndEmailAndGetUserID(req.Token, routes.SubscriptionManagementRouteEncryptionKey, req.EmailAddress)
+	if err != nil {
+		return nil, err
+	}
+	// TODO(web-context): don't use default log context here
+	c := ctx.GetDefaultLogContext()
+	var userNewsletterSchedule usernewsletterschedule.UserNewsletterSchedule
+	var userDayPreferences []usernewsletterschedule.UserNewsletterScheduleDayMetadata
+	var doesUserHaveSubscription bool
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		var err error
-		daySchedules, err = usernewsletterschedule.GetNewsletterDayMetadataForUser(tx, userID)
+		userNewsletterSchedule, err = usernewsletterschedule.GetUserNewsletterScheduleForUTCMidnight(c, tx, usernewsletterschedule.GetUserNewsletterScheduleForUTCMidnightInput{
+			UserID:           *userID,
+			DayAtUTCMidnight: timeutils.ConvertToMidnight(time.Now().UTC()),
+			LanguageCode:     req.LanguageCode,
+		})
+		if err != nil {
+			return err
+		}
+		_, doesUserHaveSubscription, err = useraccounts.DoesUserHaveSubscription(tx, *userID)
+		switch {
+		case err != nil:
+			return err
+		case !doesUserHaveSubscription:
+			return nil
+		}
+		// TODO(multiple-languages): Modify this to take in a language code
+		userDayPreferences, err = usernewsletterschedule.GetNewsletterDayMetadataForUser(tx, *userID)
 		return err
 	}); err != nil {
-		sentry.CaptureException(err)
 		return nil, err
 	}
-	daySchedulesByLanguageCode := make(map[wordsmith.LanguageCode][]scheduleDay)
-	for _, d := range daySchedules {
-		daysForLanguageCode, _ := daySchedulesByLanguageCode[d.LanguageCode]
-		daySchedulesByLanguageCode[d.LanguageCode] = append(daysForLanguageCode, scheduleDay{
-			DayOfWeekIndex:   d.DayOfWeekIndex,
-			ContentTopics:    d.ContentTopics,
-			NumberOfArticles: d.NumberOfArticles,
-			IsActive:         d.IsActive,
-		})
+	userSendTime := userNewsletterSchedule.GetSendTimeInUserTimezone()
+	var apiDayPreferences []dayPreferences = nil
+	if doesUserHaveSubscription {
+		for i := 0; i < 7; i++ {
+			apiDayPreferences = append(apiDayPreferences, dayPreferences{
+				IsActive:         true,
+				NumberOfArticles: newsletter.DefaultNumberOfArticlesPerEmail,
+				DayIndex:         i,
+			})
+		}
+		for _, userDayPreference := range userDayPreferences {
+			apiDayPreferences[userDayPreference.DayOfWeekIndex] = dayPreferences{
+				IsActive:         userDayPreference.IsActive,
+				NumberOfArticles: userDayPreference.NumberOfArticles,
+				ContentTopics:    userDayPreference.ContentTopics,
+			}
+		}
 	}
-	var outputSchedules []scheduleByLanguageCode
-	for languageCode, scheduleDays := range daySchedulesByLanguageCode {
-		outputSchedules = append(outputSchedules, scheduleByLanguageCode{
-			LanguageCode: languageCode,
-			ScheduleDays: scheduleDays,
-		})
-	}
-	return handleGetUserNewsletterScheduleResponse{
-		ScheduleByLanguageCode: outputSchedules,
+	return getUserScheduleResponse{
+		UserIANATimezone: userSendTime.Location().String(),
+		HourIndex:        userSendTime.Hour(),
+		QuarterHourIndex: userSendTime.Minute() / 15,
+		PreferencesByDay: apiDayPreferences,
 	}, nil
 }
