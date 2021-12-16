@@ -66,6 +66,9 @@ func TestResolveUTCMidnightWithNewsletterSchedule(t *testing.T) {
 			if tc.expectedDayIndex != int(result.Weekday()) {
 				t.Errorf("Error on test %d: expected %d, but got %d", idx, tc.expectedDayIndex, int(result.Weekday()))
 			}
+			if result.UTC().Weekday() != utcMidnight.Weekday() {
+				t.Errorf("Error on test %d: expected converted utc day to be %d, but got %d", idx, utcMidnight.Weekday(), result.UTC().Weekday())
+			}
 		default:
 			t.Errorf("Error on test %d: no result, but no err", idx)
 		}

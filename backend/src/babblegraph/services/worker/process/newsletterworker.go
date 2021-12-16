@@ -14,6 +14,7 @@ import (
 	"babblegraph/util/env"
 	"babblegraph/util/ses"
 	"babblegraph/util/storage"
+	"babblegraph/util/timeutils"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -41,6 +42,7 @@ func StartNewsletterPreloadWorkerThread(newsletterProcessor *newsletterprocessin
 				continue
 			}
 			c.Infof("Got send request with ID %s", sendRequest.ID)
+			dateOfSendUTCMidnight := timeutils.ConvertToMidnight(sendRequest.DateOfSend.UTC())
 			if err := database.WithTx(func(tx *sqlx.Tx) error {
 				subscriptionLevel, err := useraccounts.LookupSubscriptionLevelForUser(tx, sendRequest.UserID)
 				switch {
@@ -50,11 +52,15 @@ func StartNewsletterPreloadWorkerThread(newsletterProcessor *newsletterprocessin
 					// no-op
 				case *subscriptionLevel == useraccounts.SubscriptionLevelBetaPremium,
 					*subscriptionLevel == useraccounts.SubscriptionLevelPremium:
-					userScheduleForDay, err := usernewsletterschedule.LookupNewsletterDayMetadataForUserAndDay(tx, sendRequest.UserID, int(sendRequest.DateOfSend.Weekday()))
+					userNewsletterSchedule, err := usernewsletterschedule.GetUserNewsletterScheduleForUTCMidnight(c, tx, usernewsletterschedule.GetUserNewsletterScheduleForUTCMidnightInput{
+						UserID:           sendRequest.UserID,
+						LanguageCode:     sendRequest.LanguageCode,
+						DayAtUTCMidnight: dateOfSendUTCMidnight,
+					})
 					if err != nil {
 						return err
 					}
-					if userScheduleForDay != nil && !userScheduleForDay.IsActive {
+					if userNewsletterSchedule.IsSendRequested() {
 						return newslettersendrequests.UpdateSendRequestStatus(tx, sendRequest.ID, newslettersendrequests.PayloadStatusNoSendRequested)
 					}
 				}
@@ -64,7 +70,7 @@ func StartNewsletterPreloadWorkerThread(newsletterProcessor *newsletterprocessin
 				wordsmithAccessor := newsletter.GetDefaultWordsmithAccessor()
 				emailAccessor := newsletter.GetDefaultEmailAccessor(tx)
 				docsAccessor := newsletter.GetDefaultDocumentsAccessor()
-				userAccessor, err := newsletter.GetDefaultUserPreferencesAccessor(tx, sendRequest.UserID, sendRequest.LanguageCode, sendRequest.DateOfSend)
+				userAccessor, err := newsletter.GetDefaultUserPreferencesAccessor(c, tx, sendRequest.UserID, sendRequest.LanguageCode, dateOfSendUTCMidnight)
 				if err != nil {
 					return err
 				}
