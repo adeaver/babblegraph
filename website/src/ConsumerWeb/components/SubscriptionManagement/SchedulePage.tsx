@@ -88,8 +88,6 @@ const styleClasses = makeStyles({
 
 const makeDefaultScheduleDay = (dayIndex: number) => ({
     dayOfWeekIndex: dayIndex,
-    hourOfDayIndex: 0,
-    quarterHourIndex: 0,
     contentTopics: [],
     numberOfArticles: defaultNumberOfArticles,
     isActive: true,

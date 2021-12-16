@@ -158,16 +158,18 @@ const SubscriptionManagementDashboardPage = (props: SubscriptionManagementDashbo
                             <ActionCard redirectURL={`/manage/${reinforcementToken}/vocabulary`} title='Track words to reinforce'>
                                 Learn a new word recently and want to make sure it sticks? You can track it, which will send you articles containing these words. Seeing a word frequently is a great way to make sure you remember it.
                             </ActionCard>
-                            {
-                                subscriptionLevel && (
-                                    <ActionCard
-                                        redirectURL={`/manage/${token}/schedule`}
-                                        title='Newsletter schedule and customization'
-                                        isPremiumFeature>
-                                        Select which days you receive newsletter emails from Babblegraph. You can also configure how many articles you receive in each email and what topics are in each email.
-                                    </ActionCard>
-                                )
-                            }
+                            <ActionCard
+                                redirectURL={`/manage/${token}/schedule`}
+                                title={!!subscriptionLevel ? 'Newsletter schedule and customization' : 'Newsletter schedule settings'}
+                                isPremiumFeature={!!subscriptionLevel}>
+                                {
+                                    subscriptionLevel ? (
+                                        "Select which days you receive newsletter emails from Babblegraph. You can also configure how many articles you receive in each email and what topics are in each email."
+                                    ) : (
+                                        "Select which time you receive your daily newsletter emails from Babblegraph"
+                                    )
+                                }
+                            </ActionCard>
                             <ActionCard
                                 redirectURL={`/manage/${token}/preferences`}
                                 title='Newsletter general settings'>
