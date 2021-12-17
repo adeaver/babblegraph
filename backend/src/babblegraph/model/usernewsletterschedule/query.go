@@ -130,7 +130,7 @@ func UpsertNewsletterDayMetadataForUser(tx *sqlx.Tx, input UpsertNewsletterDayMe
 
 func lookupUserNewsletterScheduleForUser(tx *sqlx.Tx, userID users.UserID, languageCode wordsmith.LanguageCode) (*dbUserNewsletterSchedule, error) {
 	var matches []dbUserNewsletterSchedule
-	if err := tx.Select(matches, getNewsletterScheduleForUserQuery, userID, languageCode); err != nil {
+	if err := tx.Select(&matches, getNewsletterScheduleForUserQuery, userID, languageCode); err != nil {
 		return nil, err
 	}
 	switch {

@@ -10,6 +10,7 @@ import (
 	"babblegraph/services/web/clientrouter/util/routetoken"
 	"babblegraph/util/ctx"
 	"babblegraph/util/database"
+	"babblegraph/util/email"
 	"babblegraph/util/timeutils"
 	"babblegraph/wordsmith"
 	"encoding/json"
@@ -19,7 +20,6 @@ import (
 )
 
 type getUserScheduleRequest struct {
-	EmailAddress string                 `json:"email_address"`
 	Token        string                 `json:"token"`
 	LanguageCode wordsmith.LanguageCode `json:"language_code"`
 }
@@ -43,7 +43,7 @@ func handleGetUserSchedule(body []byte) (interface{}, error) {
 	if err := json.Unmarshal(body, &req); err != nil {
 		return nil, err
 	}
-	userID, err := routetoken.ValidateTokenAndEmailAndGetUserID(req.Token, routes.SubscriptionManagementRouteEncryptionKey, req.EmailAddress)
+	userID, err := routetoken.ValidateTokenAndGetUserID(req.Token, routes.SubscriptionManagementRouteEncryptionKey)
 	if err != nil {
 		return nil, err
 	}
@@ -116,10 +116,10 @@ type updateUserScheduleResponse struct {
 
 func handleUpdateUserSchedule(body []byte) (interface{}, error) {
 	var req updateUserScheduleRequest
-	if err := json.Unmarshal(body, req); err != nil {
+	if err := json.Unmarshal(body, &req); err != nil {
 		return nil, err
 	}
-	userID, err := routetoken.ValidateTokenAndEmailAndGetUserID(req.Token, routes.SubscriptionManagementRouteEncryptionKey, req.EmailAddress)
+	userID, err := routetoken.ValidateTokenAndEmailAndGetUserID(req.Token, routes.SubscriptionManagementRouteEncryptionKey, email.FormatEmailAddress(req.EmailAddress))
 	if err != nil {
 		return updateUserScheduleResponse{
 			Success: false,

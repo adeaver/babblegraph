@@ -1,8 +1,8 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
-ALTER TABLE user_newsletter_schedule_day_metadata RENAME COLUMN IF EXISTS day_of_week_index_utc TO day_of_week_index;
-ALTER TABLE user_newsletter_schedule_day_metadata DROP COLUMN IF EXISTS hour_of_day_index_utc;
-ALTER TABLE user_newsletter_schedule_day_metadata DROP COLUMN IF EXISTS quarter_hour_index_utc;
+ALTER TABLE user_newsletter_schedule_day_metadata RENAME COLUMN day_of_week_index_utc TO day_of_week_index;
+ALTER TABLE user_newsletter_schedule_day_metadata DROP COLUMN hour_of_day_index_utc;
+ALTER TABLE user_newsletter_schedule_day_metadata DROP COLUMN quarter_hour_index_utc;
 
 CREATE TABLE IF NOT EXISTS user_newsletter_schedule(
     _id uuid DEFAULT uuid_generate_v4 (),

@@ -72,7 +72,7 @@ type dbUserNewsletterSchedule struct {
 	UserID           users.UserID           `db:"user_id"`
 	LanguageCode     wordsmith.LanguageCode `db:"language_code"`
 	IANATimezone     string                 `db:"iana_timezone"`
-	HourIndex        int                    `db:"hour_index"`
+	HourIndex        int                    `db:"hour_of_day_index"`
 	QuarterHourIndex int                    `db:"quarter_hour_index"`
 }
 

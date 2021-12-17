@@ -7,6 +7,14 @@ import Divider from '@material-ui/core/Divider';
 import Page from 'common/components/Page/Page';
 import DisplayCard from 'common/components/DisplayCard/DisplayCard';
 import DisplayCardHeader from 'common/components/DisplayCard/DisplayCardHeader';
+import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
+
+import {
+    getUserSchedule,
+    GetUserScheduleResponse,
+    updateUserSchedule,
+    UpdateUserScheduleResponse,
+} from 'ConsumerWeb/api/user/schedule';
 
 import TimeSelector from './TimeSelector';
 
@@ -23,6 +31,25 @@ const SchedulePage = (props: SchedulePageProps) => {
     const [ hourIndex, setHourIndex ] = useState<number>(7);
     const [ quarterHourIndex, setQuarterHourIndex ] = useState<number>(0);
 
+    const [ isLoading, setIsLoading ] = useState<boolean>(true);
+
+    useEffect(() => {
+        getUserSchedule({
+            token: token,
+            // TODO(multiple-languages): make this dynamic
+            languageCode: "es",
+        },
+        (resp: GetUserScheduleResponse) => {
+            setIsLoading(false);
+            setIANATimezone(resp.userIanaTimezone);
+            setHourIndex(resp.hourIndex);
+            setQuarterHourIndex(resp.quarterHourIndex);
+        },
+        (err: Error) => {
+            setIsLoading(false);
+        });
+    }, []);
+
     return (
         <Page>
             <Grid container>
@@ -31,18 +58,23 @@ const SchedulePage = (props: SchedulePageProps) => {
                 </Grid>
                 <Grid item xs={12} md={6}>
                     <DisplayCard>
-                        { /* TODO: check for subscription */ }
-                        <DisplayCardHeader
-                            title="Newsletter Schedule"
-                            backArrowDestination={`/manage/${token}`} />
-                        <Divider />
-                        <TimeSelector
-                            ianaTimezone={ianaTimezone}
-                            hourIndex={hourIndex}
-                            quarterHourIndex={quarterHourIndex}
-                            handleUpdateIANATimezone={setIANATimezone}
-                            handleUpdateHourIndex={setHourIndex}
-                            handleUpdateQuarterHourIndex={setQuarterHourIndex} />
+                        { /* TODO: check for subscription */
+                            isLoading ? (
+                                <LoadingSpinner />
+                            ) : (
+                                <DisplayCardHeader
+                                    title="Newsletter Schedule"
+                                    backArrowDestination={`/manage/${token}`} />
+                                    <Divider />
+                                    <TimeSelector
+                                        ianaTimezone={ianaTimezone}
+                                        hourIndex={hourIndex}
+                                        quarterHourIndex={quarterHourIndex}
+                                        handleUpdateIANATimezone={setIANATimezone}
+                                        handleUpdateHourIndex={setHourIndex}
+                                        handleUpdateQuarterHourIndex={setQuarterHourIndex} />
+                            )
+                        }
                     </DisplayCard>
                 </Grid>
             </Grid>
