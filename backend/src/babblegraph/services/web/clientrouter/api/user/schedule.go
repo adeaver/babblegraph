@@ -40,7 +40,7 @@ type dayPreferences struct {
 
 func handleGetUserSchedule(body []byte) (interface{}, error) {
 	var req getUserScheduleRequest
-	if err := json.Unmarshal(body, req); err != nil {
+	if err := json.Unmarshal(body, &req); err != nil {
 		return nil, err
 	}
 	userID, err := routetoken.ValidateTokenAndEmailAndGetUserID(req.Token, routes.SubscriptionManagementRouteEncryptionKey, req.EmailAddress)
@@ -173,9 +173,9 @@ type updateUserScheduleWithDayPreferencesResponse struct {
 	Success bool `json:"success"`
 }
 
-func updateUserScheduleWithDayPreferences(userID users.UserID, body []byte) (interface{}, error) {
+func handleUpdateUserScheduleWithDayPreferences(userID users.UserID, body []byte) (interface{}, error) {
 	var req updateUserScheduleWithDayPreferencesRequest
-	if err := json.Unmarshal(body, req); err != nil {
+	if err := json.Unmarshal(body, &req); err != nil {
 		return nil, err
 	}
 	tokenUserID, err := routetoken.ValidateTokenAndGetUserID(req.Token, routes.SubscriptionManagementRouteEncryptionKey)
