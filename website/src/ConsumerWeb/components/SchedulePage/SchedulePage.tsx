@@ -15,6 +15,10 @@ import {
     updateUserSchedule,
     UpdateUserScheduleResponse,
 } from 'ConsumerWeb/api/user/schedule';
+import {
+    getUserProfile,
+    GetUserProfileResponse
+} from 'ConsumerWeb/api/useraccounts/useraccounts';
 
 import TimeSelector from './TimeSelector';
 
@@ -31,19 +35,32 @@ const SchedulePage = (props: SchedulePageProps) => {
     const [ hourIndex, setHourIndex ] = useState<number>(7);
     const [ quarterHourIndex, setQuarterHourIndex ] = useState<number>(0);
 
+    const [ hasSubscription, setHasSubscription ] = useState<boolean>(false);
+    const [ emailAddress, setEmailAddress ] = useState<string>(null);
+
     const [ isLoading, setIsLoading ] = useState<boolean>(true);
 
     useEffect(() => {
-        getUserSchedule({
-            token: token,
-            // TODO(multiple-languages): make this dynamic
-            languageCode: "es",
+        getUserProfile({
+            subscriptionManagementToken: token,
         },
-        (resp: GetUserScheduleResponse) => {
-            setIsLoading(false);
-            setIANATimezone(resp.userIanaTimezone);
-            setHourIndex(resp.hourIndex);
-            setQuarterHourIndex(resp.quarterHourIndex);
+        (resp: GetUserProfileResponse) => {
+            setHasSubscription(!!resp.subscriptionLevel);
+            resp.emailAddress && setEmailAddress(resp.emailAddress);
+            getUserSchedule({
+                token: token,
+                // TODO(multiple-languages): make this dynamic
+                languageCode: "es",
+            },
+            (resp: GetUserScheduleResponse) => {
+                setIsLoading(false);
+                setIANATimezone(resp.userIanaTimezone);
+                setHourIndex(resp.hourIndex);
+                setQuarterHourIndex(resp.quarterHourIndex);
+            },
+            (err: Error) => {
+                setIsLoading(false);
+            });
         },
         (err: Error) => {
             setIsLoading(false);

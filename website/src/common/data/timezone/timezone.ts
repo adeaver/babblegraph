@@ -7,6 +7,12 @@ export type TimeZone = {
 
 const timezones: Array<TimeZone> = [
 	{
+		label:"GMT (GMT+00:00)",
+		tzCode:"UTC",
+		name:"(GMT+00:00) Greenwich Mean Time",
+		utc:"+00:00"
+	},
+	{
 		label:"Pacific/Midway (GMT-11:00)",
 		tzCode:"Pacific/Midway",
 		name:"(GMT-11:00) Midway",
