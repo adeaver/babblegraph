@@ -6,6 +6,7 @@ import (
 	"babblegraph/model/routes"
 	"babblegraph/model/useraccounts"
 	"babblegraph/model/usernewsletterschedule"
+	"babblegraph/model/users"
 	"babblegraph/services/web/clientrouter/util/routetoken"
 	"babblegraph/util/ctx"
 	"babblegraph/util/database"
@@ -97,5 +98,159 @@ func handleGetUserSchedule(body []byte) (interface{}, error) {
 		HourIndex:        userSendTime.Hour(),
 		QuarterHourIndex: userSendTime.Minute() / 15,
 		PreferencesByDay: apiDayPreferences,
+	}, nil
+}
+
+type updateUserScheduleRequest struct {
+	EmailAddress     string `json:"email_address"`
+	Token            string `json:"token"`
+	LanguageCode     string `json:"language_code"`
+	HourIndex        int    `json:"hour_index"`
+	QuarterHourIndex int    `json:"quarter_hour_index"`
+	IANATimezone     string `json:"iana_timezone"`
+}
+
+type updateUserScheduleResponse struct {
+	Success bool `json:"success"`
+}
+
+func handleUpdateUserSchedule(body []byte) (interface{}, error) {
+	var req updateUserScheduleRequest
+	if err := json.Unmarshal(body, req); err != nil {
+		return nil, err
+	}
+	userID, err := routetoken.ValidateTokenAndEmailAndGetUserID(req.Token, routes.SubscriptionManagementRouteEncryptionKey, req.EmailAddress)
+	if err != nil {
+		return updateUserScheduleResponse{
+			Success: false,
+		}, nil
+	}
+	languageCode, err := wordsmith.GetLanguageCodeFromString(req.LanguageCode)
+	if err != nil {
+		return updateUserScheduleResponse{
+			Success: false,
+		}, nil
+	}
+	loc, err := time.LoadLocation(req.IANATimezone)
+	if err != nil {
+		return updateUserScheduleResponse{
+			Success: false,
+		}, nil
+	}
+	switch {
+	case req.HourIndex < 0 || req.HourIndex > 23,
+		req.QuarterHourIndex < 0 || req.QuarterHourIndex > 3:
+		return updateUserScheduleResponse{
+			Success: false,
+		}, nil
+	}
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		return usernewsletterschedule.UpsertUserNewsletterSchedule(tx, usernewsletterschedule.UpsertUserNewsletterScheduleInput{
+			UserID:           *userID,
+			LanguageCode:     *languageCode,
+			IANATimezone:     loc,
+			QuarterHourIndex: req.QuarterHourIndex,
+			HourIndex:        req.HourIndex,
+		})
+	}); err != nil {
+		return nil, err
+	}
+	return updateUserScheduleResponse{
+		Success: true,
+	}, nil
+}
+
+type updateUserScheduleWithDayPreferencesRequest struct {
+	Token            string           `json:"token"`
+	LanguageCode     string           `json:"language_code"`
+	HourIndex        int              `json:"hour_index"`
+	QuarterHourIndex int              `json:"quarter_hour_index"`
+	IANATimezone     string           `json:"iana_timezone"`
+	DayPreferences   []dayPreferences `json:"day_preferences"`
+}
+
+type updateUserScheduleWithDayPreferencesResponse struct {
+	Success bool `json:"success"`
+}
+
+func updateUserScheduleWithDayPreferences(userID users.UserID, body []byte) (interface{}, error) {
+	var req updateUserScheduleWithDayPreferencesRequest
+	if err := json.Unmarshal(body, req); err != nil {
+		return nil, err
+	}
+	tokenUserID, err := routetoken.ValidateTokenAndGetUserID(req.Token, routes.SubscriptionManagementRouteEncryptionKey)
+	if err != nil || userID != *tokenUserID {
+		return updateUserScheduleWithDayPreferencesResponse{
+			Success: false,
+		}, nil
+	}
+	languageCode, err := wordsmith.GetLanguageCodeFromString(req.LanguageCode)
+	if err != nil {
+		return updateUserScheduleWithDayPreferencesResponse{
+			Success: false,
+		}, nil
+	}
+	loc, err := time.LoadLocation(req.IANATimezone)
+	if err != nil {
+		return updateUserScheduleWithDayPreferencesResponse{
+			Success: false,
+		}, nil
+	}
+	switch {
+	case req.HourIndex < 0 || req.HourIndex > 23,
+		req.QuarterHourIndex < 0 || req.QuarterHourIndex > 3:
+		return updateUserScheduleWithDayPreferencesResponse{
+			Success: false,
+		}, nil
+	}
+	for _, pref := range req.DayPreferences {
+		if pref.DayIndex < 0 || pref.DayIndex > 6 {
+			return updateUserScheduleWithDayPreferencesResponse{
+				Success: false,
+			}, nil
+		}
+		if pref.NumberOfArticles < 0 || pref.NumberOfArticles > newsletter.DefaultNumberOfArticlesPerEmail {
+			return updateUserScheduleWithDayPreferencesResponse{
+				Success: false,
+			}, nil
+		}
+		// Validate Content Topics
+		for _, t := range pref.ContentTopics {
+			if _, err := contenttopics.GetContentTopicForString(t.Str()); err != nil {
+				return updateUserScheduleWithDayPreferencesResponse{
+					Success: false,
+				}, nil
+			}
+		}
+	}
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		for _, pref := range req.DayPreferences {
+			var topics []string
+			for _, t := range pref.ContentTopics {
+				topics = append(topics, t.Str())
+			}
+			if err := usernewsletterschedule.UpsertNewsletterDayMetadataForUser(tx, usernewsletterschedule.UpsertNewsletterDayMetadataForUserInput{
+				UserID:           userID,
+				DayOfWeekIndex:   pref.DayIndex,
+				LanguageCode:     *languageCode,
+				ContentTopics:    topics,
+				NumberOfArticles: pref.NumberOfArticles,
+				IsActive:         pref.IsActive,
+			}); err != nil {
+				return err
+			}
+		}
+		return usernewsletterschedule.UpsertUserNewsletterSchedule(tx, usernewsletterschedule.UpsertUserNewsletterScheduleInput{
+			UserID:           userID,
+			LanguageCode:     *languageCode,
+			IANATimezone:     loc,
+			QuarterHourIndex: req.QuarterHourIndex,
+			HourIndex:        req.HourIndex,
+		})
+	}); err != nil {
+		return nil, err
+	}
+	return updateUserScheduleWithDayPreferencesResponse{
+		Success: true,
 	}, nil
 }

@@ -148,22 +148,19 @@ func lookupUserNewsletterScheduleForUser(tx *sqlx.Tx, userID users.UserID, langu
 type UpsertUserNewsletterScheduleInput struct {
 	UserID           users.UserID
 	LanguageCode     wordsmith.LanguageCode
-	IANATimezone     string
+	IANATimezone     *time.Location
 	HourIndex        int
 	QuarterHourIndex int
 }
 
 func UpsertUserNewsletterSchedule(tx *sqlx.Tx, input UpsertUserNewsletterScheduleInput) error {
-	if _, err := time.LoadLocation(input.IANATimezone); err != nil {
-		return err
-	}
 	switch {
 	case input.HourIndex < 0 || input.HourIndex > 23:
 		return fmt.Errorf("Error should be between 0 and 23, but got %d", input.HourIndex)
 	case input.QuarterHourIndex < 0 || input.QuarterHourIndex > 3:
 		return fmt.Errorf("Error should be between 0 and 3, but got %d", input.QuarterHourIndex)
 	}
-	if _, err := tx.Exec(upsertNewsletterScheduleForUserQuery, input.UserID, input.LanguageCode, input.IANATimezone, input.HourIndex, input.QuarterHourIndex); err != nil {
+	if _, err := tx.Exec(upsertNewsletterScheduleForUserQuery, input.UserID, input.LanguageCode, input.IANATimezone.String(), input.HourIndex, input.QuarterHourIndex); err != nil {
 		return err
 	}
 	return nil
