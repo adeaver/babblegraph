@@ -172,6 +172,7 @@ const NewsletterPreferencesPage = (props: NewsletterPreferencesPageProps) =>  {
                                                     <PrimaryTextField
                                                         id="email"
                                                         className={classes.emailField}
+                                                        value={emailAddress}
                                                         label="Email Address"
                                                         variant="outlined"
                                                         onChange={handleEmailAddressChange} />
