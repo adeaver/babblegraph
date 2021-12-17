@@ -89,10 +89,25 @@ const SchedulePage = (props: SchedulePageProps) => {
     }, []);
 
     const handleSubmit = () => {
-        if (hasSubsciption) {
+        if (hasSubscription) {
             console.log("Will update everything");
         } else {
-            console.log("Will update some things");
+            setIsLoading(true);
+            updateUserSchedule({
+                emailAddress: emailAddress,
+                token: token,
+                // TODO(multiple-languages): Make this dynamic
+                languageCode: "es",
+                hourIndex: hourIndex,
+                quarterHourIndex: quarterHourIndex,
+                ianaTimezone: ianaTimezone,
+            },
+            (resp: UpdateUserScheduleResponse) => {
+                setIsLoading(false);
+            },
+            (err: Error) => {
+                setIsLoading(false);
+            });
         }
     }
 
