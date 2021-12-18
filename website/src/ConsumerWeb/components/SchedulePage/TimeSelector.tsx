@@ -49,6 +49,7 @@ const TimeSelector = (props: TimeSelectorProps) => {
     const classes = styleClasses();
     const currentTimezoneOption = timezones.filter((t: TimeZone) => t.tzCode === props.ianaTimezone)[0]
 
+    const initialTimezone = currentTimezoneOption ? currentTimezoneOption.name : "Unknown";
     const [ currentTimezone, setCurrentTimezone ] = useState<string>(currentTimezoneOption ? currentTimezoneOption.name : props.ianaTimezone.replace("_", " ").split("/")[1]);
 
     const [ period, setPeriod ] = useState<string>(props.hourIndex >= 12 ? "PM" : "AM");
@@ -81,11 +82,14 @@ const TimeSelector = (props: TimeSelectorProps) => {
         const proposedPeriod = e.target.value;
         if (period === proposedPeriod) {
             return;
-        } else if (proposedPeriod === "PM") {
-            props.handleUpdateHourIndex((props.hourIndex + 12) % 12);
-        } else if (proposedPeriod === "AM") {
-            props.handleUpdateHourIndex(Math.abs(props.hourIndex - 12));
         }
+        const updatedHourIndexForProposedPeriod = proposedPeriod === "PM" ? (
+            (props.hourIndex + 12) % 24
+        ) : (
+            Math.abs(props.hourIndex - 12)
+        );
+        debugger;
+        props.handleUpdateHourIndex(updatedHourIndexForProposedPeriod);
         setPeriod(proposedPeriod);
     }
     return (
@@ -144,7 +148,7 @@ const TimeSelector = (props: TimeSelectorProps) => {
                 </Grid>
             </Grid>
             <Paragraph size={Size.Small}>
-                Your timezone is currently set as {currentTimezone}
+                Your timezone is currently set as {initialTimezone}
             </Paragraph>
             <Autocomplete
                 id="timezone-selector"

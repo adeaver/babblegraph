@@ -40,7 +40,7 @@ const (
             user_id,
             language_code,
             iana_timezone,
-            hour_index,
+            hour_of_day_index,
             quarter_hour_index
         ) VALUES (
             $1, $2, $3, $4, $5
@@ -49,7 +49,7 @@ const (
         ) DO UPDATE
         SET
             iana_timezone=$3,
-            hour_index=$4,
+            hour_of_day_index=$4,
             quarter_hour_index=$5`
 )
 
