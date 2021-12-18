@@ -74,10 +74,10 @@ const SchedulePage = (props: SchedulePageProps) => {
                 languageCode: "es",
             },
             (resp: GetUserScheduleResponse) => {
-                setIsLoading(false);
                 setIANATimezone(resp.userIanaTimezone);
                 setHourIndex(resp.hourIndex);
                 setQuarterHourIndex(resp.quarterHourIndex);
+                setIsLoading(false);
             },
             (err: Error) => {
                 setIsLoading(false);

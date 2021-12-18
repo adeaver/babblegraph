@@ -7,6 +7,7 @@ import FormControlLabel from '@material-ui/core/FormControlLabel';
 import InputLabel from '@material-ui/core/InputLabel';
 import MenuItem from '@material-ui/core/MenuItem';
 import Select from '@material-ui/core/Select';
+import Autocomplete from '@material-ui/lab/Autocomplete';
 
 import { Heading3 } from 'common/typography/Heading';
 import Paragraph, { Size } from 'common/typography/Paragraph';
@@ -39,17 +40,34 @@ type TimeSelectorProps = {
     handleUpdateQuarterHourIndex: (q: number) => void;
 }
 
+type TimeZoneOption = {
+    label: string,
+    id: string,
+}
+
 const TimeSelector = (props: TimeSelectorProps) => {
     const classes = styleClasses();
-    const currentTimezone = timezones.filter((t: TimeZone) => t.tzCode === props.ianaTimezone)[0].name || props.ianaTimezone.replace("_", " ").split("/")[1];
+    const currentTimezoneOption = timezones.filter((t: TimeZone) => t.tzCode === props.ianaTimezone)[0]
+
+    const [ currentTimezone, setCurrentTimezone ] = useState<string>(currentTimezoneOption ? currentTimezoneOption.name : props.ianaTimezone.replace("_", " ").split("/")[1]);
 
     const [ period, setPeriod ] = useState<string>(props.hourIndex >= 12 ? "PM" : "AM");
+    const [ displayHour, setDisplayHour ] = useState<number>(
+        props.hourIndex === 12 || props.hourIndex === 0 ? 12 : (
+            props.hourIndex - (period === "PM" ? 12 : 0)
+        )
+    );
 
-    const handleTimezoneUpdate = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        props.handleUpdateIANATimezone(e.target.value)
+    const handleTimezoneUpdate = (_: React.ChangeEvent<HTMLSelectElement>, selectedTimezone: TimeZoneOption) => {
+        const foundTimezone = timezones.filter((t: TimeZone) => t.tzCode === selectedTimezone.id)[0];
+        if (foundTimezone) {
+            props.handleUpdateIANATimezone(foundTimezone.tzCode);
+            setCurrentTimezone(foundTimezone.name);
+        }
     }
     const handleHourUpdate = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const hourInTwelveHourFormat = parseInt(e.target.value, 10);
+        setDisplayHour(hourInTwelveHourFormat);
         if (hourInTwelveHourFormat === 12) {
             props.handleUpdateHourIndex(period === "PM" ? 12 : 0);
             return;
@@ -60,14 +78,16 @@ const TimeSelector = (props: TimeSelectorProps) => {
         props.handleUpdateQuarterHourIndex(parseInt(e.target.value, 10))
     }
     const handlePeriodUpdate = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        setPeriod(e.target.value);
+        const proposedPeriod = e.target.value;
+        if (period === proposedPeriod) {
+            return;
+        } else if (proposedPeriod === "PM") {
+            props.handleUpdateHourIndex((props.hourIndex + 12) % 12);
+        } else if (proposedPeriod === "AM") {
+            props.handleUpdateHourIndex(Math.abs(props.hourIndex - 12));
+        }
+        setPeriod(proposedPeriod);
     }
-
-    const hourIndex = props.hourIndex === 12 || props.hourIndex === 0 ? (
-        12
-    ) : (
-        props.hourIndex - (period === "PM" ? 12 : 0)
-    );
     return (
         <div>
             <Heading3 color={TypographyColor.Primary}>
@@ -80,7 +100,7 @@ const TimeSelector = (props: TimeSelectorProps) => {
                         <Select
                             labelId="hour-selector-label"
                             id="hour-selector"
-                            value={hourIndex}
+                            value={displayHour}
                             onChange={handleHourUpdate}>
                             {
                                 Array(12).fill(0).map((_, idx: number) => (
@@ -126,20 +146,16 @@ const TimeSelector = (props: TimeSelectorProps) => {
             <Paragraph size={Size.Small}>
                 Your timezone is currently set as {currentTimezone}
             </Paragraph>
-            <FormControl className={classes.timezoneSelector}>
-                <InputLabel id="timezone-selector-label">Change timezone</InputLabel>
-                <Select
-                    labelId="timezone-selector-label"
-                    id="timezone-selector"
-                    value={props.ianaTimezone}
-                    onChange={handleTimezoneUpdate}>
-                    {
-                            timezones.map((t: TimeZone, idx: number) => (
-                                <MenuItem key={`timezone-selector-${idx}`} value={t.tzCode}>{t.name}</MenuItem>
-                            ))
-                        }
-                </Select>
-            </FormControl>
+            <Autocomplete
+                id="timezone-selector"
+                onChange={handleTimezoneUpdate}
+                options={timezones.map((t: TimeZone) => ({
+                    label: t.name,
+                    id: t.tzCode,
+                }))}
+                getOptionLabel={(option: TimeZoneOption) => option.label}
+                getOptionSelected={(option: TimeZoneOption) => option.label === currentTimezone}
+                renderInput={(params) => <PrimaryTextField label="Select Timezone" {...params} />} />
         </div>
     );
 }

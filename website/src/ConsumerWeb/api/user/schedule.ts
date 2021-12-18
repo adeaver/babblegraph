@@ -14,8 +14,8 @@ export type GetUserScheduleRequest = {
 
 export type GetUserScheduleResponse = {
     userIanaTimezone: string;
-    hourIndex: string;
-    quarterHourIndex: string;
+    hourIndex: number;
+    quarterHourIndex: number;
     preferencesByDay: Array<DayPreferences>;
 }
 
