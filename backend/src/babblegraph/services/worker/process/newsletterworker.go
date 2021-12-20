@@ -31,7 +31,7 @@ func StartNewsletterPreloadWorkerThread(newsletterProcessor *newsletterprocessin
 		c.Infof("Starting Newsletter Preload Process")
 		s3Storage := storage.NewS3StorageForEnvironment()
 		for {
-			sendRequest, err := newsletterProcessor.GetNextSendRequestToPreload()
+			sendRequest, err := newsletterProcessor.GetNextSendRequestToPreload(c)
 			switch {
 			case err != nil:
 				c.Errorf("Error getting send request: %s", err.Error())
@@ -118,7 +118,7 @@ func StartNewsletterFulfillmentWorkerThread(newsletterProcessor *newsletterproce
 			FromAddress:        env.MustEnvironmentVariable("EMAIL_ADDRESS"),
 		})
 		for {
-			sendRequest, err := newsletterProcessor.GetNextSendRequestToFulfill()
+			sendRequest, err := newsletterProcessor.GetNextSendRequestToFulfill(c)
 			switch {
 			case err != nil:
 				c.Errorf("Error getting fulfillment request: %s", err.Error())

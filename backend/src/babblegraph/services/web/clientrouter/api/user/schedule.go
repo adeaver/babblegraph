@@ -19,6 +19,21 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+type scheduleError string
+
+const (
+	scheduleErrorInvalidUser         scheduleError = "invalid-user"
+	scheduleErrorInvalidEmailAddress scheduleError = "invalid-email"
+	scheduleErrorUnsupportedLanguage scheduleError = "unsupported-language"
+	scheduleErrorUnsupportedTimezone scheduleError = "unsupported-timezone"
+	scheduleErrorInvalidTime         scheduleError = "invalid-time"
+	scheduleErrorInvalidSettings     scheduleError = "invalid-settings"
+)
+
+func (s scheduleError) Ptr() *scheduleError {
+	return &s
+}
+
 type getUserScheduleRequest struct {
 	Token        string                 `json:"token"`
 	LanguageCode wordsmith.LanguageCode `json:"language_code"`
@@ -111,7 +126,7 @@ type updateUserScheduleRequest struct {
 }
 
 type updateUserScheduleResponse struct {
-	Success bool `json:"success"`
+	Error *scheduleError `json:"error"`
 }
 
 func handleUpdateUserSchedule(body []byte) (interface{}, error) {
@@ -122,26 +137,26 @@ func handleUpdateUserSchedule(body []byte) (interface{}, error) {
 	userID, err := routetoken.ValidateTokenAndEmailAndGetUserID(req.Token, routes.SubscriptionManagementRouteEncryptionKey, email.FormatEmailAddress(req.EmailAddress))
 	if err != nil {
 		return updateUserScheduleResponse{
-			Success: false,
+			Error: scheduleErrorInvalidEmailAddress.Ptr(),
 		}, nil
 	}
 	languageCode, err := wordsmith.GetLanguageCodeFromString(req.LanguageCode)
 	if err != nil {
 		return updateUserScheduleResponse{
-			Success: false,
+			Error: scheduleErrorUnsupportedLanguage.Ptr(),
 		}, nil
 	}
 	loc, err := time.LoadLocation(req.IANATimezone)
 	if err != nil {
 		return updateUserScheduleResponse{
-			Success: false,
+			Error: scheduleErrorUnsupportedTimezone.Ptr(),
 		}, nil
 	}
 	switch {
 	case req.HourIndex < 0 || req.HourIndex > 23,
 		req.QuarterHourIndex < 0 || req.QuarterHourIndex > 3:
 		return updateUserScheduleResponse{
-			Success: false,
+			Error: scheduleErrorInvalidTime.Ptr(),
 		}, nil
 	}
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
@@ -155,9 +170,7 @@ func handleUpdateUserSchedule(body []byte) (interface{}, error) {
 	}); err != nil {
 		return nil, err
 	}
-	return updateUserScheduleResponse{
-		Success: true,
-	}, nil
+	return updateUserScheduleResponse{}, nil
 }
 
 type updateUserScheduleWithDayPreferencesRequest struct {
@@ -170,7 +183,7 @@ type updateUserScheduleWithDayPreferencesRequest struct {
 }
 
 type updateUserScheduleWithDayPreferencesResponse struct {
-	Success bool `json:"success"`
+	Error *scheduleError `json:"error,omitempty"`
 }
 
 func handleUpdateUserScheduleWithDayPreferences(userID users.UserID, body []byte) (interface{}, error) {
@@ -181,44 +194,44 @@ func handleUpdateUserScheduleWithDayPreferences(userID users.UserID, body []byte
 	tokenUserID, err := routetoken.ValidateTokenAndGetUserID(req.Token, routes.SubscriptionManagementRouteEncryptionKey)
 	if err != nil || userID != *tokenUserID {
 		return updateUserScheduleWithDayPreferencesResponse{
-			Success: false,
+			Error: scheduleErrorInvalidUser.Ptr(),
 		}, nil
 	}
 	languageCode, err := wordsmith.GetLanguageCodeFromString(req.LanguageCode)
 	if err != nil {
 		return updateUserScheduleWithDayPreferencesResponse{
-			Success: false,
+			Error: scheduleErrorUnsupportedLanguage.Ptr(),
 		}, nil
 	}
 	loc, err := time.LoadLocation(req.IANATimezone)
 	if err != nil {
 		return updateUserScheduleWithDayPreferencesResponse{
-			Success: false,
+			Error: scheduleErrorUnsupportedTimezone.Ptr(),
 		}, nil
 	}
 	switch {
 	case req.HourIndex < 0 || req.HourIndex > 23,
 		req.QuarterHourIndex < 0 || req.QuarterHourIndex > 3:
 		return updateUserScheduleWithDayPreferencesResponse{
-			Success: false,
+			Error: scheduleErrorInvalidTime.Ptr(),
 		}, nil
 	}
 	for _, pref := range req.DayPreferences {
 		if pref.DayIndex < 0 || pref.DayIndex > 6 {
 			return updateUserScheduleWithDayPreferencesResponse{
-				Success: false,
+				Error: scheduleErrorInvalidTime.Ptr(),
 			}, nil
 		}
 		if pref.NumberOfArticles < 0 || pref.NumberOfArticles > newsletter.DefaultNumberOfArticlesPerEmail {
 			return updateUserScheduleWithDayPreferencesResponse{
-				Success: false,
+				Error: scheduleErrorInvalidSettings.Ptr(),
 			}, nil
 		}
 		// Validate Content Topics
 		for _, t := range pref.ContentTopics {
 			if _, err := contenttopics.GetContentTopicForString(t.Str()); err != nil {
 				return updateUserScheduleWithDayPreferencesResponse{
-					Success: false,
+					Error: scheduleErrorInvalidSettings.Ptr(),
 				}, nil
 			}
 		}
@@ -250,7 +263,5 @@ func handleUpdateUserScheduleWithDayPreferences(userID users.UserID, body []byte
 	}); err != nil {
 		return nil, err
 	}
-	return updateUserScheduleWithDayPreferencesResponse{
-		Success: true,
-	}, nil
+	return updateUserScheduleWithDayPreferencesResponse{}, nil
 }
