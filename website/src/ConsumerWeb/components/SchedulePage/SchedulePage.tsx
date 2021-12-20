@@ -4,6 +4,7 @@ import { RouteComponentProps } from 'react-router-dom';
 import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 import Divider from '@material-ui/core/Divider';
+import Snackbar from '@material-ui/core/Snackbar';
 
 import Page from 'common/components/Page/Page';
 import DisplayCard from 'common/components/DisplayCard/DisplayCard';
@@ -11,8 +12,10 @@ import DisplayCardHeader from 'common/components/DisplayCard/DisplayCardHeader';
 import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
 import { PrimaryButton } from 'common/components/Button/Button';
 import { PrimaryTextField } from 'common/components/TextField/TextField';
+import Alert from 'common/components/Alert/Alert';
 
 import {
+    UserScheduleError,
     getUserSchedule,
     GetUserScheduleResponse,
     updateUserSchedule,
@@ -24,6 +27,16 @@ import {
 } from 'ConsumerWeb/api/useraccounts/useraccounts';
 
 import TimeSelector from './TimeSelector';
+
+const errorMessages: { [k: string]: string } = {
+    [UserScheduleError.InvalidUser]:  "Your session may be invalid. Try logging out and logging back in",
+    [UserScheduleError.InvalidEmailAddress]: "Incorrect email address. Make sure it’s spelled right or try clicking the manage link from another newsletter email.",
+    [UserScheduleError.UnsupportedLanguage]: "Babblegraph currently doesn’t support that language",
+    [UserScheduleError.UnsupportedTimezone]: "That timezone is not supported by Babblegraph",
+    [UserScheduleError.InvalidTime]: "That time is invalid.",
+    [UserScheduleError.InvalidSettings]: "Your desired settings are invalid. Follow hints on the inputs to make sure they’re valid.",
+    "other": "Something went wrong processing your request",
+}
 
 type Params = {
     token: string;
@@ -61,6 +74,8 @@ const SchedulePage = (props: SchedulePageProps) => {
     const [ emailAddress, setEmailAddress ] = useState<string>(null);
 
     const [ isLoading, setIsLoading ] = useState<boolean>(true);
+    const [ error, setError ] = useState<string>(null);
+    const [ success, setSuccess ] = useState<boolean>(false);
 
     useEffect(() => {
         getUserProfile({
@@ -83,10 +98,12 @@ const SchedulePage = (props: SchedulePageProps) => {
             },
             (err: Error) => {
                 setIsLoading(false);
+                setError(errorMessages["other"]);
             });
         },
         (err: Error) => {
             setIsLoading(false);
+            setError(errorMessages["other"]);
         });
     }, []);
 
@@ -106,12 +123,16 @@ const SchedulePage = (props: SchedulePageProps) => {
             },
             (resp: UpdateUserScheduleResponse) => {
                 setIsLoading(false);
-                if (resp.success) {
+                if (resp.error) {
+                    setError(errorMessages[resp.error] || errorMessages["other"]);
+                } else {
                     setInitialIANATimezone(ianaTimezone);
+                    setSuccess(true);
                 }
             },
             (err: Error) => {
                 setIsLoading(false);
+                setError(errorMessages["other"]);
             });
         }
     }
@@ -150,6 +171,12 @@ const SchedulePage = (props: SchedulePageProps) => {
                             )
                         }
                     </DisplayCard>
+                    <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError(null)}>
+                        <Alert severity="error">{error}</Alert>
+                    </Snackbar>
+                        <Snackbar open={success} autoHideDuration={6000} onClose={() => setSuccess(false)}>
+                            <Alert severity="success">Successfully updated your schedule. Changes may take up to 24 hours to take effect!</Alert>
+                        </Snackbar>
                 </Grid>
             </Grid>
         </Page>

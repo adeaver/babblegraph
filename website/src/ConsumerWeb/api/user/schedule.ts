@@ -1,5 +1,14 @@
 import { makePostRequestWithStandardEncoding } from 'util/bgfetch/bgfetch';
 
+export enum UserScheduleError {
+    InvalidUser = 'invalid-user',
+    InvalidEmailAddress = 'invalid-email',
+    UnsupportedLanguage = 'unsupported-language',
+    UnsupportedTimezone = 'unsupported-timezone',
+    InvalidTime = 'invalid-time',
+    InvalidSettings = 'invalid-settings',
+}
+
 export type DayPreferences = {
     isActive: boolean;
     numberOfArticles: number;
@@ -42,7 +51,7 @@ export type UpdateUserScheduleRequest = {
 }
 
 export type UpdateUserScheduleResponse = {
-    success: boolean;
+    error: UserScheduleError | null;
 }
 
 export function updateUserSchedule(
@@ -69,7 +78,7 @@ export type UpdateUserScheduleWithDayPreferencesRequest = {
 }
 
 export type UpdateUserScheduleWithDayPreferencesResponse = {
-    success: boolean;
+    error: UserScheduleError | null;
 }
 
 export function updateUserScheduleWithDayPreferences(
