@@ -96,7 +96,7 @@ const SchedulePage = (props: SchedulePageProps) => {
                 setInitialIANATimezone(resp.userIanaTimezone);
                 setIANATimezone(resp.userIanaTimezone);
                 setHourIndex(resp.hourIndex);
-                setQuarterHourIndex(resp.quarterHourIndex);
+                setQuarterHourIndex(resp.quarterHourIndex * 15);
                 setPreferencesByDay(resp.preferencesByDay);
                 setIsLoading(false);
             },
@@ -169,6 +169,7 @@ const SchedulePage = (props: SchedulePageProps) => {
                                     {
                                         hasSubscription && (
                                             <CustomizationByDayTool
+                                                languageCode="es"
                                                 preferencesByDay={preferencesByDay} />
                                         )
                                     }
