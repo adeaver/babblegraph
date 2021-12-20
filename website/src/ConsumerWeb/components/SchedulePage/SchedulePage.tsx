@@ -52,6 +52,7 @@ type SchedulePageProps = RouteComponentProps<Params>
 const SchedulePage = (props: SchedulePageProps) => {
     const { token } = props.match.params;
 
+    const [ initialIANATimezone, setInitialIANATimezone ] = useState<string>(Intl.DateTimeFormat().resolvedOptions().timeZone || "America/New_York");
     const [ ianaTimezone, setIANATimezone ] = useState<string>(Intl.DateTimeFormat().resolvedOptions().timeZone || "America/New_York");
     const [ hourIndex, setHourIndex ] = useState<number>(7);
     const [ quarterHourIndex, setQuarterHourIndex ] = useState<number>(0);
@@ -74,6 +75,7 @@ const SchedulePage = (props: SchedulePageProps) => {
                 languageCode: "es",
             },
             (resp: GetUserScheduleResponse) => {
+                setInitialIANATimezone(resp.userIanaTimezone);
                 setIANATimezone(resp.userIanaTimezone);
                 setHourIndex(resp.hourIndex);
                 setQuarterHourIndex(resp.quarterHourIndex);
@@ -104,6 +106,9 @@ const SchedulePage = (props: SchedulePageProps) => {
             },
             (resp: UpdateUserScheduleResponse) => {
                 setIsLoading(false);
+                if (resp.success) {
+                    setInitialIANATimezone(ianaTimezone);
+                }
             },
             (err: Error) => {
                 setIsLoading(false);
@@ -129,6 +134,7 @@ const SchedulePage = (props: SchedulePageProps) => {
                                         backArrowDestination={`/manage/${token}`} />
                                     <Divider />
                                     <TimeSelector
+                                        initialIANATimezone={initialIANATimezone}
                                         ianaTimezone={ianaTimezone}
                                         hourIndex={hourIndex}
                                         quarterHourIndex={quarterHourIndex}

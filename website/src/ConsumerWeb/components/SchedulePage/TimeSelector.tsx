@@ -31,6 +31,7 @@ const styleClasses = makeStyles({
 });
 
 type TimeSelectorProps = {
+    initialIANATimezone: string;
     ianaTimezone: string;
     hourIndex: number;
     quarterHourIndex: number;
@@ -47,10 +48,11 @@ type TimeZoneOption = {
 
 const TimeSelector = (props: TimeSelectorProps) => {
     const classes = styleClasses();
-    const currentTimezoneOption = timezones.filter((t: TimeZone) => t.tzCode === props.ianaTimezone)[0]
+    const currentTimezoneOptions = timezones.filter((t: TimeZone) => t.tzCode === props.ianaTimezone);
+    const initialTimezoneOptions = timezones.filter((t: TimeZone) => t.tzCode === props.initialIANATimezone);
 
-    const initialTimezone = currentTimezoneOption ? currentTimezoneOption.name : "Unknown";
-    const [ currentTimezone, setCurrentTimezone ] = useState<string>(currentTimezoneOption ? currentTimezoneOption.name : props.ianaTimezone.replace("_", " ").split("/")[1]);
+    const initialTimezone = initialTimezoneOptions.length ? initialTimezoneOptions[0].name : "Unknown";
+    const [ currentTimezone, setCurrentTimezone ] = useState<string>(currentTimezoneOptions.length ? currentTimezoneOptions[0].name : props.ianaTimezone.replace("_", " ").split("/")[1]);
 
     const [ period, setPeriod ] = useState<string>(props.hourIndex >= 12 ? "PM" : "AM");
     const [ displayHour, setDisplayHour ] = useState<number>(
