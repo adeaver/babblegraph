@@ -118,7 +118,7 @@ const SchedulePage = (props: SchedulePageProps) => {
                 // TODO(multiple-languages): Make this dynamic
                 languageCode: "es",
                 hourIndex: hourIndex,
-                quarterHourIndex: quarterHourIndex,
+                quarterHourIndex: quarterHourIndex / 15,
                 ianaTimezone: ianaTimezone,
             },
             (resp: UpdateUserScheduleResponse) => {
