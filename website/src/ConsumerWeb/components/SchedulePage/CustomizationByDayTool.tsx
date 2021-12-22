@@ -6,6 +6,8 @@ import Grid from '@material-ui/core/Grid';
 import DisplayCard from 'common/components/DisplayCard/DisplayCard';
 import { Heading3 } from 'common/typography/Heading';
 import { Alignment, TypographyColor } from 'common/typography/common';
+import { PrimaryCheckbox } from 'common/components/Checkbox/Checkbox';
+import { PrimaryTextField } from 'common/components/TextField/TextField';
 
 import {
     DayPreferences,
@@ -67,10 +69,29 @@ type DayPreferencesViewProps = {
 const DayPreferencesView = (props: DayPreferencesViewProps) => {
     return (
         <DisplayCard>
-            <Heading3 color={TypographyColor.Primary}
-                align={Alignment.Left}>
-                {props.dayTitle}
-            </Heading3>
+            <Grid container>
+                <Grid item xs={1} md={2}>
+                    <PrimaryCheckbox
+                        checked={props.dayPreferences.isActive}
+                        onChange={}
+                        name={`checkbox-${props.dayTitle}`} />
+
+                </Grid>
+                <Grid item xs={11} md={10}>
+                    <Heading3
+                        align={Alignment.Left}
+                        color={props.dayPreferences.isActive ? TypographyColor.Primary : TypographyColor.Gray}>
+                        {props.dayTitle}
+                    </Heading3>
+                </Grid>
+            </Grid>
+            <PrimaryTextField
+                id="email"
+                value={props.dayPreferences.numberOfArticles}
+                type="number"
+                label="Number of Articles per Email (4 to 12)"
+                variant="outlined"
+                onChange={handleEmailAddressChange} />
         </DisplayCard>
     );
 }
