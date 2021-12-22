@@ -111,6 +111,10 @@ const SchedulePage = (props: SchedulePageProps) => {
         });
     }, []);
 
+    const handleUpdatePreferencesByDay = (d: Array<DayPreferences>) => {
+        console.log(d);
+        setPreferencesByDay(d);
+    }
     const handleSubmit = () => {
         if (hasSubscription) {
             console.log("Will update everything");
@@ -170,6 +174,7 @@ const SchedulePage = (props: SchedulePageProps) => {
                                         hasSubscription && (
                                             <CustomizationByDayTool
                                                 languageCode="es"
+                                                handleUpdatePreferencesByDay={handleUpdatePreferencesByDay}
                                                 preferencesByDay={preferencesByDay} />
                                         )
                                     }
