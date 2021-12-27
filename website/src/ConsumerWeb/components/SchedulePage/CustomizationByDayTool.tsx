@@ -134,7 +134,7 @@ const DayPreferencesView = (props: DayPreferencesViewProps) => {
         }
     }
 
-    const [ contentTopics, setContentTopics ] = useState<string[]>(props.dayPreferences.contentTopics);
+    const [ contentTopics, setContentTopics ] = useState<string[]>(props.dayPreferences.contentTopics != null ? props.dayPreferences.contentTopics : []);
     const handleUpdateContentTopics = (remove: boolean) => {
         return (contentTopic: string) => {
             const nextContentTopics = remove ? (
@@ -145,7 +145,7 @@ const DayPreferencesView = (props: DayPreferencesViewProps) => {
             setContentTopics(nextContentTopics);
             props.handleUpdateDayPreferences({
                 ...props.dayPreferences,
-                contentTopics: contentTopics,
+                contentTopics: nextContentTopics,
             });
         }
     }

@@ -21,6 +21,8 @@ import {
     updateUserSchedule,
     UpdateUserScheduleResponse,
     DayPreferences,
+    UpdateUserScheduleWithDayPreferencesResponse,
+    updateUserScheduleWithDayPreferences,
 } from 'ConsumerWeb/api/user/schedule';
 import {
     getUserProfile,
@@ -112,14 +114,35 @@ const SchedulePage = (props: SchedulePageProps) => {
     }, []);
 
     const handleUpdatePreferencesByDay = (d: Array<DayPreferences>) => {
-        console.log(d);
         setPreferencesByDay(d);
     }
     const handleSubmit = () => {
+        setIsLoading(true);
         if (hasSubscription) {
-            console.log("Will update everything");
+            updateUserScheduleWithDayPreferences({
+                emailAddress: emailAddress,
+                token: token,
+                // TODO(multiple-languages): Make this dynamic
+                languageCode: "es",
+                hourIndex: hourIndex,
+                quarterHourIndex: quarterHourIndex / 15,
+                ianaTimezone: ianaTimezone,
+                dayPreferences: preferencesByDay,
+            },
+            (resp: UpdateUserScheduleWithDayPreferencesResponse) => {
+                setIsLoading(false);
+                if (resp.error) {
+                    setError(errorMessages[resp.error] || errorMessages["other"]);
+                } else {
+                    setInitialIANATimezone(ianaTimezone);
+                    setSuccess(true);
+                }
+            },
+            (err: Error) => {
+                setIsLoading(false);
+                setError(errorMessages["other"]);
+            });
         } else {
-            setIsLoading(true);
             updateUserSchedule({
                 emailAddress: emailAddress,
                 token: token,
