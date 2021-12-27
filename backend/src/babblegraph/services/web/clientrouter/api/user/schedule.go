@@ -105,6 +105,7 @@ func handleGetUserSchedule(body []byte) (interface{}, error) {
 				IsActive:         userDayPreference.IsActive,
 				NumberOfArticles: userDayPreference.NumberOfArticles,
 				ContentTopics:    userDayPreference.ContentTopics,
+				DayIndex:         userDayPreference.DayOfWeekIndex,
 			}
 		}
 	}

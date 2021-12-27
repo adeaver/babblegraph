@@ -20,12 +20,16 @@ import {
     GetUserScheduleResponse,
     updateUserSchedule,
     UpdateUserScheduleResponse,
+    DayPreferences,
+    UpdateUserScheduleWithDayPreferencesResponse,
+    updateUserScheduleWithDayPreferences,
 } from 'ConsumerWeb/api/user/schedule';
 import {
     getUserProfile,
     GetUserProfileResponse
 } from 'ConsumerWeb/api/useraccounts/useraccounts';
 
+import CustomizationByDayTool from './CustomizationByDayTool';
 import TimeSelector from './TimeSelector';
 
 const errorMessages: { [k: string]: string } = {
@@ -69,6 +73,7 @@ const SchedulePage = (props: SchedulePageProps) => {
     const [ ianaTimezone, setIANATimezone ] = useState<string>(Intl.DateTimeFormat().resolvedOptions().timeZone || "America/New_York");
     const [ hourIndex, setHourIndex ] = useState<number>(7);
     const [ quarterHourIndex, setQuarterHourIndex ] = useState<number>(0);
+    const [ preferencesByDay, setPreferencesByDay ] = useState<Array<DayPreferences>>([]);
 
     const [ hasSubscription, setHasSubscription ] = useState<boolean>(false);
     const [ emailAddress, setEmailAddress ] = useState<string>(null);
@@ -93,7 +98,8 @@ const SchedulePage = (props: SchedulePageProps) => {
                 setInitialIANATimezone(resp.userIanaTimezone);
                 setIANATimezone(resp.userIanaTimezone);
                 setHourIndex(resp.hourIndex);
-                setQuarterHourIndex(resp.quarterHourIndex);
+                setQuarterHourIndex(resp.quarterHourIndex * 15);
+                setPreferencesByDay(resp.preferencesByDay);
                 setIsLoading(false);
             },
             (err: Error) => {
@@ -107,18 +113,43 @@ const SchedulePage = (props: SchedulePageProps) => {
         });
     }, []);
 
+    const handleUpdatePreferencesByDay = (d: Array<DayPreferences>) => {
+        setPreferencesByDay(d);
+    }
     const handleSubmit = () => {
+        setIsLoading(true);
         if (hasSubscription) {
-            console.log("Will update everything");
+            updateUserScheduleWithDayPreferences({
+                emailAddress: emailAddress,
+                token: token,
+                // TODO(multiple-languages): Make this dynamic
+                languageCode: "es",
+                hourIndex: hourIndex,
+                quarterHourIndex: quarterHourIndex / 15,
+                ianaTimezone: ianaTimezone,
+                dayPreferences: preferencesByDay,
+            },
+            (resp: UpdateUserScheduleWithDayPreferencesResponse) => {
+                setIsLoading(false);
+                if (resp.error) {
+                    setError(errorMessages[resp.error] || errorMessages["other"]);
+                } else {
+                    setInitialIANATimezone(ianaTimezone);
+                    setSuccess(true);
+                }
+            },
+            (err: Error) => {
+                setIsLoading(false);
+                setError(errorMessages["other"]);
+            });
         } else {
-            setIsLoading(true);
             updateUserSchedule({
                 emailAddress: emailAddress,
                 token: token,
                 // TODO(multiple-languages): Make this dynamic
                 languageCode: "es",
                 hourIndex: hourIndex,
-                quarterHourIndex: quarterHourIndex,
+                quarterHourIndex: quarterHourIndex / 15,
                 ianaTimezone: ianaTimezone,
             },
             (resp: UpdateUserScheduleResponse) => {
@@ -162,6 +193,14 @@ const SchedulePage = (props: SchedulePageProps) => {
                                         handleUpdateIANATimezone={setIANATimezone}
                                         handleUpdateHourIndex={setHourIndex}
                                         handleUpdateQuarterHourIndex={setQuarterHourIndex} />
+                                    {
+                                        hasSubscription && (
+                                            <CustomizationByDayTool
+                                                languageCode="es"
+                                                handleUpdatePreferencesByDay={handleUpdatePreferencesByDay}
+                                                preferencesByDay={preferencesByDay} />
+                                        )
+                                    }
                                     <ConfirmationForm
                                         emailAddress={emailAddress}
                                         userHasSubscription={hasSubscription}
