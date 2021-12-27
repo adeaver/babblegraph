@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 import ClearIcon from '@material-ui/icons/Clear';
+import Autocomplete from '@material-ui/lab/Autocomplete';
 
 import Color from 'common/styles/colors';
 import DisplayCard from 'common/components/DisplayCard/DisplayCard';
@@ -10,7 +11,8 @@ import { Heading3, Heading4 } from 'common/typography/Heading';
 import { Alignment, TypographyColor } from 'common/typography/common';
 import { PrimaryCheckbox } from 'common/components/Checkbox/Checkbox';
 import { PrimaryTextField } from 'common/components/TextField/TextField';
-import Paragraph from 'common/typography/Paragraph';
+import { PrimaryButton } from 'common/components/Button/Button';
+import Paragraph, { Size } from 'common/typography/Paragraph';
 
 import {
     DayPreferences,
@@ -25,6 +27,7 @@ const daysOfTheWeekByLanguageCode: { [languageCode: string]: Array<string> } = {
 }
 const minimumNumberOfArticles = 4;
 const maximumNumberOfArticles = 12;
+const maxContentTopicsPerDay = 6;
 
 const styleClasses = makeStyles({
     preferencesContainer: {
@@ -36,6 +39,9 @@ const styleClasses = makeStyles({
     },
     removeContentTopicIcon: {
         color: Color.Warning,
+    },
+    buttonWithMargin: {
+        margin: '10px 0',
     },
 });
 
@@ -68,24 +74,32 @@ const CustomizationByDayTool = (props: CustomizationByDayToolProps) => {
 
     const classes = styleClasses();
     return (
-        <Grid container>
-            {
-                Array(7).fill(0).map((_, idx: number) => {
-                    const dayPreferencesForIdx = dayPreferencesToIndexMap[idx];
-                    if (!!dayPreferencesForIdx) {
-                        return (
-                            <Grid className={classes.preferencesContainer} item xs={12} md={6}>
-                                <DayPreferencesView key={`day-preferences-view-${idx}`}
-                                    handleUpdateDayPreferences={handleUpdateDayPreferences}
-                                    dayTitle={daysOfTheWeekForLanguageCode[idx]}
-                                    dayPreferences={dayPreferencesForIdx} />
-                            </Grid>
-                        );
-                    }
-                    return;
-                })
-            }
-        </Grid>
+        <div>
+            <Heading3 color={TypographyColor.Primary}>
+                Customize your newsletter by day
+            </Heading3>
+            <Paragraph size={Size.Small}>
+                Hit the checkmark on any day you do not wish to receive a newsletter
+            </Paragraph>
+            <Grid container>
+                {
+                    Array(7).fill(0).map((_, idx: number) => {
+                        const dayPreferencesForIdx = dayPreferencesToIndexMap[idx];
+                        if (!!dayPreferencesForIdx) {
+                            return (
+                                <Grid className={classes.preferencesContainer} item xs={12} md={6}>
+                                    <DayPreferencesView key={`day-preferences-view-${idx}`}
+                                        handleUpdateDayPreferences={handleUpdateDayPreferences}
+                                        dayTitle={daysOfTheWeekForLanguageCode[idx]}
+                                        dayPreferences={dayPreferencesForIdx} />
+                                </Grid>
+                            );
+                        }
+                        return;
+                    })
+                }
+            </Grid>
+        </div>
     );
 }
 
@@ -148,11 +162,11 @@ const DayPreferencesView = (props: DayPreferencesViewProps) => {
 
                 </Grid>
                 <Grid item xs={11} md={10}>
-                    <Heading3
+                    <Heading4
                         align={Alignment.Left}
                         color={isActive ? TypographyColor.Primary : TypographyColor.Gray}>
                         {props.dayTitle}
-                    </Heading3>
+                    </Heading4>
                 </Grid>
             </Grid>
             <PrimaryTextField
@@ -167,7 +181,8 @@ const DayPreferencesView = (props: DayPreferencesViewProps) => {
             <ContentTopicView
                 dayIndex={props.dayPreferences.dayIndex}
                 selectedContentTopics={contentTopics}
-                handleRemoveContentTopic={handleUpdateContentTopics(true)} />
+                handleRemoveContentTopic={handleUpdateContentTopics(true)}
+                handleAddContentTopic={handleUpdateContentTopics(false)} />
         </DisplayCard>
     );
 }
@@ -177,6 +192,7 @@ type ContentTopicViewProps = {
     selectedContentTopics: string[];
 
     handleRemoveContentTopic: (topic: string) => void;
+    handleAddContentTopic: (topic: string) => void;
 }
 
 const ContentTopicView = (props: ContentTopicViewProps) => {
@@ -193,12 +209,33 @@ const ContentTopicView = (props: ContentTopicViewProps) => {
                 }), {})
         )
     );
+
+    const [ newOption, setNewOption ] = useState<ContentTopicDisplayMapping | null>(null);
+    const availableMappings = contentTopicDisplayMappings
+        .filter((mapping: ContentTopicDisplayMapping) => {
+            return mapping.apiValue.reduce((acc: number, apiValue: string) => {
+                const nextValue = (props.selectedContentTopics || []).indexOf(apiValue);
+                return nextValue > acc ? nextValue : acc
+            }, -1) === -1
+        });
+    const handleAddTopicChange = (_: React.ChangeEvent<HTMLSelectElement>, selectedOption: ContentTopicDisplayMapping) => {
+        setNewOption(selectedOption);
+    }
+    const submitNewOption = () => {
+        setNewOption(null);
+        newOption.apiValue.forEach((apiValue: string) => props.handleAddContentTopic(apiValue));
+    }
+
     const classes = styleClasses();
     return (
         <div>
             <Heading4 color={TypographyColor.Primary}>
                 Topics on this day
             </Heading4>
+            <Paragraph size={Size.Small}>
+                Any topics selected will show up in your newsletter for this day if there is content available for it. You can select up to 6 topics.
+                If you select fewer than 4 topics, then random topics from your selected interests will be in the newsletter.
+            </Paragraph>
             {
                 selectedContentTopicMappings.map((mapping: ContentTopicDisplayMapping, idx: number) => (
                     <Grid container
@@ -218,6 +255,22 @@ const ContentTopicView = (props: ContentTopicViewProps) => {
                     </Grid>
                 ))
             }
+            <Paragraph size={Size.Small}>
+                Add up to 6 topics you want to appear on this day
+            </Paragraph>
+            <Autocomplete
+                id={`${props.dayIndex}-topic-selector`}
+                onChange={handleAddTopicChange}
+                options={availableMappings}
+                disabled={(props.selectedContentTopics || []).length >= maxContentTopicsPerDay}
+                getOptionLabel={(option: ContentTopicDisplayMapping) => option.displayText}
+                renderInput={(params) => <PrimaryTextField label="Add a topic" {...params} />} />
+            <PrimaryButton
+                className={classes.buttonWithMargin}
+                disabled={(props.selectedContentTopics || []).length >= maxContentTopicsPerDay}
+                onClick={submitNewOption}>
+                Add new topic
+            </PrimaryButton>
         </div>
     );
 }
