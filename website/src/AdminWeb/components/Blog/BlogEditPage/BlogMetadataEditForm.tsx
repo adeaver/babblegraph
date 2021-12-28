@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 
+import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 
 import { Heading3 } from 'common/typography/Heading';
 import { TypographyColor } from 'common/typography/common';
 import DisplayCard from 'common/components/DisplayCard/DisplayCard';
 import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
+import { PrimaryButton } from 'common/components/Button/Button';
 import { PrimaryTextField } from 'common/components/TextField/TextField';
 
 import {
@@ -13,6 +15,13 @@ import {
     getBlogPostMetadataByURLPath,
     GetBlogPostMetadataByURLPathResponse,
 } from 'AdminWeb/api/blog/blog';
+
+const styleClasses = makeStyles({
+    editBlogFormTextField: {
+        minWidth: '100%',
+        margin: '10px 0',
+    },
+});
 
 type BlogMetadataEditFormProps = {
     urlPath: string;
@@ -41,7 +50,11 @@ const BlogMetadataEditForm = (props: BlogMetadataEditFormProps) => {
     if (isLoading) {
         body = <LoadingSpinner />;
     } else if (!!blogPostMetadata) {
-        body = <EditBlogPostMetadataForm {...blogPostMetadata} />
+        body = (
+            <EditBlogPostMetadataForm
+                setIsLoading={setIsLoading}
+                blogPostMetadata={blogPostMetadata} />
+        );
     } else {
         body = (
             <Heading3 color={TypographyColor.Warning}>
@@ -73,11 +86,14 @@ type EditBlogPostMetadataFormProps = {
     setIsLoading: (isLoading: boolean) => void;
 }
 
-const EditBlogPostMetadataForm = (props: BlogPostMetadata) => {
+const EditBlogPostMetadataForm = (props: EditBlogPostMetadataFormProps) => {
     const [ title, setTitle ] = useState<string>(props.blogPostMetadata.title);
-    const [ urlPath, setURLPath ] = useState<string>(props.blogPostMetadata.urlPath);
     const [ description, setDescription ] = useState<string>(props.blogPostMetadata.description);
     const [ authorName, setAuthorName ] = useState<string>(props.blogPostMetadata.authorName);
+
+    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+    }
 
     return (
         <form onSubmit={handleSubmit} noValidate autoComplete="off">
@@ -85,20 +101,19 @@ const EditBlogPostMetadataForm = (props: BlogPostMetadata) => {
                 Edit Metadata
             </Heading3>
             <EditBlogPostMetadataFormTextField
-                name="blogURLPath"
-                label="URL Path"
-                handleChange={setURLPath} />
-            <EditBlogPostMetadataFormTextField
                 name="blogTitle"
                 label="Title"
+                currentValue={title}
                 handleChange={setTitle} />
             <EditBlogPostMetadataFormTextField
                 name="blogDesc"
                 label="Description"
+                currentValue={description}
                 handleChange={setDescription} />
             <EditBlogPostMetadataFormTextField
                 name="blogAuthorName"
                 label="Author Name"
+                currentValue={authorName}
                 handleChange={setAuthorName} />
             <Grid container>
                 <Grid item xs={false} md={3}>
@@ -119,6 +134,7 @@ const EditBlogPostMetadataForm = (props: BlogPostMetadata) => {
 type EditBlogPostMetadataFormTextFieldProps = {
     name: string;
     label: string;
+    currentValue: string;
     handleChange: (s: string) => void;
 }
 
@@ -134,8 +150,9 @@ const EditBlogPostMetadataFormTextField = (props: EditBlogPostMetadataFormTextFi
             </Grid>
             <Grid item xs={12} md={6}>
                 <PrimaryTextField
-                    className={classes.addBlogFormTextField}
+                    className={classes.editBlogFormTextField}
                     id={props.name}
+                    value={props.currentValue}
                     label={props.label}
                     onChange={handleChange}
                     variant="outlined" />
