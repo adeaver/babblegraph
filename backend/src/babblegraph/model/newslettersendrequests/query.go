@@ -91,7 +91,6 @@ func GetOrCreateSendRequestsForUsersForDay(c ctx.LogContext, tx *sqlx.Tx, userID
 
 func GetOutstandingSendRequestsForUser(tx *sqlx.Tx, userID users.UserID, languageCode wordsmith.LanguageCode) ([]NewsletterSendRequest, error) {
 	query, args, err := sqlx.In(fmt.Sprintf(getOutstandingSendRequestsForUserQuery, userID, languageCode), []PayloadStatus{
-		PayloadStatusNoSendRequested,
 		PayloadStatusUnverifiedUser,
 		PayloadStatusSent,
 		PayloadStatusDeleted,

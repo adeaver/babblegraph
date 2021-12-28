@@ -284,7 +284,8 @@ func updateOutstandingSendRequests(c ctx.LogContext, tx *sqlx.Tx, userID users.U
 		return err
 	}
 	for _, sendRequest := range outstandingNewsletterSendRequests {
-		if sendRequest.DateOfSend.Before(time.Now().Add(2 * config.NewsletterSendRequestSyncInterval)) {
+		if sendRequest.DateOfSend.Before(time.Now().Add(4 * config.NewsletterSendRequestSyncInterval)) {
+			c.Debugf("Send request with ID %s is in the past", sendRequest.ID)
 			continue
 		}
 		sendRequestUTCMidnight := timeutils.ConvertToMidnight(sendRequest.DateOfSend.UTC())
@@ -297,9 +298,9 @@ func updateOutstandingSendRequests(c ctx.LogContext, tx *sqlx.Tx, userID users.U
 		case err != nil:
 			c.Errorf("Error getting schedule for user %s: %s", userID, err.Error())
 			return err
-		case scheduleForDay.GetUTCSendTime().Before(time.Now()):
-			continue
-		case scheduleForDay.GetUTCSendTime().Before(time.Now().Add(2 * config.NewsletterSendRequestSyncInterval)):
+		case scheduleForDay.GetUTCSendTime().Before(time.Now()),
+			scheduleForDay.GetUTCSendTime().Before(time.Now().Add(4 * config.NewsletterSendRequestSyncInterval)):
+			c.Debugf("Send request with ID %s will be sent too soon", sendRequest.ID)
 			continue
 		case !scheduleForDay.IsSendRequested() && sendRequest.PayloadStatus != newslettersendrequests.PayloadStatusNoSendRequested:
 			if err := newslettersendrequests.UpdateSendRequestStatus(tx, sendRequest.ID, newslettersendrequests.PayloadStatusNoSendRequested); err != nil {
@@ -307,6 +308,7 @@ func updateOutstandingSendRequests(c ctx.LogContext, tx *sqlx.Tx, userID users.U
 			}
 			continue
 		}
+		c.Debugf("Updating send request with ID %s", sendRequest.ID)
 		// TODO: handle configuration changes (i.e. content topics, number of articles, etc.)
 		if scheduleForDay.IsSendRequested() && sendRequest.PayloadStatus == newslettersendrequests.PayloadStatusNoSendRequested {
 			if err := newslettersendrequests.UpdateSendRequestStatus(tx, sendRequest.ID, newslettersendrequests.PayloadStatusNeedsPreload); err != nil {

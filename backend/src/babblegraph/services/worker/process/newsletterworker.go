@@ -128,6 +128,7 @@ func StartNewsletterFulfillmentWorkerThread(newsletterProcessor *newsletterproce
 				time.Sleep(defaultPreloadWaitInterval)
 				continue
 			}
+			dateOfSendUTCMidnight := timeutils.ConvertToMidnight(sendRequest.DateOfSend.UTC())
 			if database.WithTx(func(tx *sqlx.Tx) error {
 				user, err := users.GetUser(tx, sendRequest.UserID)
 				switch {
@@ -138,6 +139,14 @@ func StartNewsletterFulfillmentWorkerThread(newsletterProcessor *newsletterproce
 				}
 				c.Infof("Found user %s", user.ID)
 				if err := newslettersendrequests.UpdateSendRequestStatus(tx, sendRequest.ID, newslettersendrequests.PayloadStatusSent); err != nil {
+					return err
+				}
+				userNewsletterSchedule, err := usernewsletterschedule.GetUserNewsletterScheduleForUTCMidnight(c, tx, usernewsletterschedule.GetUserNewsletterScheduleForUTCMidnightInput{
+					UserID:           sendRequest.UserID,
+					LanguageCode:     sendRequest.LanguageCode,
+					DayAtUTCMidnight: dateOfSendUTCMidnight,
+				})
+				if err != nil {
 					return err
 				}
 				data, err := s3Storage.GetData("prod-spaces-1", sendRequest.GetFileKey())
@@ -163,7 +172,7 @@ func StartNewsletterFulfillmentWorkerThread(newsletterProcessor *newsletterproce
 					return err
 				}
 				c.Debugf("Created HTML %s", *newsletterHTML)
-				today := time.Now()
+				today := userNewsletterSchedule.GetSendTimeInUserTimezone()
 				subject := fmt.Sprintf("Babblegraph Newsletter - %s %d, %d", today.Month().String(), today.Day(), today.Year())
 				return email.SendEmailWithHTMLBody(tx, emailClient, email.SendEmailWithHTMLBodyInput{
 					ID:           newsletter.EmailRecordID,
