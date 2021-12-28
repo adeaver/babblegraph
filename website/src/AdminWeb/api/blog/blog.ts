@@ -59,3 +59,24 @@ export function addBlogPostMetadata(
         onError,
     );
 }
+
+export type GetBlogPostMetadataByURLPathRequest = {
+    urlPath: string;
+}
+
+export type GetBlogPostMetadataByURLPathResponse = {
+    blogPost: BlogPostMetadata;
+}
+
+export function getBlogPostMetadataByURLPath(
+    req: GetBlogPostMetadataByURLPathRequest,
+    onSuccess: (resp: GetBlogPostMetadataByURLPathResponse) => void,
+    onError: (e: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<GetBlogPostMetadataByURLPathRequest, GetBlogPostMetadataByURLPathResponse>(
+        '/ops/api/blog/get_blog_post_metadata_by_url_path_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}

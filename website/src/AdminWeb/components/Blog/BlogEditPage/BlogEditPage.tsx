@@ -3,6 +3,8 @@ import { RouteComponentProps } from 'react-router-dom';
 
 import Page from 'common/components/Page/Page';
 
+import BlogMetadataEditForm from './BlogMetadataEditForm';
+
 type Params = {
     blogPath: string;
 }
@@ -14,7 +16,7 @@ const BlogEditPage = (props: BlogEditPageProps) => {
 
     return (
         <Page>
-            {blogPath}
+            <BlogMetadataEditForm urlPath={blogPath} />
         </Page>
     );
 }
