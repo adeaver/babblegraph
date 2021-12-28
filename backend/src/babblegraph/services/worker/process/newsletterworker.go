@@ -60,7 +60,7 @@ func StartNewsletterPreloadWorkerThread(newsletterProcessor *newsletterprocessin
 					if err != nil {
 						return err
 					}
-					if userNewsletterSchedule.IsSendRequested() {
+					if !userNewsletterSchedule.IsSendRequested() {
 						return newslettersendrequests.UpdateSendRequestStatus(tx, sendRequest.ID, newslettersendrequests.PayloadStatusNoSendRequested)
 					}
 				}

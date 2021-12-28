@@ -124,6 +124,7 @@ func GetUserNewsletterScheduleForUTCMidnight(c ctx.LogContext, tx *sqlx.Tx, inpu
 			return nil, err
 		}
 	}
+	c.Debugf("Got user send time of %+v for UTC midnight %+v with day of %+v", userScheduleTime, input.DayAtUTCMidnight, userScheduleDay)
 	return &ScheduleWithMetadata{
 		sendTimeAtUserTimezone: *userScheduleTime,
 		userScheduleDay:        userScheduleDay,
