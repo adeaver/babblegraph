@@ -29,7 +29,8 @@ const (
         $1, $2, $3, $4, $5, $6, $7
     )`
 
-	updateSendRequestSendAtTimeQuery = "UPDATE newsletter_send_requests SET hour_to_send_index_utc=$1, quarter_hour_to_send_index_utc=$2 WHERE _id = $3"
+	getOutstandingSendRequestsForUserQuery = "SELECT * FROM newsletter_send_requests WHERE user_id = '%s' AND language_code = '%s' AND payload_status NOT IN (?)"
+	updateSendRequestSendAtTimeQuery       = "UPDATE newsletter_send_requests SET hour_to_send_index_utc=$1, quarter_hour_to_send_index_utc=$2 WHERE _id = $3"
 
 	updateSendRequestStatusQuery = "UPDATE newsletter_send_requests SET payload_status = $1, last_modified_at=timezone('utc', now()) WHERE _id = $2"
 	insertDebounceRecordQuery    = "INSERT INTO newsletter_send_request_debounce_records (newsletter_send_request_id, to_payload_status) VALUES ($1, $2)"
@@ -88,6 +89,32 @@ func GetOrCreateSendRequestsForUsersForDay(c ctx.LogContext, tx *sqlx.Tx, userID
 	return out, nil
 }
 
+func GetOutstandingSendRequestsForUser(tx *sqlx.Tx, userID users.UserID, languageCode wordsmith.LanguageCode) ([]NewsletterSendRequest, error) {
+	query, args, err := sqlx.In(fmt.Sprintf(getOutstandingSendRequestsForUserQuery, userID, languageCode), []PayloadStatus{
+		PayloadStatusNoSendRequested,
+		PayloadStatusUnverifiedUser,
+		PayloadStatusSent,
+		PayloadStatusDeleted,
+	})
+	if err != nil {
+		return nil, nil
+	}
+	sql := tx.Rebind(query)
+	var matches []dbNewsletterSendRequest
+	if err := tx.Select(&matches, sql, args...); err != nil {
+		return nil, err
+	}
+	var out []NewsletterSendRequest
+	for _, m := range matches {
+		nonDB, err := m.ToNonDB()
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, *nonDB)
+	}
+	return out, nil
+}
+
 func GetNonDeletedSendRequestsOlderThan(tx *sqlx.Tx, t time.Time) ([]NewsletterSendRequest, error) {
 	var matches []dbNewsletterSendRequest
 	if err := tx.Select(&matches, getSendRequestsOlderThanWithStatusQuery, t, PayloadStatusDeleted); err != nil {
@@ -115,8 +142,10 @@ func UpdateSendRequestSendAtTime(tx *sqlx.Tx, id ID, sendAtTime time.Time) error
 }
 
 func UpdateSendRequestStatus(tx *sqlx.Tx, id ID, newStatus PayloadStatus) error {
-	if _, err := tx.Exec(insertDebounceRecordQuery, id, newStatus); err != nil {
-		return err
+	if newStatus != PayloadStatusNoSendRequested && newStatus != PayloadStatusNeedsPreload {
+		if _, err := tx.Exec(insertDebounceRecordQuery, id, newStatus); err != nil {
+			return err
+		}
 	}
 	if _, err := tx.Exec(updateSendRequestStatusQuery, newStatus, id); err != nil {
 		return err

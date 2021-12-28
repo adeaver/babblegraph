@@ -1,8 +1,10 @@
 package user
 
 import (
+	"babblegraph/config"
 	"babblegraph/model/contenttopics"
 	"babblegraph/model/newsletter"
+	"babblegraph/model/newslettersendrequests"
 	"babblegraph/model/routes"
 	"babblegraph/model/useraccounts"
 	"babblegraph/model/usernewsletterschedule"
@@ -131,6 +133,7 @@ type updateUserScheduleResponse struct {
 }
 
 func handleUpdateUserSchedule(body []byte) (interface{}, error) {
+	c := ctx.GetDefaultLogContext()
 	var req updateUserScheduleRequest
 	if err := json.Unmarshal(body, &req); err != nil {
 		return nil, err
@@ -161,13 +164,16 @@ func handleUpdateUserSchedule(body []byte) (interface{}, error) {
 		}, nil
 	}
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
-		return usernewsletterschedule.UpsertUserNewsletterSchedule(tx, usernewsletterschedule.UpsertUserNewsletterScheduleInput{
+		if err := usernewsletterschedule.UpsertUserNewsletterSchedule(tx, usernewsletterschedule.UpsertUserNewsletterScheduleInput{
 			UserID:           *userID,
 			LanguageCode:     *languageCode,
 			IANATimezone:     loc,
 			QuarterHourIndex: req.QuarterHourIndex,
 			HourIndex:        req.HourIndex,
-		})
+		}); err != nil {
+			return err
+		}
+		return updateOutstandingSendRequests(c, tx, *userID, *languageCode)
 	}); err != nil {
 		return nil, err
 	}
@@ -188,6 +194,8 @@ type updateUserScheduleWithDayPreferencesResponse struct {
 }
 
 func handleUpdateUserScheduleWithDayPreferences(userID users.UserID, body []byte) (interface{}, error) {
+	// TODO(web-context): don't use default log context here
+	c := ctx.GetDefaultLogContext()
 	var req updateUserScheduleWithDayPreferencesRequest
 	if err := json.Unmarshal(body, &req); err != nil {
 		return nil, err
@@ -254,15 +262,62 @@ func handleUpdateUserScheduleWithDayPreferences(userID users.UserID, body []byte
 				return err
 			}
 		}
-		return usernewsletterschedule.UpsertUserNewsletterSchedule(tx, usernewsletterschedule.UpsertUserNewsletterScheduleInput{
+		if err := usernewsletterschedule.UpsertUserNewsletterSchedule(tx, usernewsletterschedule.UpsertUserNewsletterScheduleInput{
 			UserID:           userID,
 			LanguageCode:     *languageCode,
 			IANATimezone:     loc,
 			QuarterHourIndex: req.QuarterHourIndex,
 			HourIndex:        req.HourIndex,
-		})
+		}); err != nil {
+			return err
+		}
+		return updateOutstandingSendRequests(c, tx, userID, *languageCode)
 	}); err != nil {
 		return nil, err
 	}
 	return updateUserScheduleWithDayPreferencesResponse{}, nil
+}
+
+func updateOutstandingSendRequests(c ctx.LogContext, tx *sqlx.Tx, userID users.UserID, languageCode wordsmith.LanguageCode) error {
+	outstandingNewsletterSendRequests, err := newslettersendrequests.GetOutstandingSendRequestsForUser(tx, userID, languageCode)
+	if err != nil {
+		return err
+	}
+	for _, sendRequest := range outstandingNewsletterSendRequests {
+		if sendRequest.DateOfSend.Before(time.Now().Add(2 * config.NewsletterSendRequestSyncInterval)) {
+			continue
+		}
+		sendRequestUTCMidnight := timeutils.ConvertToMidnight(sendRequest.DateOfSend.UTC())
+		scheduleForDay, err := usernewsletterschedule.GetUserNewsletterScheduleForUTCMidnight(c, tx, usernewsletterschedule.GetUserNewsletterScheduleForUTCMidnightInput{
+			UserID:           userID,
+			LanguageCode:     languageCode,
+			DayAtUTCMidnight: sendRequestUTCMidnight,
+		})
+		switch {
+		case err != nil:
+			c.Errorf("Error getting schedule for user %s: %s", userID, err.Error())
+			return err
+		case scheduleForDay.GetUTCSendTime().Before(time.Now()):
+			continue
+		case scheduleForDay.GetUTCSendTime().Before(time.Now().Add(2 * config.NewsletterSendRequestSyncInterval)):
+			continue
+		case !scheduleForDay.IsSendRequested() && sendRequest.PayloadStatus != newslettersendrequests.PayloadStatusNoSendRequested:
+			if err := newslettersendrequests.UpdateSendRequestStatus(tx, sendRequest.ID, newslettersendrequests.PayloadStatusNoSendRequested); err != nil {
+				return err
+			}
+			continue
+		}
+		// TODO: handle configuration changes (i.e. content topics, number of articles, etc.)
+		if scheduleForDay.IsSendRequested() && sendRequest.PayloadStatus == newslettersendrequests.PayloadStatusNoSendRequested {
+			if err := newslettersendrequests.UpdateSendRequestStatus(tx, sendRequest.ID, newslettersendrequests.PayloadStatusNeedsPreload); err != nil {
+				return err
+			}
+		}
+		if !sendRequest.DateOfSend.UTC().Equal(scheduleForDay.GetUTCSendTime()) {
+			if err := newslettersendrequests.UpdateSendRequestSendAtTime(tx, sendRequest.ID, scheduleForDay.GetUTCSendTime()); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }

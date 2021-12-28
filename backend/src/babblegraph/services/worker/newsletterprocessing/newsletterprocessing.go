@@ -1,6 +1,7 @@
 package newsletterprocessing
 
 import (
+	"babblegraph/config"
 	"babblegraph/model/newslettersendrequests"
 	"babblegraph/model/users"
 	"babblegraph/util/ctx"
@@ -12,8 +13,6 @@ import (
 
 	"github.com/jmoiron/sqlx"
 )
-
-const syncInterval = 3 * time.Hour
 
 type NewsletterProcessor struct {
 	mu                           sync.Mutex
@@ -33,7 +32,7 @@ func CreateNewsletterProcessor(c ctx.LogContext) (*NewsletterProcessor, error) {
 func (n *NewsletterProcessor) GetNextSendRequestToPreload(c ctx.LogContext) (*newslettersendrequests.NewsletterSendRequest, error) {
 	n.mu.Lock()
 	defer n.mu.Unlock()
-	if time.Now().After(n.timeOfLastSync.Add(syncInterval)) {
+	if time.Now().After(n.timeOfLastSync.Add(config.NewsletterSendRequestSyncInterval)) {
 		if err := n.syncSendRequests(c); err != nil {
 			return nil, err
 		}
@@ -52,7 +51,7 @@ func (n *NewsletterProcessor) GetNextSendRequestToPreload(c ctx.LogContext) (*ne
 func (n *NewsletterProcessor) GetNextSendRequestToFulfill(c ctx.LogContext) (*newslettersendrequests.NewsletterSendRequest, error) {
 	n.mu.Lock()
 	defer n.mu.Unlock()
-	if time.Now().After(n.timeOfLastSync.Add(syncInterval)) {
+	if time.Now().After(n.timeOfLastSync.Add(config.NewsletterSendRequestSyncInterval)) {
 		if err := n.syncSendRequests(c); err != nil {
 			return nil, err
 		}
