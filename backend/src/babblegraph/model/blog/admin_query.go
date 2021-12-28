@@ -1,0 +1,79 @@
+package blog
+
+import (
+	"fmt"
+
+	"github.com/jmoiron/sqlx"
+)
+
+const (
+	getAllBlogPostMetadataQuery       = "SELECT * FROM blog_post_metadata ORDER BY created_at DESC"
+	getBlogPostMetadataByURLPathQuery = "SELECT * FROM blog_post_metadata WHERE url_path = $1"
+	addBlogPostMetadataQuery          = "INSERT INTO blog_post_metadata (title, description, author_name, url_path) VALUES ($1, $2, $3, $4)"
+	updateBlogPostMetadataQuery       = "UPDATE blog_post_metadata SET title=$1, description=$2, hero_image_path=$3, author_name=$4 WHERE url_path = $5"
+	updateBlogPostStatusQuery         = "UPDATE blog_post_metadata SET status=$1 WHERE url_path = $2"
+)
+
+func GetAllBlogPostMetadata(tx *sqlx.Tx) ([]BlogPostMetadata, error) {
+	var matches []dbBlogPostMetadata
+	if err := tx.Select(&matches, getAllBlogPostMetadataQuery); err != nil {
+		return nil, err
+	}
+	var out []BlogPostMetadata
+	for _, m := range matches {
+		out = append(out, m.ToNonDB())
+	}
+	return out, nil
+}
+
+func GetBlogPostMetadataByURLPath(tx *sqlx.Tx, urlPath string) (*BlogPostMetadata, error) {
+	var matches []dbBlogPostMetadata
+	if err := tx.Select(&matches, getBlogPostMetadataByURLPathQuery, urlPath); err != nil {
+		return nil, err
+	}
+	switch {
+	case len(matches) == 0:
+		return nil, fmt.Errorf("Blog post %s not found", urlPath)
+	case len(matches) > 1:
+		return nil, fmt.Errorf("Expected only one blog post, but found %d for blog post %s", len(matches), urlPath)
+	default:
+		out := matches[0].ToNonDB()
+		return &out, nil
+	}
+}
+
+type AddBlogPostMetadataInput struct {
+	Title       string
+	Description string
+	AuthorName  string
+	URLPath     string
+}
+
+func AddBlogPostMetadata(tx *sqlx.Tx, input AddBlogPostMetadataInput) error {
+	if _, err := tx.Exec(addBlogPostMetadataQuery, input.Title, input.Description, input.AuthorName, input.URLPath); err != nil {
+		return err
+	}
+	return nil
+}
+
+type UpdateBlogPostMetadataInput struct {
+	Title         string
+	Description   string
+	AuthorName    string
+	HeroImagePath *string
+	URLPath       string
+}
+
+func UpdateBlogPostMetadata(tx *sqlx.Tx, input UpdateBlogPostMetadataInput) error {
+	if _, err := tx.Exec(updateBlogPostMetadataQuery, input.Title, input.Description, input.HeroImagePath, input.AuthorName, input.URLPath); err != nil {
+		return err
+	}
+	return nil
+}
+
+func UpdateBlogPostStatus(tx *sqlx.Tx, urlPath string, status PostStatus) error {
+	if _, err := tx.Exec(updateBlogPostStatusQuery, status, urlPath); err != nil {
+		return err
+	}
+	return nil
+}
