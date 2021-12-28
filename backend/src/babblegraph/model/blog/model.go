@@ -5,7 +5,7 @@ import "time"
 type dbBlogPostMetadata struct {
 	CreatedAt      time.Time  `db:"created_at"`
 	LastModifiedAt time.Time  `db:"last_modified_at"`
-	PublishedAt    time.Time  `db:"published_at"`
+	PublishedAt    *time.Time `db:"published_at"`
 	HeroImagePath  *string    `db:"hero_image_path"`
 	Title          string     `db:"title"`
 	AuthorName     string     `db:"author_name"`
@@ -27,7 +27,7 @@ func (d dbBlogPostMetadata) ToNonDB() BlogPostMetadata {
 }
 
 type BlogPostMetadata struct {
-	PublishedAt   time.Time  `json:"published_at"`
+	PublishedAt   *time.Time `json:"published_at"`
 	HeroImagePath *string    `json:"hero_image_path,omitempty"`
 	Title         string     `json:"title"`
 	Description   string     `json:"description"`

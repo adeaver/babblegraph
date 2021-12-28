@@ -9,9 +9,10 @@ import (
 const (
 	getAllBlogPostMetadataQuery       = "SELECT * FROM blog_post_metadata ORDER BY created_at DESC"
 	getBlogPostMetadataByURLPathQuery = "SELECT * FROM blog_post_metadata WHERE url_path = $1"
-	addBlogPostMetadataQuery          = "INSERT INTO blog_post_metadata (title, description, author_name, url_path) VALUES ($1, $2, $3, $4)"
-	updateBlogPostMetadataQuery       = "UPDATE blog_post_metadata SET title=$1, description=$2, hero_image_path=$3, author_name=$4 WHERE url_path = $5"
-	updateBlogPostStatusQuery         = "UPDATE blog_post_metadata SET status=$1 WHERE url_path = $2"
+	addBlogPostMetadataQuery          = "INSERT INTO blog_post_metadata (title, description, author_name, url_path, status) VALUES ($1, $2, $3, $4, $5)"
+	updateBlogPostMetadataQuery       = "UPDATE blog_post_metadata SET title=$1, description=$2, hero_image_path=$3, author_name=$4, last_modified_at = timezone('utc', now()) WHERE url_path = $5"
+	updateBlogPostStatusQuery         = "UPDATE blog_post_metadata SET status=$1, last_modified_at=timezone('utc', now()) WHERE url_path = $2"
+	updateBlogPostPublishedTimeQuery  = "UPDATE blog_post_metadata SET published_at=timezone('utc', now()), last_modified_at=timezone('utc', now()) WHERE url_path=$1"
 )
 
 func GetAllBlogPostMetadata(tx *sqlx.Tx) ([]BlogPostMetadata, error) {
@@ -50,7 +51,7 @@ type AddBlogPostMetadataInput struct {
 }
 
 func AddBlogPostMetadata(tx *sqlx.Tx, input AddBlogPostMetadataInput) error {
-	if _, err := tx.Exec(addBlogPostMetadataQuery, input.Title, input.Description, input.AuthorName, input.URLPath); err != nil {
+	if _, err := tx.Exec(addBlogPostMetadataQuery, input.Title, input.Description, input.AuthorName, input.URLPath, PostStatusDraft); err != nil {
 		return err
 	}
 	return nil
@@ -72,8 +73,20 @@ func UpdateBlogPostMetadata(tx *sqlx.Tx, input UpdateBlogPostMetadataInput) erro
 }
 
 func UpdateBlogPostStatus(tx *sqlx.Tx, urlPath string, status PostStatus) error {
-	if _, err := tx.Exec(updateBlogPostStatusQuery, status, urlPath); err != nil {
-		return err
+	switch status {
+	case PostStatusHidden,
+		PostStatusDeleted,
+		PostStatusDraft:
+		if _, err := tx.Exec(updateBlogPostStatusQuery, status, urlPath); err != nil {
+			return err
+		}
+	case PostStatusLive:
+		if _, err := tx.Exec(updateBlogPostPublishedTimeQuery, urlPath); err != nil {
+			return err
+		}
+		if _, err := tx.Exec(updateBlogPostStatusQuery, status, urlPath); err != nil {
+			return err
+		}
 	}
 	return nil
 }
