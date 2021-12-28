@@ -12,6 +12,7 @@ import (
 	"babblegraph/model/usernewsletterpreferences"
 	"babblegraph/model/usernewsletterschedule"
 	"babblegraph/model/users"
+	"babblegraph/util/ctx"
 	"babblegraph/wordsmith"
 	"time"
 
@@ -31,7 +32,7 @@ type userPreferencesAccessor interface {
 
 	getUserSubscriptionLevel() *useraccounts.SubscriptionLevel
 	getUserNewsletterPreferences() *usernewsletterpreferences.UserNewsletterPreferences
-	getUserScheduleForDay() *usernewsletterschedule.UserNewsletterScheduleDayMetadata
+	getUserNewsletterSchedule() usernewsletterschedule.UserNewsletterSchedule
 	getReadingLevel() *userReadingLevel
 	getSentDocumentIDs() []documents.DocumentID
 	getUserTopics() []contenttopics.ContentTopic
@@ -52,7 +53,7 @@ type DefaultUserPreferencesAccessor struct {
 	doesUserHaveAccount       bool
 	userSubscriptionLevel     *useraccounts.SubscriptionLevel
 	userNewsletterPreferences *usernewsletterpreferences.UserNewsletterPreferences
-	userScheduleForDay        *usernewsletterschedule.UserNewsletterScheduleDayMetadata
+	userNewsletterSchedule    usernewsletterschedule.UserNewsletterSchedule
 	userReadingLevel          *userReadingLevel
 	sentDocumentIDs           []documents.DocumentID
 	userTopics                []contenttopics.ContentTopic
@@ -61,7 +62,7 @@ type DefaultUserPreferencesAccessor struct {
 	userSpotlightRecords      []userlemma.UserLemmaReinforcementSpotlightRecord
 }
 
-func GetDefaultUserPreferencesAccessor(tx *sqlx.Tx, userID users.UserID, languageCode wordsmith.LanguageCode, dateOfSend time.Time) (*DefaultUserPreferencesAccessor, error) {
+func GetDefaultUserPreferencesAccessor(c ctx.LogContext, tx *sqlx.Tx, userID users.UserID, languageCode wordsmith.LanguageCode, dateOfSendUTCMidnight time.Time) (*DefaultUserPreferencesAccessor, error) {
 	userSubscriptionLevel, err := useraccounts.LookupSubscriptionLevelForUser(tx, userID)
 	if err != nil {
 		return nil, err
@@ -74,8 +75,11 @@ func GetDefaultUserPreferencesAccessor(tx *sqlx.Tx, userID users.UserID, languag
 	if err != nil {
 		return nil, err
 	}
-	currentUTCWeekdayIndex := int(dateOfSend.Weekday())
-	userScheduleForDay, err := usernewsletterschedule.LookupNewsletterDayMetadataForUserAndDay(tx, userID, currentUTCWeekdayIndex)
+	userNewsletterSchedule, err := usernewsletterschedule.GetUserNewsletterScheduleForUTCMidnight(c, tx, usernewsletterschedule.GetUserNewsletterScheduleForUTCMidnightInput{
+		UserID:           userID,
+		LanguageCode:     languageCode,
+		DayAtUTCMidnight: dateOfSendUTCMidnight,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +116,7 @@ func GetDefaultUserPreferencesAccessor(tx *sqlx.Tx, userID users.UserID, languag
 		doesUserHaveAccount:       doesUserHaveAccount,
 		userSubscriptionLevel:     userSubscriptionLevel,
 		userNewsletterPreferences: userNewsletterPreferences,
-		userScheduleForDay:        userScheduleForDay,
+		userNewsletterSchedule:    userNewsletterSchedule,
 		// The current scoring system is pretty broken. So we just set everyone to use the middle.
 		// TODO: create a better scoring system
 		userReadingLevel: &userReadingLevel{
@@ -147,8 +151,8 @@ func (d *DefaultUserPreferencesAccessor) getUserNewsletterPreferences() *usernew
 	return d.userNewsletterPreferences
 }
 
-func (d *DefaultUserPreferencesAccessor) getUserScheduleForDay() *usernewsletterschedule.UserNewsletterScheduleDayMetadata {
-	return d.userScheduleForDay
+func (d *DefaultUserPreferencesAccessor) getUserNewsletterSchedule() usernewsletterschedule.UserNewsletterSchedule {
+	return d.userNewsletterSchedule
 }
 
 func (d *DefaultUserPreferencesAccessor) getReadingLevel() *userReadingLevel {

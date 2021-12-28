@@ -70,7 +70,7 @@ func getDocumentCategories(c ctx.LogContext, input getDocumentCategoriesInput) (
 		emailRecordID:                 input.emailRecordID,
 		userAccessor:                  input.userAccessor,
 		languageCode:                  input.languageCode,
-		numberOfDocumentsInNewsletter: deref.Int(input.numberOfDocumentsInNewsletter, defaultNumberOfArticlesPerEmail),
+		numberOfDocumentsInNewsletter: deref.Int(input.numberOfDocumentsInNewsletter, DefaultNumberOfArticlesPerEmail),
 		documentsByTopic:              documentsByTopic,
 		genericDocuments:              append(genericDocuments.RecentDocuments, genericDocuments.NonRecentDocuments...),
 	})
@@ -186,12 +186,10 @@ func getTopicsForNewsletter(accessor userPreferencesAccessor) []contenttopics.Co
 		return topics
 	case *userSubscriptionLevel == useraccounts.SubscriptionLevelBetaPremium,
 		*userSubscriptionLevel == useraccounts.SubscriptionLevelPremium:
-		if userScheduleForDay := accessor.getUserScheduleForDay(); userScheduleForDay != nil && len(userScheduleForDay.ContentTopics) != 0 {
-			topics := userScheduleForDay.ContentTopics
-			if len(topics) < defaultNumberOfTopicsPerEmail {
-				for _, idx := range pickUpToNRandomIndices(int(len(allUserTopics)), defaultNumberOfTopicsPerEmail-len(topics)) {
-					topics = append(topics, allUserTopics[idx])
-				}
+		topics := accessor.getUserNewsletterSchedule().GetContentTopicsForDay()
+		if len(topics) < defaultNumberOfTopicsPerEmail {
+			for _, idx := range pickUpToNRandomIndices(int(len(allUserTopics)), defaultNumberOfTopicsPerEmail-len(topics)) {
+				topics = append(topics, allUserTopics[idx])
 			}
 		}
 		return topics

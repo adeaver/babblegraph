@@ -1,64 +1,93 @@
 import { makePostRequestWithStandardEncoding } from 'util/bgfetch/bgfetch';
 
-export type AddUserNewsletterScheduleRequest = {
-    userScheduleDayRequests: Array<ScheduleDayRequest>;
-    languageCode: string;
-    ianaTimezone: string;
+export enum UserScheduleError {
+    InvalidUser = 'invalid-user',
+    InvalidEmailAddress = 'invalid-email',
+    UnsupportedLanguage = 'unsupported-language',
+    UnsupportedTimezone = 'unsupported-timezone',
+    InvalidTime = 'invalid-time',
+    InvalidSettings = 'invalid-settings',
 }
 
-export type ScheduleDayRequest = {
-    dayOfWeekIndex: number;
-    contentTopics: string[];
-    numberOfArticles: number;
+export type DayPreferences = {
     isActive: boolean;
+    numberOfArticles: number;
+    contentTopics: string[];
+    dayIndex: number;
 }
 
-export type AddUserNewsletterScheduleResponse = {
-    success: boolean;
+export type GetUserScheduleRequest = {
+    token: string;
+    languageCode: string;
 }
 
-export function addUserNewsletterSchedule(
-    req: AddUserNewsletterScheduleRequest,
-    onSuccess: (resp: AddUserNewsletterScheduleResponse) => void,
-    onError: (e: Error) => void,
+export type GetUserScheduleResponse = {
+    userIanaTimezone: string;
+    hourIndex: number;
+    quarterHourIndex: number;
+    preferencesByDay: Array<DayPreferences>;
+}
+
+export function getUserSchedule(
+    req: GetUserScheduleRequest,
+    onSuccess: (resp: GetUserScheduleResponse) => void,
+    onError: (err: Error) => void,
 ) {
-    makePostRequestWithStandardEncoding<AddUserNewsletterScheduleRequest, AddUserNewsletterScheduleResponse>(
-        '/api/user/add_user_schedule_1',
+    makePostRequestWithStandardEncoding<GetUserScheduleRequest, GetUserScheduleResponse>(
+        '/api/user/get_user_newsletter_schedule_1',
         req,
         onSuccess,
         onError,
     );
 }
 
-export type GetUserNewsletterScheduleRequest = {
+export type UpdateUserScheduleRequest = {
+    emailAddress: string;
+    token: string;
+    languageCode: string;
+    hourIndex: number;
+    quarterHourIndex: number;
     ianaTimezone: string;
 }
 
-export type GetUserNewsletterScheduleResponse = {
-    scheduleByLanguageCode: Array<ScheduleByLanguageCode>;
+export type UpdateUserScheduleResponse = {
+    error: UserScheduleError | null;
 }
 
-export type ScheduleByLanguageCode = {
-    languageCode: string;
-    scheduleDays: Array<ScheduleDay>;
-}
-
-export type ScheduleDay = {
-    dayOfWeekIndex: number;
-    hourOfDayIndex: number;
-    quarterHourIndex: number;
-    contentTopics: string[];
-    numberOfArticles: number;
-    isActive: boolean;
-}
-
-export function getUserNewsletterSchedule(
-    req: GetUserNewsletterScheduleRequest,
-    onSuccess: (resp:  GetUserNewsletterScheduleResponse) => void,
-    onError: (e: Error) => void,
+export function updateUserSchedule(
+    req: UpdateUserScheduleRequest,
+    onSuccess: (resp: UpdateUserScheduleResponse) => void,
+    onError: (err: Error) => void,
 ) {
-    makePostRequestWithStandardEncoding<GetUserNewsletterScheduleRequest, GetUserNewsletterScheduleResponse>(
-        '/api/user/get_user_schedule_1',
+    makePostRequestWithStandardEncoding<UpdateUserScheduleRequest, UpdateUserScheduleResponse>(
+        '/api/user/update_user_newsletter_schedule_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}
+
+export type UpdateUserScheduleWithDayPreferencesRequest = {
+    emailAddress: string;
+    token: string;
+    languageCode: string;
+    hourIndex: number;
+    quarterHourIndex: number;
+    ianaTimezone: string;
+    dayPreferences: Array<DayPreferences>;
+}
+
+export type UpdateUserScheduleWithDayPreferencesResponse = {
+    error: UserScheduleError | null;
+}
+
+export function updateUserScheduleWithDayPreferences(
+    req: UpdateUserScheduleWithDayPreferencesRequest,
+    onSuccess: (resp: UpdateUserScheduleWithDayPreferencesResponse) => void,
+    onError: (err: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<UpdateUserScheduleWithDayPreferencesRequest, UpdateUserScheduleWithDayPreferencesResponse>(
+        '/api/user/update_user_newsletter_schedule_and_day_preferences_1',
         req,
         onSuccess,
         onError,

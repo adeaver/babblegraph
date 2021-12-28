@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	defaultNumberOfArticlesPerEmail = 12
+	DefaultNumberOfArticlesPerEmail = 12
 	defaultNumberOfTopicsPerEmail   = 4
 
 	minimumDaysSinceLastSpotlight = 3
@@ -33,12 +33,10 @@ func CreateNewsletter(c ctx.LogContext, wordsmithAccessor wordsmithAccessor, ema
 		// no-op
 	case *userSubscriptionLevel == useraccounts.SubscriptionLevelBetaPremium,
 		*userSubscriptionLevel == useraccounts.SubscriptionLevelPremium:
-		if userScheduleForDay := userAccessor.getUserScheduleForDay(); userScheduleForDay != nil {
-			if !userScheduleForDay.IsActive {
-				return nil, nil
-			}
-			numberOfDocumentsInNewsletter = ptr.Int(userScheduleForDay.NumberOfArticles)
+		if !userAccessor.getUserNewsletterSchedule().IsSendRequested() {
+			return nil, nil
 		}
+		numberOfDocumentsInNewsletter = ptr.Int(userAccessor.getUserNewsletterSchedule().GetNumberOfDocuments())
 
 	default:
 		return nil, fmt.Errorf("Unrecognized subscription level: %s", *userSubscriptionLevel)

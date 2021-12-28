@@ -58,19 +58,18 @@ func RegisterRouteGroups() error {
 			}, {
 				Path:    "update_user_newsletter_preferences_1",
 				Handler: updateUserNewsletterPreferences,
+			}, {
+				Path:    "get_user_newsletter_schedule_1",
+				Handler: handleGetUserSchedule,
+			}, {
+				Path:    "update_user_newsletter_schedule_1",
+				Handler: handleUpdateUserSchedule,
 			},
 		},
 		AuthenticatedRoutes: []api.AuthenticatedRoute{
 			{
-				Path:    "get_user_schedule_1",
-				Handler: handleGetUserNewsletterSchedule,
-				ValidAuthorizationLevels: []useraccounts.SubscriptionLevel{
-					useraccounts.SubscriptionLevelPremium,
-					useraccounts.SubscriptionLevelBetaPremium,
-				},
-			}, {
-				Path:    "add_user_schedule_1",
-				Handler: handleAddUserNewsletterSchedule,
+				Path:    "update_user_newsletter_schedule_and_day_preferences_1",
+				Handler: handleUpdateUserScheduleWithDayPreferences,
 				ValidAuthorizationLevels: []useraccounts.SubscriptionLevel{
 					useraccounts.SubscriptionLevelBetaPremium,
 					useraccounts.SubscriptionLevelPremium,

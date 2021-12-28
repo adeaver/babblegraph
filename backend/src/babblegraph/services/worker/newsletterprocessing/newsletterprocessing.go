@@ -1,20 +1,18 @@
 package newsletterprocessing
 
 import (
+	"babblegraph/config"
 	"babblegraph/model/newslettersendrequests"
 	"babblegraph/model/users"
+	"babblegraph/util/ctx"
 	"babblegraph/util/database"
 	"babblegraph/wordsmith"
-	"fmt"
-	"log"
 	"sort"
 	"sync"
 	"time"
 
 	"github.com/jmoiron/sqlx"
 )
-
-const syncInterval = 3 * time.Hour
 
 type NewsletterProcessor struct {
 	mu                           sync.Mutex
@@ -23,19 +21,19 @@ type NewsletterProcessor struct {
 	orderedSendRequestsToFulfill []newslettersendrequests.NewsletterSendRequest
 }
 
-func CreateNewsletterProcessor() (*NewsletterProcessor, error) {
+func CreateNewsletterProcessor(c ctx.LogContext) (*NewsletterProcessor, error) {
 	n := &NewsletterProcessor{}
 	n.mu.Lock()
 	defer n.mu.Unlock()
-	n.syncSendRequests()
+	n.syncSendRequests(c)
 	return n, nil
 }
 
-func (n *NewsletterProcessor) GetNextSendRequestToPreload() (*newslettersendrequests.NewsletterSendRequest, error) {
+func (n *NewsletterProcessor) GetNextSendRequestToPreload(c ctx.LogContext) (*newslettersendrequests.NewsletterSendRequest, error) {
 	n.mu.Lock()
 	defer n.mu.Unlock()
-	if time.Now().After(n.timeOfLastSync.Add(syncInterval)) {
-		if err := n.syncSendRequests(); err != nil {
+	if time.Now().After(n.timeOfLastSync.Add(config.NewsletterSendRequestSyncInterval)) {
+		if err := n.syncSendRequests(c); err != nil {
 			return nil, err
 		}
 	}
@@ -50,11 +48,11 @@ func (n *NewsletterProcessor) GetNextSendRequestToPreload() (*newslettersendrequ
 	return &nextSendRequestToPreload, nil
 }
 
-func (n *NewsletterProcessor) GetNextSendRequestToFulfill() (*newslettersendrequests.NewsletterSendRequest, error) {
+func (n *NewsletterProcessor) GetNextSendRequestToFulfill(c ctx.LogContext) (*newslettersendrequests.NewsletterSendRequest, error) {
 	n.mu.Lock()
 	defer n.mu.Unlock()
-	if time.Now().After(n.timeOfLastSync.Add(syncInterval)) {
-		if err := n.syncSendRequests(); err != nil {
+	if time.Now().After(n.timeOfLastSync.Add(config.NewsletterSendRequestSyncInterval)) {
+		if err := n.syncSendRequests(c); err != nil {
 			return nil, err
 		}
 	}
@@ -70,13 +68,13 @@ func (n *NewsletterProcessor) GetNextSendRequestToFulfill() (*newslettersendrequ
 }
 
 // Acquire lock before calling this function
-func (n *NewsletterProcessor) syncSendRequests() error {
-	log.Println(fmt.Sprintf("Syncing send requests"))
-	toPreload, toFulfill, err := getSendRequestsByType()
+func (n *NewsletterProcessor) syncSendRequests(c ctx.LogContext) error {
+	c.Infof("Syncing send requests")
+	toPreload, toFulfill, err := getSendRequestsByType(c)
 	if err != nil {
 		return err
 	}
-	log.Println(fmt.Sprintf("Got %d send requests to preload and %d to fulfill", len(toPreload), len(toFulfill)))
+	c.Infof("Got %d send requests to preload and %d to fulfill", len(toPreload), len(toFulfill))
 	n.orderedSendRequestsToPreload = toPreload
 	sort.Slice(n.orderedSendRequestsToPreload, func(i, j int) bool {
 		return n.orderedSendRequestsToPreload[i].DateOfSend.Before(n.orderedSendRequestsToPreload[j].DateOfSend)
@@ -86,14 +84,14 @@ func (n *NewsletterProcessor) syncSendRequests() error {
 		return n.orderedSendRequestsToFulfill[i].DateOfSend.Before(n.orderedSendRequestsToFulfill[j].DateOfSend)
 	})
 	n.timeOfLastSync = time.Now()
-	log.Println(fmt.Sprintf("Sync complete"))
+	c.Infof("Sync complete")
 	return nil
 }
 
-func getSendRequestsByType() (_toPreload, _toFulfill []newslettersendrequests.NewsletterSendRequest, _err error) {
+func getSendRequestsByType(c ctx.LogContext) (_toPreload, _toFulfill []newslettersendrequests.NewsletterSendRequest, _err error) {
 	var toPreload, toFulfill []newslettersendrequests.NewsletterSendRequest
 	today := time.Now()
-	sendRequestsForToday, err := getSendRequestsForDay(today)
+	sendRequestsForToday, err := getSendRequestsForDay(c, today)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -108,11 +106,11 @@ func getSendRequestsByType() (_toPreload, _toFulfill []newslettersendrequests.Ne
 			newslettersendrequests.PayloadStatusDeleted:
 			// no-op
 		default:
-			log.Println(fmt.Sprintf("Unrecgonized payload status: %s", s.PayloadStatus))
+			c.Infof("Unrecgonized payload status: %s", s.PayloadStatus)
 		}
 	}
 	tomorrow := today.Add(24 * time.Hour)
-	sendRequestsForTomorrow, err := getSendRequestsForDay(tomorrow)
+	sendRequestsForTomorrow, err := getSendRequestsForDay(c, tomorrow)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -126,13 +124,13 @@ func getSendRequestsByType() (_toPreload, _toFulfill []newslettersendrequests.Ne
 			newslettersendrequests.PayloadStatusDeleted:
 			// no-op
 		default:
-			log.Println(fmt.Sprintf("Unrecgonized payload status: %s", s.PayloadStatus))
+			c.Infof("Unrecgonized payload status: %s", s.PayloadStatus)
 		}
 	}
 	return toPreload, toFulfill, nil
 }
 
-func getSendRequestsForDay(t time.Time) ([]newslettersendrequests.NewsletterSendRequest, error) {
+func getSendRequestsForDay(c ctx.LogContext, t time.Time) ([]newslettersendrequests.NewsletterSendRequest, error) {
 	var sendRequestsForDay []newslettersendrequests.NewsletterSendRequest
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		activeUsers, err := users.GetAllActiveUsers(tx)
@@ -143,7 +141,7 @@ func getSendRequestsForDay(t time.Time) ([]newslettersendrequests.NewsletterSend
 		for _, u := range activeUsers {
 			userIDs = append(userIDs, u.ID)
 		}
-		sendRequestsForDay, err = newslettersendrequests.GetOrCreateSendRequestsForUsersForDay(tx, userIDs, wordsmith.LanguageCodeSpanish, t)
+		sendRequestsForDay, err = newslettersendrequests.GetOrCreateSendRequestsForUsersForDay(c, tx, userIDs, wordsmith.LanguageCodeSpanish, t)
 		return err
 	}); err != nil {
 		return nil, err

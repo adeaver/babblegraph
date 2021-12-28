@@ -104,8 +104,8 @@ func TestUserScheduleDay(t *testing.T) {
 			contenttopics.ContentTopicArt,
 		},
 		userSubscriptionLevel: useraccounts.SubscriptionLevelPremium.Ptr(),
-		userScheduleForDay: &usernewsletterschedule.UserNewsletterScheduleDayMetadata{
-			IsActive: false,
+		userNewsletterSchedule: usernewsletterschedule.TestNewsletterSchedule{
+			SendRequested: false,
 		},
 		readingLevel: &userReadingLevel{
 			LowerBound: 30,
@@ -132,8 +132,8 @@ func TestUserScheduleDayNoSubscription(t *testing.T) {
 		userTopics: []contenttopics.ContentTopic{
 			contenttopics.ContentTopicArt,
 		},
-		userScheduleForDay: &usernewsletterschedule.UserNewsletterScheduleDayMetadata{
-			IsActive: false,
+		userNewsletterSchedule: usernewsletterschedule.TestNewsletterSchedule{
+			SendRequested: false,
 		},
 		readingLevel: &userReadingLevel{
 			LowerBound: 30,

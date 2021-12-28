@@ -16,7 +16,7 @@ import SubscriptionManagementDashboardPage from 'ConsumerWeb/components/Subscrip
 import InterestSelectionPage from 'ConsumerWeb/components/SubscriptionManagement/InterestSelectionPage';
 import UnsubscribePage from 'ConsumerWeb/components/SubscriptionManagement/UnsubscribePage';
 import WordReinforcementPage from 'ConsumerWeb/components/SubscriptionManagement/WordReinforcementPage';
-import SchedulePage from 'ConsumerWeb/components/SubscriptionManagement/SchedulePage';
+import SchedulePage from 'ConsumerWeb/components/SchedulePage/SchedulePage';
 import NewsletterPreferencesPage from 'ConsumerWeb/components/SubscriptionManagement/NewsletterPreferencesPage';
 import SubscriptionManagementPremiumInformationPage from 'ConsumerWeb/components/SubscriptionManagement/PremiumInformationPage';
 import PaymentAndSubscriptionSettingsPage from 'ConsumerWeb/components/SubscriptionManagement/PaymentAndSubscriptionPage';

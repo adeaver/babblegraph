@@ -9,7 +9,7 @@ from util import (
 )
 
 START_TOKEN = StartToken()
-MINIMUM_WORD_COUNT = 10
+MINIMUM_WORD_COUNT = 2
 MINIMUM_BIGRAM_COUNT = 10
 
 observed_parts_of_speech = {
