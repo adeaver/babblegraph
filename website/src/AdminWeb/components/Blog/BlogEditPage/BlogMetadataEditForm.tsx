@@ -14,6 +14,9 @@ import {
     BlogPostMetadata,
     getBlogPostMetadataByURLPath,
     GetBlogPostMetadataByURLPathResponse,
+
+    updateBlogPostMetadata,
+    UpdateBlogPostMetadataResponse,
 } from 'AdminWeb/api/blog/blog';
 
 const styleClasses = makeStyles({
@@ -90,9 +93,24 @@ const EditBlogPostMetadataForm = (props: EditBlogPostMetadataFormProps) => {
     const [ title, setTitle ] = useState<string>(props.blogPostMetadata.title);
     const [ description, setDescription ] = useState<string>(props.blogPostMetadata.description);
     const [ authorName, setAuthorName ] = useState<string>(props.blogPostMetadata.authorName);
+    const [ heroImagePath, setHeroImagePath ] = useState<string>(props.blogPostMetadata.heroImagePath);
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        props.setIsLoading(true);
+        updateBlogPostMetadata({
+            urlPath: props.blogPostMetadata.urlPath,
+            title: title,
+            description: description,
+            heroImagePath: heroImagePath,
+            authorName: authorName,
+        },
+        (resp: UpdateBlogPostMetadataResponse) => {
+            props.setIsLoading(false);
+        },
+        (err: Error) => {
+            props.setIsLoading(false);
+        });
     }
 
     return (
@@ -115,6 +133,11 @@ const EditBlogPostMetadataForm = (props: EditBlogPostMetadataFormProps) => {
                 label="Author Name"
                 currentValue={authorName}
                 handleChange={setAuthorName} />
+            <EditBlogPostMetadataFormTextField
+                name="blogHeroImage"
+                label="Hero Image Path"
+                currentValue={heroImagePath}
+                handleChange={setHeroImagePath} />
             <Grid container>
                 <Grid item xs={false} md={3}>
                     &nbsp;
@@ -122,7 +145,7 @@ const EditBlogPostMetadataForm = (props: EditBlogPostMetadataFormProps) => {
                 <Grid item xs={12} md={6}>
                     <PrimaryButton
                         type="submit"
-                        disabled={!title || !urlPath || !description || !authorName}>
+                        disabled={!title || !description || !authorName}>
                         Submit
                     </PrimaryButton>
                 </Grid>

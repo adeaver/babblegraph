@@ -9,7 +9,7 @@ export enum PostStatus {
 
 export type BlogPostMetadata = {
     publishedAt: Date | undefined;
-    heroImagePage: string | undefined;
+    heroImagePath: string | undefined;
     title: string;
     description: string;
     urlPath: string;
@@ -75,6 +75,31 @@ export function getBlogPostMetadataByURLPath(
 ) {
     makePostRequestWithStandardEncoding<GetBlogPostMetadataByURLPathRequest, GetBlogPostMetadataByURLPathResponse>(
         '/ops/api/blog/get_blog_post_metadata_by_url_path_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}
+
+export type UpdateBlogPostMetadataRequest = {
+	urlPath: string;
+	title: string;
+	description: string;
+	heroImagePath: string | undefined;
+	authorName: string;
+}
+
+export type UpdateBlogPostMetadataResponse = {
+    success: boolean;
+}
+
+export function updateBlogPostMetadata(
+    req: UpdateBlogPostMetadataRequest,
+    onSuccess: (resp: UpdateBlogPostMetadataResponse) => void,
+    onError: (e: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<UpdateBlogPostMetadataRequest, UpdateBlogPostMetadataResponse>(
+        '/ops/api/blog/update_blog_post_metadata_1',
         req,
         onSuccess,
         onError,
