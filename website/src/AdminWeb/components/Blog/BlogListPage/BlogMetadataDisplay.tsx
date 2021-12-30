@@ -28,7 +28,7 @@ const BlogMetadataDisplay = (props: BlogPostMetadata) => {
                 &nbsp;
             </Grid>
             <Grid item xs={12} md={6}>
-                <ActionCard className={classes.blogMetadataCard} onClick={() => setLocation(`blog-manager/edit/${props.urlPath}`)}>
+                <ActionCard className={classes.blogMetadataCard} onClick={() => setLocation(`/ops/blog-manager/edit/${props.urlPath}`)}>
                     <Heading3 color={TypographyColor.Primary}>
                         {props.title}
                     </Heading3>
