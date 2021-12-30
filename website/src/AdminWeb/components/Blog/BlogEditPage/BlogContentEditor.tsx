@@ -74,6 +74,23 @@ const BlogContentEditor = (props: BlogContentEditorProps) => {
             nodeIdx === idx ? newNode : nextNode
         )));
     }
+    const handleSaveBlogContent = () => {
+        setIsLoading(true);
+        updateBlogContent({
+            urlPath: props.urlPath,
+            content: content,
+        },
+        (resp: UpdateBlogContentResponse) => {
+            setIsLoading(false);
+            if (!resp.success) {
+                setError(new Error("Something went wrong"));
+            }
+        },
+        (err: Error) => {
+            setIsLoading(false);
+            setError(err);
+        });
+    }
 
     useEffect(() => {
         getBlogContent({
@@ -105,6 +122,7 @@ const BlogContentEditor = (props: BlogContentEditorProps) => {
                 <Grid className={classes.blogContentEditorContainer} item xs={6}>
                     <EditorComponent
                         content={content}
+                        handleSaveBlogContent={handleSaveBlogContent}
                         handleRemoveContentAtIndex={handleRemoveContentAtIndex}
                         handleAppendContentAtIndex={handleAppendContentAtIndex}
                         handleUpsertContentAtIndex={handleUpsertContentAtIndex} />
@@ -128,6 +146,7 @@ type EditorComponentProps = {
     content: ContentNode[];
 
     // TODO: add move content to index
+    handleSaveBlogContent: () => void;
     handleRemoveContentAtIndex: (idx: number) => void;
     handleAppendContentAtIndex: (contentNode: ContentNode, idx: number) => void;
     handleUpsertContentAtIndex: (contentNode: ContentNode, idx: number) => void;
@@ -158,6 +177,12 @@ const EditorComponent = (props: EditorComponentProps) => {
     return (
         <DisplayCard>
             <div className={classes.editorRow}>
+                <PrimaryButton
+                    className={classes.nodeButton}
+                    type="submit"
+                    onClick={props.handleSaveBlogContent}>
+                    Save Updates
+                </PrimaryButton>
                 <Heading4 color={TypographyColor.Primary}>
                     Add a node
                 </Heading4>
