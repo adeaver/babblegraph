@@ -26,7 +26,7 @@ const BlogListPage = () => {
         getAllBlogPostMetadata({},
             (resp: GetAllBlogPostMetadataResponse) => {
                 setIsLoading(false);
-                setAllBlogPosts(resp.allBlogPosts);
+                setAllBlogPosts(resp.allBlogPosts || []);
             },
             (err: Error) => {
                 setIsLoading(false);

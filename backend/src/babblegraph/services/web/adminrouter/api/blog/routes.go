@@ -6,6 +6,7 @@ import (
 	"babblegraph/services/web/adminrouter/middleware"
 	"babblegraph/services/web/router"
 	"babblegraph/util/database"
+	"babblegraph/util/storage"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -42,6 +43,18 @@ var Routes = router.RouteGroup{
 			Handler: middleware.WithPermission(
 				admin.PermissionPublishBlog,
 				updateBlogPostStatus,
+			),
+		}, {
+			Path: "update_blog_content_1",
+			Handler: middleware.WithPermission(
+				admin.PermissionPublishBlog,
+				updateBlogContent,
+			),
+		}, {
+			Path: "get_blog_content_1",
+			Handler: middleware.WithPermission(
+				admin.PermissionPublishBlog,
+				getBlogContent,
 			),
 		},
 	},
@@ -176,5 +189,57 @@ func updateBlogPostStatus(adminID admin.ID, r *router.Request) (interface{}, err
 	}
 	return updateBlogPostStatusResponse{
 		Success: true,
+	}, nil
+}
+
+type updateBlogContentRequest struct {
+	URLPath string             `json:"url_path"`
+	Content []blog.ContentNode `json:"content"`
+}
+
+type updateBlogContentResponse struct {
+	Success bool `json:"success"`
+}
+
+func updateBlogContent(adminID admin.ID, r *router.Request) (interface{}, error) {
+	var req updateBlogContentRequest
+	if err := r.GetJSONBody(&req); err != nil {
+		return nil, err
+	}
+	s3Storage := storage.NewS3StorageForEnvironment()
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		return blog.UpsertContentForBlog(tx, s3Storage, req.URLPath, req.Content)
+	}); err != nil {
+		return nil, err
+	}
+	return updateBlogContentResponse{
+		Success: true,
+	}, nil
+}
+
+type getBlogContentRequest struct {
+	URLPath string `json:"url_path"`
+}
+
+type getBlogContentResponse struct {
+	Content []blog.ContentNode `json:"content"`
+}
+
+func getBlogContent(adminID admin.ID, r *router.Request) (interface{}, error) {
+	var req getBlogContentRequest
+	if err := r.GetJSONBody(&req); err != nil {
+		return nil, err
+	}
+	s3Storage := storage.NewS3StorageForEnvironment()
+	var content []blog.ContentNode
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		var err error
+		content, err = blog.GetContentForBlog(tx, s3Storage, req.URLPath)
+		return err
+	}); err != nil {
+		return nil, err
+	}
+	return getBlogContentResponse{
+		Content: content,
 	}, nil
 }

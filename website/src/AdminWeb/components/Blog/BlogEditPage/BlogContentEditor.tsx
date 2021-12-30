@@ -10,9 +10,10 @@ import DisplayCard from 'common/components/DisplayCard/DisplayCard';
 import { PrimaryRadio } from 'common/components/Radio/Radio';
 import { PrimaryTextField } from 'common/components/TextField/TextField';
 import { PrimaryButton, WarningButton } from 'common/components/Button/Button';
-import { Heading4, Heading6 } from 'common/typography/Heading';
+import { Heading3, Heading4, Heading6 } from 'common/typography/Heading';
 import { TypographyColor } from 'common/typography/common';
 import BlogDisplay from 'common/components/BlogDisplay/BlogDisplay';
+import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
 
 import {
     ContentNodeType,
@@ -21,7 +22,13 @@ import {
     Heading as HeadingContent,
     Paragraph as ParagraphContent,
     getDefaultContentNodeForType,
-} from 'common/api/blog/content.ts';
+} from 'common/api/blog/content';
+import {
+    getBlogContent,
+    GetBlogContentResponse,
+    updateBlogContent,
+    UpdateBlogContentResponse,
+} from 'AdminWeb/api/blog/blog';
 
 const styleClasses = makeStyles({
     blogContentEditorContainer: {
@@ -43,6 +50,8 @@ type BlogContentEditorProps = {
 
 const BlogContentEditor = (props: BlogContentEditorProps) => {
     const [ content, setContent ] = useState<Array<ContentNode>>([]);
+    const [ isLoading, setIsLoading ] = useState<boolean>(true);
+    const [ error, setError ] = useState<Error>(null);
 
     const handleRemoveContentAtIndex = (idx: number) => {
         setContent(content.filter((node: ContentNode, nodeIdx: number) => idx !== nodeIdx));
@@ -66,22 +75,52 @@ const BlogContentEditor = (props: BlogContentEditorProps) => {
         )));
     }
 
+    useEffect(() => {
+        getBlogContent({
+            urlPath: props.urlPath,
+        },
+        (resp: GetBlogContentResponse) => {
+            setIsLoading(false);
+            setContent(resp.content || []);
+        },
+        (err: Error) => {
+            setIsLoading(false);
+            setError(err);
+        });
+    }, []);
+
     const classes = styleClasses();
+    let body;
+    if (isLoading) {
+        body = <LoadingSpinner />;
+    } else if (!!error) {
+        body = (
+            <Heading3 color={TypographyColor.Warning}>
+                An error occurred.
+            </Heading3>
+        );
+    } else {
+        body = (
+            <Grid container>
+                <Grid className={classes.blogContentEditorContainer} item xs={6}>
+                    <EditorComponent
+                        content={content}
+                        handleRemoveContentAtIndex={handleRemoveContentAtIndex}
+                        handleAppendContentAtIndex={handleAppendContentAtIndex}
+                        handleUpsertContentAtIndex={handleUpsertContentAtIndex} />
+                </Grid>
+                <Grid className={classes.blogContentEditorContainer} item xs={6}>
+                    <DisplayCard>
+                        { !!content.length && <BlogDisplay content={content} /> }
+                    </DisplayCard>
+                </Grid>
+            </Grid>
+        );
+    }
     return (
-        <Grid container>
-            <Grid className={classes.blogContentEditorContainer} item xs={6}>
-                <EditorComponent
-                    content={content}
-                    handleRemoveContentAtIndex={handleRemoveContentAtIndex}
-                    handleAppendContentAtIndex={handleAppendContentAtIndex}
-                    handleUpsertContentAtIndex={handleUpsertContentAtIndex} />
-            </Grid>
-            <Grid className={classes.blogContentEditorContainer} item xs={6}>
-                <DisplayCard>
-                    { !!content.length && <BlogDisplay content={content} /> }
-                </DisplayCard>
-            </Grid>
-        </Grid>
+        <div>
+            {body}
+        </div>
     );
 }
 

@@ -27,7 +27,7 @@ func GetAllBlogPostMetadata(tx *sqlx.Tx) ([]BlogPostMetadata, error) {
 	return out, nil
 }
 
-func GetBlogPostMetadataByURLPath(tx *sqlx.Tx, urlPath string) (*BlogPostMetadata, error) {
+func getBlogPostMetadataByURLPath(tx *sqlx.Tx, urlPath string) (*dbBlogPostMetadata, error) {
 	var matches []dbBlogPostMetadata
 	if err := tx.Select(&matches, getBlogPostMetadataByURLPathQuery, urlPath); err != nil {
 		return nil, err
@@ -38,9 +38,18 @@ func GetBlogPostMetadataByURLPath(tx *sqlx.Tx, urlPath string) (*BlogPostMetadat
 	case len(matches) > 1:
 		return nil, fmt.Errorf("Expected only one blog post, but found %d for blog post %s", len(matches), urlPath)
 	default:
-		out := matches[0].ToNonDB()
-		return &out, nil
+		m := matches[0]
+		return &m, nil
 	}
+}
+
+func GetBlogPostMetadataByURLPath(tx *sqlx.Tx, urlPath string) (*BlogPostMetadata, error) {
+	metadata, err := getBlogPostMetadataByURLPath(tx, urlPath)
+	if err != nil {
+		return nil, err
+	}
+	out := metadata.ToNonDB()
+	return &out, nil
 }
 
 type AddBlogPostMetadataInput struct {

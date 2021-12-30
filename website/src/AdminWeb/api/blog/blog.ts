@@ -1,4 +1,7 @@
 import { makePostRequestWithStandardEncoding } from 'util/bgfetch/bgfetch';
+import {
+    ContentNode,
+} from 'common/api/blog/content';
 
 export enum PostStatus {
 	Draft = "draft",
@@ -100,6 +103,49 @@ export function updateBlogPostMetadata(
 ) {
     makePostRequestWithStandardEncoding<UpdateBlogPostMetadataRequest, UpdateBlogPostMetadataResponse>(
         '/ops/api/blog/update_blog_post_metadata_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}
+
+export type GetBlogContentRequest = {
+    urlPath: string;
+}
+
+export type GetBlogContentResponse = {
+    content: ContentNode[],
+}
+
+export function getBlogContent(
+    req: GetBlogContentRequest,
+    onSuccess: (resp: GetBlogContentResponse) => void,
+    onError: (e: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<GetBlogContentRequest, GetBlogContentResponse>(
+        '/ops/api/blog/get_blog_content_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}
+
+export type UpdateBlogContentRequest = {
+    urlPath: string;
+    content: ContentNode[],
+}
+
+export type UpdateBlogContentResponse = {
+    success: boolean,
+}
+
+export function updateBlogContent(
+    req: UpdateBlogContentRequest,
+    onSuccess: (resp: UpdateBlogContentResponse) => void,
+    onError: (e: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<UpdateBlogContentRequest, UpdateBlogContentResponse>(
+        '/ops/api/blog/update_blog_content_1',
         req,
         onSuccess,
         onError,

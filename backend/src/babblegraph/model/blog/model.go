@@ -2,7 +2,10 @@ package blog
 
 import "time"
 
+type id string
+
 type dbBlogPostMetadata struct {
+	ID             id         `db:"_id"`
 	CreatedAt      time.Time  `db:"created_at"`
 	LastModifiedAt time.Time  `db:"last_modified_at"`
 	PublishedAt    *time.Time `db:"published_at"`
