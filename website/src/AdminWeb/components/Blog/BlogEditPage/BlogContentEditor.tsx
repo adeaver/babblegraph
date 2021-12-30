@@ -9,9 +9,10 @@ import RadioGroup from '@material-ui/core/RadioGroup';
 import DisplayCard from 'common/components/DisplayCard/DisplayCard';
 import { PrimaryRadio } from 'common/components/Radio/Radio';
 import { PrimaryTextField } from 'common/components/TextField/TextField';
-import { PrimaryButton } from 'common/components/Button/Button';
+import { PrimaryButton, WarningButton } from 'common/components/Button/Button';
 import { Heading4, Heading6 } from 'common/typography/Heading';
 import { TypographyColor } from 'common/typography/common';
+import BlogDisplay from 'common/components/BlogDisplay/BlogDisplay';
 
 import {
     ContentNodeType,
@@ -26,6 +27,13 @@ const styleClasses = makeStyles({
     blogContentEditorContainer: {
         padding: '10px',
     },
+    editorRow: {
+        minWidth: '100%',
+        margin: '10px 0',
+    },
+    nodeButton: {
+        margin: '0 5px',
+    }
 });
 
 
@@ -70,7 +78,7 @@ const BlogContentEditor = (props: BlogContentEditorProps) => {
             </Grid>
             <Grid className={classes.blogContentEditorContainer} item xs={6}>
                 <DisplayCard>
-                    Hello
+                    { !!content.length && <BlogDisplay content={content} /> }
                 </DisplayCard>
             </Grid>
         </Grid>
@@ -101,25 +109,33 @@ const EditorComponent = (props: EditorComponentProps) => {
             props.handleUpsertContentAtIndex(newNode, idx);
         }
     }
+    const handleDeleteNode = (idx: number) => {
+        return () => {
+            props.handleRemoveContentAtIndex(idx);
+        }
+    }
 
+    const classes = styleClasses();
     return (
         <DisplayCard>
-            <Heading4 color={TypographyColor.Primary}>
-                Add a node
-            </Heading4>
-            <FormControl component="fieldset">
-                <RadioGroup aria-label="add-node-type" name="add-node-type1" value={newNodeType} onChange={handleRadioFormChange}>
-                    <Grid container>
-                        {
-                            Object.values(ContentNodeType).map((option: ContentNodeType, idx: number) => (
-                                <EditorComponentAddNodeSelector
-                                    key={`add-node-selector-${idx}`}
-                                    value={option} />
-                            ))
-                        }
-                    </Grid>
-                </RadioGroup>
-            </FormControl>
+            <div className={classes.editorRow}>
+                <Heading4 color={TypographyColor.Primary}>
+                    Add a node
+                </Heading4>
+                <FormControl component="fieldset">
+                    <RadioGroup aria-label="add-node-type" name="add-node-type1" value={newNodeType} onChange={handleRadioFormChange}>
+                        <Grid container>
+                            {
+                                Object.values(ContentNodeType).map((option: ContentNodeType, idx: number) => (
+                                    <EditorComponentAddNodeSelector
+                                        key={`add-node-selector-${idx}`}
+                                        value={option} />
+                                ))
+                            }
+                        </Grid>
+                    </RadioGroup>
+                </FormControl>
+            </div>
             <PrimaryButton
                 type="submit"
                 onClick={handleAddNewNode}>
@@ -131,12 +147,14 @@ const EditorComponent = (props: EditorComponentProps) => {
                         return (
                             <HeadingNodeEditor
                                 body={node.body as HeadingContent}
+                                handleDelete={handleDeleteNode(idx)}
                                 handleUpdate={handleUpdateNode(idx)} />
                         );
                     } else if (node.type === ContentNodeType.Paragraph) {
                         return (
                             <ParagraphNodeEditor
                                 body={node.body as ParagraphContent}
+                                handleDelete={handleDeleteNode(idx)}
                                 handleUpdate={handleUpdateNode(idx)} />
                         );
                     }
@@ -161,6 +179,7 @@ const EditorComponentAddNodeSelector  = (props: EditorComponentAddNodeSelectorPr
 type HeadingNodeEditorProps = {
     body: HeadingContent;
     handleUpdate: (node: ContentNode) => void;
+    handleDelete: () => void;
 }
 
 const HeadingNodeEditor = (props: HeadingNodeEditorProps) => {
@@ -178,21 +197,30 @@ const HeadingNodeEditor = (props: HeadingNodeEditorProps) => {
         })
     }
 
+    const classes = styleClasses();
     return (
         <div>
             <Heading6 color={TypographyColor.Primary}>
                 Edit Heading Node
             </Heading6>
             <PrimaryTextField
+                className={classes.editorRow}
                 value={text}
                 label="Heading Content"
                 onChange={handleChange}
                 variant="outlined" />
             <PrimaryButton
+                className={classes.nodeButton}
                 type="submit"
                 onClick={handleSubmit}>
                 Submit
             </PrimaryButton>
+            <WarningButton
+                className={classes.nodeButton}
+                type="submit"
+                onClick={props.handleDelete}>
+                Delete
+            </WarningButton>
         </div>
     );
 }
@@ -200,6 +228,7 @@ const HeadingNodeEditor = (props: HeadingNodeEditorProps) => {
 type ParagraphNodeEditorProps = {
     body: ParagraphContent;
     handleUpdate: (node: ContentNode) => void;
+    handleDelete: () => void;
 }
 
 const ParagraphNodeEditor = (props: ParagraphNodeEditorProps) => {
@@ -217,21 +246,32 @@ const ParagraphNodeEditor = (props: ParagraphNodeEditorProps) => {
         })
     }
 
+    const classes = styleClasses();
     return (
         <div>
             <Heading6 color={TypographyColor.Primary}>
                 Edit Paragraph Node
             </Heading6>
             <PrimaryTextField
+                className={classes.editorRow}
                 value={text}
+                minRows={6}
                 label="Paragraph Content"
                 onChange={handleChange}
-                variant="outlined" />
+                variant="outlined"
+                multiline />
             <PrimaryButton
+                className={classes.nodeButton}
                 type="submit"
                 onClick={handleSubmit}>
                 Submit
             </PrimaryButton>
+            <WarningButton
+                className={classes.nodeButton}
+                type="submit"
+                onClick={props.handleDelete}>
+                Delete
+            </WarningButton>
         </div>
     );
 }
