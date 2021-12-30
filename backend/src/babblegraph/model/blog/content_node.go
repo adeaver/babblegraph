@@ -79,16 +79,21 @@ func UpsertContentForBlog(tx *sqlx.Tx, s3Storage *storage.S3Storage, urlPath str
 func verifyContent(content []ContentNode) error {
 	var errs []string
 	for idx, node := range content {
+		bytes, err := json.Marshal(node.Body)
+		if err != nil {
+			errs = append(errs, fmt.Sprintf("Error marshalling node %d: %s", idx, err.Error()))
+			continue
+		}
 		switch node.Type {
 		case ContentNodeTypeHeading:
-			_, ok := node.Body.(Heading)
-			if !ok {
-				errs = append(errs, fmt.Sprintf("Node %d has type heading, but the body does not match", idx))
+			var h Heading
+			if err := json.Unmarshal(bytes, &h); err != nil {
+				errs = append(errs, fmt.Sprintf("Node %d has type heading, but the body does not marshal correctly", idx))
 			}
 		case ContentNodeTypeParagraph:
-			_, ok := node.Body.(Paragraph)
-			if !ok {
-				errs = append(errs, fmt.Sprintf("Node %d has type paragraph, but the body does not match", idx))
+			var p Paragraph
+			if err := json.Unmarshal(bytes, &p); err != nil {
+				errs = append(errs, fmt.Sprintf("Node %d has type paragraph, but the body does not marshal correctly", idx))
 			}
 		default:
 			errs = append(errs, fmt.Sprintf("Node %d has unrecognized type %s", idx, node.Type))

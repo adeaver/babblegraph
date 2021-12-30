@@ -176,35 +176,6 @@ const EditorComponent = (props: EditorComponentProps) => {
     const classes = styleClasses();
     return (
         <DisplayCard>
-            <div className={classes.editorRow}>
-                <PrimaryButton
-                    className={classes.nodeButton}
-                    type="submit"
-                    onClick={props.handleSaveBlogContent}>
-                    Save Updates
-                </PrimaryButton>
-                <Heading4 color={TypographyColor.Primary}>
-                    Add a node
-                </Heading4>
-                <FormControl component="fieldset">
-                    <RadioGroup aria-label="add-node-type" name="add-node-type1" value={newNodeType} onChange={handleRadioFormChange}>
-                        <Grid container>
-                            {
-                                Object.values(ContentNodeType).map((option: ContentNodeType, idx: number) => (
-                                    <EditorComponentAddNodeSelector
-                                        key={`add-node-selector-${idx}`}
-                                        value={option} />
-                                ))
-                            }
-                        </Grid>
-                    </RadioGroup>
-                </FormControl>
-            </div>
-            <PrimaryButton
-                type="submit"
-                onClick={handleAddNewNode}>
-                Submit
-            </PrimaryButton>
             {
                 props.content.map((node: ContentNode, idx: number) => {
                     if (node.type === ContentNodeType.Heading) {
@@ -224,6 +195,34 @@ const EditorComponent = (props: EditorComponentProps) => {
                     }
                 })
             }
+            <div className={classes.editorRow}>
+                <Heading4 color={TypographyColor.Primary}>
+                    Add a node </Heading4>
+                <FormControl component="fieldset">
+                    <RadioGroup aria-label="add-node-type" name="add-node-type1" value={newNodeType} onChange={handleRadioFormChange}>
+                        <Grid container>
+                            {
+                                Object.values(ContentNodeType).map((option: ContentNodeType, idx: number) => (
+                                    <EditorComponentAddNodeSelector
+                                        key={`add-node-selector-${idx}`}
+                                        value={option} />
+                                ))
+                            }
+                        </Grid>
+                    </RadioGroup>
+                </FormControl>
+            </div>
+            <PrimaryButton
+                type="submit"
+                onClick={handleAddNewNode}>
+                Submit
+            </PrimaryButton>
+            <PrimaryButton
+                className={classes.nodeButton}
+                type="submit"
+                onClick={props.handleSaveBlogContent}>
+                Save Updates
+            </PrimaryButton>
         </DisplayCard>
     );
 }
