@@ -20,6 +20,8 @@ import {
     UpdateBlogPostMetadataResponse,
 } from 'AdminWeb/api/blog/blog';
 
+import ImageUpload from 'AdminWeb/components/Blog/common/ImageUpload';
+
 const styleClasses = makeStyles({
     editBlogFormTextField: {
         minWidth: '100%',
@@ -154,22 +156,8 @@ const EditBlogPostMetadataForm = (props: EditBlogPostMetadataFormProps) => {
                     &nbsp;
                 </Grid>
                 <Grid item xs={12} md={6}>
-                    <Paragraph
-                        align={Alignment.Left}
-                        color={TypographyColor.Primary}
-                        size={Size.Small}>
-                        Hero Image
-                    </Paragraph>
-                    <PrimaryTextField
-                        className={classes.editBlogFormTextField}
-                        id="blogHeroImage"
-                        type="file"
-                        accept="image/*"
-                        variant="outlined" />
-                    <PrimaryButton
-                        type="submit">
-                        Upload
-                    </PrimaryButton>
+                    <ImageUpload
+                        label="Hero Image" />
                 </Grid>
                 <Grid item xs={false} md={3}>
                     &nbsp;
