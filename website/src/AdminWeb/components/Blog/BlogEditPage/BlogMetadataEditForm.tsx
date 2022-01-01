@@ -4,11 +4,12 @@ import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 
 import { Heading3 } from 'common/typography/Heading';
-import { TypographyColor } from 'common/typography/common';
+import { Alignment, TypographyColor } from 'common/typography/common';
 import DisplayCard from 'common/components/DisplayCard/DisplayCard';
 import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
 import { PrimaryButton } from 'common/components/Button/Button';
 import { PrimaryTextField } from 'common/components/TextField/TextField';
+import Paragraph, { Size } from 'common/typography/Paragraph';
 
 import {
     BlogPostMetadata,
@@ -113,44 +114,68 @@ const EditBlogPostMetadataForm = (props: EditBlogPostMetadataFormProps) => {
         });
     }
 
+    const classes = styleClasses();
     return (
-        <form onSubmit={handleSubmit} noValidate autoComplete="off">
-            <Heading3 color={TypographyColor.Primary}>
-                Edit Metadata
-            </Heading3>
-            <EditBlogPostMetadataFormTextField
-                name="blogTitle"
-                label="Title"
-                currentValue={title}
-                handleChange={setTitle} />
-            <EditBlogPostMetadataFormTextField
-                name="blogDesc"
-                label="Description"
-                currentValue={description}
-                handleChange={setDescription} />
-            <EditBlogPostMetadataFormTextField
-                name="blogAuthorName"
-                label="Author Name"
-                currentValue={authorName}
-                handleChange={setAuthorName} />
-            <EditBlogPostMetadataFormTextField
-                name="blogHeroImage"
-                label="Hero Image Path"
-                currentValue={heroImagePath}
-                handleChange={setHeroImagePath} />
+        <div>
+            <form onSubmit={handleSubmit} noValidate autoComplete="off">
+                <Heading3 color={TypographyColor.Primary}>
+                    Edit Metadata
+                </Heading3>
+                <EditBlogPostMetadataFormTextField
+                    name="blogTitle"
+                    label="Title"
+                    currentValue={title}
+                    handleChange={setTitle} />
+                <EditBlogPostMetadataFormTextField
+                    name="blogDesc"
+                    label="Description"
+                    currentValue={description}
+                    handleChange={setDescription} />
+                <EditBlogPostMetadataFormTextField
+                    name="blogAuthorName"
+                    label="Author Name"
+                    currentValue={authorName}
+                    handleChange={setAuthorName} />
+                <Grid container>
+                    <Grid item xs={false} md={3}>
+                        &nbsp;
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                        <PrimaryButton
+                            type="submit"
+                            disabled={!title || !description || !authorName}>
+                            Submit
+                        </PrimaryButton>
+                    </Grid>
+                </Grid>
+            </form>
             <Grid container>
                 <Grid item xs={false} md={3}>
                     &nbsp;
                 </Grid>
                 <Grid item xs={12} md={6}>
+                    <Paragraph
+                        align={Alignment.Left}
+                        color={TypographyColor.Primary}
+                        size={Size.Small}>
+                        Hero Image
+                    </Paragraph>
+                    <PrimaryTextField
+                        className={classes.editBlogFormTextField}
+                        id="blogHeroImage"
+                        type="file"
+                        accept="image/*"
+                        variant="outlined" />
                     <PrimaryButton
-                        type="submit"
-                        disabled={!title || !description || !authorName}>
-                        Submit
+                        type="submit">
+                        Upload
                     </PrimaryButton>
                 </Grid>
+                <Grid item xs={false} md={3}>
+                    &nbsp;
+                </Grid>
             </Grid>
-        </form>
+        </div>
     )
 }
 
