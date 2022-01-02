@@ -1,6 +1,10 @@
 package blog
 
-import "time"
+import (
+	"time"
+
+	"github.com/jmoiron/sqlx"
+)
 
 type id string
 
@@ -9,7 +13,7 @@ type dbBlogPostMetadata struct {
 	CreatedAt      time.Time  `db:"created_at"`
 	LastModifiedAt time.Time  `db:"last_modified_at"`
 	PublishedAt    *time.Time `db:"published_at"`
-	HeroImagePath  *string    `db:"hero_image_path"`
+	HeroImageID    *imageID   `db:"hero_image_id"`
 	Title          string     `db:"title"`
 	AuthorName     string     `db:"author_name"`
 	Description    string     `db:"description"`
@@ -17,26 +21,25 @@ type dbBlogPostMetadata struct {
 	Status         PostStatus `db:"status"`
 }
 
-func (d dbBlogPostMetadata) ToNonDB() BlogPostMetadata {
-	return BlogPostMetadata{
-		PublishedAt:   d.PublishedAt,
-		HeroImagePath: d.HeroImagePath,
-		Title:         d.Title,
-		Description:   d.Description,
-		URLPath:       d.URLPath,
-		Status:        d.Status,
-		AuthorName:    d.AuthorName,
-	}
+func (d dbBlogPostMetadata) ToNonDB(tx *sqlx.Tx) (*BlogPostMetadata, error) {
+	return &BlogPostMetadata{
+		PublishedAt: d.PublishedAt,
+		Title:       d.Title,
+		Description: d.Description,
+		URLPath:     d.URLPath,
+		Status:      d.Status,
+		AuthorName:  d.AuthorName,
+	}, nil
 }
 
 type BlogPostMetadata struct {
-	PublishedAt   *time.Time `json:"published_at"`
-	HeroImagePath *string    `json:"hero_image_path,omitempty"`
-	Title         string     `json:"title"`
-	Description   string     `json:"description"`
-	URLPath       string     `json:"url_path"`
-	Status        PostStatus `json:"status"`
-	AuthorName    string     `json:"author_name"`
+	PublishedAt *time.Time `json:"published_at"`
+	HeroImage   *Image     `json:"hero_image,omitempty"`
+	Title       string     `json:"title"`
+	Description string     `json:"description"`
+	URLPath     string     `json:"url_path"`
+	Status      PostStatus `json:"status"`
+	AuthorName  string     `json:"author_name"`
 }
 
 type PostStatus string
@@ -47,3 +50,25 @@ const (
 	PostStatusHidden  PostStatus = "hidden"
 	PostStatusDeleted PostStatus = "deleted"
 )
+
+type imageID string
+
+type dbImageMetadata struct {
+	ID       imageID `db:"_id"`
+	Path     *string `db:"path"`
+	BlogID   id      `db:"blog_id"`
+	FileName string  `db:"file_name"`
+	AltText  string  `db:"alt_text"`
+	Caption  *string `db:"caption"`
+}
+
+func (d dbImageMetadata) ToNonDB() *Image {
+	if d.Path == nil {
+		return nil
+	}
+	return &Image{
+		Path:    d.Path,
+		AltText: d.AltText,
+		Caption: d.Caption,
+	}
+}

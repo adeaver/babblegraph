@@ -22,7 +22,11 @@ func GetAllBlogPostMetadata(tx *sqlx.Tx) ([]BlogPostMetadata, error) {
 	}
 	var out []BlogPostMetadata
 	for _, m := range matches {
-		out = append(out, m.ToNonDB())
+		blogPost, err := m.ToNonDB(tx)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, *blogPost)
 	}
 	return out, nil
 }
@@ -48,8 +52,7 @@ func GetBlogPostMetadataByURLPath(tx *sqlx.Tx, urlPath string) (*BlogPostMetadat
 	if err != nil {
 		return nil, err
 	}
-	out := metadata.ToNonDB()
-	return &out, nil
+	return metadata.ToNonDB(tx)
 }
 
 type AddBlogPostMetadataInput struct {
