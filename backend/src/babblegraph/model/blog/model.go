@@ -6,10 +6,10 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type id string
+type ID string
 
 type dbBlogPostMetadata struct {
-	ID             id         `db:"_id"`
+	ID             ID         `db:"_id"`
 	CreatedAt      time.Time  `db:"created_at"`
 	LastModifiedAt time.Time  `db:"last_modified_at"`
 	PublishedAt    *time.Time `db:"published_at"`
@@ -22,6 +22,7 @@ type dbBlogPostMetadata struct {
 
 func (d dbBlogPostMetadata) ToNonDB(tx *sqlx.Tx) (*BlogPostMetadata, error) {
 	return &BlogPostMetadata{
+		ID:          d.ID,
 		PublishedAt: d.PublishedAt,
 		Title:       d.Title,
 		Description: d.Description,
@@ -32,6 +33,7 @@ func (d dbBlogPostMetadata) ToNonDB(tx *sqlx.Tx) (*BlogPostMetadata, error) {
 }
 
 type BlogPostMetadata struct {
+	ID          ID         `json:"id"`
 	PublishedAt *time.Time `json:"published_at"`
 	HeroImage   *Image     `json:"hero_image,omitempty"`
 	Title       string     `json:"title"`
@@ -55,7 +57,7 @@ type imageID string
 type dbImageMetadata struct {
 	ID       imageID `db:"_id"`
 	Path     string  `db:"path"`
-	BlogID   id      `db:"blog_id"`
+	BlogID   ID      `db:"blog_id"`
 	FileName string  `db:"file_name"`
 	AltText  string  `db:"alt_text"`
 	Caption  *string `db:"caption"`

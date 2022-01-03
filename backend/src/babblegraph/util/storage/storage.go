@@ -1,5 +1,45 @@
 package storage
 
+// TODO: refactor this package
+/*
+
+type storage interface {
+    Read(directory str, fileName str) []byte, err
+    Write(directory str, file File)
+}
+
+type File struct {
+    fileName str
+    data []byte
+    contentType ContentType
+    accessControl AccessContorl
+}
+
+func CreateFileWithAccessControl(fileName string, accessControl) (*file, error)
+func (f *File) WriteToFile(data []byte)
+
+type remoteStorage struct {
+    s3Storage util.s3.storage
+}
+
+func (r remoteStorage) Write
+func (r remoteStorage) Read
+
+var RemoteStorage
+
+do local storage as well
+
+// util.s3
+
+type S3Client struct {
+    Credentials
+    BucketName (prod-spaces-1)
+}
+
+GetS3ClientForEnvironment
+
+*/
+
 import (
 	"babblegraph/util/env"
 	"babblegraph/util/ptr"
@@ -49,29 +89,25 @@ func (s *S3Storage) GetData(bucketName, fileName string) (*string, error) {
 	return ptr.String(b.String()), nil
 }
 
-type ContentType string
-
-const (
-	ContentTypeApplicationJSON = "application/json"
-)
-
-func (c ContentType) Str() string {
-	return string(c)
-}
-
 type UploadDataInput struct {
 	BucketName  string
 	FileName    string
 	Data        string
 	ContentType ContentType
+	IsPublic    bool
 }
 
 func (s *S3Storage) UploadData(input UploadDataInput) error {
+	var acl *string
+	if input.IsPublic {
+		acl = ptr.String("public-read")
+	}
 	_, err := s.s3Client.PutObject(&s3.PutObjectInput{
 		Bucket:      aws.String(input.BucketName),
 		Key:         aws.String(input.FileName),
 		Body:        strings.NewReader(input.Data),
 		ContentType: aws.String(input.ContentType.Str()),
+		ACL:         acl,
 	})
 	return err
 }

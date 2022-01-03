@@ -36,6 +36,34 @@ const ImageUpload = (props: ImageUploadProps) => {
         setCaption(event.target.value);
     }
 
+    const handleSubmit = () => {
+        const data = new FormData();
+        data.append("file", selectedFile);
+        data.append("alt_text", altText);
+        data.append("file_name", fileName);
+        data.append("caption", caption);
+        fetch("/ops/api/blog/upload_image_1", {
+            credentials: 'include',
+            method: 'POST',
+            headers: {
+                'cache': 'no-cache',
+            },
+            body: data
+        })
+        .then(response => {
+            if (!response.ok) {
+                response.text().then(data => console.log(data));
+                return;
+            }
+            response.json().then(data => {
+                console.log(data);
+            });
+        })
+        .catch(err => {
+            console.log(err);
+        });
+    }
+
     const classes = styleClasses();
     return (
         <div>
@@ -75,6 +103,7 @@ const ImageUpload = (props: ImageUploadProps) => {
                 onChange={handleCaptionChange}
                 multiline />
             <PrimaryButton
+                onClick={handleSubmit}
                 type="submit">
                 Upload
             </PrimaryButton>

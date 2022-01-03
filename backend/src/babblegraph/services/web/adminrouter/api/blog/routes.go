@@ -6,8 +6,10 @@ import (
 	"babblegraph/services/web/adminrouter/middleware"
 	"babblegraph/services/web/router"
 	"babblegraph/util/database"
+	"babblegraph/util/ptr"
 	"babblegraph/util/storage"
 	"bytes"
+	"fmt"
 	"io"
 
 	"github.com/jmoiron/sqlx"
@@ -253,6 +255,7 @@ func getBlogContent(adminID admin.ID, r *router.Request) (interface{}, error) {
 }
 
 type uploadBlogImageResponse struct {
+	ImagePath string `json:"image_path"`
 }
 
 func uploadBlogImage(adminID admin.ID, r *router.Request) (interface{}, error) {
@@ -265,9 +268,39 @@ func uploadBlogImage(adminID admin.ID, r *router.Request) (interface{}, error) {
 	if _, err := io.Copy(buf, file); err != nil {
 		return nil, err
 	}
+	blogURLPath := r.GetFormValue("url_path")
+	var caption *string
+	if captionValue := r.GetFormValue("caption"); len(captionValue) != 0 {
+		caption = ptr.String(captionValue)
+	}
+	fileName := r.GetFormValue("file_name")
+	storageFile, err := storage.NewFile(fileName, buf.Bytes())
+	if err != nil {
+		return nil, err
+	}
+	storageFile.AssignAccessControlLevel(storage.AccessControlPublicReadOnly)
+	var path string
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		blogPostMetadata, err := blog.GetBlogPostMetadataByURLPath(tx, blogURLPath)
+		if err != nil {
+			return err
+		}
+		imageDirectory := blog.MakeImageDirectory(blogPostMetadata.ID)
+		path = fmt.Sprintf("%s/%s", imageDirectory, fileName)
+		if err := blog.InsertBlogImageMetadata(tx, blog.InsertBlogImageMetadataInput{
+			BlogID:   blogPostMetadata.ID,
+			Path:     path,
+			FileName: fileName,
+			AltText:  r.GetFormValue("alt_text"),
+			Caption:  caption,
+		}); err != nil {
+			return err
+		}
+		return storage.RemoteStorage.Write(imageDirectory, *storageFile)
 	}); err != nil {
 		return nil, err
 	}
-	return uploadBlogImageResponse{}, nil
+	return uploadBlogImageResponse{
+		ImagePath: path,
+	}, nil
 }

@@ -39,7 +39,7 @@ type Image struct {
 	Caption *string `json:"caption,omitempty"`
 }
 
-func getContentFileNameforID(id id) string {
+func getContentFileNameforID(id ID) string {
 	return fmt.Sprintf("blog-content/%s/content/%s.json", env.MustEnvironmentName(), id)
 }
 
