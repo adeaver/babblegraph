@@ -160,7 +160,8 @@ const EditBlogPostMetadataForm = (props: EditBlogPostMetadataFormProps) => {
                         // TODO: fix this?
                         handleFileUpload={(i: Image) => console.log(i)}
                         urlPath={props.blogPostMetadata.urlPath}
-                        label="Hero Image" />
+                        label="Hero Image"
+                        isHeroImage />
                 </Grid>
                 <Grid item xs={false} md={3}>
                     &nbsp;

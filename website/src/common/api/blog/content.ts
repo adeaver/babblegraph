@@ -1,6 +1,7 @@
 export enum ContentNodeType {
     Heading = 'heading',
     Paragraph = 'paragraph',
+    Image = 'image',
 }
 
 export type ContentNode = {
@@ -8,7 +9,7 @@ export type ContentNode = {
     body: ContentNodeBody;
 }
 
-export type ContentNodeBody = Heading | Paragraph;
+export type ContentNodeBody = Heading | Paragraph | Image;
 
 export type Heading = {
     text: string;
@@ -38,6 +39,15 @@ export function getDefaultContentNodeForType(nodeType: ContentNodeType) {
             body: {
                 text: "",
             }
+        }
+    } else if (nodeType === ContentNodeType.Image) {
+        return {
+            type: ContentNodeType.Image,
+            body: {
+                altText: "",
+                path: "",
+                caption: "",
+            },
         }
     } else {
         throw new Error("Unsupported node type");

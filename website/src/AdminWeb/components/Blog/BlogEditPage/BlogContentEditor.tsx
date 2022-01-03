@@ -21,6 +21,7 @@ import {
     ContentNodeBody,
     Heading as HeadingContent,
     Paragraph as ParagraphContent,
+    Image as ImageContent,
     getDefaultContentNodeForType,
 } from 'common/api/blog/content';
 import {
@@ -29,6 +30,7 @@ import {
     updateBlogContent,
     UpdateBlogContentResponse,
 } from 'AdminWeb/api/blog/blog';
+import ImageUpload from 'AdminWeb/components/Blog/common/ImageUpload';
 
 const styleClasses = makeStyles({
     blogContentEditorContainer: {
@@ -40,6 +42,9 @@ const styleClasses = makeStyles({
     },
     nodeButton: {
         margin: '0 5px',
+    },
+    nodeButtonVertical: {
+        margin: '5px 0',
     }
 });
 
@@ -121,6 +126,7 @@ const BlogContentEditor = (props: BlogContentEditorProps) => {
             <Grid container>
                 <Grid className={classes.blogContentEditorContainer} item xs={6}>
                     <EditorComponent
+                        urlPath={props.urlPath}
                         content={content}
                         handleSaveBlogContent={handleSaveBlogContent}
                         handleRemoveContentAtIndex={handleRemoveContentAtIndex}
@@ -143,6 +149,7 @@ const BlogContentEditor = (props: BlogContentEditorProps) => {
 }
 
 type EditorComponentProps = {
+    urlPath: string;
     content: ContentNode[];
 
     // TODO: add move content to index
@@ -192,6 +199,14 @@ const EditorComponent = (props: EditorComponentProps) => {
                                 handleDelete={handleDeleteNode(idx)}
                                 handleUpdate={handleUpdateNode(idx)} />
                         );
+                    } else if (node.type === ContentNodeType.Image) {
+                        return (
+                            <ImageNodeEditor
+                                urlPath={props.urlPath}
+                                body={node.body as ImageContent}
+                                handleDelete={handleDeleteNode(idx)}
+                                handleUpdate={handleUpdateNode(idx)} />
+                        )
                     }
                 })
             }
@@ -331,6 +346,39 @@ const ParagraphNodeEditor = (props: ParagraphNodeEditorProps) => {
             </PrimaryButton>
             <WarningButton
                 className={classes.nodeButton}
+                type="submit"
+                onClick={props.handleDelete}>
+                Delete
+            </WarningButton>
+        </div>
+    );
+}
+
+type ImageNodeEditorProps = {
+    urlPath: string;
+    body: ImageContent;
+    handleUpdate: (node: ContentNode) => void;
+    handleDelete: () => void;
+}
+
+const ImageNodeEditor = (props: ImageNodeEditorProps) => {
+    const handleImageUpload = (i: ImageContent) => {
+        props.handleUpdate({
+            type: ContentNodeType.Image,
+            body: i,
+        })
+    }
+
+    const classes = styleClasses();
+    return (
+        <div>
+            <ImageUpload
+                label="Add an image"
+                urlPath={props.urlPath}
+                image={props.body}
+                handleFileUpload={handleImageUpload} />
+            <WarningButton
+                className={classes.nodeButtonVertical}
                 type="submit"
                 onClick={props.handleDelete}>
                 Delete

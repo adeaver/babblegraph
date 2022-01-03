@@ -276,6 +276,7 @@ func uploadBlogImage(adminID admin.ID, r *router.Request) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
+	isHeroImage := r.GetFormValue("is_hero_image") == "true"
 	storageFile.AssignAccessControlLevel(storage.AccessControlPublicReadOnly)
 	var path string
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
@@ -286,11 +287,12 @@ func uploadBlogImage(adminID admin.ID, r *router.Request) (interface{}, error) {
 		imageDirectory := blog.MakeImageDirectory(blogPostMetadata.ID)
 		path = fmt.Sprintf("%s/%s", imageDirectory, fileName)
 		if err := blog.InsertBlogImageMetadata(tx, blog.InsertBlogImageMetadataInput{
-			BlogID:   blogPostMetadata.ID,
-			Path:     path,
-			FileName: fileName,
-			AltText:  r.GetFormValue("alt_text"),
-			Caption:  caption,
+			BlogID:      blogPostMetadata.ID,
+			Path:        path,
+			FileName:    fileName,
+			AltText:     r.GetFormValue("alt_text"),
+			Caption:     caption,
+			IsHeroImage: isHeroImage,
 		}); err != nil {
 			return err
 		}

@@ -9,10 +9,14 @@ import Paragraph, { Size } from 'common/typography/Paragraph';
 import { UploadBlogImageResponse } from 'AdminWeb/api/blog/blog';
 import { Image } from 'common/api/blog/content';
 
+import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
+
 type ImageUploadProps = {
     label: string;
     urlPath: string;
     isHeroImage?: boolean;
+
+    image?: Image;
 
     handleFileUpload: (i: Image) => void;
 }
@@ -25,10 +29,12 @@ const styleClasses = makeStyles({
 });
 
 const ImageUpload = (props: ImageUploadProps) => {
+    const initialPathParts = !!props.image ? props.image.path.split("/") : [];
+    const [ isLoading, setIsLoading ] = useState<boolean>(false);
     const [ selectedFile, setSelectedFile ] = useState<File>(null);
-    const [ altText, setAltText ] = useState<string>(null);
-    const [ fileName, setFileName ] = useState<string>(null);
-    const [ caption, setCaption ] = useState<string>(null);
+    const [ altText, setAltText ] = useState<string>(!!props.image ? props.image.altText : null);
+    const [ fileName, setFileName ] = useState<string>(!!props.image ? initialPathParts[initialPathParts.length - 1] : null);
+    const [ caption, setCaption ] = useState<string>(!!props.image ? props.image.caption : null);
     const [ error, setError ] = useState<Error>(null);
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -45,12 +51,14 @@ const ImageUpload = (props: ImageUploadProps) => {
     }
 
     const handleSubmit = () => {
+        setIsLoading(true);
         const data = new FormData();
         data.append("file", selectedFile);
         data.append("alt_text", altText);
         data.append("file_name", fileName);
         data.append("caption", caption);
         data.append("url_path", props.urlPath);
+        data.append("is_hero_image", props.isHeroImage ? "true" : "false");
         fetch("/ops/api/blog/upload_blog_image_1", {
             credentials: 'include',
             method: 'POST',
@@ -61,19 +69,24 @@ const ImageUpload = (props: ImageUploadProps) => {
         })
         .then(response => {
             if (!response.ok) {
-                response.text().then(data => setError(new Error(data)));
+                response.text().then(data => {
+                    setIsLoading(false);
+                    setError(new Error(data))
+                });
                 return;
             }
             response.json().then(data => {
                 const resp = data as UploadBlogImageResponse;
                 props.handleFileUpload({
                     altText: altText,
-                    path: resp.imagePath,
+                    path: resp.image_path,
                     caption: !!caption.length ? caption : null,
                 });
+                setIsLoading(false);
             });
         })
         .catch(err => {
+            setIsLoading(false);
             setError(err);
         });
     }
@@ -93,6 +106,7 @@ const ImageUpload = (props: ImageUploadProps) => {
                 type="file"
                 accept="image/*"
                 onChange={handleFileChange}
+                disabled={isLoading}
                 variant="outlined" />
             <PrimaryTextField
                 className={classes.imageUploadInput}
@@ -100,12 +114,16 @@ const ImageUpload = (props: ImageUploadProps) => {
                 type="text"
                 variant="outlined"
                 label="File Name"
+                value={fileName}
+                disabled={isLoading}
                 onChange={handleFileNameChange} />
             <PrimaryTextField
                 className={classes.imageUploadInput}
                 id={`image-upload-${props.label.replace(" ", "-")}-alt-text`}
                 type="text"
                 variant="outlined"
+                disabled={isLoading}
+                value={altText}
                 label="Image Alt Text"
                 onChange={handleAltTextChange} />
             <PrimaryTextField
@@ -114,13 +132,22 @@ const ImageUpload = (props: ImageUploadProps) => {
                 type="text"
                 variant="outlined"
                 label="Caption"
+                disabled={isLoading}
+                value={caption}
                 onChange={handleCaptionChange}
                 multiline />
-            <PrimaryButton
-                onClick={handleSubmit}
-                type="submit">
-                Upload
-            </PrimaryButton>
+            {
+                isLoading ? (
+                    <LoadingSpinner />
+                ) : (
+                    <PrimaryButton
+                        isDisabled={!selectedFile || !altText || !fileName || isLoading }
+                        onClick={handleSubmit}
+                        type="submit">
+                        Upload
+                    </PrimaryButton>
+                )
+            }
         </div>
     )
 }

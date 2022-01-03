@@ -151,5 +151,5 @@ export function updateBlogContent(
 }
 
 export type UploadBlogImageResponse = {
-    imagePath: string;
+    image_path: string;
 }
