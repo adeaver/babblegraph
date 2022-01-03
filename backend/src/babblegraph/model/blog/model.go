@@ -13,7 +13,6 @@ type dbBlogPostMetadata struct {
 	CreatedAt      time.Time  `db:"created_at"`
 	LastModifiedAt time.Time  `db:"last_modified_at"`
 	PublishedAt    *time.Time `db:"published_at"`
-	HeroImageID    *imageID   `db:"hero_image_id"`
 	Title          string     `db:"title"`
 	AuthorName     string     `db:"author_name"`
 	Description    string     `db:"description"`
