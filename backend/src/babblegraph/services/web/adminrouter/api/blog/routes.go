@@ -7,6 +7,8 @@ import (
 	"babblegraph/services/web/router"
 	"babblegraph/util/database"
 	"babblegraph/util/storage"
+	"bytes"
+	"io"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -47,14 +49,20 @@ var Routes = router.RouteGroup{
 		}, {
 			Path: "update_blog_content_1",
 			Handler: middleware.WithPermission(
-				admin.PermissionPublishBlog,
+				admin.PermissionWriteBlog,
 				updateBlogContent,
 			),
 		}, {
 			Path: "get_blog_content_1",
 			Handler: middleware.WithPermission(
-				admin.PermissionPublishBlog,
+				admin.PermissionWriteBlog,
 				getBlogContent,
+			),
+		}, {
+			Path: "upload_blog_image_1",
+			Handler: middleware.WithPermission(
+				admin.PermissionWriteBlog,
+				uploadBlogImage,
 			),
 		},
 	},
@@ -242,4 +250,24 @@ func getBlogContent(adminID admin.ID, r *router.Request) (interface{}, error) {
 	return getBlogContentResponse{
 		Content: content,
 	}, nil
+}
+
+type uploadBlogImageResponse struct {
+}
+
+func uploadBlogImage(adminID admin.ID, r *router.Request) (interface{}, error) {
+	file, _, err := r.GetFile(nil)
+	defer file.Close()
+	if err != nil {
+		return nil, err
+	}
+	buf := bytes.NewBuffer(nil)
+	if _, err := io.Copy(buf, file); err != nil {
+		return nil, err
+	}
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+	}); err != nil {
+		return nil, err
+	}
+	return uploadBlogImageResponse{}, nil
 }

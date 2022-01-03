@@ -13,6 +13,8 @@ const (
 	updateBlogPostMetadataQuery       = "UPDATE blog_post_metadata SET title=$1, description=$2, hero_image_path=$3, author_name=$4, last_modified_at = timezone('utc', now()) WHERE url_path = $5"
 	updateBlogPostStatusQuery         = "UPDATE blog_post_metadata SET status=$1, last_modified_at=timezone('utc', now()) WHERE url_path = $2"
 	updateBlogPostPublishedTimeQuery  = "UPDATE blog_post_metadata SET published_at=timezone('utc', now()), last_modified_at=timezone('utc', now()) WHERE url_path=$1"
+
+	insertBlogImageQuery = "INSERT INTO blog_post_image_metadata (path, file_name, alt_text, caption) VALUES ($1, $2, $3, $4)"
 )
 
 func GetAllBlogPostMetadata(tx *sqlx.Tx) ([]BlogPostMetadata, error) {
@@ -101,4 +103,18 @@ func UpdateBlogPostStatus(tx *sqlx.Tx, urlPath string, status PostStatus) error 
 		}
 	}
 	return nil
+}
+
+type InsertBlogImageMetadataInput struct {
+	Path     string
+	FileName string
+	AltText  string
+	Caption  string
+}
+
+func InsertBlogImageMetadata(tx *sqlx.Tx, input InsertBlogImageMetadataInput) (*imageID, error) {
+	if _, err := tx.Exec(insertBlogImageQuery, input.Path, input.FileName, input.AltText, input.Caption); err != nil {
+		return nil, err
+	}
+	return nil, nil
 }

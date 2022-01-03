@@ -55,18 +55,15 @@ type imageID string
 
 type dbImageMetadata struct {
 	ID       imageID `db:"_id"`
-	Path     *string `db:"path"`
+	Path     string  `db:"path"`
 	BlogID   id      `db:"blog_id"`
 	FileName string  `db:"file_name"`
 	AltText  string  `db:"alt_text"`
 	Caption  *string `db:"caption"`
 }
 
-func (d dbImageMetadata) ToNonDB() *Image {
-	if d.Path == nil {
-		return nil
-	}
-	return &Image{
+func (d dbImageMetadata) ToNonDB() Image {
+	return Image{
 		Path:    d.Path,
 		AltText: d.AltText,
 		Caption: d.Caption,

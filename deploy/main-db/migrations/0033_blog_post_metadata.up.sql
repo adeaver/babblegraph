@@ -5,7 +5,6 @@ CREATE TABLE IF NOT EXISTS blog_post_metadata(
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()),
     last_modified_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()),
     published_at TIMESTAMP WITH TIME ZONE,
-    hero_image_id uuid REFERENCES blog_post_image_metadata(_id),
     title TEXT NOT NULL,
     author_name TEXT NOT NULL,
     description TEXT NOT NULL,
@@ -21,13 +20,15 @@ CREATE TABLE IF NOT EXISTS blog_post_image_metadata(
     _id uuid DEFAULT uuid_generate_v4 (),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()),
     last_modified_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()),
-    path TEXT,
+    path TEXT NOT NULL,
     blog_id uuid NOT NULL REFERENCES blog_post_metadata(_id),
     file_name TEXT NOT NULL,
     alt_text TEXT NOT NULL,
+    is_hero_image BOOLEAN DEFAULT FALSE,
     caption TEXT,
 
     PRIMARY KEY (_id)
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS blog_post_image_file_name ON blog_post_image_metadata(blog_id, file_name);
+CREATE UNIQUE INDEX IF NOT EXISTS blog_post_image_hero_image ON blog_post_image_metadata(blog_id) WHERE is_hero_image = TRUE;
