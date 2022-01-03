@@ -157,6 +157,7 @@ const EditBlogPostMetadataForm = (props: EditBlogPostMetadataFormProps) => {
                 </Grid>
                 <Grid item xs={12} md={6}>
                     <ImageUpload
+                        urlPath={props.blogPostMetadata.urlPath}
                         label="Hero Image" />
                 </Grid>
                 <Grid item xs={false} md={3}>

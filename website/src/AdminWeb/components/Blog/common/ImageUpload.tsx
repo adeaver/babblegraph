@@ -8,6 +8,7 @@ import Paragraph, { Size } from 'common/typography/Paragraph';
 
 type ImageUploadProps = {
     label: string;
+    urlPath: string;
 }
 
 const styleClasses = makeStyles({
@@ -42,7 +43,8 @@ const ImageUpload = (props: ImageUploadProps) => {
         data.append("alt_text", altText);
         data.append("file_name", fileName);
         data.append("caption", caption);
-        fetch("/ops/api/blog/upload_image_1", {
+        data.append("url_path", props.urlPath);
+        fetch("/ops/api/blog/upload_blog_image_1", {
             credentials: 'include',
             method: 'POST',
             headers: {
