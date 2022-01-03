@@ -18,6 +18,12 @@ export type Paragraph = {
     text: string;
 }
 
+export type Image = {
+    altText: string;
+    path: string;
+    caption: string;
+}
+
 export function getDefaultContentNodeForType(nodeType: ContentNodeType) {
     if (nodeType === ContentNodeType.Heading) {
         return {

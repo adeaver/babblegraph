@@ -6,9 +6,15 @@ import { PrimaryTextField } from 'common/components/TextField/TextField';
 import { PrimaryButton } from 'common/components/Button/Button';
 import Paragraph, { Size } from 'common/typography/Paragraph';
 
+import { UploadBlogImageResponse } from 'AdminWeb/api/blog/blog';
+import { Image } from 'common/api/blog/content';
+
 type ImageUploadProps = {
     label: string;
     urlPath: string;
+    isHeroImage?: boolean;
+
+    handleFileUpload: (i: Image) => void;
 }
 
 const styleClasses = makeStyles({
@@ -23,6 +29,7 @@ const ImageUpload = (props: ImageUploadProps) => {
     const [ altText, setAltText ] = useState<string>(null);
     const [ fileName, setFileName ] = useState<string>(null);
     const [ caption, setCaption ] = useState<string>(null);
+    const [ error, setError ] = useState<Error>(null);
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setSelectedFile(event.target.files[0]);
@@ -54,15 +61,20 @@ const ImageUpload = (props: ImageUploadProps) => {
         })
         .then(response => {
             if (!response.ok) {
-                response.text().then(data => console.log(data));
+                response.text().then(data => setError(new Error(data)));
                 return;
             }
             response.json().then(data => {
-                console.log(data);
+                const resp = data as UploadBlogImageResponse;
+                props.handleFileUpload({
+                    altText: altText,
+                    path: resp.imagePath,
+                    caption: !!caption.length ? caption : null,
+                });
             });
         })
         .catch(err => {
-            console.log(err);
+            setError(err);
         });
     }
 

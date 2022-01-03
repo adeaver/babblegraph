@@ -12,7 +12,6 @@ export enum PostStatus {
 
 export type BlogPostMetadata = {
     publishedAt: Date | undefined;
-    heroImagePath: string | undefined;
     title: string;
     description: string;
     urlPath: string;
@@ -88,7 +87,6 @@ export type UpdateBlogPostMetadataRequest = {
 	urlPath: string;
 	title: string;
 	description: string;
-	heroImagePath: string | undefined;
 	authorName: string;
 }
 
@@ -150,4 +148,8 @@ export function updateBlogContent(
         onSuccess,
         onError,
     );
+}
+
+export type UploadBlogImageResponse = {
+    imagePath: string;
 }

@@ -22,6 +22,8 @@ import {
 
 import ImageUpload from 'AdminWeb/components/Blog/common/ImageUpload';
 
+import { Image } from 'common/api/blog/content';
+
 const styleClasses = makeStyles({
     editBlogFormTextField: {
         minWidth: '100%',
@@ -96,7 +98,6 @@ const EditBlogPostMetadataForm = (props: EditBlogPostMetadataFormProps) => {
     const [ title, setTitle ] = useState<string>(props.blogPostMetadata.title);
     const [ description, setDescription ] = useState<string>(props.blogPostMetadata.description);
     const [ authorName, setAuthorName ] = useState<string>(props.blogPostMetadata.authorName);
-    const [ heroImagePath, setHeroImagePath ] = useState<string>(props.blogPostMetadata.heroImagePath);
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -105,7 +106,6 @@ const EditBlogPostMetadataForm = (props: EditBlogPostMetadataFormProps) => {
             urlPath: props.blogPostMetadata.urlPath,
             title: title,
             description: description,
-            heroImagePath: heroImagePath,
             authorName: authorName,
         },
         (resp: UpdateBlogPostMetadataResponse) => {
@@ -157,6 +157,8 @@ const EditBlogPostMetadataForm = (props: EditBlogPostMetadataFormProps) => {
                 </Grid>
                 <Grid item xs={12} md={6}>
                     <ImageUpload
+                        // TODO: fix this?
+                        handleFileUpload={(i: Image) => console.log(i)}
                         urlPath={props.blogPostMetadata.urlPath}
                         label="Hero Image" />
                 </Grid>

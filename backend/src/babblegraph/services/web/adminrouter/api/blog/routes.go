@@ -146,11 +146,10 @@ func addBlogPostMetadata(adminID admin.ID, r *router.Request) (interface{}, erro
 }
 
 type updateBlogPostMetadataRequest struct {
-	URLPath       string  `json:"url_path"`
-	Title         string  `json:"title"`
-	Description   string  `json:"description"`
-	HeroImagePath *string `json:"hero_image_path,omitempty"`
-	AuthorName    string  `json:"author_name"`
+	URLPath     string `json:"url_path"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	AuthorName  string `json:"author_name"`
 }
 
 type updateBlogPostMetadataResponse struct {
@@ -164,11 +163,10 @@ func updateBlogPostMetadata(adminID admin.ID, r *router.Request) (interface{}, e
 	}
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		return blog.UpdateBlogPostMetadata(tx, blog.UpdateBlogPostMetadataInput{
-			Title:         req.Title,
-			URLPath:       req.URLPath,
-			AuthorName:    req.AuthorName,
-			Description:   req.Description,
-			HeroImagePath: req.HeroImagePath,
+			Title:       req.Title,
+			URLPath:     req.URLPath,
+			AuthorName:  req.AuthorName,
+			Description: req.Description,
 		})
 	}); err != nil {
 		return nil, err
