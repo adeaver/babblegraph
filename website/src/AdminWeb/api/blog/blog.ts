@@ -136,6 +136,28 @@ export function updateBlogContent(
     );
 }
 
+export type UpdateBlogPostStatusRequest = {
+	urlPath: string;
+	status:  PostStatus;
+}
+
+export type UpdateBlogPostStatusResponse = {
+	success: boolean;
+}
+
+export function updateBlogPostStatus(
+    req: UpdateBlogPostStatusRequest,
+    onSuccess: (resp: UpdateBlogPostStatusResponse) => void,
+    onError: (e: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<UpdateBlogPostStatusRequest, UpdateBlogPostStatusResponse>(
+        '/ops/api/blog/update_blog_post_status_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}
+
 export type UploadBlogImageResponse = {
     image_path: string;
 }

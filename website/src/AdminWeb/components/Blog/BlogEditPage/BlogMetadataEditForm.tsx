@@ -2,6 +2,11 @@ import React, { useState, useEffect } from 'react';
 
 import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
+import FormControl from '@material-ui/core/FormControl';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import InputLabel from '@material-ui/core/InputLabel';
+import MenuItem from '@material-ui/core/MenuItem';
+import Select from '@material-ui/core/Select';
 
 import { Heading3 } from 'common/typography/Heading';
 import { TypographyColor } from 'common/typography/common';
@@ -13,10 +18,13 @@ import { getStaticContentURLForPath } from 'util/static/static';
 
 import {
     BlogPostMetadata,
+    PostStatus,
 } from 'common/api/blog/content.ts';
 import {
     updateBlogPostMetadata,
     UpdateBlogPostMetadataResponse,
+    updateBlogPostStatus,
+    UpdateBlogPostStatusResponse,
 } from 'AdminWeb/api/blog/blog';
 
 import ImageUpload from 'AdminWeb/components/Blog/common/ImageUpload';
@@ -32,6 +40,10 @@ const styleClasses = makeStyles({
         borderRadius: '5px',
         width: '100%',
         height: 'auto',
+        margin: '10px 0',
+    },
+    button: {
+        margin: '10px 0',
     },
 });
 
@@ -51,6 +63,10 @@ const BlogMetadataEditForm = (props: BlogMetadataEditFormProps) => {
             </Grid>
             <Grid item xs={12} md={6}>
                 <DisplayCard>
+                    <EditBlogPostStatusForm
+                        setIsLoading={props.setIsLoading}
+                        blogPostMetadata={props.blogPostMetadata}
+                        updateBlogPostMetadata={props.updateBlogPostMetadata} />
                     <EditBlogPostMetadataForm
                         setIsLoading={props.setIsLoading}
                         blogPostMetadata={props.blogPostMetadata}
@@ -190,6 +206,73 @@ const EditBlogPostMetadataFormTextField = (props: EditBlogPostMetadataFormTextFi
                     label={props.label}
                     onChange={handleChange}
                     variant="outlined" />
+            </Grid>
+            <Grid item xs={false} md={3}>
+                &nbsp;
+            </Grid>
+        </Grid>
+    );
+}
+
+type EditBlogPostStatusFormProps = {
+    blogPostMetadata: BlogPostMetadata;
+
+    setIsLoading: (isLoading: boolean) => void;
+    updateBlogPostMetadata: (b: BlogPostMetadata) => void;
+}
+
+const EditBlogPostStatusForm = (props: EditBlogPostStatusFormProps) => {
+    const [ status, setStatus ] = useState<PostStatus>(props.blogPostMetadata.status);
+
+    const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        setStatus(e.target.value as PostStatus);
+    };
+    const handleUpdate = () => {
+        props.setIsLoading(true);
+        updateBlogPostStatus({
+            urlPath: props.blogPostMetadata.urlPath,
+            status: status,
+        },
+        (resp: UpdateBlogPostStatusResponse) => {
+            props.setIsLoading(false);
+            props.updateBlogPostMetadata({
+                ...props.blogPostMetadata,
+                status: status,
+            })
+        },
+        (err: Error) => {
+            props.setIsLoading(false);
+        });
+    }
+
+    const classes = styleClasses();
+    return (
+        <Grid container>
+            <Grid item xs={false} md={3}>
+                &nbsp;
+            </Grid>
+            <Grid item xs={12} md={6}>
+                <FormControl fullWidth>
+                    <InputLabel id="status-label">Set Article Status:</InputLabel>
+                    <Select
+                        labelId="status-label"
+                        id="status-select"
+                        value={status}
+                        label="Status"
+                        onChange={handleChange}>
+                        {
+                            Object.values(PostStatus).map((s: PostStatus, idx: number) => (
+                                <MenuItem value={s}>{s}</MenuItem>
+                            ))
+                        }
+                    </Select>
+                </FormControl>
+                <PrimaryButton
+                    className={classes.button}
+                    onClick={handleUpdate}
+                    type="submit">
+                    Update
+                </PrimaryButton>
             </Grid>
             <Grid item xs={false} md={3}>
                 &nbsp;
