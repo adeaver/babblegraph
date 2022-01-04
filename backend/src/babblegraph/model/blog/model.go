@@ -21,6 +21,15 @@ type dbBlogPostMetadata struct {
 }
 
 func (d dbBlogPostMetadata) ToNonDB(tx *sqlx.Tx) (*BlogPostMetadata, error) {
+	heroImage, err := lookupHeroImageForBlogPost(tx, d.ID)
+	if err != nil {
+		return nil, err
+	}
+	var i *Image
+	if heroImage != nil {
+		temp := heroImage.ToNonDB()
+		i = &temp
+	}
 	return &BlogPostMetadata{
 		ID:          d.ID,
 		PublishedAt: d.PublishedAt,
@@ -29,6 +38,7 @@ func (d dbBlogPostMetadata) ToNonDB(tx *sqlx.Tx) (*BlogPostMetadata, error) {
 		URLPath:     d.URLPath,
 		Status:      d.Status,
 		AuthorName:  d.AuthorName,
+		HeroImage:   i,
 	}, nil
 }
 

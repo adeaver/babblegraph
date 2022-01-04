@@ -9,6 +9,7 @@ import DisplayCard from 'common/components/DisplayCard/DisplayCard';
 import { PrimaryButton } from 'common/components/Button/Button';
 import { PrimaryTextField } from 'common/components/TextField/TextField';
 import Paragraph, { Size } from 'common/typography/Paragraph';
+import { getStaticContentURLForPath } from 'util/static/static';
 
 import {
     BlogPostMetadata,
@@ -24,6 +25,11 @@ const styleClasses = makeStyles({
     editBlogFormTextField: {
         minWidth: '100%',
         margin: '10px 0',
+    },
+    image: {
+        borderRadius: '5px',
+        width: '100%',
+        height: 'auto',
     },
 });
 
@@ -131,6 +137,14 @@ const EditBlogPostMetadataForm = (props: EditBlogPostMetadataFormProps) => {
                     &nbsp;
                 </Grid>
                 <Grid item xs={12} md={6}>
+                    {
+                        !!props.blogPostMetadata.heroImage && (
+                            <img
+                                className={classes.image}
+                                src={getStaticContentURLForPath(props.blogPostMetadata.heroImage.path)}
+                                alt={props.blogPostMetadata.heroImage.altText} />
+                        )
+                    }
                     <ImageUpload
                         handleFileUpload={(i: Image) => props.updateBlogPostMetadata({
                                 ...props.blogPostMetadata,
