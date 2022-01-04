@@ -73,6 +73,7 @@ type dbImageMetadata struct {
 	FileName       string    `db:"file_name"`
 	AltText        string    `db:"alt_text"`
 	Caption        *string   `db:"caption"`
+	IsHeroImage    bool      `db:"is_hero_image"`
 }
 
 func (d dbImageMetadata) ToNonDB() Image {
