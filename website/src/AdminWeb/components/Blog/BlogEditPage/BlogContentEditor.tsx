@@ -137,7 +137,9 @@ const BlogContentEditor = (props: BlogContentEditorProps) => {
                 </Grid>
                 <Grid className={classes.blogContentEditorContainer} item xs={6}>
                     <DisplayCard>
-                        { !!content.length && <BlogDisplay content={content} /> }
+                        <BlogDisplay
+                            content={content}
+                            metadata={props.blogPostMetadata} />
                     </DisplayCard>
                 </Grid>
             </Grid>

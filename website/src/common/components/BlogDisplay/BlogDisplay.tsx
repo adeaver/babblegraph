@@ -28,6 +28,7 @@ const styleClasses = makeStyles({
 });
 
 type BlogDisplayProps = {
+    metadata: BlogPostMetadata;
     content: ContentNode[];
 }
 
@@ -37,11 +38,11 @@ const BlogDisplay = (props: BlogDisplayProps) => {
             <Heading1
                 color={TypographyColor.Primary}
                 align={Alignment.Center}>
-                This will be the title
+                { props.metadata.title }
             </Heading1>
             <Paragraph
                 align={Alignment.Center}>
-                The description will be here
+                { props.metadata.description }
             </Paragraph>
             {
                 props.content.map((node: ContentNode, idx: number) => {
