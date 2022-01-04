@@ -20,6 +20,7 @@ export enum ContentNodeType {
     Heading = 'heading',
     Paragraph = 'paragraph',
     Image = 'image',
+    Link = 'link',
 }
 
 export type ContentNode = {
@@ -27,7 +28,7 @@ export type ContentNode = {
     body: ContentNodeBody;
 }
 
-export type ContentNodeBody = Heading | Paragraph | Image;
+export type ContentNodeBody = Heading | Paragraph | Image | Link;
 
 export type Heading = {
     text: string;
@@ -43,6 +44,10 @@ export type Image = {
     caption: string;
 }
 
+export type Link = {
+    destinationUrl: string;
+    text: string;
+}
 export function getDefaultContentNodeForType(nodeType: ContentNodeType) {
     if (nodeType === ContentNodeType.Heading) {
         return {
@@ -65,6 +70,14 @@ export function getDefaultContentNodeForType(nodeType: ContentNodeType) {
                 altText: "",
                 path: "",
                 caption: "",
+            },
+        }
+    } else if (nodeType === ContentNodeType.Link) {
+        return {
+            type: ContentNodeType.Image,
+            body: {
+                destinationUrl: "",
+                text: "",
             },
         }
     } else {

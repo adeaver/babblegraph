@@ -23,6 +23,7 @@ const (
 	ContentNodeTypeHeading   ContentNodeType = "heading"
 	ContentNodeTypeParagraph ContentNodeType = "paragraph"
 	ContentNodeTypeImage     ContentNodeType = "image"
+	ContentNodeTypeLink      ContentNodeType = "link"
 )
 
 type Heading struct {
@@ -37,6 +38,11 @@ type Image struct {
 	Path    string  `json:"path"`
 	AltText string  `json:"alt_text"`
 	Caption *string `json:"caption,omitempty"`
+}
+
+type Link struct {
+	DestinationURL string `json:"destination_url"`
+	Text           string `json:"text"`
 }
 
 func getContentFileNameforID(id ID) string {
@@ -106,6 +112,11 @@ func verifyContent(content []ContentNode) error {
 			var i Image
 			if err := json.Unmarshal(bytes, &i); err != nil {
 				errs = append(errs, fmt.Sprintf("Node %d has type image, but the body does not marshal correctly", idx))
+			}
+		case ContentNodeTypeLink:
+			var l Link
+			if err := json.Unmarshal(bytes, &l); err != nil {
+				errs = append(errs, fmt.Sprintf("Node %d has type link, but the body does not marshal correctly", idx))
 			}
 		default:
 			errs = append(errs, fmt.Sprintf("Node %d has unrecognized type %s", idx, node.Type))
