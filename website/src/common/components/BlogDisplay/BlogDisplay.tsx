@@ -59,19 +59,19 @@ const BlogDisplay = (props: BlogDisplayProps) => {
                 props.content.map((node: ContentNode, idx: number) => {
                     if (node.type === ContentNodeType.Heading) {
                         return (
-                            <HeadingDisplay key={`${metadata.id}-display-${idx}`} {...node.body as HeadingContent} />
+                            <HeadingDisplay key={`${props.metadata.id}-display-${idx}`} {...node.body as HeadingContent} />
                         );
                     } else if (node.type === ContentNodeType.Paragraph) {
                         return (
-                            <ParagraphDisplay key={`${metadata.id}-display-${idx}`} {...node.body as ParagraphContent} />
+                            <ParagraphDisplay key={`${props.metadata.id}-display-${idx}`} {...node.body as ParagraphContent} />
                         );
                     } else if (node.type === ContentNodeType.Image) {
                         return (
-                            <ImageDisplay key={`${metadata.id}-display-${idx}`} {...node.body as ImageContent} />
+                            <ImageDisplay key={`${props.metadata.id}-display-${idx}`} {...node.body as ImageContent} />
                         );
                     } else if (node.type === ContentNodeType.Link) {
                         return (
-                            <LinkDisplay key={`${metadata.id}-display-${idx}`} {...node.body as LinkContent} />
+                            <LinkDisplay key={`${props.metadata.id}-display-${idx}`} {...node.body as LinkContent} />
                         );
                     } else {
                         throw new Error("Unsupported node type");
@@ -101,7 +101,7 @@ const ParagraphDisplay = (props: ParagraphContent) => {
 }
 
 const ImageDisplay = (props: ImageContent) => {
-    if (!props.path.length) {
+    if (!props.path || !props.path.length) {
         return null;
     }
     const classes = styleClasses();

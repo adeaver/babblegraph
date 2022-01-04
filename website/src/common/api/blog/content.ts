@@ -74,7 +74,7 @@ export function getDefaultContentNodeForType(nodeType: ContentNodeType) {
         }
     } else if (nodeType === ContentNodeType.Link) {
         return {
-            type: ContentNodeType.Image,
+            type: ContentNodeType.Link,
             body: {
                 destinationUrl: "",
                 text: "",
