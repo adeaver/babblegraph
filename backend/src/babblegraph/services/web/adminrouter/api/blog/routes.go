@@ -238,11 +238,10 @@ func getBlogContent(adminID admin.ID, r *router.Request) (interface{}, error) {
 	if err := r.GetJSONBody(&req); err != nil {
 		return nil, err
 	}
-	s3Storage := storage.NewS3StorageForEnvironment()
 	var content []blog.ContentNode
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		var err error
-		content, err = blog.GetContentForBlog(tx, s3Storage, req.URLPath)
+		content, err = blog.GetContentForBlog(tx, req.URLPath, false)
 		return err
 	}); err != nil {
 		return nil, err

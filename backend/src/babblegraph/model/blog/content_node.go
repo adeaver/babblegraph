@@ -45,16 +45,23 @@ type Link struct {
 	Text           string `json:"text"`
 }
 
-func getContentFileNameforID(id ID) string {
-	return fmt.Sprintf("blog-content/%s/content/%s.json", env.MustEnvironmentName(), id)
+func getContentDirectory() string {
+	return fmt.Sprintf("blog-content/%s/content", env.MustEnvironmentName())
 }
 
-func GetContentForBlog(tx *sqlx.Tx, s3Storage *storage.S3Storage, urlPath string) ([]ContentNode, error) {
+func getContentFileNameforID(id ID) string {
+	return fmt.Sprintf("%s.json", id)
+}
+
+func GetContentForBlog(tx *sqlx.Tx, urlPath string, requireIsPostLive bool) ([]ContentNode, error) {
 	metadata, err := getBlogPostMetadataByURLPath(tx, urlPath)
 	if err != nil {
 		return nil, err
 	}
-	contentStr, err := s3Storage.GetData("prod-spaces-1", getContentFileNameforID(metadata.ID))
+	if requireIsPostLive && metadata.Status != PostStatusLive {
+		return nil, fmt.Errorf("Post is not live")
+	}
+	bytes, err := storage.RemoteStorage.Read(getContentDirectory(), getContentFileNameforID(metadata.ID))
 	if err != nil {
 		if strings.Contains(err.Error(), "NoSuchKey") {
 			return nil, nil
@@ -62,7 +69,7 @@ func GetContentForBlog(tx *sqlx.Tx, s3Storage *storage.S3Storage, urlPath string
 		return nil, err
 	}
 	var content []ContentNode
-	if err := json.Unmarshal([]byte(*contentStr), &content); err != nil {
+	if err := json.Unmarshal(bytes, &content); err != nil {
 		return nil, err
 	}
 	return content, nil

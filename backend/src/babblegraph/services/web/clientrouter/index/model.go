@@ -33,6 +33,7 @@ func RegisterIndexRoutes(r *mux.Router, indexPages []IndexPage) error {
 	r.HandleFunc("/paywall-report/{token}", HandlePaywallReport)
 	r.HandleFunc("/checkout/{token}", HandleCheckoutPage(staticFileDirName))
 	r.HandleFunc("/verify/{token}", HandleVerificationForToken)
+	r.HandleFunc("/blog/{blog_path}", HandleServeBlogPost(staticFileDirName))
 	r.HandleFunc("/dist/{token}/logo.png", HandleServeLogo(staticFileDirName))
 	r.PathPrefix("/dist").Handler(http.StripPrefix("/dist", http.FileServer(http.Dir(staticFileDirName))))
 	r.PathPrefix("/").HandlerFunc(HandleServeIndexPage(staticFileDirName))

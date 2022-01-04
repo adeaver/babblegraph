@@ -2,6 +2,7 @@ package clientrouter
 
 import (
 	"babblegraph/services/web/clientrouter/api"
+	"babblegraph/services/web/clientrouter/api/blog"
 	"babblegraph/services/web/clientrouter/api/language"
 	"babblegraph/services/web/clientrouter/api/ses"
 	"babblegraph/services/web/clientrouter/api/stripe"
@@ -38,6 +39,9 @@ func registerAPI(r *mux.Router) error {
 		return err
 	}
 	if err := stripe.RegisterRouteGroups(); err != nil {
+		return err
+	}
+	if err := blog.RegisterRouteGroups(); err != nil {
 		return err
 	}
 	return nil
