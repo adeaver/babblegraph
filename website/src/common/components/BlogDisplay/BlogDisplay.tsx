@@ -33,8 +33,17 @@ type BlogDisplayProps = {
 }
 
 const BlogDisplay = (props: BlogDisplayProps) => {
+    const classes = styleClasses();
     return (
         <div>
+            {
+                !!props.metadata.heroImage && (
+                    <img
+                        className={classes.image}
+                        src={getStaticContentURLForPath(props.metadata.heroImage.path)}
+                        alt={props.metadata.heroImage.altText} />
+                )
+            }
             <Heading1
                 color={TypographyColor.Primary}
                 align={Alignment.Center}>
