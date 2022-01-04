@@ -42,3 +42,5 @@ CREATE TABLE IF NOT EXISTS blog_post_view(
 
     PRIMARY KEY (_id)
 );
+
+CREATE INDEX IF NOT EXISTS blog_post_view_blog_id ON blog_post_view(blog_id);
