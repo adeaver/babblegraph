@@ -23,6 +23,7 @@ import {
     Heading as HeadingContent,
     Paragraph as ParagraphContent,
     Image as ImageContent,
+    Link as LinkContent,
     getDefaultContentNodeForType,
 } from 'common/api/blog/content';
 import {
@@ -211,6 +212,13 @@ const EditorComponent = (props: EditorComponentProps) => {
                                 handleDelete={handleDeleteNode(idx)}
                                 handleUpdate={handleUpdateNode(idx)} />
                         )
+                    } else if (node.type === ContentNodeType.Link) {
+                        return (
+                            <LinkNodeEditor
+                                body={node.body as LinkContent}
+                                handleDelete={handleDeleteNode(idx)}
+                                handleUpdate={handleUpdateNode(idx)} />
+                        )
                     }
                 })
             }
@@ -383,6 +391,69 @@ const ImageNodeEditor = (props: ImageNodeEditorProps) => {
                 handleFileUpload={handleImageUpload} />
             <WarningButton
                 className={classes.nodeButtonVertical}
+                type="submit"
+                onClick={props.handleDelete}>
+                Delete
+            </WarningButton>
+        </div>
+    );
+}
+
+type LinkNodeEditorProps = {
+    body: LinkContent;
+    handleUpdate: (node: ContentNode) => void;
+    handleDelete: () => void;
+}
+
+const LinkNodeEditor = (props: LinkNodeEditorProps) => {
+    const [ text, setText ] = useState<string>(props.body.text);
+    const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setText((event.target as HTMLInputElement).value);
+    }
+
+    const [ destinationURL, setDestinationURL ] = useState<string>(props.body.destinationUrl);
+    const handleURLChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setDestinationURL((event.target as HTMLInputElement).value);
+    }
+
+    const handleSubmit = () => {
+        props.handleUpdate({
+            type: ContentNodeType.Link,
+            body: {
+                text: text,
+                destinationUrl: destinationURL,
+            }
+        })
+    }
+
+    const classes = styleClasses();
+    return (
+        <div>
+            <Heading6 color={TypographyColor.Primary}>
+                Edit Link Node
+            </Heading6>
+            <PrimaryTextField
+                className={classes.editorRow}
+                value={text}
+                minRows={6}
+                label="Text"
+                onChange={handleChange}
+                variant="outlined"
+                multiline />
+            <PrimaryTextField
+                className={classes.editorRow}
+                value={destinationURL}
+                label="Destination URL"
+                onChange={handleURLChange}
+                variant="outlined" />
+            <PrimaryButton
+                className={classes.nodeButton}
+                type="submit"
+                onClick={handleSubmit}>
+                Submit
+            </PrimaryButton>
+            <WarningButton
+                className={classes.nodeButton}
                 type="submit"
                 onClick={props.handleDelete}>
                 Delete

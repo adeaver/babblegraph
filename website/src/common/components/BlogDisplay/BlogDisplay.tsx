@@ -6,6 +6,7 @@ import Grid from '@material-ui/core/Grid';
 import { Heading1, Heading2, Heading4 } from 'common/typography/Heading';
 import Paragraph, { Size } from 'common/typography/Paragraph';
 import { Alignment, TypographyColor } from 'common/typography/common';
+import Link from 'common/components/Link/Link';
 import { getStaticContentURLForPath } from 'util/static/static';
 
 import {
@@ -16,6 +17,7 @@ import {
     Heading as HeadingContent,
     Paragraph as ParagraphContent,
     Image as ImageContent,
+    Link as LinkContent,
     getDefaultContentNodeForType,
 } from 'common/api/blog/content.ts';
 
@@ -57,15 +59,19 @@ const BlogDisplay = (props: BlogDisplayProps) => {
                 props.content.map((node: ContentNode, idx: number) => {
                     if (node.type === ContentNodeType.Heading) {
                         return (
-                            <HeadingDisplay {...node.body as HeadingContent} />
+                            <HeadingDisplay key={`${props.metadata.id}-display-${idx}`} {...node.body as HeadingContent} />
                         );
                     } else if (node.type === ContentNodeType.Paragraph) {
                         return (
-                            <ParagraphDisplay {...node.body as ParagraphContent} />
+                            <ParagraphDisplay key={`${props.metadata.id}-display-${idx}`} {...node.body as ParagraphContent} />
                         );
                     } else if (node.type === ContentNodeType.Image) {
                         return (
-                            <ImageDisplay {...node.body as ImageContent} />
+                            <ImageDisplay key={`${props.metadata.id}-display-${idx}`} {...node.body as ImageContent} />
+                        );
+                    } else if (node.type === ContentNodeType.Link) {
+                        return (
+                            <LinkDisplay key={`${props.metadata.id}-display-${idx}`} {...node.body as LinkContent} />
                         );
                     } else {
                         throw new Error("Unsupported node type");
@@ -95,7 +101,7 @@ const ParagraphDisplay = (props: ParagraphContent) => {
 }
 
 const ImageDisplay = (props: ImageContent) => {
-    if (!props.path.length) {
+    if (!props.path || !props.path.length) {
         return null;
     }
     const classes = styleClasses();
@@ -119,6 +125,14 @@ const ImageDisplay = (props: ImageContent) => {
             </Grid>
         </Grid>
     )
+}
+
+const LinkDisplay = (props: LinkContent) => {
+    return (
+        <Link href={props.destinationUrl}>
+            { props.text }
+        </Link>
+    );
 }
 
 export default BlogDisplay;

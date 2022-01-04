@@ -29,7 +29,7 @@ const styleClasses = makeStyles({
 });
 
 const ImageUpload = (props: ImageUploadProps) => {
-    const initialPathParts = !!props.image ? props.image.path.split("/") : [];
+    const initialPathParts = !!props.image && !!props.image.path ? props.image.path.split("/") : [];
     const [ isLoading, setIsLoading ] = useState<boolean>(false);
     const [ selectedFile, setSelectedFile ] = useState<File>(null);
     const [ altText, setAltText ] = useState<string>(!!props.image ? props.image.altText : null);
