@@ -49,7 +49,9 @@ func HandleServeBlogPost(staticFileDirName string) func(w http.ResponseWriter, r
 		errs := make(chan error)
 		async.WithContext(errs, "serve-blog", func(c async.Context) {
 			if err := database.WithTx(func(tx *sqlx.Tx) error {
-				// TODO: add blog view
+				if err := blog.RegisterBlogView(tx, blogPostMetadata.ID, utmTrackingID); err != nil {
+					return err
+				}
 				if utmTrackingID == nil {
 					return nil
 				}

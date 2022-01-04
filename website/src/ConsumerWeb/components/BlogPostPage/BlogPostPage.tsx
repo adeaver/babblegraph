@@ -5,7 +5,7 @@ import Grid from '@material-ui/core/Grid';
 
 import Paragraph from 'common/typography/Paragraph';
 import { Heading3 } from 'common/typography/Heading';
-import { Alignment, TypographyColor } from 'common/typography/common';
+import { TypographyColor } from 'common/typography/common';
 import Page from 'common/components/Page/Page';
 import DisplayCard from 'common/components/DisplayCard/DisplayCard';
 import DisplayCardHeader from 'common/components/DisplayCard/DisplayCardHeader';
@@ -91,13 +91,10 @@ const BlogPostPage = (props: BlogPostPageProps) => {
                                         <BlogDisplay
                                             content={blogContent}
                                             metadata={blogMetadata} />
-                                        <Heading3
-                                            color={TypographyColor.Primary}
-                                            align={Alignment.Left}>
+                                        <Heading3 color={TypographyColor.Primary}>
                                             About Babblegraph
                                         </Heading3>
-                                        <Paragraph
-                                            align={Alignment.Left}>
+                                        <Paragraph>
                                             Babblegraph helps intermediate and advanced Spanish students effortlessly get a daily dose of Spanish practice. With Babblegraph you’ll receive a daily newsletter with news articles from trusted, Spanish-language news sources from Spain and Latin America. Sign up for free today!
                                         </Paragraph>
                                         <Link href="/">

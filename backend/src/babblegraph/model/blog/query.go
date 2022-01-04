@@ -1,17 +1,16 @@
 package blog
 
 import (
+	"babblegraph/model/utm"
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
 )
 
-// Required Methods
-// - Get all live blog post metadata
-
 const (
 	getHeroImageForBlogPostQuery             = "SELECT * FROM blog_post_image_metadata WHERE blog_id = $1 AND is_hero_image = TRUE"
 	getClientBlogPostMetadataForURLPathQuery = "SELECT * FROM blog_post_metadata WHERE url_path = $1 AND status = $2"
+	registerBlogViewQuery                    = "INSERT INTO blog_post_view (blog_id, tracking_id) VALUES ($1, $2)"
 )
 
 func lookupHeroImageForBlogPost(tx *sqlx.Tx, blogID ID) (*dbImageMetadata, error) {
@@ -45,4 +44,11 @@ func GetClientBlogPostMetadataForURLPath(tx *sqlx.Tx, blogURLPath string) (*Blog
 	default:
 		panic("unreachable")
 	}
+}
+
+func RegisterBlogView(tx *sqlx.Tx, blogID ID, trackingID *utm.TrackingID) error {
+	if _, err := tx.Exec(registerBlogViewQuery, blogID, trackingID); err != nil {
+		return err
+	}
+	return nil
 }
