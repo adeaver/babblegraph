@@ -10,9 +10,11 @@ const (
 	getAllBlogPostMetadataQuery       = "SELECT * FROM blog_post_metadata ORDER BY created_at DESC"
 	getBlogPostMetadataByURLPathQuery = "SELECT * FROM blog_post_metadata WHERE url_path = $1"
 	addBlogPostMetadataQuery          = "INSERT INTO blog_post_metadata (title, description, author_name, url_path, status) VALUES ($1, $2, $3, $4, $5)"
-	updateBlogPostMetadataQuery       = "UPDATE blog_post_metadata SET title=$1, description=$2, hero_image_path=$3, author_name=$4, last_modified_at = timezone('utc', now()) WHERE url_path = $5"
+	updateBlogPostMetadataQuery       = "UPDATE blog_post_metadata SET title=$1, description=$2, author_name=$3, last_modified_at = timezone('utc', now()) WHERE url_path = $4"
 	updateBlogPostStatusQuery         = "UPDATE blog_post_metadata SET status=$1, last_modified_at=timezone('utc', now()) WHERE url_path = $2"
 	updateBlogPostPublishedTimeQuery  = "UPDATE blog_post_metadata SET published_at=timezone('utc', now()), last_modified_at=timezone('utc', now()) WHERE url_path=$1"
+
+	insertBlogImageQuery = "INSERT INTO blog_post_image_metadata (blog_id, path, file_name, alt_text, caption, is_hero_image) VALUES ($1, $2, $3, $4, $5, $6)"
 )
 
 func GetAllBlogPostMetadata(tx *sqlx.Tx) ([]BlogPostMetadata, error) {
@@ -22,12 +24,16 @@ func GetAllBlogPostMetadata(tx *sqlx.Tx) ([]BlogPostMetadata, error) {
 	}
 	var out []BlogPostMetadata
 	for _, m := range matches {
-		out = append(out, m.ToNonDB())
+		blogPost, err := m.ToNonDB(tx)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, *blogPost)
 	}
 	return out, nil
 }
 
-func GetBlogPostMetadataByURLPath(tx *sqlx.Tx, urlPath string) (*BlogPostMetadata, error) {
+func getBlogPostMetadataByURLPath(tx *sqlx.Tx, urlPath string) (*dbBlogPostMetadata, error) {
 	var matches []dbBlogPostMetadata
 	if err := tx.Select(&matches, getBlogPostMetadataByURLPathQuery, urlPath); err != nil {
 		return nil, err
@@ -38,9 +44,17 @@ func GetBlogPostMetadataByURLPath(tx *sqlx.Tx, urlPath string) (*BlogPostMetadat
 	case len(matches) > 1:
 		return nil, fmt.Errorf("Expected only one blog post, but found %d for blog post %s", len(matches), urlPath)
 	default:
-		out := matches[0].ToNonDB()
-		return &out, nil
+		m := matches[0]
+		return &m, nil
 	}
+}
+
+func GetBlogPostMetadataByURLPath(tx *sqlx.Tx, urlPath string) (*BlogPostMetadata, error) {
+	metadata, err := getBlogPostMetadataByURLPath(tx, urlPath)
+	if err != nil {
+		return nil, err
+	}
+	return metadata.ToNonDB(tx)
 }
 
 type AddBlogPostMetadataInput struct {
@@ -58,15 +72,14 @@ func AddBlogPostMetadata(tx *sqlx.Tx, input AddBlogPostMetadataInput) error {
 }
 
 type UpdateBlogPostMetadataInput struct {
-	Title         string
-	Description   string
-	AuthorName    string
-	HeroImagePath *string
-	URLPath       string
+	Title       string
+	Description string
+	AuthorName  string
+	URLPath     string
 }
 
 func UpdateBlogPostMetadata(tx *sqlx.Tx, input UpdateBlogPostMetadataInput) error {
-	if _, err := tx.Exec(updateBlogPostMetadataQuery, input.Title, input.Description, input.HeroImagePath, input.AuthorName, input.URLPath); err != nil {
+	if _, err := tx.Exec(updateBlogPostMetadataQuery, input.Title, input.Description, input.AuthorName, input.URLPath); err != nil {
 		return err
 	}
 	return nil
@@ -87,6 +100,22 @@ func UpdateBlogPostStatus(tx *sqlx.Tx, urlPath string, status PostStatus) error 
 		if _, err := tx.Exec(updateBlogPostStatusQuery, status, urlPath); err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+type InsertBlogImageMetadataInput struct {
+	BlogID      ID
+	Path        string
+	FileName    string
+	AltText     string
+	Caption     *string
+	IsHeroImage bool
+}
+
+func InsertBlogImageMetadata(tx *sqlx.Tx, input InsertBlogImageMetadataInput) error {
+	if _, err := tx.Exec(insertBlogImageQuery, input.BlogID, input.Path, input.FileName, input.AltText, input.Caption, input.IsHeroImage); err != nil {
+		return err
 	}
 	return nil
 }

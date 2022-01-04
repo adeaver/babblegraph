@@ -1,21 +1,9 @@
 import { makePostRequestWithStandardEncoding } from 'util/bgfetch/bgfetch';
-
-export enum PostStatus {
-	Draft = "draft",
-	Live = "live",
-	Hidden = "hidden",
-	Deleted = "deleted",
-}
-
-export type BlogPostMetadata = {
-    publishedAt: Date | undefined;
-    heroImagePath: string | undefined;
-    title: string;
-    description: string;
-    urlPath: string;
-    status: PostStatus;
-    authorName: string
-}
+import {
+    ContentNode,
+    BlogPostMetadata,
+    PostStatus,
+} from 'common/api/blog/content';
 
 export type GetAllBlogPostMetadataRequest = {}
 
@@ -85,7 +73,6 @@ export type UpdateBlogPostMetadataRequest = {
 	urlPath: string;
 	title: string;
 	description: string;
-	heroImagePath: string | undefined;
 	authorName: string;
 }
 
@@ -104,4 +91,51 @@ export function updateBlogPostMetadata(
         onSuccess,
         onError,
     );
+}
+
+export type GetBlogContentRequest = {
+    urlPath: string;
+}
+
+export type GetBlogContentResponse = {
+    content: ContentNode[],
+}
+
+export function getBlogContent(
+    req: GetBlogContentRequest,
+    onSuccess: (resp: GetBlogContentResponse) => void,
+    onError: (e: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<GetBlogContentRequest, GetBlogContentResponse>(
+        '/ops/api/blog/get_blog_content_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}
+
+export type UpdateBlogContentRequest = {
+    urlPath: string;
+    content: ContentNode[],
+}
+
+export type UpdateBlogContentResponse = {
+    success: boolean,
+}
+
+export function updateBlogContent(
+    req: UpdateBlogContentRequest,
+    onSuccess: (resp: UpdateBlogContentResponse) => void,
+    onError: (e: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<UpdateBlogContentRequest, UpdateBlogContentResponse>(
+        '/ops/api/blog/update_blog_content_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}
+
+export type UploadBlogImageResponse = {
+    image_path: string;
 }

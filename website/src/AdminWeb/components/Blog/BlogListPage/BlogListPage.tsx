@@ -12,6 +12,8 @@ import BlogMetadataDisplay from './BlogMetadataDisplay';
 
 import {
     BlogPostMetadata,
+} from 'common/api/blog/content.ts';
+import {
     GetAllBlogPostMetadataResponse,
     getAllBlogPostMetadata,
 } from 'AdminWeb/api/blog/blog';
@@ -26,7 +28,7 @@ const BlogListPage = () => {
         getAllBlogPostMetadata({},
             (resp: GetAllBlogPostMetadataResponse) => {
                 setIsLoading(false);
-                setAllBlogPosts(resp.allBlogPosts);
+                setAllBlogPosts(resp.allBlogPosts || []);
             },
             (err: Error) => {
                 setIsLoading(false);
