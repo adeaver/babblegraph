@@ -25,6 +25,7 @@ import {
     getDefaultContentNodeForType,
 } from 'common/api/blog/content';
 import {
+    BlogPostMetadata,
     getBlogContent,
     GetBlogContentResponse,
     updateBlogContent,
@@ -50,6 +51,7 @@ const styleClasses = makeStyles({
 
 
 type BlogContentEditorProps = {
+    blogPostMetadata: BlogPostMetadata;
     urlPath: string;
 }
 

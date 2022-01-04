@@ -4,18 +4,14 @@ import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 
 import { Heading3 } from 'common/typography/Heading';
-import { Alignment, TypographyColor } from 'common/typography/common';
+import { TypographyColor } from 'common/typography/common';
 import DisplayCard from 'common/components/DisplayCard/DisplayCard';
-import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
 import { PrimaryButton } from 'common/components/Button/Button';
 import { PrimaryTextField } from 'common/components/TextField/TextField';
 import Paragraph, { Size } from 'common/typography/Paragraph';
 
 import {
     BlogPostMetadata,
-    getBlogPostMetadataByURLPath,
-    GetBlogPostMetadataByURLPathResponse,
-
     updateBlogPostMetadata,
     UpdateBlogPostMetadataResponse,
 } from 'AdminWeb/api/blog/blog';
@@ -33,44 +29,13 @@ const styleClasses = makeStyles({
 
 type BlogMetadataEditFormProps = {
     urlPath: string;
+    blogPostMetadata: BlogPostMetadata;
+
+    setIsLoading: (isLoading: boolean) => void;
+    updateBlogPostMetadata: (b: BlogPostMetadata) => void;
 }
 
 const BlogMetadataEditForm = (props: BlogMetadataEditFormProps) => {
-    const [ isLoading, setIsLoading ] = useState<boolean>(true);
-    const [ error, setError ] = useState<Error>(null);
-    const [ blogPostMetadata, setBlogPostMetadata ] = useState<BlogPostMetadata | null>(null);
-
-    useEffect(() => {
-        getBlogPostMetadataByURLPath({
-            urlPath: props.urlPath,
-        },
-        (resp: GetBlogPostMetadataByURLPathResponse) => {
-            setIsLoading(false);
-            setBlogPostMetadata(resp.blogPost);
-        },
-        (err: Error) => {
-            setIsLoading(false);
-            setError(err);
-        });
-    }, []);
-
-    let body;
-    if (isLoading) {
-        body = <LoadingSpinner />;
-    } else if (!!blogPostMetadata) {
-        body = (
-            <EditBlogPostMetadataForm
-                setIsLoading={setIsLoading}
-                blogPostMetadata={blogPostMetadata} />
-        );
-    } else {
-        body = (
-            <Heading3 color={TypographyColor.Warning}>
-                An error occurred.
-            </Heading3>
-        );
-    }
-
     return (
         <Grid container>
             <Grid item xs={false} md={3}>
@@ -78,7 +43,10 @@ const BlogMetadataEditForm = (props: BlogMetadataEditFormProps) => {
             </Grid>
             <Grid item xs={12} md={6}>
                 <DisplayCard>
-                    { body }
+                    <EditBlogPostMetadataForm
+                        setIsLoading={props.setIsLoading}
+                        blogPostMetadata={props.blogPostMetadata}
+                        updateBlogPostMetadata={props.updateBlogPostMetadata} />
                 </DisplayCard>
             </Grid>
             <Grid item xs={false} md={3}>
@@ -92,6 +60,7 @@ type EditBlogPostMetadataFormProps = {
     blogPostMetadata: BlogPostMetadata;
 
     setIsLoading: (isLoading: boolean) => void;
+    updateBlogPostMetadata: (b: BlogPostMetadata) => void;
 }
 
 const EditBlogPostMetadataForm = (props: EditBlogPostMetadataFormProps) => {
@@ -110,6 +79,12 @@ const EditBlogPostMetadataForm = (props: EditBlogPostMetadataFormProps) => {
         },
         (resp: UpdateBlogPostMetadataResponse) => {
             props.setIsLoading(false);
+            props.updateBlogPostMetadata({
+                ...props.blogPostMetadata,
+                title:  title,
+                description: description,
+                authorName: authorName,
+            });
         },
         (err: Error) => {
             props.setIsLoading(false);
@@ -157,9 +132,12 @@ const EditBlogPostMetadataForm = (props: EditBlogPostMetadataFormProps) => {
                 </Grid>
                 <Grid item xs={12} md={6}>
                     <ImageUpload
-                        // TODO: fix this?
-                        handleFileUpload={(i: Image) => console.log(i)}
+                        handleFileUpload={(i: Image) => props.updateBlogPostMetadata({
+                                ...props.blogPostMetadata,
+                                heroImage: i,
+                            })}
                         urlPath={props.blogPostMetadata.urlPath}
+                        image={props.blogPostMetadata.heroImage}
                         label="Hero Image"
                         isHeroImage />
                 </Grid>
