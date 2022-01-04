@@ -28,7 +28,7 @@ type getBlogMetadataRequest struct {
 	URLPath string `json:"url_path"`
 }
 
-type getBlogMetadataRequestResponse struct {
+type getBlogMetadataResponse struct {
 	BlogPost blog.BlogPostMetadata `json:"blog_post"`
 }
 
@@ -45,7 +45,7 @@ func handleGetBlogMetadata(body []byte) (interface{}, error) {
 	}); err != nil {
 		return nil, err
 	}
-	return getBlogMetadataRequestResponse{
+	return getBlogMetadataResponse{
 		BlogPost: *blogPostMetadata,
 	}, nil
 }
