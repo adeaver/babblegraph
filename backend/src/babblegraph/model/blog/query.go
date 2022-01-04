@@ -15,9 +15,9 @@ const (
 	getHeroImageForBlogPostQuery = "SELECT * FROM blog_post_image_metadata WHERE blog_id = $1 AND is_hero_image = TRUE"
 )
 
-func lookupHeroImageForBlogPost(tx *sqlx.Tx, blogID id) (*dbImageMetadata, error) {
+func lookupHeroImageForBlogPost(tx *sqlx.Tx, blogID ID) (*dbImageMetadata, error) {
 	var matches []dbImageMetadata
-	err := tx.Select(&matches, getHeroImageForBlogPostQuery, id)
+	err := tx.Select(&matches, getHeroImageForBlogPostQuery, blogID)
 	switch {
 	case err != nil:
 		return nil, err

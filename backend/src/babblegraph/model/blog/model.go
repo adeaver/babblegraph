@@ -65,12 +65,14 @@ const (
 type imageID string
 
 type dbImageMetadata struct {
-	ID       imageID `db:"_id"`
-	Path     string  `db:"path"`
-	BlogID   ID      `db:"blog_id"`
-	FileName string  `db:"file_name"`
-	AltText  string  `db:"alt_text"`
-	Caption  *string `db:"caption"`
+	CreatedAt      time.Time `db:"created_at"`
+	LastModifiedAt time.Time `db:"last_modified_at"`
+	ID             imageID   `db:"_id"`
+	Path           string    `db:"path"`
+	BlogID         ID        `db:"blog_id"`
+	FileName       string    `db:"file_name"`
+	AltText        string    `db:"alt_text"`
+	Caption        *string   `db:"caption"`
 }
 
 func (d dbImageMetadata) ToNonDB() Image {
