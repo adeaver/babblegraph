@@ -12,7 +12,7 @@ import Paragraph from 'common/typography/Paragraph';
 import {
     BlogPostMetadata,
     PostStatus,
-} from 'AdminWeb/api/blog/blog';
+} from 'common/api/blog/content';
 
 const styleClasses = makeStyles({
     blogMetadataCard: {

@@ -9,6 +9,7 @@ import { Alignment, TypographyColor } from 'common/typography/common';
 import { getStaticContentURLForPath } from 'util/static/static';
 
 import {
+    BlogPostMetadata,
     ContentNodeType,
     ContentNode,
     ContentNodeBody,

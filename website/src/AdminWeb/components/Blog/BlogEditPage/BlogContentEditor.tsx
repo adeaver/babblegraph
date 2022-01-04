@@ -16,6 +16,7 @@ import BlogDisplay from 'common/components/BlogDisplay/BlogDisplay';
 import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
 
 import {
+    BlogPostMetadata,
     ContentNodeType,
     ContentNode,
     ContentNodeBody,
@@ -25,7 +26,6 @@ import {
     getDefaultContentNodeForType,
 } from 'common/api/blog/content';
 import {
-    BlogPostMetadata,
     getBlogContent,
     GetBlogContentResponse,
     updateBlogContent,

@@ -11,6 +11,8 @@ import BlogContentEditor from './BlogContentEditor';
 
 import {
     BlogPostMetadata,
+} from 'common/api/blog/content.ts';
+import {
     getBlogPostMetadataByURLPath,
     GetBlogPostMetadataByURLPathResponse,
 } from 'AdminWeb/api/blog/blog';

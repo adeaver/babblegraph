@@ -13,6 +13,8 @@ import { getStaticContentURLForPath } from 'util/static/static';
 
 import {
     BlogPostMetadata,
+} from 'common/api/blog/content.ts';
+import {
     updateBlogPostMetadata,
     UpdateBlogPostMetadataResponse,
 } from 'AdminWeb/api/blog/blog';

@@ -56,7 +56,7 @@ const ImageUpload = (props: ImageUploadProps) => {
         data.append("file", selectedFile);
         data.append("alt_text", altText);
         data.append("file_name", fileName);
-        data.append("caption", caption);
+        !!caption && data.append("caption", caption);
         data.append("url_path", props.urlPath);
         data.append("is_hero_image", props.isHeroImage ? "true" : "false");
         fetch("/ops/api/blog/upload_blog_image_1", {
@@ -80,7 +80,7 @@ const ImageUpload = (props: ImageUploadProps) => {
                 props.handleFileUpload({
                     altText: altText,
                     path: resp.image_path,
-                    caption: !!caption.length ? caption : null,
+                    caption: !!caption && !!caption.length ? caption : null,
                 });
                 setIsLoading(false);
             });
@@ -141,7 +141,7 @@ const ImageUpload = (props: ImageUploadProps) => {
                     <LoadingSpinner />
                 ) : (
                     <PrimaryButton
-                        isDisabled={!selectedFile || !altText || !fileName || isLoading }
+                        disabled={!selectedFile || !altText || !fileName || isLoading }
                         onClick={handleSubmit}
                         type="submit">
                         Upload

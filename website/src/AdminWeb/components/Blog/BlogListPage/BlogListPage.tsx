@@ -12,6 +12,8 @@ import BlogMetadataDisplay from './BlogMetadataDisplay';
 
 import {
     BlogPostMetadata,
+} from 'common/api/blog/content.ts';
+import {
     GetAllBlogPostMetadataResponse,
     getAllBlogPostMetadata,
 } from 'AdminWeb/api/blog/blog';

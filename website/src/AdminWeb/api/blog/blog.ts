@@ -1,26 +1,9 @@
 import { makePostRequestWithStandardEncoding } from 'util/bgfetch/bgfetch';
 import {
     ContentNode,
-    Image,
+    BlogPostMetadata,
+    PostStatus,
 } from 'common/api/blog/content';
-
-export enum PostStatus {
-	Draft = "draft",
-	Live = "live",
-	Hidden = "hidden",
-	Deleted = "deleted",
-}
-
-export type BlogPostMetadata = {
-    id: string;
-    publishedAt: Date | undefined;
-    title: string;
-    description: string;
-    urlPath: string;
-    status: PostStatus;
-    authorName: string
-    heroImage: Image | undefined;
-}
 
 export type GetAllBlogPostMetadataRequest = {}
 
