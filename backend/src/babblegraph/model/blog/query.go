@@ -8,6 +8,7 @@ import (
 )
 
 const (
+	getAllClientBlogPostsQuery               = "SELECT * FROM blog_post_metadata WHERE status = $1"
 	getHeroImageForBlogPostQuery             = "SELECT * FROM blog_post_image_metadata WHERE blog_id = $1 AND is_hero_image = TRUE"
 	getClientBlogPostMetadataForURLPathQuery = "SELECT * FROM blog_post_metadata WHERE url_path = $1 AND status = $2"
 	registerBlogViewQuery                    = "INSERT INTO blog_post_view (blog_id, tracking_id) VALUES ($1, $2)"
@@ -29,6 +30,22 @@ func lookupHeroImageForBlogPost(tx *sqlx.Tx, blogID ID) (*dbImageMetadata, error
 	default:
 		panic("unreachable")
 	}
+}
+
+func GetAllClientBlogPosts(tx *sqlx.Tx) ([]BlogPostMetadata, error) {
+	var matches []dbBlogPostMetadata
+	if err := tx.Select(&matches, getAllClientBlogPostsQuery, PostStatusLive); err != nil {
+		return nil, err
+	}
+	var out []BlogPostMetadata
+	for _, m := range matches {
+		nonDB, err := m.ToNonDB(tx)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, *nonDB)
+	}
+	return out, nil
 }
 
 func GetClientBlogPostMetadataForURLPath(tx *sqlx.Tx, blogURLPath string) (*BlogPostMetadata, error) {

@@ -4,6 +4,25 @@ import {
     BlogPostMetadata,
 } from 'common/api/blog/content';
 
+export type GetAllBlogPostsRequest = {}
+
+export type GetAllBlogPostsResponse = {
+    blogPosts: Array<BlogPostMetadata>;
+}
+
+export function getAllBlogPosts(
+    req: GetAllBlogPostsRequest,
+    onSuccess: (resp: GetAllBlogPostsResponse) => void,
+    onError: (e: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<GetAllBlogPostsRequest, GetAllBlogPostsResponse>(
+        '/api/blog/get_all_blog_posts_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}
+
 export type GetBlogMetadataRequest = {
 	urlPath: string;
 }

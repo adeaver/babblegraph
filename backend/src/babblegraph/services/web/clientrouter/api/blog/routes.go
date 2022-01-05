@@ -14,6 +14,9 @@ func RegisterRouteGroups() error {
 		Prefix: "blog",
 		Routes: []api.Route{
 			{
+				Path:    "get_all_blog_posts_1",
+				Handler: handleGetAllBlogPosts,
+			}, {
 				Path:    "get_blog_metadata_1",
 				Handler: handleGetBlogMetadata,
 			}, {
@@ -22,6 +25,26 @@ func RegisterRouteGroups() error {
 			},
 		},
 	})
+}
+
+type getAllBlogPostsRequest struct{}
+
+type getAllBlogPostsResponse struct {
+	BlogPosts []blog.BlogPostMetadata `json:"blog_posts"`
+}
+
+func handleGetAllBlogPosts(body []byte) (interface{}, error) {
+	var blogPosts []blog.BlogPostMetadata
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		var err error
+		blogPosts, err = blog.GetAllClientBlogPosts(tx)
+		return err
+	}); err != nil {
+		return nil, err
+	}
+	return getAllBlogPostsResponse{
+		BlogPosts: blogPosts,
+	}, nil
 }
 
 type getBlogMetadataRequest struct {
