@@ -13,6 +13,7 @@ RUN npm install
 RUN mkdir ./dist
 
 COPY website/dist/index.html ./dist
+COPY website/dist/blog_index.html ./dist
 COPY website/dist/ops_index.html ./dist
 COPY website/dist/logo.png ./dist
 COPY website/src ./src
@@ -54,6 +55,7 @@ RUN mkdir -p ./static && chown -R $SERVICE_USER:$SERVICE_USER ./static
 COPY --chown=$SERVICE_USER:$SERVICE_USER --from=frontend-builder /usr/app/dist/consumerBundle.js ./static
 COPY --chown=$SERVICE_USER:$SERVICE_USER --from=frontend-builder /usr/app/dist/opsBundle.js ./static
 COPY --chown=$SERVICE_USER:$SERVICE_USER --from=frontend-builder /usr/app/dist/index.html ./static
+COPY --chown=$SERVICE_USER:$SERVICE_USER --from=frontend-builder /usr/app/dist/blog_index.html ./static
 COPY --chown=$SERVICE_USER:$SERVICE_USER --from=frontend-builder /usr/app/dist/ops_index.html ./static
 COPY --chown=$SERVICE_USER:$SERVICE_USER --from=frontend-builder /usr/app/dist/logo.png ./static
 

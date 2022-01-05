@@ -57,6 +57,8 @@ type Permission string
 const (
 	PermissionManagePermissions Permission = "manage-permissions"
 	PermissionViewUserMetrics   Permission = "view-user-metrics"
+	PermissionWriteBlog         Permission = "write-blog"
+	PermissionPublishBlog       Permission = "publish-blog"
 )
 
 var validAdminEmailDomains = map[string]bool{

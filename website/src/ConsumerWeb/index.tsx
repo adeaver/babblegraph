@@ -12,6 +12,9 @@ import AboutPage from 'ConsumerWeb/components/AboutPage/AboutPage';
 import PrivacyPolicyPage from 'ConsumerWeb/components/PrivacyPolicyPage/PrivacyPolicyPage';
 import PaywallReportPage from 'ConsumerWeb/components/PaywallReportPage/PaywallReportPage';
 
+import BlogListPage from 'ConsumerWeb/components/BlogListPage/BlogListPage';
+import BlogPostPage from 'ConsumerWeb/components/BlogPostPage/BlogPostPage';
+
 import SubscriptionManagementDashboardPage from 'ConsumerWeb/components/SubscriptionManagement/SubscriptionManagementDashboardPage';
 import InterestSelectionPage from 'ConsumerWeb/components/SubscriptionManagement/InterestSelectionPage';
 import UnsubscribePage from 'ConsumerWeb/components/SubscriptionManagement/UnsubscribePage';
@@ -51,6 +54,10 @@ class App extends React.Component{
                     <Route path="/checkout/:token" component={SubscriptionCheckoutPage} />
                     <Route path="/forgot-password" component={ForgotPasswordPage} />
                     <Route path="/password-reset/:token" component={ResetPasswordPage} />
+
+                    { /* Blog */ }
+                    <Route path="/blog/:blogPath" component={BlogPostPage} />
+                    <Route exact path="/blog" component={BlogListPage} />
 
                     { /* Home Page & About Page */ }
                     <Route path="/about" component={AboutPage} />

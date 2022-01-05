@@ -3,6 +3,8 @@ import { makePostRequestWithStandardEncoding } from 'util/bgfetch/bgfetch';
 export enum Permission {
     ManagePermissions = 'manage-permissions',
     ViewUserMetrics = 'view-user-metrics',
+	WriteBlog = "write-blog",
+	PublishBlog = "publish-blog",
 }
 
 export type ManageUserPermissionsRequest = {
