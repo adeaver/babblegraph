@@ -161,3 +161,31 @@ export function updateBlogPostStatus(
 export type UploadBlogImageResponse = {
     image_path: string;
 }
+
+export type GetBlogPostViewMetricsRequest = {
+    urlPath: string;
+}
+
+export type BlogPostViewMetrics = {
+    totalViews: number;
+    uniqueViews: number;
+    lastMonthTotalViews: number;
+    lastMonthUniqueViews: number;
+}
+
+export type GetBlogPostViewMetricsResponse = {
+    viewMetrics: BlogPostViewMetrics;
+}
+
+export function getBlogPostViewMetrics(
+    req: GetBlogPostViewMetricsRequest,
+    onSuccess: (resp: GetBlogPostViewMetricsResponse) => void,
+    onError: (e: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<GetBlogPostViewMetricsRequest, GetBlogPostViewMetricsResponse>(
+        '/ops/api/blog/get_blog_post_view_metrics_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}

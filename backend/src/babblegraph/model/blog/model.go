@@ -1,6 +1,7 @@
 package blog
 
 import (
+	"babblegraph/model/utm"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -82,4 +83,14 @@ func (d dbImageMetadata) ToNonDB() Image {
 		AltText: d.AltText,
 		Caption: d.Caption,
 	}
+}
+
+type blogPostViewID string
+
+type dbBlogPostView struct {
+	CreatedAt      time.Time       `db:"created_at"`
+	LastModifiedAt time.Time       `db:"last_modified_at"`
+	ID             blogPostViewID  `db:"_id"`
+	BlogID         ID              `db:"blog_id"`
+	TrackingID     *utm.TrackingID `db:"tracking_id"`
 }

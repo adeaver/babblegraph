@@ -8,6 +8,7 @@ import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
 
 import BlogMetadataEditForm from './BlogMetadataEditForm';
 import BlogContentEditor from './BlogContentEditor';
+import BlogViewMetricsComponent from './BlogViewMetricsComponent';
 
 import {
     BlogPostMetadata,
@@ -15,6 +16,9 @@ import {
 import {
     getBlogPostMetadataByURLPath,
     GetBlogPostMetadataByURLPathResponse,
+    getBlogPostViewMetrics,
+    GetBlogPostViewMetricsResponse,
+    BlogPostViewMetrics,
 } from 'AdminWeb/api/blog/blog';
 
 type Params = {
@@ -25,6 +29,7 @@ type BlogEditPageProps = RouteComponentProps<Params>;
 
 const BlogEditPage = (props: BlogEditPageProps) => {
     const { blogPath } = props.match.params;
+
     const [ blogPostMetadata, setBlogPostMetadata ] = useState<BlogPostMetadata | null>(null);
     const [ isLoading, setIsLoading ] = useState<boolean>(true);
     const [ error, setError ] = useState<Error>(null);
@@ -46,6 +51,7 @@ const BlogEditPage = (props: BlogEditPageProps) => {
 
     return (
         <Page>
+            <BlogViewMetricsComponent urlPath={blogPath} />
             {
                 isLoading ? (
                     <LoadingSpinner />
