@@ -66,6 +66,12 @@ var Routes = router.RouteGroup{
 				admin.PermissionWriteBlog,
 				uploadBlogImage,
 			),
+		}, {
+			Path: "get_blog_post_view_metrics_1",
+			Handler: middleware.WithPermission(
+				admin.PermissionWriteBlog,
+				getBlogPostViewMetrics,
+			),
 		},
 	},
 }
@@ -301,5 +307,31 @@ func uploadBlogImage(adminID admin.ID, r *router.Request) (interface{}, error) {
 	}
 	return uploadBlogImageResponse{
 		ImagePath: path,
+	}, nil
+}
+
+type getBlogPostViewMetricsRequest struct {
+	URLPath string `json:"url_path"`
+}
+
+type getBlogPostViewMetricsResponse struct {
+	ViewMetrics blog.BlogPostViewMetrics `json:"view_metrics"`
+}
+
+func getBlogPostViewMetrics(adminID admin.ID, r *router.Request) (interface{}, error) {
+	var req getBlogPostViewMetricsRequest
+	if err := r.GetJSONBody(&req); err != nil {
+		return nil, err
+	}
+	var viewMetrics *blog.BlogPostViewMetrics
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		var err error
+		viewMetrics, err = blog.GetBlogPostViewMetrics(tx, req.URLPath)
+		return err
+	}); err != nil {
+		return nil, err
+	}
+	return getBlogPostViewMetricsResponse{
+		ViewMetrics: *viewMetrics,
 	}, nil
 }

@@ -1,7 +1,9 @@
 package blog
 
 import (
+	"babblegraph/model/utm"
 	"fmt"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -15,6 +17,8 @@ const (
 	updateBlogPostPublishedTimeQuery  = "UPDATE blog_post_metadata SET published_at=timezone('utc', now()), last_modified_at=timezone('utc', now()) WHERE url_path=$1"
 
 	insertBlogImageQuery = "INSERT INTO blog_post_image_metadata (blog_id, path, file_name, alt_text, caption, is_hero_image) VALUES ($1, $2, $3, $4, $5, $6)"
+
+	lookupBlogPostViewsForBlogQuery = "SELECT * FROM blog_post_view WHERE blog_id = $1"
 )
 
 func GetAllBlogPostMetadata(tx *sqlx.Tx) ([]BlogPostMetadata, error) {
@@ -118,4 +122,48 @@ func InsertBlogImageMetadata(tx *sqlx.Tx, input InsertBlogImageMetadataInput) er
 		return err
 	}
 	return nil
+}
+
+type BlogPostViewMetrics struct {
+	TotalViews           int64 `json:"total_views"`
+	UniqueViews          int64 `json:"unique_views"`
+	LastMonthTotalViews  int64 `json:"last_month_total_views"`
+	LastMonthUniqueViews int64 `json:"last_month_unique_views"`
+}
+
+func GetBlogPostViewMetrics(tx *sqlx.Tx, urlPath string) (*BlogPostViewMetrics, error) {
+	blogPostMetadata, err := getBlogPostMetadataByURLPath(tx, urlPath)
+	if err != nil {
+		return nil, err
+	}
+	var matches []dbBlogPostView
+	if err := tx.Select(&matches, lookupBlogPostViewsForBlogQuery, blogPostMetadata.ID); err != nil {
+		return nil, err
+	}
+	uniqueViews := make(map[utm.TrackingID]bool)
+	uniqueViewsInLastMonth := make(map[utm.TrackingID]bool)
+	var totalViews, totalViewsInLastMonth int64
+	lastMonth := time.Now().Add(-31 * 24 * time.Hour)
+	for _, m := range matches {
+		totalViews++
+		isInLastMonth := m.CreatedAt.After(lastMonth)
+		switch {
+		case m.TrackingID == nil && isInLastMonth:
+			totalViewsInLastMonth++
+		case m.TrackingID != nil && !isInLastMonth:
+			uniqueViews[*m.TrackingID] = true
+		case m.TrackingID != nil && isInLastMonth:
+			totalViewsInLastMonth++
+			uniqueViewsInLastMonth[*m.TrackingID] = true
+			uniqueViews[*m.TrackingID] = true
+		default:
+			// no-op
+		}
+	}
+	return &BlogPostViewMetrics{
+		TotalViews:           totalViews,
+		UniqueViews:          int64(len(uniqueViews)),
+		LastMonthTotalViews:  totalViewsInLastMonth,
+		LastMonthUniqueViews: int64(len(uniqueViewsInLastMonth)),
+	}, nil
 }
