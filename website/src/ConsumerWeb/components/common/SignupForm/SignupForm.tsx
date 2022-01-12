@@ -140,7 +140,7 @@ const SignupComponent = (props: SignupComponentProps) => {
                         onChange={handleEmailAddressChange} />
                 </Grid>
                 <Grid item xs={3} md={2} className={classes.submitButtonContainer}>
-                    <PrimaryButton disabled={!props.emailAddress || props.disabled}>
+                    <PrimaryButton type="submit" disabled={!props.emailAddress || props.disabled}>
                         Try it!
                     </PrimaryButton>
                 </Grid>
