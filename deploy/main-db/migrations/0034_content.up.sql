@@ -12,6 +12,20 @@ CREATE TABLE IF NOT EXISTS content_topic(
 
 CREATE UNIQUE INDEX IF NOT EXISTS content_topic_label_unique ON content_topic(label);
 
+CREATE TABLE IF NOT EXISTS content_topic_display_name(
+    _id uuid DEFAULT uuid_generate_v4 (),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()),
+    last_modified_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()),
+    topic_id uuid NOT NULL REFERENCES content_topic(_id),
+    language_code TEXT NOT NULL,
+    label TEXT NOT NULL,
+    is_active BOOLEAN NOT NULL,
+
+    PRIMARY KEY (_id)
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS content_topic_display_name_unique ON content_topic_display_name(label);
+
 CREATE TABLE IF NOT EXISTS content_source(
     _id uuid DEFAULT uuid_generate_v4 (),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()),

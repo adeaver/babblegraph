@@ -31,6 +31,36 @@ type Topic struct {
 	IsActive bool    `json:"is_active"`
 }
 
+type TopicDisplayNameID string
+
+type dbTopicDisplayName struct {
+	ID             TopicDisplayNameID     `db:"id"`
+	CreatedAt      time.Time              `db:"created_at"`
+	LastModifiedAt time.Time              `db:"last_modified_at"`
+	TopicID        TopicID                `db:"topic_id"`
+	LanguageCode   wordsmith.LanguageCode `db:"language_code"`
+	Label          string                 `db:"label"`
+	IsActive       bool                   `db:"is_active"`
+}
+
+func (d dbTopicDisplayName) ToNonDB() TopicDisplayName {
+	return TopicDisplayName{
+		ID:           d.ID,
+		TopicID:      d.TopicID,
+		LanguageCode: d.LanguageCode,
+		Label:        d.Label,
+		IsActive:     d.IsActive,
+	}
+}
+
+type TopicDisplayName struct {
+	ID           TopicDisplayNameID     `json:"id"`
+	TopicID      TopicID                `json:"topic_id"`
+	LanguageCode wordsmith.LanguageCode `json:"language_code"`
+	Label        string                 `json:"label"`
+	IsActive     bool                   `json:"is_active"`
+}
+
 type SourceID string
 
 type dbSource struct {
