@@ -43,11 +43,10 @@ const styleClasses = makeStyles({
 
 type SignupFormProps = {
     disabled: boolean;
+    shouldShowVerificationForm: boolean;
 
     setIsLoading: (isLoading: boolean) => void;
     onSuccess: (emailAddress: string) => void;
-
-    shouldShowVerificationForm: boolean;
 }
 
 const SignupForm = (props: SignupFormProps) => {
@@ -57,8 +56,10 @@ const SignupForm = (props: SignupFormProps) => {
         props.onSuccess(emailAddress);
     }
 
-    const body = shouldShowVerificationForm ? (
+    const body = props.shouldShowVerificationForm ? (
         <VerificationComponent
+            disabled={props.disabled}
+            setIsLoading={props.setIsLoading}
             emailAddress={emailAddress} />
     ) : (
         <SignupComponent
@@ -164,20 +165,24 @@ const SignupComponent = (props: SignupComponentProps) => {
 
 type VerificationComponentProps = {
     emailAddress: string | null;
+    disabled: boolean;
+
+    setIsLoading: (isLoading: boolean) => void;
 }
 
 const VerificationComponent = (props: VerificationComponentProps) => {
     const handleReenqueueSignupAttempt = () => {
+        props.setIsLoading(true);
         withCaptchaToken("signup", (token: string) => {
             signupUser({
                 emailAddress: props.emailAddress,
                 captchaToken: token,
             },
             (resp: SignupUserResponse) => {
-                // no-op
+                props.setIsLoading(false);
             },
             (e: Error) => {
-                // no-op
+                props.setIsLoading(false);
             });
         });
     }
@@ -199,7 +204,7 @@ const VerificationComponent = (props: VerificationComponentProps) => {
                     &nbsp;
                 </Grid>
                 <Grid item xs={6} md={4}>
-                    <PrimaryButton className={classes.verificationButton} onClick={handleReenqueueSignupAttempt}>
+                    <PrimaryButton className={classes.verificationButton} onClick={handleReenqueueSignupAttempt} disabled={props.disabled}>
                         Resend the verification email
                     </PrimaryButton>
                 </Grid>
