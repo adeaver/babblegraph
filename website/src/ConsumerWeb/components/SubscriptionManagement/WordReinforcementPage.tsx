@@ -22,6 +22,7 @@ import { PrimaryTextField } from 'common/components/TextField/TextField';
 import { PrimarySwitch } from 'common/components/Switch/Switch';
 import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
 import { toTitleCase } from 'util/string/StringConvert';
+import Form from 'common/components/Form/Form';
 
 import {
     GetLemmasMatchingTextResponse,
@@ -329,7 +330,7 @@ const SearchBox = (props: SearchBoxProps) => {
                     </Grid>
                 </Grid>
                 <Divider className={classes.headerDivider} />
-                <form>
+                <Form handleSubmit={props.handleSubmit}>
                     <Grid container>
                         <Grid item xs={9} md={10}>
                             <PrimaryTextField
@@ -341,12 +342,12 @@ const SearchBox = (props: SearchBoxProps) => {
                                 onChange={handleSearchTermChange} />
                         </Grid>
                         <Grid className={classes.buttonContainer} item xs={3} md={2}>
-                            <PrimaryButton className={classes.button} onClick={props.handleSubmit} disabled={!props.searchTerm && !props.loadingAddLemmaID}>
+                            <PrimaryButton className={classes.button} disabled={!props.searchTerm && !props.loadingAddLemmaID}>
                                 Search
                             </PrimaryButton>
                         </Grid>
                     </Grid>
-                </form>
+                </Form>
                 <LemmaSearchResultsDisplay
                     lemmas={props.lemmas}
                     isLoading={props.isLoadingLemmas}

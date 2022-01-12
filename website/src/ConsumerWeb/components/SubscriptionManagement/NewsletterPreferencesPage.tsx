@@ -16,6 +16,7 @@ import { PrimarySwitch } from 'common/components/Switch/Switch';
 import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
 import { PrimaryButton } from 'common/components/Button/Button';
 import { PrimaryTextField } from 'common/components/TextField/TextField';
+import Form from 'common/components/Form/Form';
 
 import { ContentHeader } from './common';
 
@@ -160,7 +161,7 @@ const NewsletterPreferencesPage = (props: NewsletterPreferencesPageProps) =>  {
                                     isActive={isWordReinforcementSpotlightActive}
                                     toggleIsActive={setIsWordReinforcementSpotlightActive} />
                                 <Divider />
-                                <form className={classes.confirmationForm} noValidate autoComplete="off">
+                                <Form className={classes.confirmationForm} handleSubmit={handleSubmit}>
                                     <Grid container>
                                         {
                                             !!subscriptionLevel ? (
@@ -182,13 +183,12 @@ const NewsletterPreferencesPage = (props: NewsletterPreferencesPageProps) =>  {
                                         <Grid item xs={4} md={2} className={classes.submitButtonContainer}>
                                             <PrimaryButton
                                                 className={classes.submitButton}
-                                                onClick={handleSubmit}
                                                 disabled={!emailAddress}>
                                                 Submit
                                             </PrimaryButton>
                                         </Grid>
                                     </Grid>
-                                </form>
+                                </Form>
                             </DisplayCard>
                         )
                     }
