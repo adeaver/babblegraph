@@ -4,14 +4,17 @@ import (
 	"babblegraph/util/geo"
 	"babblegraph/wordsmith"
 	"strings"
+	"time"
 )
 
 type TopicID string
 
 type dbTopic struct {
-	ID       TopicID `db:"_id"`
-	Label    string  `db:"label"`
-	IsActive bool    `db:"is_active"`
+	ID             TopicID   `db:"_id"`
+	CreatedAt      time.Time `db:"created_at"`
+	LastModifiedAt time.Time `db:"last_modified_at"`
+	Label          string    `db:"label"`
+	IsActive       bool      `db:"is_active"`
 }
 
 func (d dbTopic) ToNonDB() Topic {
@@ -32,6 +35,8 @@ type SourceID string
 
 type dbSource struct {
 	ID                 SourceID               `db:"_id"`
+	CreatedAt          time.Time              `db:"created_at"`
+	LastModifiedAt     time.Time              `db:"last_modified_at"`
 	URL                string                 `db:"url"`
 	Type               SourceType             `db:"type"`
 	Country            geo.CountryCode        `db:"country"`
@@ -80,10 +85,12 @@ const (
 type SourceSeedID string
 
 type dbSourceSeed struct {
-	ID       SourceSeedID `json:"id"`
-	RootID   SourceID     `json:"root_id"`
-	URL      string       `json:"url"`
-	IsActive bool         `json:"is_active"`
+	ID             SourceSeedID `json:"id"`
+	CreatedAt      time.Time    `db:"created_at"`
+	LastModifiedAt time.Time    `db:"last_modified_at"`
+	RootID         SourceID     `json:"root_id"`
+	URL            string       `json:"url"`
+	IsActive       bool         `json:"is_active"`
 }
 
 func (d dbSourceSeed) ToNonDB() SourceSeed {
@@ -108,21 +115,30 @@ const paywallFilterDelimiter = "#"
 
 type dbSourceFilter struct {
 	ID                  SourceFilterID `db:"_id"`
+	CreatedAt           time.Time      `db:"created_at"`
+	LastModifiedAt      time.Time      `db:"last_modified_at"`
 	RootID              SourceID       `db:"root_id"`
 	IsActive            bool           `db:"is_active"`
-	UseLDJSONValidation bool           `db:"use_ld_db_validation"`
-	PaywallClasses      string         `db:"paywall_classes"`
-	PaywallIDs          string         `db:"paywall_ids"`
+	UseLDJSONValidation *bool          `db:"use_ld_json_validation"`
+	PaywallClasses      *string        `db:"paywall_classes"`
+	PaywallIDs          *string        `db:"paywall_ids"`
 }
 
 func (d dbSourceFilter) ToNonDB() SourceFilter {
+	var paywallClasses, paywallIDs []string
+	if d.PaywallClasses != nil {
+		paywallClasses = strings.Split(*d.PaywallClasses, paywallFilterDelimiter)
+	}
+	if d.PaywallIDs != nil {
+		paywallIDs = strings.Split(*d.PaywallIDs, paywallFilterDelimiter)
+	}
 	return SourceFilter{
 		ID:                  d.ID,
 		RootID:              d.RootID,
 		IsActive:            d.IsActive,
 		UseLDJSONValidation: d.UseLDJSONValidation,
-		PaywallClasses:      strings.Split(d.PaywallClasses, paywallFilterDelimiter),
-		PaywallIDs:          strings.Split(d.PaywallIDs, paywallFilterDelimiter),
+		PaywallClasses:      paywallClasses,
+		PaywallIDs:          paywallIDs,
 	}
 }
 
@@ -130,7 +146,7 @@ type SourceFilter struct {
 	ID                  SourceFilterID `json:"id"`
 	RootID              SourceID       `json:"root_id"`
 	IsActive            bool           `json:"is_active"`
-	UseLDJSONValidation bool           `json:"use_ld_json_validation"`
+	UseLDJSONValidation *bool          `json:"use_ld_json_validation"`
 	PaywallClasses      []string       `json:"paywall_classes"`
 	PaywallIDs          []string       `json:"paywall_ids"`
 }
