@@ -342,7 +342,7 @@ const SearchBox = (props: SearchBoxProps) => {
                                 onChange={handleSearchTermChange} />
                         </Grid>
                         <Grid className={classes.buttonContainer} item xs={3} md={2}>
-                            <PrimaryButton className={classes.button} disabled={!props.searchTerm && !props.loadingAddLemmaID}>
+                            <PrimaryButton type="submit" className={classes.button} disabled={!props.searchTerm && !props.loadingAddLemmaID}>
                                 Search
                             </PrimaryButton>
                         </Grid>

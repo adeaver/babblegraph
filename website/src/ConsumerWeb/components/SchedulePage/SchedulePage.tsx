@@ -259,7 +259,8 @@ const ConfirmationForm = (props: ConfirmationFormProps) => {
                 <Grid item xs={4} md={2} className={classes.submitButtonContainer}>
                     <PrimaryButton
                         className={classes.submitButton}
-                        disabled={!props.emailAddress}>
+                        disabled={!props.emailAddress}
+                        type="submit">
                         Submit
                     </PrimaryButton>
                 </Grid>

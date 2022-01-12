@@ -285,6 +285,7 @@ const ContentTopicSelectionForm = (props: ContentTopicSelectionFormProps) => {
                     }
                     <Grid item xs={4} md={2} className={classes.submitButtonContainer}>
                         <PrimaryButton
+                            type="submit"
                             className={classes.submitButton}
                             disabled={!props.emailAddress}>
                             Submit
