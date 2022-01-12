@@ -139,7 +139,8 @@ const HomePage = () => {
                         <SignupForm
                             disabled={isLoading || !hasLoadedCaptcha}
                             setIsLoading={setIsLoading}
-                            onSuccess={handleSuccess} />
+                            onSuccess={handleSuccess}
+                            shouldShowVerificationForm={hadSuccess} />
                         {
                             isLoading ? (
                                 <LoadingSpinner />

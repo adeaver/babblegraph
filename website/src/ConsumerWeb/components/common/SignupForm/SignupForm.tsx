@@ -46,14 +46,14 @@ type SignupFormProps = {
 
     setIsLoading: (isLoading: boolean) => void;
     onSuccess: (emailAddress: string) => void;
+
+    shouldShowVerificationForm: boolean;
 }
 
 const SignupForm = (props: SignupFormProps) => {
     const [ emailAddress, setEmailAddress ] = useState<string>(null);
-    const [ shouldShowVerificationForm, setShouldShowVerificationForm ] = useState<boolean>(false);
 
     const handleSuccess = (emailAddress: string) => {
-        setShouldShowVerificationForm(true);
         props.onSuccess(emailAddress);
     }
 
