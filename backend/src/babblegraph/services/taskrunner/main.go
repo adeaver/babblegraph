@@ -7,6 +7,7 @@ import (
 	"babblegraph/util/elastic"
 	"babblegraph/util/env"
 	"babblegraph/util/ses"
+	"babblegraph/wordsmith"
 	"flag"
 	"fmt"
 	"log"
@@ -20,7 +21,7 @@ func main() {
 		log.Fatal(err.Error())
 	}
 	taskName := flag.String("task", "none", `Name of task to run
-        daily-email: send daily email manually
+        sample-email: send sample
         privacy-policy: send privacy policy
         email-for-addresses: send email for EMAIL_ADDRESSES environment variable
         create-user: create beta-premium user
@@ -49,6 +50,13 @@ func main() {
 	})
 	defer sentry.Flush(2 * time.Second)
 	switch *taskName {
+	case "sample-email":
+		if userEmail == nil {
+			log.Fatal("no email specified")
+		}
+		if err := tasks.SendSampleNewsletter(emailClient, *userEmail); err != nil {
+			log.Fatal(err.Error())
+		}
 	case "create-user":
 		// Creates a user with Beta Premium Subscription
 		if userEmail == nil {
@@ -94,6 +102,9 @@ func main() {
 func setupDatabases() error {
 	if err := database.GetDatabaseForEnvironmentRetrying(); err != nil {
 		return fmt.Errorf("Error setting up main-db: %s", err.Error())
+	}
+	if err := wordsmith.MustSetupWordsmithForEnvironment(); err != nil {
+		return fmt.Errorf("Error setting up wordsmith: %s", err.Error())
 	}
 	if err := elastic.InitializeElasticsearchClientForEnvironment(); err != nil {
 		return fmt.Errorf("Error setting up elasticsearch: %s", err.Error())

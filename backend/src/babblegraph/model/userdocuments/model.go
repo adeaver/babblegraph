@@ -9,6 +9,10 @@ import (
 
 type UserDocumentID string
 
+func (u UserDocumentID) Ptr() *UserDocumentID {
+	return &u
+}
+
 type dbUserDocument struct {
 	ID          UserDocumentID       `db:"_id"`
 	UserID      users.UserID         `db:"user_id"`
