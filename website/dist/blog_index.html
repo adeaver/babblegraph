@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>{{.Title}} | Babblegraph Blog</title>
+    <meta name="viewport" content="width=device-width" />
+    <meta name="description" content="{{.Description}}" />
+    <meta name="og:title" content="{{.Title}} | Babblegraph Blog" />
+    <meta name="og:image" content="https://static.babblegraph.com/{{.HeroImage.Path}}" />
+    <meta name="og:description" content="{{.Description}}" />
+    <meta name="og:type" content="article" />
+    <link rel="canonical" href="https://www.babblegraph.com/blog/{{.URLPath}}" />
+    <meta name="robots" content="index, follow" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300&family=Roboto&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+</head>
+<body style="margin: 0;">
+    <div id="content"></div>
+    <script src="/dist/consumerBundle.js"></script>
+</body>
+</html>

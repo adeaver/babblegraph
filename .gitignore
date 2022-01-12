@@ -10,6 +10,7 @@ backend/src/golang.org/**
 website/node_modules/**
 website/dist/*
 !website/dist/ops_index.html
+!website/dist/blog_index.html
 !website/dist/index.html
 !website/dist/logo.png
 !website/dist/home-page.jpg
