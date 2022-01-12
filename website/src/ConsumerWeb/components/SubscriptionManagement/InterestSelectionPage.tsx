@@ -19,6 +19,7 @@ import { Alignment, TypographyColor } from 'common/typography/common';
 import { PrimaryButton } from 'common/components/Button/Button';
 import { PrimaryCheckbox } from 'common/components/Checkbox/Checkbox';
 import { PrimaryTextField } from 'common/components/TextField/TextField';
+import Form from 'common/components/Form/Form';
 
 import {
     contentTopicDisplayMappings,
@@ -264,7 +265,7 @@ const ContentTopicSelectionForm = (props: ContentTopicSelectionFormProps) => {
                 }
             </Grid>
             <Divider />
-            <form className={classes.confirmationForm} noValidate autoComplete="off">
+            <Form className={classes.confirmationForm} handleSubmit={props.handleSubmit}>
                 <Grid container>
                     {
                         !!props.userProfile ? (
@@ -285,13 +286,12 @@ const ContentTopicSelectionForm = (props: ContentTopicSelectionFormProps) => {
                     <Grid item xs={4} md={2} className={classes.submitButtonContainer}>
                         <PrimaryButton
                             className={classes.submitButton}
-                            onClick={props.handleSubmit}
                             disabled={!props.emailAddress}>
                             Submit
                         </PrimaryButton>
                     </Grid>
                 </Grid>
-            </form>
+            </Form>
         </FormGroup>
     );
 }

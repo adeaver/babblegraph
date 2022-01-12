@@ -17,6 +17,7 @@ import { Alignment, TypographyColor } from 'common/typography/common';
 import { PrimaryButton } from 'common/components/Button/Button';
 import { PrimaryTextField } from 'common/components/TextField/TextField';
 import Link from 'common/components/Link/Link';
+import Form from 'common/components/Form/Form';
 
 import { unsubscribeUser, UnsubscribeResponse } from 'ConsumerWeb/api/user/unsubscribe';
 import {
@@ -188,16 +189,12 @@ const UnsubscribeForm = (props: UnsubscribeFormProps) => {
         }
         props.handleUnsubscribeReasonChange(unsubscribeReason);
     };
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        props.handleSubmit();
-    }
 
     const [ validationError, setValidationError ] = useState<string | null>(null);
 
     const classes = styleClasses();
     return (
-        <form onSubmit={handleSubmit} className={classes.formContainer} noValidate autoComplete="off">
+        <Form handleSubmit={props.handleSubmit} className={classes.formContainer}>
             {
                 props.hasUserProfile && (
                     <div>
@@ -242,7 +239,7 @@ const UnsubscribeForm = (props: UnsubscribeFormProps) => {
                     </PrimaryButton>
                 </Grid>
             </Grid>
-        </form>
+        </Form>
     );
 }
 

@@ -13,6 +13,7 @@ import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
 import { PrimaryButton } from 'common/components/Button/Button';
 import { PrimaryTextField } from 'common/components/TextField/TextField';
 import Alert from 'common/components/Alert/Alert';
+import Form from 'common/components/Form/Form';
 
 import {
     UserScheduleError,
@@ -236,7 +237,7 @@ const ConfirmationForm = (props: ConfirmationFormProps) => {
     }
     const classes = styleClasses();
     return (
-        <form className={classes.confirmationForm} noValidate autoComplete="off">
+        <Form className={classes.confirmationForm} handleSubmit={props.handleSubmit}>
             <Grid container>
                 {
                     props.userHasSubscription ? (
@@ -258,13 +259,12 @@ const ConfirmationForm = (props: ConfirmationFormProps) => {
                 <Grid item xs={4} md={2} className={classes.submitButtonContainer}>
                     <PrimaryButton
                         className={classes.submitButton}
-                        onClick={props.handleSubmit}
                         disabled={!props.emailAddress}>
                         Submit
                     </PrimaryButton>
                 </Grid>
             </Grid>
-        </form>
+        </Form>
     )
 }
 

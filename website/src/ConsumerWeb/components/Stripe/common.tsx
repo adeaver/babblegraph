@@ -13,6 +13,7 @@ import Grid from '@material-ui/core/Grid';
 import StripeInput from 'common/util/stripe/StripeInput';
 import { PrimaryButton } from 'common/components/Button/Button';
 import { PrimaryTextField } from 'common/components/TextField/TextField';
+import Form from 'common/components/Form/Form';
 
 const styleClasses = makeStyles({
     checkoutFormObject: {
@@ -50,15 +51,14 @@ export const GenericCardForm = (props: GenericCardFormProps) => {
     const handlePostalCodeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setPostalCode((event.target as HTMLInputElement).value);
     }
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault()
+    const handleSubmit = () => {
         const cardElement = props.elements.getElement(CardNumberElement);
         props.handleSubmit(cardElement, cardholderName, postalCode);
     }
 
     const classes = styleClasses();
     return (
-        <form onSubmit={handleSubmit} noValidate autoComplete="off">
+        <Form handleSubmit={handleSubmit}>
             <Grid container>
                 <Grid item xs={false} md={3}>
                     &nbsp;
@@ -121,7 +121,6 @@ export const GenericCardForm = (props: GenericCardFormProps) => {
                         disabled={props.isLoading}
                         required
                         fullWidth />
-
                 </Grid>
                 <Grid item xs={6} md={3}>
                     <PrimaryTextField
@@ -186,8 +185,7 @@ export const GenericCardForm = (props: GenericCardFormProps) => {
                     </a>
                 </Grid>
             </Grid>
-
-        </form>
+        </Form>
     );
 }
 

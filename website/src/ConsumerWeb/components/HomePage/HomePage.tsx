@@ -22,6 +22,7 @@ import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
 import { PhotoKey } from 'common/data/photos/Photos';
 import Link, { LinkTarget } from 'common/components/Link/Link';
 import { withCaptchaToken, loadCaptchaScript } from 'common/util/grecaptcha/grecaptcha';
+import Form from 'common/components/Form/Form';
 
 import {
     SignupUserResponse,
@@ -203,7 +204,7 @@ const SignupForm = (props: SignupFormProps) => {
             <Paragraph>
                 It’s completely free and you can unsubscribe anytime you’d like.
             </Paragraph>
-            <form className={classes.confirmationForm} noValidate autoComplete="off">
+            <Form className={classes.confirmationForm} handleSubmit={props.handleSubmit}>
                 <Grid container>
                     <Grid item xs={9} md={10}>
                         <PrimaryTextField
@@ -215,12 +216,12 @@ const SignupForm = (props: SignupFormProps) => {
                             onChange={handleEmailAddressChange} />
                     </Grid>
                     <Grid item xs={3} md={2} className={classes.submitButtonContainer}>
-                        <PrimaryButton onClick={props.handleSubmit} disabled={!props.emailAddress && props.canSubmit}>
+                        <PrimaryButton disabled={!props.emailAddress && props.canSubmit}>
                             Try it!
                         </PrimaryButton>
                     </Grid>
                 </Grid>
-            </form>
+            </Form>
             {
                 !!props.errorMessage && (
                     <Grid container>
