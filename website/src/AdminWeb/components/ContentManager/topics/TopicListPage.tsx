@@ -3,9 +3,14 @@ import React, { useState, useEffect } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 
-import { asBasePage, BasePageProps } from 'AdminWeb/common/BasePage/BasePage';
-import { Heading1 } from 'common/typography/Heading';
+import Page from 'common/components/Page/Page';
+import DisplayCard from 'common/components/DisplayCard/DisplayCard';
+import { asBaseComponent, BaseComponentProps } from 'AdminWeb/common/Base/BaseComponent';
+import { Heading1, Heading3 } from 'common/typography/Heading';
 import { TypographyColor } from 'common/typography/common';
+import Form from 'common/components/Form/Form';
+import { PrimaryButton } from 'common/components/Button/Button';
+import { PrimaryTextField } from 'common/components/TextField/TextField';
 
 import {
     Topic,
@@ -16,24 +21,122 @@ import {
     addTopic,
 } from 'AdminWeb/api/content/topic';
 
-type TopicListPageProps = GetAllContentTopicsResponse & BasePageProps;
+const styleClasses = makeStyles({
+    submitButtonContainer: {
+        alignSelf: 'center',
+        padding: '5px',
+    },
+    labelField: {
+        width: '100%',
+    },
+    confirmationForm: {
+        padding: '10px 0',
+        width: '100%',
+    },
+});
 
-const TopicListPage = (props: TopicListPageProps) => {
-    return (
-        <Heading1>{props.topics}</Heading1>
-    );
-}
+const TopicListPage = asBaseComponent(
+    (props: GetAllContentTopicsResponse & BaseComponentProps) => {
+        const [ allTopics, setAllTopics ] = useState<Array<Topic>>(props.topics || []);
 
-export default asBasePage(
-    TopicListPage,
-    (
-        setData: (data: GetAllContentTopicsResponse) => void,
-        setError: (err: Error) => void,
-    ) => {
-        getAllContentTopics(
-            {},
-            setData,
-            setError,
+        const handleAddNewTopic = (topic: Topic) => {
+            setAllTopics(allTopics.concat(topic));
+        }
+        return (
+            <div>
+                <AddTopicForm handleAddNewTopic={handleAddNewTopic} />
+                <Grid container>
+                    {
+                        allTopics.map((t: Topic, idx: number) => (
+                            <TopicDisplay key={`topic-display-${idx}`} {...t} />
+                        ))
+                    }
+                </Grid>
+            </div>
         );
     },
+    (
+        onSuccess: (resp: GetAllContentTopicsResponse) => void,
+        onError: (err: Error) => void,
+    ) => getAllContentTopics({}, onSuccess, onError),
+    true,
+)
+
+const TopicDisplay = (props: Topic) => {
+    return <p>{props.label}</p>
+}
+
+type AddTopicFormProps = {
+    handleAddNewTopic: (topic: Topic) => void;
+}
+
+const AddTopicForm = asBaseComponent<{}, AddTopicFormProps>(
+    (props: AddTopicFormProps & BaseComponentProps) => {
+        const [ label, setLabel ] = useState<string>(null);
+
+        const handleSubmit = () => {
+            props.setIsLoading(true);
+            addTopic({
+                label: label,
+            },
+            (resp: AddTopicResponse) => {
+                props.setIsLoading(false);
+                props.handleAddNewTopic({
+                    id: resp.id,
+                    label: label,
+                    isActive: false,
+                });
+                setLabel(null);
+            },
+            (err: Error) => {
+                props.setIsLoading(false);
+                props.setError(err);
+            });
+        }
+        const handleLabelChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+            setLabel((event.target as HTMLInputElement).value);
+        };
+
+        const classes = styleClasses();
+        return (
+            <Grid container>
+                <Grid item xs={false} md={3}>
+                    &nbsp;
+                </Grid>
+                <Grid item xs={12} md={6}>
+                    <DisplayCard>
+                        <Heading3 color={TypographyColor.Primary}>
+                            Add a topic
+                        </Heading3>
+                        <Form className={classes.confirmationForm} handleSubmit={handleSubmit}>
+                            <Grid container>
+                                <Grid item xs={9} md={10}>
+                                    <PrimaryTextField
+                                        id="label"
+                                        className={classes.labelField}
+                                        label="Label"
+                                        variant="outlined"
+                                        defaultValue={label}
+                                        value={label}
+                                        onChange={handleLabelChange} />
+                                </Grid>
+                                <Grid item xs={3} md={2} className={classes.submitButtonContainer}>
+                                    <PrimaryButton disabled={!label} type="submit">
+                                        Submit
+                                    </PrimaryButton>
+                                </Grid>
+                            </Grid>
+                        </Form>
+                    </DisplayCard>
+                </Grid>
+            </Grid>
+        );
+    },
+    (
+        onSuccess: (props: {}) => void,
+        onError: (err: Error) => void,
+    ) => onSuccess({}),
+    false,
 );
+
+export default TopicListPage;

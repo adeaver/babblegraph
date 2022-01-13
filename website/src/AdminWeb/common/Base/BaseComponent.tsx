@@ -11,13 +11,13 @@ export type SetErrorFunc = (err: Error) => void;
 
 export type InitialDataFunc<P> = (setSuccess: (data: P) => void, setError: SetErrorFunc) => void;
 
-export type BasePageProps = {
+export type BaseComponentProps = {
     setIsLoading: SetIsLoadingFunc;
     setError: SetErrorFunc;
 }
 
-export function asBasePage<P>(WrappedComponent: React.ComponentType<P & BasePageProps>, fetchInitialData: InitialDataFunc<P>) {
-    return () => {
+export function asBaseComponent<P, V>(WrappedComponent: React.ComponentType<V & P & BaseComponentProps>, fetchInitialData: InitialDataFunc<P>, isPage: boolean) {
+    return (props: V) => {
         const [ isLoading, setIsLoading ] = useState<boolean>(true);
         const [ error, setError ] = useState<Error>(null);
 
@@ -36,25 +36,24 @@ export function asBasePage<P>(WrappedComponent: React.ComponentType<P & BasePage
             fetchInitialData(handleData, handleError);
         }, []);
 
-        let body;
+        let component;
         if (isLoading) {
-            body = <LoadingSpinner />;
+             component = <LoadingSpinner />;
         } else if (!!error) {
-            body = (
+            component = (
                 <Heading3 color={TypographyColor.Warning}>
                     An error occurred.
                 </Heading3>
             );
-        } else {
-            body = (
-                <WrappedComponent setIsLoading={setIsLoading} setError={setError} {...wrappedComponentProps} />
+        }
+        component = <WrappedComponent setIsLoading={setIsLoading} setError={setError} {...props} {...wrappedComponentProps} />;
+        if (isPage) {
+            component = (
+                <Page>
+                    { component }
+                </Page>
             );
         }
-
-        return (
-            <Page>
-                { body }
-            </Page>
-        );
+        return component;
     }
 }
