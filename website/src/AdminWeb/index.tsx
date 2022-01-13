@@ -14,6 +14,7 @@ import UserMetricsPage from 'AdminWeb/components/UserMetricsPage/UserMetricsPage
 import PermissionManagerPage from 'AdminWeb/components/PermissionManagerPage/PermissionManagerPage';
 import BlogListPage from 'AdminWeb/components/Blog/BlogListPage/BlogListPage';
 import BlogEditPage from 'AdminWeb/components/Blog/BlogEditPage/BlogEditPage';
+import ContentManagerDashboard from 'AdminWeb/components/ContentManager/ContentManagerDashboard';
 
 class App extends React.Component{
     render() {
@@ -21,8 +22,13 @@ class App extends React.Component{
             <Router basename="/ops">
                 <Switch>
                     <Route path="/dashboard" component={Dashboard} />
-                    <Route path="/user-metrics" component={UserMetricsPage} />
+
                     <Route path="/permission-manager" component={PermissionManagerPage} />
+
+                    <Route path="/user-metrics" component={UserMetricsPage} />
+
+                    <Route path="/content-manager" component={ContentManagerDashboard} />
+
                     <Route path="/blog-manager/edit/:blogPath" component={BlogEditPage} />
                     <Route path="/blog-manager" component={BlogListPage} />
 

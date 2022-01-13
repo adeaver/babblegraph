@@ -5,6 +5,7 @@ export enum Permission {
     ViewUserMetrics = 'view-user-metrics',
 	WriteBlog = "write-blog",
 	PublishBlog = "publish-blog",
+	EditContentTopics = "edit-content-topics",
 }
 
 export type ManageUserPermissionsRequest = {

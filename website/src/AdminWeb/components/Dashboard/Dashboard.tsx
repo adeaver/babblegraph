@@ -36,6 +36,10 @@ const Dashboard = () => {
                         title="View User Metrics"
                         description="View metrics such as user counts, email usage statistics, etc." />
                     <NavigationCard
+                        location="/ops/content-manager"
+                        title="Content Manager"
+                        description="View and edit content topics and available content sources" />
+                    <NavigationCard
                         location="/ops/blog-manager"
                         title="Blog Manager"
                         description="Write, edit, delete, or promote blog posts." />
