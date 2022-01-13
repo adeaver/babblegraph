@@ -5,12 +5,14 @@ import Grid from '@material-ui/core/Grid';
 
 import Page from 'common/components/Page/Page';
 import DisplayCard from 'common/components/DisplayCard/DisplayCard';
+import ActionCard from 'common/components/ActionCard/ActionCard';
 import { asBaseComponent, BaseComponentProps } from 'AdminWeb/common/Base/BaseComponent';
 import { Heading1, Heading3 } from 'common/typography/Heading';
 import { TypographyColor } from 'common/typography/common';
 import Form from 'common/components/Form/Form';
 import { PrimaryButton } from 'common/components/Button/Button';
 import { PrimaryTextField } from 'common/components/TextField/TextField';
+import Link, { LinkTarget } from 'common/components/Link/Link';
 
 import {
     Topic,
@@ -33,24 +35,33 @@ const styleClasses = makeStyles({
         padding: '10px 0',
         width: '100%',
     },
+    topicDisplayCard: {
+        margin: '10px 0',
+    },
 });
 
 const TopicListPage = asBaseComponent(
     (props: GetAllContentTopicsResponse & BaseComponentProps) => {
-        const [ allTopics, setAllTopics ] = useState<Array<Topic>>(props.topics || []);
+        const [ addedTopics, setAddedTopics ] = useState<Array<Topic>>([]);
 
         const handleAddNewTopic = (topic: Topic) => {
-            setAllTopics(allTopics.concat(topic));
+            setAddedTopics(addedTopics.concat(topic));
         }
+        const topics = (props.topics || []).concat(addedTopics);
         return (
             <div>
                 <AddTopicForm handleAddNewTopic={handleAddNewTopic} />
                 <Grid container>
-                    {
-                        allTopics.map((t: Topic, idx: number) => (
-                            <TopicDisplay key={`topic-display-${idx}`} {...t} />
-                        ))
-                    }
+                    <Grid item xs={false} md={3}>
+                        &nbsp;
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                        {
+                            topics.map((t: Topic, idx: number) => (
+                                <TopicDisplay key={`topic-display-${idx}`} {...t} />
+                            ))
+                        }
+                    </Grid>
                 </Grid>
             </div>
         );
@@ -63,7 +74,17 @@ const TopicListPage = asBaseComponent(
 )
 
 const TopicDisplay = (props: Topic) => {
-    return <p>{props.label}</p>
+    const classes = styleClasses();
+    return (
+        <DisplayCard className={classes.topicDisplayCard}>
+            <Heading3 color={TypographyColor.Primary}>
+                {props.label}
+            </Heading3>
+            <Link href={`/ops/content-manager/topics/${props.id}`} target={LinkTarget.Self}>
+                Manage this topic
+            </Link>
+        </DisplayCard>
+    );
 }
 
 type AddTopicFormProps = {
@@ -117,7 +138,6 @@ const AddTopicForm = asBaseComponent<{}, AddTopicFormProps>(
                                         label="Label"
                                         variant="outlined"
                                         defaultValue={label}
-                                        value={label}
                                         onChange={handleLabelChange} />
                                 </Grid>
                                 <Grid item xs={3} md={2} className={classes.submitButtonContainer}>
