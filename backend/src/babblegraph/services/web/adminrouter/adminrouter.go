@@ -4,6 +4,7 @@ import (
 	"babblegraph/model/admin"
 	"babblegraph/services/web/adminrouter/api/auth"
 	"babblegraph/services/web/adminrouter/api/blog"
+	"babblegraph/services/web/adminrouter/api/content"
 	"babblegraph/services/web/adminrouter/api/usermetrics"
 	"babblegraph/services/web/router"
 	"babblegraph/util/database"
@@ -23,6 +24,7 @@ func RegisterAdminRouter(r *mux.Router) error {
 		auth.Routes,
 		usermetrics.Routes,
 		blog.Routes,
+		content.Routes,
 	}); err != nil {
 		return err
 	}
