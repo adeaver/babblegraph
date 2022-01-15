@@ -16,6 +16,7 @@ import BlogListPage from 'AdminWeb/components/Blog/BlogListPage/BlogListPage';
 import BlogEditPage from 'AdminWeb/components/Blog/BlogEditPage/BlogEditPage';
 import ContentManagerDashboard from 'AdminWeb/components/ContentManager/ContentManagerDashboard';
 import TopicListPage from 'AdminWeb/components/ContentManager/topics/TopicListPage';
+import TopicManagementPage from 'AdminWeb/components/ContentManager/topics/TopicManagementPage';
 
 class App extends React.Component{
     render() {
@@ -28,6 +29,7 @@ class App extends React.Component{
 
                     <Route path="/user-metrics" component={UserMetricsPage} />
 
+                    <Route path="/content-manager/topics/:id" component={TopicManagementPage} />
                     <Route path="/content-manager/topics" component={TopicListPage} />
                     <Route path="/content-manager" component={ContentManagerDashboard} />
 

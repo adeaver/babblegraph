@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
 import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 
-import Page from 'common/components/Page/Page';
 import DisplayCard from 'common/components/DisplayCard/DisplayCard';
 import ActionCard from 'common/components/ActionCard/ActionCard';
 import { asBaseComponent, BaseComponentProps } from 'AdminWeb/common/Base/BaseComponent';
@@ -67,6 +66,7 @@ const TopicListPage = asBaseComponent(
         );
     },
     (
+        ownProps: {},
         onSuccess: (resp: GetAllContentTopicsResponse) => void,
         onError: (err: Error) => void,
     ) => getAllContentTopics({}, onSuccess, onError),
@@ -83,6 +83,7 @@ const TopicDisplay = (props: Topic) => {
             <Link href={`/ops/content-manager/topics/${props.id}`} target={LinkTarget.Self}>
                 Manage this topic
             </Link>
+            { /* TODO: add switch here */ }
         </DisplayCard>
     );
 }
@@ -153,6 +154,7 @@ const AddTopicForm = asBaseComponent<{}, AddTopicFormProps>(
         );
     },
     (
+        ownProps: AddTopicFormProps,
         onSuccess: (props: {}) => void,
         onError: (err: Error) => void,
     ) => onSuccess({}),

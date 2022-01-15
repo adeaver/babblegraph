@@ -33,7 +33,7 @@ func GetTopic(tx *sqlx.Tx, id TopicID) (*Topic, error) {
 	case err != nil:
 		return nil, err
 	case len(matches) == 0,
-		len(matches) > 0:
+		len(matches) > 1:
 		return nil, fmt.Errorf("Expected 1 topic for ID %s, but got %d", id, len(matches))
 	default:
 		m := matches[0].ToNonDB()
