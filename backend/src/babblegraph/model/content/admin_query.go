@@ -9,7 +9,7 @@ import (
 const (
 	getAllTopicsQuery      = "SELECT * FROM content_topic"
 	getTopicQuery          = "SELECT * FROM content_topic WHERE _id = $1"
-	insertTopicQuery       = "INSERT INTO content_topic (label, is_active) VALUES ($1, $2)"
+	insertTopicQuery       = "INSERT INTO content_topic (label, is_active) VALUES ($1, $2) RETURNING _id"
 	toggleTopicActiveQuery = "UPDATE content_topic SET is_active = $1 WHERE _id = $2"
 	updateTopicLabelQuery  = "UPDATE content_topic SET label = $1 WHERE _id = $2"
 )
@@ -53,7 +53,7 @@ func AddTopic(tx *sqlx.Tx, label string, isActive bool) (*TopicID, error) {
 			return nil, err
 		}
 	}
-	return &topicID, nil
+	return topicID.Ptr(), nil
 }
 
 func ToggleTopicIsActive(tx *sqlx.Tx, id TopicID, isActive bool) error {

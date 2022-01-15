@@ -9,6 +9,10 @@ import (
 
 type TopicID string
 
+func (t TopicID) Ptr() *TopicID {
+	return &t
+}
+
 type dbTopic struct {
 	ID             TopicID   `db:"_id"`
 	CreatedAt      time.Time `db:"created_at"`

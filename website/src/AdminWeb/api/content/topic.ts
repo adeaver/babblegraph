@@ -51,7 +51,7 @@ export type AddTopicRequest = {
 }
 
 export type AddTopicResponse = {
-    id: string;
+    topicId: string;
 }
 
 export function addTopic(

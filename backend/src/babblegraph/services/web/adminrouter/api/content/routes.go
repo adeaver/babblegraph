@@ -6,6 +6,7 @@ import (
 	"babblegraph/services/web/adminrouter/middleware"
 	"babblegraph/services/web/router"
 	"babblegraph/util/database"
+	"strings"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -103,7 +104,7 @@ func addContentTopic(adminID admin.ID, r *router.Request) (interface{}, error) {
 	var topicID *content.TopicID
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		var err error
-		topicID, err = content.AddTopic(tx, req.Label, false)
+		topicID, err = content.AddTopic(tx, strings.ToLower(req.Label), false)
 		return err
 	}); err != nil {
 		return nil, err

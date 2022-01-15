@@ -12,17 +12,26 @@ import Form from 'common/components/Form/Form';
 import { PrimaryButton } from 'common/components/Button/Button';
 import { PrimaryTextField } from 'common/components/TextField/TextField';
 import Link, { LinkTarget } from 'common/components/Link/Link';
+import { PrimarySwitch } from 'common/components/Switch/Switch';
 
 import {
     Topic,
     GetAllContentTopicsResponse,
     getAllContentTopics,
-
     AddTopicResponse,
     addTopic,
+    updateIsContentTopicActive,
+    UpdateIsContentTopicActiveResponse,
 } from 'AdminWeb/api/content/topic';
 
 const styleClasses = makeStyles({
+    topicContainer: {
+        padding: '5px',
+    },
+    topicContainerHeader: {
+        display: 'flex',
+        alignItems: 'center',
+    },
     submitButtonContainer: {
         alignSelf: 'center',
         padding: '5px',
@@ -47,20 +56,22 @@ const TopicListPage = asBaseComponent(
             setAddedTopics(addedTopics.concat(topic));
         }
         const topics = (props.topics || []).concat(addedTopics);
+        const classes = styleClasses();
         return (
             <div>
                 <AddTopicForm handleAddNewTopic={handleAddNewTopic} />
                 <Grid container>
-                    <Grid item xs={false} md={3}>
-                        &nbsp;
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                        {
-                            topics.map((t: Topic, idx: number) => (
-                                <TopicDisplay key={`topic-display-${idx}`} {...t} />
-                            ))
-                        }
-                    </Grid>
+                {
+                    topics.map((t: Topic, idx: number) => (
+                        <Grid className={classes.topicContainer} xs={12} md={4} item>
+                            <TopicDisplay
+                                key={`topic-display-${idx}`}
+                                topic={t}
+                                setIsLoading={props.setIsLoading}
+                                setError={props.setError} />
+                        </Grid>
+                    ))
+                }
                 </Grid>
             </div>
         );
@@ -73,17 +84,49 @@ const TopicListPage = asBaseComponent(
     true,
 )
 
-const TopicDisplay = (props: Topic) => {
+type TopicDisplayProps = {
+    topic: Topic,
+
+    setIsLoading: (isLoading: boolean) => void;
+    setError: (err: Error) => void;
+}
+
+const TopicDisplay = (props: TopicDisplayProps) => {
+    const [ isActive, setIsActive ] = useState<boolean>(props.topic.isActive);
+
+    const handleToggleTopic = () => {
+        props.setIsLoading(true);
+        updateIsContentTopicActive({
+            id: props.topic.id,
+            isActive: !isActive,
+        },
+        (resp: UpdateIsContentTopicActiveResponse) => {
+            props.setIsLoading(false);
+            props.setError(null);
+            setIsActive(!isActive);
+        },
+        (err: Error) => {
+            props.setIsLoading(false);
+            props.setError(err);
+        });
+    }
+
     const classes = styleClasses();
     return (
         <DisplayCard className={classes.topicDisplayCard}>
-            <Heading3 color={TypographyColor.Primary}>
-                {props.label}
-            </Heading3>
-            <Link href={`/ops/content-manager/topics/${props.id}`} target={LinkTarget.Self}>
+            <Grid container className={classes.topicContainerHeader}>
+                <Grid item xs={8}>
+                    <Heading3 color={isActive ? TypographyColor.Primary : TypographyColor.Gray}>
+                        {props.topic.label}
+                    </Heading3>
+                </Grid>
+                <Grid item xs={4}>
+                    <PrimarySwitch checked={isActive} onClick={handleToggleTopic} />
+                </Grid>
+            </Grid>
+            <Link href={`/ops/content-manager/topics/${props.topic.id}`} target={LinkTarget.Self}>
                 Manage this topic
             </Link>
-            { /* TODO: add switch here */ }
         </DisplayCard>
     );
 }
@@ -104,7 +147,7 @@ const AddTopicForm = asBaseComponent<{}, AddTopicFormProps>(
             (resp: AddTopicResponse) => {
                 props.setIsLoading(false);
                 props.handleAddNewTopic({
-                    id: resp.id,
+                    id: resp.topicId,
                     label: label,
                     isActive: false,
                 });
