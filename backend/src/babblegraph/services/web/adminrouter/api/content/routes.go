@@ -6,6 +6,7 @@ import (
 	"babblegraph/services/web/adminrouter/middleware"
 	"babblegraph/services/web/router"
 	"babblegraph/util/database"
+	"babblegraph/wordsmith"
 	"strings"
 
 	"github.com/jmoiron/sqlx"
@@ -37,6 +38,30 @@ var Routes = router.RouteGroup{
 			Handler: middleware.WithPermission(
 				admin.PermissionEditContentTopics,
 				updateIsContentTopicActive,
+			),
+		}, {
+			Path: "get_all_topic_display_names_for_topic_1",
+			Handler: middleware.WithPermission(
+				admin.PermissionEditContentTopics,
+				getAllTopicDisplayNamesForTopic,
+			),
+		}, {
+			Path: "add_topic_display_name_for_topic_1",
+			Handler: middleware.WithPermission(
+				admin.PermissionEditContentTopics,
+				addTopicDisplayNameForTopic,
+			),
+		}, {
+			Path: "update_topic_display_name_label_1",
+			Handler: middleware.WithPermission(
+				admin.PermissionEditContentTopics,
+				updateTopicDisplayNameLabel,
+			),
+		}, {
+			Path: "toggle_topic_display_name_is_active_1",
+			Handler: middleware.WithPermission(
+				admin.PermissionEditContentTopics,
+				toggleTopicDisplayNameIsActive,
 			),
 		},
 	},
@@ -134,6 +159,112 @@ func updateIsContentTopicActive(adminID admin.ID, r *router.Request) (interface{
 		return nil, err
 	}
 	return updateIsContentTopicActiveResponse{
+		Success: true,
+	}, nil
+}
+
+type getAllTopicDisplayNamesForTopicRequest struct {
+	TopicID content.TopicID `json:"topic_id"`
+}
+
+type getAllTopicDisplayNamesForTopicResponse struct {
+	TopicDisplayNames []content.TopicDisplayName `json:"topic_display_names"`
+}
+
+func getAllTopicDisplayNamesForTopic(adminID admin.ID, r *router.Request) (interface{}, error) {
+	var req getAllTopicDisplayNamesForTopicRequest
+	if err := r.GetJSONBody(&req); err != nil {
+		return nil, err
+	}
+	var displayNames []content.TopicDisplayName
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		var err error
+		displayNames, err = content.GetAllTopicDipslayNamesForTopic(tx, req.TopicID)
+		return err
+	}); err != nil {
+		return nil, err
+	}
+	return getAllTopicDisplayNamesForTopicResponse{
+		TopicDisplayNames: displayNames,
+	}, nil
+}
+
+type addTopicDisplayNameForTopicRequest struct {
+	TopicID      content.TopicID `json:"topic_id"`
+	Label        string          `json:"label"`
+	LanguageCode string          `json:"language_code"`
+}
+
+type addTopicDisplayNameForTopicResponse struct {
+	TopicDisplayNameID content.TopicDisplayNameID `json:"topic_display_name_id"`
+}
+
+func addTopicDisplayNameForTopic(adminID admin.ID, r *router.Request) (interface{}, error) {
+	var req addTopicDisplayNameForTopicRequest
+	if err := r.GetJSONBody(&req); err != nil {
+		return nil, err
+	}
+	languageCode, err := wordsmith.GetLanguageCodeFromString(req.LanguageCode)
+	if err != nil {
+		return nil, err
+	}
+	var displayNameID *content.TopicDisplayNameID
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		var err error
+		displayNameID, err = content.AddTopicDisplayName(tx, req.TopicID, *languageCode, req.Label, false)
+		return err
+	}); err != nil {
+		return nil, err
+	}
+	return addTopicDisplayNameForTopicResponse{
+		TopicDisplayNameID: *displayNameID,
+	}, nil
+}
+
+type updateTopicDisplayNameLabelRequest struct {
+	TopicDisplayNameID content.TopicDisplayNameID `json:"topic_display_name_id"`
+	Label              string                     `json:"label"`
+}
+
+type updateTopicDisplayNameLabelResponse struct {
+	Success bool `json:"success"`
+}
+
+func updateTopicDisplayNameLabel(adminID admin.ID, r *router.Request) (interface{}, error) {
+	var req updateTopicDisplayNameLabelRequest
+	if err := r.GetJSONBody(&req); err != nil {
+		return nil, err
+	}
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		return content.UpdateTopicDisplayNameLabel(tx, req.TopicDisplayNameID, req.Label)
+	}); err != nil {
+		return nil, err
+	}
+	return updateTopicDisplayNameLabelResponse{
+		Success: true,
+	}, nil
+}
+
+type toggleTopicDisplayNameIsActiveRequest struct {
+	TopicDisplayNameID content.TopicDisplayNameID `json:"topic_display_name_id"`
+	IsActive           bool                       `json:"is_active"`
+}
+
+type toggleTopicDisplayNameIsActiveResponse struct {
+	Success bool `json:"success"`
+}
+
+func toggleTopicDisplayNameIsActive(adminID admin.ID, r *router.Request) (interface{}, error) {
+	var req toggleTopicDisplayNameIsActiveRequest
+	if err := r.GetJSONBody(&req); err != nil {
+		return nil, err
+	}
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		return content.ToggleTopicDisplayNameIsActive(tx, req.TopicDisplayNameID, req.IsActive)
+	}); err != nil {
+		return nil, err
+	}
+	return toggleTopicDisplayNameIsActiveResponse{
 		Success: true,
 	}, nil
 }
