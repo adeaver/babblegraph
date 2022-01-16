@@ -11,6 +11,9 @@ import { TypographyColor } from 'common/typography/common';
 import { withCaptchaToken, loadCaptchaScript } from 'common/util/grecaptcha/grecaptcha';
 import { PrimaryButton } from 'common/components/Button/Button';
 import { PrimaryTextField } from 'common/components/TextField/TextField';
+import { DisplayLanguage } from 'common/model/language/language';
+
+import { TextBlock, getTextBlocksForLanguage } from './translations';
 
 import {
     SignupUserResponse,
@@ -20,8 +23,9 @@ import {
 
 const styleClasses = makeStyles({
     submitButtonContainer: {
-        alignSelf: 'center',
-        padding: '5px',
+        display: 'flex',
+        justifyContent: 'end',
+        padding: '5px 0',
     },
     emailField: {
         width: '100%',
@@ -44,6 +48,7 @@ const styleClasses = makeStyles({
 type SignupFormProps = {
     disabled: boolean;
     shouldShowVerificationForm: boolean;
+    displayLanguage?: DisplayLanguage;
 
     setIsLoading: (isLoading: boolean) => void;
     onSuccess: (emailAddress: string) => void;
@@ -58,11 +63,13 @@ const SignupForm = (props: SignupFormProps) => {
 
     const body = props.shouldShowVerificationForm ? (
         <VerificationComponent
+            displayLanguage={props.displayLanguage}
             disabled={props.disabled}
             setIsLoading={props.setIsLoading}
             emailAddress={emailAddress} />
     ) : (
         <SignupComponent
+            displayLanguage={props.displayLanguage}
             emailAddress={emailAddress}
             disabled={props.disabled}
             setEmailAddress={setEmailAddress}
@@ -74,17 +81,18 @@ const SignupForm = (props: SignupFormProps) => {
 
 const errorMessages = {
     // TODO: think about these
-    [SignupErrorMessage.InvalidEmailAddress]: "Hmm, the email address you gave doesn’t appear to be valid. Check to make sure that you spelled everything right.",
-    [SignupErrorMessage.RateLimited]: "It looks like we’re having some trouble reaching you. Contact our support so we can get you on the list!",
-    [SignupErrorMessage.IncorrectStatus]: "It looks like you’re already signed up for Babblegraph!",
-    [SignupErrorMessage.LowScore]: "We’re having some trouble verifying your request. Contact us at hello@babblegraph.com to finish signing up.",
-    "default": "Something went wrong. Contact our support so we can get you on the list!"
+    [SignupErrorMessage.InvalidEmailAddress]: TextBlock.ErrorMessageInvalidEmailAddress,
+    [SignupErrorMessage.RateLimited]: TextBlock.ErrorMessageRateLimited,
+    [SignupErrorMessage.IncorrectStatus]: TextBlock.ErrorMessageIncorrectStatus,
+    [SignupErrorMessage.LowScore]: TextBlock.ErrorMessageLowScore,
+    "default": TextBlock.ErrorMessageDefault,
 
 }
 
 type SignupComponentProps = {
     emailAddress: string | null;
     disabled: boolean;
+    displayLanguage?: DisplayLanguage;
 
     setEmailAddress: (emailAddress: string) => void;
     setIsLoading: (isLoading: boolean) => void;
@@ -98,6 +106,8 @@ const SignupComponent = (props: SignupComponentProps) => {
         props.setEmailAddress((event.target as HTMLInputElement).value);
     };
 
+    const translations = getTextBlocksForLanguage(props.displayLanguage);
+
     const handleSubmit = () => {
         props.setIsLoading(true);
         withCaptchaToken("signup", (token: string) => {
@@ -108,12 +118,12 @@ const SignupComponent = (props: SignupComponentProps) => {
             (resp: SignupUserResponse) => {
                 props.setIsLoading(false);
                 if (!!resp.errorMessage) {
-                    setErrorMessage(errorMessages[resp.errorMessage] || errorMessages["default"]);
+                    setErrorMessage(translations[errorMessages[resp.errorMessage] || errorMessages["default"]]);
                 } else if (resp.success) {
                     setErrorMessage(null);
                     props.onSuccess(props.emailAddress);
                 } else {
-                    setErrorMessage(errorMessages["default"]);
+                    setErrorMessage(translations[errorMessages["default"]]);
                 }
             },
             (e: Error) => {
@@ -129,19 +139,19 @@ const SignupComponent = (props: SignupComponentProps) => {
             className={classes.confirmationForm}
             handleSubmit={handleSubmit}>
             <Grid container>
-                <Grid item xs={9} md={10}>
+                <Grid item xs={12}>
                     <PrimaryTextField
                         id="email"
                         className={classes.emailField}
-                        label="Email Address"
+                        label={translations[TextBlock.EmailAddressInputLabel]}
                         variant="outlined"
                         defaultValue={props.emailAddress}
                         disabled={props.disabled}
                         onChange={handleEmailAddressChange} />
                 </Grid>
-                <Grid item xs={3} md={2} className={classes.submitButtonContainer}>
+                <Grid item xs={12} className={classes.submitButtonContainer}>
                     <PrimaryButton type="submit" disabled={!props.emailAddress || props.disabled}>
-                        Try it!
+                        { translations[TextBlock.SignupFormButtonText] }
                     </PrimaryButton>
                 </Grid>
             </Grid>
@@ -166,6 +176,7 @@ const SignupComponent = (props: SignupComponentProps) => {
 type VerificationComponentProps = {
     emailAddress: string | null;
     disabled: boolean;
+    displayLanguage?: DisplayLanguage;
 
     setIsLoading: (isLoading: boolean) => void;
 }
@@ -187,17 +198,19 @@ const VerificationComponent = (props: VerificationComponentProps) => {
         });
     }
 
+    const translations = getTextBlocksForLanguage(props.displayLanguage);
+
     const classes = styleClasses();
     return (
         <div>
             <Paragraph>
-                Check your email for a verification email from hello@babblegraph.com. We sent it to {props.emailAddress}.
+                {`${translations[TextBlock.VerificationLocationConfirmation]} ${props.emailAddress}`}.
             </Paragraph>
             <Paragraph>
-                You’ll need to click the button in the verification email that was just sent to you in order to start receiving emails from Babblegraph.
+                { translations[TextBlock.VerificationInstructions] }
             </Paragraph>
             <Paragraph>
-                It can take up to 5 minutes for the email to make its way to your inbox.
+                { translations[TextBlock.VerificationWarningDisclaimer] }
             </Paragraph>
             <Grid container>
                 <Grid item xs={3} md={4}>
@@ -205,7 +218,7 @@ const VerificationComponent = (props: VerificationComponentProps) => {
                 </Grid>
                 <Grid item xs={6} md={4}>
                     <PrimaryButton className={classes.verificationButton} onClick={handleReenqueueSignupAttempt} disabled={props.disabled}>
-                        Resend the verification email
+                        { translations[TextBlock.VerificationResendButtonText] }
                     </PrimaryButton>
                 </Grid>
                 <Grid item xs={3} md={4}>
