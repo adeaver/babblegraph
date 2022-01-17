@@ -21,6 +21,12 @@ export enum ContentNodeType {
     Paragraph = 'paragraph',
     Image = 'image',
     Link = 'link',
+    List = 'list',
+}
+
+export enum ListType {
+    Unordered = 'unordered',
+    Ordered = 'ordered',
 }
 
 export type ContentNode = {
@@ -28,7 +34,7 @@ export type ContentNode = {
     body: ContentNodeBody;
 }
 
-export type ContentNodeBody = Heading | Paragraph | Image | Link;
+export type ContentNodeBody = Heading | Paragraph | Image | Link | List;
 
 export type Heading = {
     text: string;
@@ -48,6 +54,12 @@ export type Link = {
     destinationUrl: string;
     text: string;
 }
+
+export type List = {
+    items: string[];
+    type: ListType,
+}
+
 export function getDefaultContentNodeForType(nodeType: ContentNodeType) {
     if (nodeType === ContentNodeType.Heading) {
         return {
@@ -78,6 +90,14 @@ export function getDefaultContentNodeForType(nodeType: ContentNodeType) {
             body: {
                 destinationUrl: "",
                 text: "",
+            },
+        }
+    } else if (nodeType === ContentNodeType.List) {
+        return {
+            type: ContentNodeType.List,
+            body: {
+                items: [],
+                type: ListType.Unordered,
             },
         }
     } else {

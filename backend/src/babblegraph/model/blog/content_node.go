@@ -24,6 +24,7 @@ const (
 	ContentNodeTypeParagraph ContentNodeType = "paragraph"
 	ContentNodeTypeImage     ContentNodeType = "image"
 	ContentNodeTypeLink      ContentNodeType = "link"
+	ContentNodeTypeList      ContentNodeType = "list"
 )
 
 type Heading struct {
@@ -44,6 +45,18 @@ type Link struct {
 	DestinationURL string `json:"destination_url"`
 	Text           string `json:"text"`
 }
+
+type List struct {
+	Items []string `json:"items"`
+	Type  ListType `json:"type"`
+}
+
+type ListType string
+
+const (
+	ListTypeUnordered ListType = "unordered"
+	ListTypeOrdered   ListType = "ordered"
+)
 
 func getContentDirectory() string {
 	return fmt.Sprintf("blog-content/%s/content", env.MustEnvironmentName())
@@ -124,6 +137,11 @@ func verifyContent(content []ContentNode) error {
 			var l Link
 			if err := json.Unmarshal(bytes, &l); err != nil {
 				errs = append(errs, fmt.Sprintf("Node %d has type link, but the body does not marshal correctly", idx))
+			}
+		case ContentNodeTypeList:
+			var l List
+			if err := json.Unmarshal(bytes, &l); err != nil {
+				errs = append(errs, fmt.Sprintf("Node %d has type list, but the body does not marshal correctly", idx))
 			}
 		default:
 			errs = append(errs, fmt.Sprintf("Node %d has unrecognized type %s", idx, node.Type))

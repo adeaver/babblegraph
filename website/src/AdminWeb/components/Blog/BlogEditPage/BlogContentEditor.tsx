@@ -24,6 +24,8 @@ import {
     Paragraph as ParagraphContent,
     Image as ImageContent,
     Link as LinkContent,
+    List as ListContent,
+    ListType,
     getDefaultContentNodeForType,
 } from 'common/api/blog/content';
 import {
@@ -219,6 +221,13 @@ const EditorComponent = (props: EditorComponentProps) => {
                                 handleDelete={handleDeleteNode(idx)}
                                 handleUpdate={handleUpdateNode(idx)} />
                         )
+                    } else if (node.type === ContentNodeType.List) {
+                        return (
+                            <ListNodeEditor
+                                body={node.body as ListContent}
+                                handleDelete={handleDeleteNode(idx)}
+                                handleUpdate={handleUpdateNode(idx)} />
+                        )
                     }
                 })
             }
@@ -255,7 +264,7 @@ const EditorComponent = (props: EditorComponentProps) => {
 }
 
 type EditorComponentAddNodeSelectorProps = {
-    value: ContentNodeType;
+    value: ContentNodeType | ListType;
 }
 
 const EditorComponentAddNodeSelector  = (props: EditorComponentAddNodeSelectorProps) => {
@@ -446,6 +455,76 @@ const LinkNodeEditor = (props: LinkNodeEditorProps) => {
                 label="Destination URL"
                 onChange={handleURLChange}
                 variant="outlined" />
+            <PrimaryButton
+                className={classes.nodeButton}
+                type="submit"
+                onClick={handleSubmit}>
+                Submit
+            </PrimaryButton>
+            <WarningButton
+                className={classes.nodeButton}
+                type="submit"
+                onClick={props.handleDelete}>
+                Delete
+            </WarningButton>
+        </div>
+    );
+}
+
+type ListNodeEditorProps = {
+    body: ListContent;
+    handleUpdate: (node: ContentNode) => void;
+    handleDelete: () => void;
+}
+
+const ListNodeEditor = (props: ListNodeEditorProps) => {
+    const [ items, setItems ] = useState<string[]>(props.body.items);
+    const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setItems((event.target as HTMLInputElement).value.split("\n"));
+    }
+
+    const [ listType, setListType ] = useState<ListType>(props.body.type);
+    const handleRadioFormChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setListType((event.target as HTMLInputElement).value as ListType);
+    };
+
+    const handleSubmit = () => {
+        props.handleUpdate({
+            type: ContentNodeType.List,
+            body: {
+                items: items,
+                type: listType,
+            }
+        })
+    }
+
+    const classes = styleClasses();
+    return (
+        <div>
+            <Heading6 color={TypographyColor.Primary}>
+                Edit List Node
+            </Heading6>
+            <PrimaryTextField
+                className={classes.editorRow}
+                value={items.join("\n")}
+                minRows={6}
+                label="Items (separated by newline)"
+                onChange={handleChange}
+                variant="outlined"
+                multiline />
+            <FormControl component="fieldset">
+                <RadioGroup aria-label="add-node-type" name="add-node-type1" value={props.body.type} onChange={handleRadioFormChange}>
+                    <Grid container>
+                        {
+                            Object.values(ListType).map((option: ListType, idx: number) => (
+                                <EditorComponentAddNodeSelector
+                                    key={`list-type-selector-${idx}`}
+                                    value={option} />
+                            ))
+                        }
+                    </Grid>
+                </RadioGroup>
+            </FormControl>
             <PrimaryButton
                 className={classes.nodeButton}
                 type="submit"
