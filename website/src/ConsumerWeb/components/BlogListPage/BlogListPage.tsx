@@ -45,7 +45,7 @@ const BlogListPage = (props: BlogListPageProps) => {
     useEffect(() => {
         getAllBlogPosts({},
             (resp: GetAllBlogPostsResponse) => {
-                setBlogPosts(resp.blogPosts);
+                setBlogPosts(resp.blogPosts || []);
                 setIsLoading(false);
             },
             (err: Error) => {
@@ -63,10 +63,16 @@ const BlogListPage = (props: BlogListPageProps) => {
                 An error occurred. Check back later!
             </Heading3>
         );
-    } else {
+    } else if (!!(blogPosts || []).length) {
         body = blogPosts.map((post: BlogPostMetadata, idx: number) => (
             <BlogPostDisplay key={`blog-post-${idx}`} {...post} />
         ));
+    } else {
+        body = (
+            <Heading3>
+                Check back later for our blog posts
+            </Heading3>
+        );
     }
 
     return (

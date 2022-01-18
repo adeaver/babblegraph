@@ -46,6 +46,11 @@ type BlogDisplayProps = {
 
 const BlogDisplay = (props: BlogDisplayProps) => {
     const classes = styleClasses();
+    if (!props.metadata) {
+        return (
+            <div />
+        );
+    }
     return (
         <div>
             {
