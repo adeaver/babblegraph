@@ -2,6 +2,7 @@ import React from 'react';
 
 import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
+import Divider from '@material-ui/core/Divider';
 
 import { Heading1, Heading2, Heading4 } from 'common/typography/Heading';
 import Paragraph, { Size } from 'common/typography/Paragraph';
@@ -64,6 +65,7 @@ const BlogDisplay = (props: BlogDisplayProps) => {
                 align={Alignment.Center}>
                 { props.metadata.description }
             </Paragraph>
+            <Divider />
             {
                 props.content.map((node: ContentNode, idx: number) => {
                     if (node.type === ContentNodeType.Heading) {
@@ -151,7 +153,7 @@ const LinkDisplay = (props: LinkContent) => {
 const ListDisplay = (props: ListContent) => {
     const classes = styleClasses();
     const body = props.items.map((item: string, idx: number) => (
-        <li>
+        <li key={`list-item-${idx}`}>
             <Paragraph align={Alignment.Left}>
                 {item}
             </Paragraph>

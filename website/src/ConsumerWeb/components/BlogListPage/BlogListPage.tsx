@@ -27,8 +27,11 @@ const styleClasses = makeStyles({
         height: 'auto',
     },
     displayCard: {
-        width: '100%',
         margin: '10px 0',
+    },
+    blogPostRow: {
+        display: 'flex',
+        alignItems: 'center',
     },
 });
 
@@ -92,7 +95,7 @@ const BlogPostDisplay = (props: BlogPostMetadata) => {
         <ActionCard
             className={classes.displayCard}
             onClick={() => setLocation(`/blog/${props.urlPath}`)}>
-            <Grid container>
+            <Grid className={classes.blogPostRow} container>
                 <Grid item xs={12} md={4}>
                     <img
                         className={classes.image}
