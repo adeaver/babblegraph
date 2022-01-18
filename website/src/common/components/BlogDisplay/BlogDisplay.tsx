@@ -2,11 +2,13 @@ import React from 'react';
 
 import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
+import Divider from '@material-ui/core/Divider';
 
 import { Heading1, Heading2, Heading4 } from 'common/typography/Heading';
 import Paragraph, { Size } from 'common/typography/Paragraph';
 import { Alignment, TypographyColor } from 'common/typography/common';
 import Link from 'common/components/Link/Link';
+import Color from 'common/styles/colors';
 import { getStaticContentURLForPath } from 'util/static/static';
 
 import {
@@ -18,14 +20,22 @@ import {
     Paragraph as ParagraphContent,
     Image as ImageContent,
     Link as LinkContent,
+    List as ListContent,
+    ListType,
     getDefaultContentNodeForType,
-} from 'common/api/blog/content.ts';
+} from 'common/api/blog/content';
 
 const styleClasses = makeStyles({
     image: {
         borderRadius: '5px',
         width: '100%',
         height: 'auto',
+    },
+    orderedList: {
+        fontFamily: "'Roboto', sans-serif",
+        lineHeight: 1.5,
+        fontSize: '16px',
+        color: Color.TextGray,
     },
 });
 
@@ -36,6 +46,11 @@ type BlogDisplayProps = {
 
 const BlogDisplay = (props: BlogDisplayProps) => {
     const classes = styleClasses();
+    if (!props.metadata) {
+        return (
+            <div />
+        );
+    }
     return (
         <div>
             {
@@ -55,6 +70,7 @@ const BlogDisplay = (props: BlogDisplayProps) => {
                 align={Alignment.Center}>
                 { props.metadata.description }
             </Paragraph>
+            <Divider />
             {
                 props.content.map((node: ContentNode, idx: number) => {
                     if (node.type === ContentNodeType.Heading) {
@@ -72,6 +88,10 @@ const BlogDisplay = (props: BlogDisplayProps) => {
                     } else if (node.type === ContentNodeType.Link) {
                         return (
                             <LinkDisplay key={`${props.metadata.id}-display-${idx}`} {...node.body as LinkContent} />
+                        );
+                    } else if (node.type === ContentNodeType.List) {
+                        return (
+                            <ListDisplay key={`${props.metadata.id}-display-${idx}`} {...node.body as ListContent} />
                         );
                     } else {
                         throw new Error("Unsupported node type");
@@ -133,6 +153,31 @@ const LinkDisplay = (props: LinkContent) => {
             { props.text }
         </Link>
     );
+}
+
+const ListDisplay = (props: ListContent) => {
+    const classes = styleClasses();
+    const body = props.items.map((item: string, idx: number) => (
+        <li key={`list-item-${idx}`}>
+            <Paragraph align={Alignment.Left}>
+                {item}
+            </Paragraph>
+        </li>
+    ))
+    if (props.type === ListType.Unordered) {
+        return (
+            <ul>
+                {body}
+            </ul>
+        );
+    } else if (props.type === ListType.Ordered) {
+        return (
+            <ol className={classes.orderedList}>
+                {body}
+            </ol>
+        );
+    }
+    throw new Error(`unrecognized list type ${props.type}`);
 }
 
 export default BlogDisplay;
