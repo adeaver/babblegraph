@@ -513,7 +513,7 @@ const ListNodeEditor = (props: ListNodeEditorProps) => {
                 variant="outlined"
                 multiline />
             <FormControl component="fieldset">
-                <RadioGroup aria-label="add-node-type" name="add-node-type1" value={props.body.type} onChange={handleRadioFormChange}>
+                <RadioGroup aria-label="add-list-type" name="add-list-type1" value={listType} onChange={handleRadioFormChange}>
                     <Grid container>
                         {
                             Object.values(ListType).map((option: ListType, idx: number) => (

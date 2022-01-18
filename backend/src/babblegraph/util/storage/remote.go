@@ -7,6 +7,7 @@ import (
 	"io"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -68,4 +69,23 @@ func (r *remoteStorage) Delete(directory string, fileName string) error {
 		Key:    aws.String(fmt.Sprintf("%s/%s", directory, fileName)),
 	})
 	return err
+}
+
+func (r *remoteStorage) DoesExist(directory string, fileName string) (bool, error) {
+	_, err := r.s3Client.HeadObject(&s3.HeadObjectInput{
+		Bucket: r.bucketName,
+		Key:    aws.String(fmt.Sprintf("%s/%s", directory, fileName)),
+	})
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case "NotFound": // s3.ErrCodeNoSuchKey does not work, aws is missing this error code so we hardwire a string
+				return false, nil
+			default:
+				return false, err
+			}
+		}
+		return false, err
+	}
+	return true, nil
 }

@@ -88,7 +88,7 @@ func GetContentForBlog(tx *sqlx.Tx, urlPath string, requireIsPostLive bool) ([]C
 	return content, nil
 }
 
-func UpsertContentForBlog(tx *sqlx.Tx, s3Storage *storage.S3Storage, urlPath string, content []ContentNode) error {
+func UpsertContentForBlog(tx *sqlx.Tx, urlPath string, content []ContentNode) error {
 	if err := verifyContent(content); err != nil {
 		return err
 	}
@@ -100,13 +100,11 @@ func UpsertContentForBlog(tx *sqlx.Tx, s3Storage *storage.S3Storage, urlPath str
 	if err != nil {
 		return err
 	}
-	return s3Storage.UploadData(storage.UploadDataInput{
-		// TODO(staging environment): make this dynamic
-		BucketName:  "prod-spaces-1",
-		FileName:    getContentFileNameforID(metadata.ID),
-		Data:        string(bytes),
-		ContentType: storage.ContentTypeApplicationJSON,
-	})
+	file, err := storage.NewFile(getContentFileNameforID(metadata.ID), bytes)
+	if err != nil {
+		return err
+	}
+	return storage.RemoteStorage.Write(getContentDirectory(), *file)
 }
 
 func verifyContent(content []ContentNode) error {
