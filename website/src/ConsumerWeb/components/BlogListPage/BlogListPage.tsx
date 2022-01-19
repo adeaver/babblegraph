@@ -27,8 +27,11 @@ const styleClasses = makeStyles({
         height: 'auto',
     },
     displayCard: {
-        width: '100%',
         margin: '10px 0',
+    },
+    blogPostRow: {
+        display: 'flex',
+        alignItems: 'center',
     },
 });
 
@@ -42,7 +45,7 @@ const BlogListPage = (props: BlogListPageProps) => {
     useEffect(() => {
         getAllBlogPosts({},
             (resp: GetAllBlogPostsResponse) => {
-                setBlogPosts(resp.blogPosts);
+                setBlogPosts(resp.blogPosts || []);
                 setIsLoading(false);
             },
             (err: Error) => {
@@ -60,10 +63,16 @@ const BlogListPage = (props: BlogListPageProps) => {
                 An error occurred. Check back later!
             </Heading3>
         );
-    } else {
+    } else if (!!(blogPosts || []).length) {
         body = blogPosts.map((post: BlogPostMetadata, idx: number) => (
             <BlogPostDisplay key={`blog-post-${idx}`} {...post} />
         ));
+    } else {
+        body = (
+            <Heading3>
+                Check back later for our blog posts
+            </Heading3>
+        );
     }
 
     return (
@@ -92,7 +101,7 @@ const BlogPostDisplay = (props: BlogPostMetadata) => {
         <ActionCard
             className={classes.displayCard}
             onClick={() => setLocation(`/blog/${props.urlPath}`)}>
-            <Grid container>
+            <Grid className={classes.blogPostRow} container>
                 <Grid item xs={12} md={4}>
                     <img
                         className={classes.image}

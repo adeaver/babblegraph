@@ -220,9 +220,8 @@ func updateBlogContent(adminID admin.ID, r *router.Request) (interface{}, error)
 	if err := r.GetJSONBody(&req); err != nil {
 		return nil, err
 	}
-	s3Storage := storage.NewS3StorageForEnvironment()
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
-		return blog.UpsertContentForBlog(tx, s3Storage, req.URLPath, req.Content)
+		return blog.UpsertContentForBlog(tx, req.URLPath, req.Content)
 	}); err != nil {
 		return nil, err
 	}
