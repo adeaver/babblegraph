@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	getAllClientBlogPostsQuery               = "SELECT * FROM blog_post_metadata WHERE status = $1"
+	getAllClientBlogPostsQuery               = "SELECT * FROM blog_post_metadata WHERE status = $1 ORDER BY published_at DESC"
 	getHeroImageForBlogPostQuery             = "SELECT * FROM blog_post_image_metadata WHERE blog_id = $1 AND is_hero_image = TRUE"
 	getClientBlogPostMetadataForURLPathQuery = "SELECT * FROM blog_post_metadata WHERE url_path = $1 AND status = $2"
 	registerBlogViewQuery                    = "INSERT INTO blog_post_view (blog_id, tracking_id) VALUES ($1, $2)"

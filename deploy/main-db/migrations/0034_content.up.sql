@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS content_topic_display_name(
     PRIMARY KEY (_id)
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS content_topic_display_name_unique ON content_topic_display_name(label);
+CREATE UNIQUE INDEX IF NOT EXISTS content_topic_display_name_for_language ON content_topic_display_name(topic_id, language_code);
 
 CREATE TABLE IF NOT EXISTS content_source(
     _id uuid DEFAULT uuid_generate_v4 (),

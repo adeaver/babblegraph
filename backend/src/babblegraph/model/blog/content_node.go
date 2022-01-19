@@ -24,6 +24,7 @@ const (
 	ContentNodeTypeParagraph ContentNodeType = "paragraph"
 	ContentNodeTypeImage     ContentNodeType = "image"
 	ContentNodeTypeLink      ContentNodeType = "link"
+	ContentNodeTypeList      ContentNodeType = "list"
 )
 
 type Heading struct {
@@ -44,6 +45,18 @@ type Link struct {
 	DestinationURL string `json:"destination_url"`
 	Text           string `json:"text"`
 }
+
+type List struct {
+	Items []string `json:"items"`
+	Type  ListType `json:"type"`
+}
+
+type ListType string
+
+const (
+	ListTypeUnordered ListType = "unordered"
+	ListTypeOrdered   ListType = "ordered"
+)
 
 func getContentDirectory() string {
 	return fmt.Sprintf("blog-content/%s/content", env.MustEnvironmentName())
@@ -75,7 +88,7 @@ func GetContentForBlog(tx *sqlx.Tx, urlPath string, requireIsPostLive bool) ([]C
 	return content, nil
 }
 
-func UpsertContentForBlog(tx *sqlx.Tx, s3Storage *storage.S3Storage, urlPath string, content []ContentNode) error {
+func UpsertContentForBlog(tx *sqlx.Tx, urlPath string, content []ContentNode) error {
 	if err := verifyContent(content); err != nil {
 		return err
 	}
@@ -87,13 +100,11 @@ func UpsertContentForBlog(tx *sqlx.Tx, s3Storage *storage.S3Storage, urlPath str
 	if err != nil {
 		return err
 	}
-	return s3Storage.UploadData(storage.UploadDataInput{
-		// TODO(staging environment): make this dynamic
-		BucketName:  "prod-spaces-1",
-		FileName:    getContentFileNameforID(metadata.ID),
-		Data:        string(bytes),
-		ContentType: storage.ContentTypeApplicationJSON,
-	})
+	file, err := storage.NewFile(getContentFileNameforID(metadata.ID), bytes)
+	if err != nil {
+		return err
+	}
+	return storage.RemoteStorage.Write(getContentDirectory(), *file)
 }
 
 func verifyContent(content []ContentNode) error {
@@ -124,6 +135,11 @@ func verifyContent(content []ContentNode) error {
 			var l Link
 			if err := json.Unmarshal(bytes, &l); err != nil {
 				errs = append(errs, fmt.Sprintf("Node %d has type link, but the body does not marshal correctly", idx))
+			}
+		case ContentNodeTypeList:
+			var l List
+			if err := json.Unmarshal(bytes, &l); err != nil {
+				errs = append(errs, fmt.Sprintf("Node %d has type list, but the body does not marshal correctly", idx))
 			}
 		default:
 			errs = append(errs, fmt.Sprintf("Node %d has unrecognized type %s", idx, node.Type))

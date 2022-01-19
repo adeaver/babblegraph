@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { RouteComponentProps } from 'react-router-dom';
 
+import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 
 import Paragraph from 'common/typography/Paragraph';
@@ -12,6 +13,9 @@ import DisplayCardHeader from 'common/components/DisplayCard/DisplayCardHeader';
 import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
 import BlogDisplay from 'common/components/BlogDisplay/BlogDisplay';
 import Link from 'common/components/Link/Link';
+import SignupForm from 'ConsumerWeb/components/common/SignupForm/SignupForm';
+import { loadCaptchaScript } from 'common/util/grecaptcha/grecaptcha';
+import { DisplayLanguage } from 'common/model/language/language';
 
 import {
     getBlogMetadata,
@@ -23,6 +27,12 @@ import {
     ContentNode,
     BlogPostMetadata,
 } from 'common/api/blog/content';
+
+const styleClasses = makeStyles({
+    signupFormContainer: {
+        padding: '0 5px',
+    },
+});
 
 type Params = {
     blogPath: string;
@@ -41,7 +51,17 @@ const BlogPostPage = (props: BlogPostPageProps) => {
     const [ blogContent, setBlogContent ] = useState<ContentNode[]>([]);
     const [ isLoadingBlogContent, setIsLoadingBlogContent ] = useState<boolean>(true);
 
+    const [ hasLoadedCaptcha, setHasLoadedCaptcha ] = useState<boolean>(false);
+    const [ isLoadingSignup, setIsLoadingSignup ] = useState<boolean>(false);
+    const [ successfullySignedUp, setSuccessfullySignedUp ] = useState<boolean>(false);
+
+    const handleSignupSuccess = (emailAddress: string) => {
+        setSuccessfullySignedUp(true);
+    }
+
     useEffect(() => {
+        loadCaptchaScript();
+        setHasLoadedCaptcha(true);
         getBlogMetadata({
             urlPath: blogPath,
         },
@@ -67,6 +87,8 @@ const BlogPostPage = (props: BlogPostPageProps) => {
     }, []);
 
     const isLoading = isLoadingBlogContent || isLoadingBlogMetadata;
+    const classes = styleClasses();
+    /* TODO: internationalization/multiple-languages: add translations */
     return (
         <Page>
             <Grid container>
@@ -76,7 +98,7 @@ const BlogPostPage = (props: BlogPostPageProps) => {
                 <Grid item xs={12} md={8}>
                     <DisplayCard>
                         <DisplayCardHeader
-                            title="Return to all blog posts"
+                            title="Todos los articúlos"
                             backArrowDestination="/blog" />
                         {
                             isLoading ? (
@@ -84,26 +106,29 @@ const BlogPostPage = (props: BlogPostPageProps) => {
                             ) : (
                                 !!error ? (
                                     <Heading3 color={TypographyColor.Warning}>
-                                        Something went wrong! Check back later.
+                                        Había un problema, vuelva luego!
                                     </Heading3>
                                 ) : (
-                                    <div>
-                                        <BlogDisplay
-                                            content={blogContent}
-                                            metadata={blogMetadata} />
-                                        <Heading3 color={TypographyColor.Primary}>
-                                            About Babblegraph
-                                        </Heading3>
-                                        <Paragraph>
-                                            Babblegraph helps intermediate and advanced Spanish students effortlessly get a daily dose of Spanish practice. With Babblegraph you’ll receive a daily newsletter with news articles from trusted, Spanish-language news sources from Spain and Latin America. Sign up for free today!
-                                        </Paragraph>
-                                        <Link href="/">
-                                            Click here to learn more
-                                        </Link>
-                                    </div>
+                                    <BlogDisplay
+                                        content={blogContent}
+                                        metadata={blogMetadata} />
                                 )
                             )
                         }
+                        <div className={classes.signupFormContainer}>
+                            <SignupForm
+                                disabled={isLoadingSignup || !hasLoadedCaptcha}
+                                setIsLoading={setIsLoadingSignup}
+                                onSuccess={handleSignupSuccess}
+                                displayLanguage={DisplayLanguage.Spanish}
+                                shouldShowVerificationForm={successfullySignedUp} />
+                            {
+                                isLoadingSignup && <LoadingSpinner />
+                            }
+                            <Link href="/">
+                                Haga clic aquí para aprender más
+                            </Link>
+                        </div>
                     </DisplayCard>
                 </Grid>
             </Grid>
