@@ -236,7 +236,7 @@ func updateTopicDisplayNameLabel(adminID admin.ID, r *router.Request) (interface
 		return nil, err
 	}
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
-		return content.UpdateTopicDisplayNameLabel(tx, req.TopicDisplayNameID, req.Label)
+		return content.UpdateTopicDisplayNameLabel(tx, req.TopicDisplayNameID, strings.ToLower(req.Label))
 	}); err != nil {
 		return nil, err
 	}

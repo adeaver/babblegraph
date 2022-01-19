@@ -38,7 +38,7 @@ type Topic struct {
 type TopicDisplayNameID string
 
 type dbTopicDisplayName struct {
-	ID             TopicDisplayNameID     `db:"id"`
+	ID             TopicDisplayNameID     `db:"_id"`
 	CreatedAt      time.Time              `db:"created_at"`
 	LastModifiedAt time.Time              `db:"last_modified_at"`
 	TopicID        TopicID                `db:"topic_id"`
