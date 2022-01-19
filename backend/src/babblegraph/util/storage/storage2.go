@@ -13,6 +13,7 @@ type Storage interface {
 	Read(directory string, fileName string) ([]byte, error)
 	Write(directory string, file File) error
 	Delete(directory string, fileName string) error
+	DoesExist(directory string, fileName string) (bool, error)
 }
 
 type File struct {

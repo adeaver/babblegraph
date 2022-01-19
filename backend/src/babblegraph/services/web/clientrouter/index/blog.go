@@ -64,11 +64,13 @@ func HandleServeBlogPost(staticFileDirName string) func(w http.ResponseWriter, r
 		var tmpl *template.Template
 		tmpl, err = template.New("blog_index.html").ParseFiles(fmt.Sprintf("%s/blog_index.html", staticFileDirName))
 		if err != nil {
+			c.Errorf("Error loading blog index page: %s", err.Error())
 			http.Error(w, http.StatusText(500), 500)
 			return
 		}
 		err = tmpl.Execute(w, *blogPostMetadata)
 		if err != nil {
+			c.Errorf("Error executing blog index template: %s", err.Error())
 			http.Error(w, http.StatusText(500), 500)
 			return
 		}
