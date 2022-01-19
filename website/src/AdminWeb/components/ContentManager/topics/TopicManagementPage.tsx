@@ -15,6 +15,8 @@ import {
     GetTopicByIDResponse,
     updateIsContentTopicActive,
     UpdateIsContentTopicActiveResponse,
+    getAllTopicDisplayNamesForTopic,
+    GetAllTopicDisplayNamesForTopicResponse,
 } from 'AdminWeb/api/content/topic';
 
 const styleClasses = makeStyles({
@@ -91,6 +93,30 @@ const TopicManagementPage = asBaseComponent<GetTopicByIDResponse, TopicManagemen
         onError)
     },
     true
+);
+
+type TopicDisplayNameListOwnProps = {
+    topicId: string;
+}
+
+const TopicDisplayNameList = asBaseComponent<GetAllTopicDisplayNamesForTopicResponse, TopicDisplayNameListOwnProps>(
+    (props: GetAllTopicDisplayNamesForTopicResponse & TopicDisplayNameListOwnProps & BaseComponentProps) => {
+        return (
+            <div />
+        );
+    },
+    (
+        ownProps: TopicDisplayNameListOwnProps,
+        onSuccess: (resp: GetAllTopicDisplayNamesForTopicResponse) => void,
+        onError: (err: Error) => void,
+    ) => {
+        getAllTopicDisplayNamesForTopic({
+            topicId: ownProps.topicId,
+        },
+        onSuccess,
+        onError)
+    },
+    false
 );
 
 export default TopicManagementPage;

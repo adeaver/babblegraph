@@ -88,3 +88,99 @@ export function updateIsContentTopicActive(
         onError,
     );
 }
+
+export type TopicDisplayName = {
+	id: string;
+	topicId: string;
+	languageCode: string;
+	label: string;
+	isActive: boolean;
+}
+
+export type GetAllTopicDisplayNamesForTopicRequest = {
+    topicId: string;
+}
+
+export type GetAllTopicDisplayNamesForTopicResponse = {
+    topicDisplayNames: Array<TopicDisplayName>;
+}
+
+export function getAllTopicDisplayNamesForTopic(
+    req: GetAllTopicDisplayNamesForTopicRequest,
+    onSuccess: (resp: GetAllTopicDisplayNamesForTopicResponse) => void,
+    onError: (e: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<GetAllTopicDisplayNamesForTopicRequest, GetAllTopicDisplayNamesForTopicResponse>(
+        '/ops/api/content/get_all_topic_display_names_for_topic_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}
+
+export type AddTopicDisplayNameForTopicRequest = {
+    topicId: string;
+    label: string;
+    languageCode: string;
+}
+
+export type AddTopicDisplayNameForTopicResponse = {
+    topicDisplayNameId: string;
+}
+
+export function addTopicDisplayNameForTopic(
+    req: AddTopicDisplayNameForTopicRequest,
+    onSuccess: (resp: AddTopicDisplayNameForTopicResponse) => void,
+    onError: (e: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<AddTopicDisplayNameForTopicRequest, AddTopicDisplayNameForTopicResponse>(
+        '/ops/api/content/add_topic_display_name_for_topic_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}
+
+export type UpdateTopicDisplayNameLabelRequest = {
+    topicDisplayNameId: string;
+    label: string;
+}
+
+export type UpdateTopicDisplayNameLabelResponse = {
+    success: boolean;
+}
+
+export function updateTopicDisplayNameLabel(
+    req: UpdateTopicDisplayNameLabelRequest,
+    onSuccess: (resp: UpdateTopicDisplayNameLabelResponse) => void,
+    onError: (e: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<UpdateTopicDisplayNameLabelRequest, UpdateTopicDisplayNameLabelResponse>(
+        '/ops/api/content/update_topic_display_name_label_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}
+
+export type ToggleTopicDisplayNameIsActiveRequest = {
+    topicDisplayNameId: string;
+    isActive: boolean;
+}
+
+export type ToggleTopicDisplayNameIsActiveResponse = {
+    success: boolean;
+}
+
+export function toggleTopicDisplayNameIsActive(
+    req: ToggleTopicDisplayNameIsActiveRequest,
+    onSuccess: (resp: ToggleTopicDisplayNameIsActiveResponse) => void,
+    onError: (e: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<ToggleTopicDisplayNameIsActiveRequest, ToggleTopicDisplayNameIsActiveResponse>(
+        '/ops/api/content/toggle_topic_display_name_is_active_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}
