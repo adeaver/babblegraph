@@ -11,6 +11,9 @@ import { PrimaryButton } from 'common/components/Button/Button';
 import { PrimaryTextField } from 'common/components/TextField/TextField';
 import { Heading1, Heading3 } from 'common/typography/Heading';
 import { TypographyColor } from 'common/typography/common';
+import { PrimarySwitch } from 'common/components/Switch/Switch';
+import Link, { LinkTarget } from 'common/components/Link/Link';
+import Paragraph from 'common/typography/Paragraph';
 
 import { WordsmithLanguageCode, getEnglishNameForLanguageCode } from 'common/model/language/language';
 import { CountryCode, getEnglishNameForCountryCode } from 'common/model/geo/geo';
@@ -45,12 +48,24 @@ const SourcesListPage = asBaseComponent(
             setNewSources(newSources.concat(newSource));
         }
 
+        const sources = (props.sources || []).concat(newSources);
         return (
             <div>
                 <AddSourceForm
                     setIsLoading={props.setIsLoading}
                     setError={props.setError}
                     handleNewSource={handleNewSource} />
+                <Grid container>
+                {
+                    sources.map((s: Source, idx: number) => ((
+                        <SourceDisplay
+                            key={`sources-list-${idx}`}
+                            source={s}
+                            setIsLoading={props.setIsLoading}
+                            setError={props.setError} />
+                    )))
+                }
+                </Grid>
             </div>
         );
     },
@@ -213,6 +228,44 @@ const AddSourceForm = (props: AddSourceFormProps) => {
             </Grid>
         </Grid>
     );
+}
+
+type SourceDisplayProps = {
+    source: Source,
+
+    setIsLoading: (isLoading: boolean) => void;
+    setError: (err: Error) => void;
+}
+
+const SourceDisplay = (props: SourceDisplayProps) => {
+    const [ isActive, setIsActive ] = useState<boolean>(props.source.isActive);
+
+    const handleToggleSource = () => {
+
+    }
+
+    return (
+        <Grid xs={12} md={4} item>
+            <DisplayCard>
+                <Grid container>
+                    <Grid item xs={8}>
+                        <Heading3 color={isActive ? TypographyColor.Primary : TypographyColor.Gray}>
+                            {props.source.url}
+                        </Heading3>
+                    </Grid>
+                    <Grid item xs={4}>
+                        <PrimarySwitch checked={isActive} onClick={handleToggleSource} />
+                    </Grid>
+                </Grid>
+                <Paragraph>
+                    {getEnglishNameForLanguageCode(props.source.languageCode)}
+                </Paragraph>
+                <Link href={`/ops/content-manager/sources/${props.source.id}`} target={LinkTarget.Self}>
+                    Manage this source
+                </Link>
+            </DisplayCard>
+        </Grid>
+    )
 }
 
 export default SourcesListPage;
