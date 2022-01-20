@@ -1,6 +1,7 @@
 package content
 
 import (
+	"babblegraph/util/geo"
 	"babblegraph/wordsmith"
 	"fmt"
 
@@ -18,6 +19,33 @@ const (
 	insertTopicDisplayNameForTopicQuery  = "INSERT INTO content_topic_display_name (topic_id, language_code, label, is_active) VALUES ($1, $2, $3, $4) RETURNING _id"
 	updateTopicDisplayNameLabelQuery     = "UPDATE content_topic_display_name SET label = $1 WHERE _id = $2"
 	updateTopicDisplayNameIsActiveQuery  = "UPDATE content_topic_display_name SET is_active = $1 WHERE _id = $2"
+
+	getAllSourcesQuery = "SELECT * FROM content_source"
+	getSourceQuery     = "SELECT * FROM content_source WHERE _id = $1"
+	insertSourceQuery  = `INSERT INTO
+        content_source (
+            language_code,
+            url,
+            type,
+            country,
+            ingest_strategy,
+            is_active,
+            monthly_access_limit
+        ) VALUES (
+            $1, $2, $3, $4, $5, $6, $7
+        ) RETURNING _id`
+	updateSourceQuery = `UPDATE
+        content_source
+    SET
+        url=$1,
+        type=$2,
+        country=$3,
+        ingest_strategy=$4,
+        is_active=$5,
+        monthly_access_limit=$6
+    WHERE
+        _id = $7
+    `
 )
 
 func GetAllTopics(tx *sqlx.Tx) ([]Topic, error) {
@@ -112,6 +140,73 @@ func UpdateTopicDisplayNameLabel(tx *sqlx.Tx, topicDisplayNameID TopicDisplayNam
 
 func ToggleTopicDisplayNameIsActive(tx *sqlx.Tx, topicDisplayNameID TopicDisplayNameID, isActive bool) error {
 	if _, err := tx.Exec(updateTopicDisplayNameIsActiveQuery, isActive, topicDisplayNameID); err != nil {
+		return err
+	}
+	return nil
+}
+
+func GetAllSources(tx *sqlx.Tx) ([]Source, error) {
+	var matches []dbSource
+	if err := tx.Select(&matches, getAllSourcesQuery); err != nil {
+		return nil, err
+	}
+	var out []Source
+	for _, m := range matches {
+		out = append(out, m.ToNonDB())
+	}
+	return out, nil
+}
+
+func GetSource(tx *sqlx.Tx, id SourceID) (*Source, error) {
+	var matches []dbSource
+	err := tx.Select(&matches, getSourceQuery, id)
+	switch {
+	case err != nil:
+		return nil, err
+	case len(matches) == 0,
+		len(matches) > 1:
+		return nil, fmt.Errorf("Expected 1 match, but got %d for source ID %s", len(matches), id)
+	default:
+		m := matches[0].ToNonDB()
+		return &m, nil
+	}
+}
+
+type InsertSourceInput struct {
+	LanguageCode       wordsmith.LanguageCode
+	URL                string
+	Type               SourceType
+	IngestStrategy     IngestStrategy
+	Country            geo.CountryCode
+	MonthlyAccessLimit *int64
+}
+
+func InsertSource(tx *sqlx.Tx, input InsertSourceInput) (*SourceID, error) {
+	rows, err := tx.Query(insertSourceQuery, input.LanguageCode, input.URL, input.Type, input.Country, input.IngestStrategy, false, input.MonthlyAccessLimit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var sourceID SourceID
+	for rows.Next() {
+		if err := rows.Scan(&sourceID); err != nil {
+			return nil, err
+		}
+	}
+	return &sourceID, nil
+}
+
+type UpdateSourceInput struct {
+	URL                string
+	Type               SourceType
+	IngestStrategy     IngestStrategy
+	IsActive           bool
+	MonthlyAccessLimit *int64
+	Country            geo.CountryCode
+}
+
+func UpdateSource(tx *sqlx.Tx, id SourceID, input UpdateSourceInput) error {
+	if _, err := tx.Exec(updateSourceQuery, input.URL, input.Type, input.Country, input.IngestStrategy, input.IsActive, input.MonthlyAccessLimit, id); err != nil {
 		return err
 	}
 	return nil
