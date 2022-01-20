@@ -78,7 +78,7 @@ type dbSource struct {
 	IngestStrategy     IngestStrategy         `db:"ingest_strategy"`
 	LanguageCode       wordsmith.LanguageCode `db:"language_code"`
 	IsActive           bool                   `db:"is_active"`
-	MonthlyAccessLimit *int64                 `json:"monthly_access_limit"`
+	MonthlyAccessLimit *int64                 `db:"monthly_access_limit"`
 }
 
 func (d dbSource) ToNonDB() Source {
