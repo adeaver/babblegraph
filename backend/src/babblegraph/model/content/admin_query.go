@@ -2,6 +2,7 @@ package content
 
 import (
 	"babblegraph/util/geo"
+	"babblegraph/util/urlparser"
 	"babblegraph/wordsmith"
 	"fmt"
 
@@ -51,6 +52,10 @@ const (
     WHERE
         _id = $10
     `
+
+	getAllSourceSeedsForSourceQuery = "SELECT * FROM content_source_seed WHERE root_id = $1"
+	addSourceSeedQuery              = "INSERT INTO content_source_seed (root_id, url, is_active) VALUES ($1, $2, $3) RETURNING _id"
+	updateSourceSeedQuery           = "UPDATE content_source_seed SET url=$1, is_active=$2 WHERE _id = $3"
 )
 
 func GetAllTopics(tx *sqlx.Tx) ([]Topic, error) {
@@ -218,6 +223,40 @@ type UpdateSourceInput struct {
 
 func UpdateSource(tx *sqlx.Tx, id SourceID, input UpdateSourceInput) error {
 	if _, err := tx.Exec(updateSourceQuery, input.LanguageCode, input.Title, input.URL, input.Type, input.Country, input.IngestStrategy, input.ShouldUseURLAsSeedURL, input.IsActive, input.MonthlyAccessLimit, id); err != nil {
+		return err
+	}
+	return nil
+}
+
+func GetAllSourceSeedsForSource(tx *sqlx.Tx, sourceID SourceID) ([]SourceSeed, error) {
+	var matches []dbSourceSeed
+	if err := tx.Select(&matches, getAllSourceSeedsForSourceQuery, sourceID); err != nil {
+		return nil, err
+	}
+	var out []SourceSeed
+	for _, m := range matches {
+		out = append(out, m.ToNonDB())
+	}
+	return out, nil
+}
+
+func AddSourceSeed(tx *sqlx.Tx, sourceID SourceID, u urlparser.ParsedURL, isActive bool) (*SourceSeedID, error) {
+	rows, err := tx.Query(addSourceSeedQuery, sourceID, u.URL, isActive)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var sourceSeedID SourceSeedID
+	for rows.Next() {
+		if err := rows.Scan(&sourceSeedID); err != nil {
+			return nil, err
+		}
+	}
+	return &sourceSeedID, nil
+}
+
+func UpdateSourceSeed(tx *sqlx.Tx, sourceSeedID SourceSeedID, u urlparser.ParsedURL, isActive bool) error {
+	if _, err := tx.Exec(updateSourceSeedQuery, u.URL, isActive, sourceSeedID); err != nil {
 		return err
 	}
 	return nil

@@ -45,8 +45,9 @@ export function asBaseComponent<P, V>(WrappedComponent: React.ComponentType<V & 
                     An error occurred.
                 </Heading3>
             );
+        } else {
+            component = <WrappedComponent setIsLoading={setIsLoading} setError={setError} {...props} {...wrappedComponentProps} />;
         }
-        component = <WrappedComponent setIsLoading={setIsLoading} setError={setError} {...props} {...wrappedComponentProps} />;
         if (isPage) {
             component = (
                 <Page>

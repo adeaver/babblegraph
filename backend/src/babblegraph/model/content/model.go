@@ -187,12 +187,12 @@ type SourceTopicMapping struct {
 type SourceSeedID string
 
 type dbSourceSeed struct {
-	ID             SourceSeedID `json:"id"`
+	ID             SourceSeedID `db:"_id"`
 	CreatedAt      time.Time    `db:"created_at"`
 	LastModifiedAt time.Time    `db:"last_modified_at"`
-	RootID         SourceID     `json:"root_id"`
-	URL            string       `json:"url"`
-	IsActive       bool         `json:"is_active"`
+	RootID         SourceID     `db:"root_id"`
+	URL            string       `db:"url"`
+	IsActive       bool         `db:"is_active"`
 }
 
 func (d dbSourceSeed) ToNonDB() SourceSeed {

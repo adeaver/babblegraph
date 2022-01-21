@@ -190,3 +190,89 @@ func updateSource(adminID admin.ID, r *router.Request) (interface{}, error) {
 		Success: true,
 	}, nil
 }
+
+type getAllSourceSeedsForSourceRequest struct {
+	SourceID content.SourceID `json:"source_id"`
+}
+
+type getAllSourceSeedsForSourceResponse struct {
+	SourceSeeds []content.SourceSeed `json:"source_seeds"`
+}
+
+func getAllSourceSeedsForSource(adminID admin.ID, r *router.Request) (interface{}, error) {
+	var req getAllSourceSeedsForSourceRequest
+	if err := r.GetJSONBody(&req); err != nil {
+		return nil, err
+	}
+	var sourceSeeds []content.SourceSeed
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		var err error
+		sourceSeeds, err = content.GetAllSourceSeedsForSource(tx, req.SourceID)
+		return err
+	}); err != nil {
+		return nil, err
+	}
+	return getAllSourceSeedsForSourceResponse{
+		SourceSeeds: sourceSeeds,
+	}, nil
+}
+
+type addSourceSeedRequest struct {
+	SourceID content.SourceID `json:"source_id"`
+	URL      string           `json:"url"`
+}
+
+type addSourceSeedResponse struct {
+	ID content.SourceSeedID `json:"id"`
+}
+
+func addSourceSeed(adminID admin.ID, r *router.Request) (interface{}, error) {
+	var req addSourceSeedRequest
+	if err := r.GetJSONBody(&req); err != nil {
+		return nil, err
+	}
+	u := urlparser.ParseURL(req.URL)
+	if u == nil {
+		return nil, fmt.Errorf("Invalid URL")
+	}
+	var sourceSeedID *content.SourceSeedID
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		var err error
+		sourceSeedID, err = content.AddSourceSeed(tx, req.SourceID, *u, false)
+		return err
+	}); err != nil {
+		return nil, err
+	}
+	return addSourceSeedResponse{
+		ID: *sourceSeedID,
+	}, nil
+}
+
+type updateSourceSeedRequest struct {
+	SourceSeedID content.SourceSeedID `json:"source_seed_id"`
+	URL          string               `json:"url"`
+	IsActive     bool                 `json:"is_active"`
+}
+
+type updateSourceSeedResponse struct {
+	Success bool `json:"success"`
+}
+
+func updateSourceSeed(adminID admin.ID, r *router.Request) (interface{}, error) {
+	var req updateSourceSeedRequest
+	if err := r.GetJSONBody(&req); err != nil {
+		return nil, err
+	}
+	u := urlparser.ParseURL(req.URL)
+	if u == nil {
+		return nil, fmt.Errorf("Invalid URL")
+	}
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		return content.UpdateSourceSeed(tx, req.SourceSeedID, *u, req.IsActive)
+	}); err != nil {
+		return nil, err
+	}
+	return updateSourceSeedResponse{
+		Success: true,
+	}, nil
+}
