@@ -157,6 +157,33 @@ func GetIngestStrategyFromString(i string) (*IngestStrategy, error) {
 	}
 }
 
+type SourceTopicMappingID string
+
+type dbSourceTopicMapping struct {
+	ID             SourceTopicMappingID `db:"_id"`
+	CreatedAt      time.Time            `db:"created_at"`
+	LastModifiedAt time.Time            `db:"last_modified_at"`
+	RootID         SourceID             `db:"root_id"`
+	TopicID        TopicID              `db:"topic_id"`
+	IsActive       bool                 `db:"is_active"`
+}
+
+func (d dbSourceTopicMapping) ToNonDB() SourceTopicMapping {
+	return SourceTopicMapping{
+		ID:       d.ID,
+		RootID:   d.RootID,
+		TopicID:  d.TopicID,
+		IsActive: d.IsActive,
+	}
+}
+
+type SourceTopicMapping struct {
+	ID       SourceTopicMappingID `json:"id"`
+	RootID   SourceID             `json:"root_id"`
+	TopicID  TopicID              `json:"topic_id"`
+	IsActive bool                 `json:"is_active"`
+}
+
 type SourceSeedID string
 
 type dbSourceSeed struct {
