@@ -62,7 +62,7 @@ const SourceManagementPage = asBaseComponent<GetSourceByIDResponse, SourceManage
         return (
             <div>
                 <Heading1 color={TypographyColor.Primary}>
-                    {props.source.url}
+                    {props.source.title}
                 </Heading1>
                 <UpdateSourceForm
                     setIsLoading={props.setIsLoading}
