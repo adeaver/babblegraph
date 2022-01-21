@@ -88,6 +88,7 @@ export function addSource(
 }
 
 export type UpdateSourceRequest = {
+    id: string;
 	url: string;
 	type: SourceType;
 	ingestStrategy: IngestStrategy;
