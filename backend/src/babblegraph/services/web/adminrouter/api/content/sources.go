@@ -5,6 +5,7 @@ import (
 	"babblegraph/model/content"
 	"babblegraph/services/web/router"
 	"babblegraph/util/database"
+	"babblegraph/util/deref"
 	"babblegraph/util/geo"
 	"babblegraph/util/urlparser"
 	"babblegraph/wordsmith"
@@ -60,16 +61,19 @@ func getSourceByID(adminID admin.ID, r *router.Request) (interface{}, error) {
 }
 
 type addSourceRequest struct {
-	URL                string `json:"url"`
-	Type               string `json:"type"`
-	IngestStrategy     string `json:"ingest_strategy"`
-	LanguageCode       string `json:"language_code"`
-	MonthlyAccessLimit *int64 `json:"monthly_access_limit"`
-	Country            string `json:"country"`
+	Title                 *string `json:"title,omitempty"`
+	URL                   string  `json:"url"`
+	Type                  string  `json:"type"`
+	IngestStrategy        string  `json:"ingest_strategy"`
+	LanguageCode          string  `json:"language_code"`
+	ShouldUseURLAsSeedURL bool    `json:"should_use_url_as_seed_url"`
+	MonthlyAccessLimit    *int64  `json:"monthly_access_limit"`
+	Country               string  `json:"country"`
 }
 
 type addSourceResponse struct {
-	ID content.SourceID `json:"id"`
+	Title string           `json:"title"`
+	ID    content.SourceID `json:"id"`
 }
 
 func addSource(adminID admin.ID, r *router.Request) (interface{}, error) {
@@ -97,34 +101,45 @@ func addSource(adminID admin.ID, r *router.Request) (interface{}, error) {
 	if u == nil {
 		return nil, fmt.Errorf("Invalid URL")
 	}
+	title := deref.String(req.Title, u.Domain)
+	url, err := urlparser.EnsureProtocol(u.URL)
+	if err != nil {
+		return nil, err
+	}
 	var sourceID *content.SourceID
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		var err error
 		sourceID, err = content.InsertSource(tx, content.InsertSourceInput{
-			LanguageCode:       *languageCode,
-			Type:               *sourceType,
-			IngestStrategy:     *ingestStrategy,
-			Country:            *countryCode,
-			MonthlyAccessLimit: req.MonthlyAccessLimit,
-			URL:                u.URL,
+			Title:                 title,
+			LanguageCode:          *languageCode,
+			Type:                  *sourceType,
+			IngestStrategy:        *ingestStrategy,
+			Country:               *countryCode,
+			MonthlyAccessLimit:    req.MonthlyAccessLimit,
+			URL:                   *url,
+			ShouldUseURLAsSeedURL: req.ShouldUseURLAsSeedURL,
 		})
 		return err
 	}); err != nil {
 		return nil, err
 	}
 	return addSourceResponse{
-		ID: *sourceID,
+		Title: title,
+		ID:    *sourceID,
 	}, nil
 }
 
 type updateSourceRequest struct {
-	ID                 content.SourceID `json:"id"`
-	URL                string           `json:"url"`
-	Type               string           `json:"type"`
-	IngestStrategy     string           `json:"ingest_strategy"`
-	IsActive           bool             `json:"is_active"`
-	MonthlyAccessLimit *int64           `json:"monthly_access_limit"`
-	Country            string           `json:"country"`
+	ID                    content.SourceID `json:"id"`
+	Title                 string           `json:"title"`
+	LanguageCode          string           `json:"language_code"`
+	URL                   string           `json:"url"`
+	Type                  string           `json:"type"`
+	IngestStrategy        string           `json:"ingest_strategy"`
+	IsActive              bool             `json:"is_active"`
+	ShouldUseURLAsSeedURL bool             `json:"should_use_url_as_seed_url"`
+	MonthlyAccessLimit    *int64           `json:"monthly_access_limit"`
+	Country               string           `json:"country"`
 }
 
 type updateSourceResponse struct {
@@ -148,18 +163,25 @@ func updateSource(adminID admin.ID, r *router.Request) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
+	languageCode, err := wordsmith.GetLanguageCodeFromString(req.LanguageCode)
+	if err != nil {
+		return nil, err
+	}
 	u := urlparser.ParseURL(req.URL)
 	if u == nil {
 		return nil, fmt.Errorf("Invalid URL")
 	}
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		return content.UpdateSource(tx, req.ID, content.UpdateSourceInput{
-			Type:               *sourceType,
-			IngestStrategy:     *ingestStrategy,
-			Country:            *countryCode,
-			MonthlyAccessLimit: req.MonthlyAccessLimit,
-			URL:                u.URL,
-			IsActive:           req.IsActive,
+			Title:                 req.Title,
+			LanguageCode:          *languageCode,
+			Type:                  *sourceType,
+			IngestStrategy:        *ingestStrategy,
+			Country:               *countryCode,
+			MonthlyAccessLimit:    req.MonthlyAccessLimit,
+			URL:                   u.URL,
+			IsActive:              req.IsActive,
+			ShouldUseURLAsSeedURL: req.ShouldUseURLAsSeedURL,
 		})
 	}); err != nil {
 		return nil, err

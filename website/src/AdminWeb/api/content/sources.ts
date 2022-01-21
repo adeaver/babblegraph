@@ -12,6 +12,7 @@ export enum IngestStrategy {
 
 export type Source = {
 	id: string;
+    title: string;
 	url: string;
 	type: SourceType;
 	country: CountryCode;
@@ -19,6 +20,7 @@ export type Source = {
 	languageCode: WordsmithLanguageCode;
 	isActive: boolean;
 	monthlyAccessLimit: number | undefined;
+    shouldUseUrlAsSeedUrl: boolean;
 }
 
 export type GetAllSourcesRequest = {}
@@ -62,16 +64,19 @@ export function getSourceByID(
 }
 
 export type AddSourceRequest = {
+    title: string | undefined;
 	url: string;
 	type: SourceType;
 	ingestStrategy: IngestStrategy;
 	languageCode: WordsmithLanguageCode;
     monthlyAccessLimit: number | undefined;
 	country: CountryCode;
+    shouldUseUrlAsSeedUrl: boolean;
 }
 
 export type AddSourceResponse = {
 	id: string;
+    title: string;
 }
 
 export function addSource(
@@ -89,12 +94,15 @@ export function addSource(
 
 export type UpdateSourceRequest = {
     id: string;
+    title: string;
+	languageCode: WordsmithLanguageCode;
 	url: string;
 	type: SourceType;
 	ingestStrategy: IngestStrategy;
 	isActive: boolean;
     monthlyAccessLimit: number | undefined;
 	country: CountryCode;
+    shouldUseUrlAsSeedUrl: boolean;
 }
 
 export type UpdateSourceResponse = {
