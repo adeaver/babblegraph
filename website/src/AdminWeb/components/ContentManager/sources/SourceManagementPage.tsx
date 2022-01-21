@@ -10,6 +10,7 @@ import { asBaseComponent, BaseComponentProps } from 'AdminWeb/common/Base/BaseCo
 import DisplayCard from 'common/components/DisplayCard/DisplayCard';
 import { Heading1, Heading3 } from 'common/typography/Heading';
 import { TypographyColor } from 'common/typography/common';
+import Paragraph from 'common/typography/Paragraph';
 import { PrimaryButton } from 'common/components/Button/Button';
 import { PrimaryTextField } from 'common/components/TextField/TextField';
 import { PrimaryCheckbox } from 'common/components/Checkbox/Checkbox';
@@ -19,6 +20,7 @@ import { WordsmithLanguageCode, getEnglishNameForLanguageCode } from 'common/mod
 import { CountryCode, getEnglishNameForCountryCode } from 'common/model/geo/geo';
 import {
     Source,
+    SourceSeed,
     SourceType,
     IngestStrategy,
 
@@ -26,6 +28,11 @@ import {
     GetSourceByIDResponse,
     updateSource,
     UpdateSourceResponse,
+
+    getAllSourceSeedsForSource,
+    GetAllSourceSeedsForSourceResponse,
+    addSourceSeed,
+    AddSourceSeedResponse,
 } from 'AdminWeb/api/content/sources';
 
 const styleClasses = makeStyles({
@@ -68,6 +75,8 @@ const SourceManagementPage = asBaseComponent<GetSourceByIDResponse, SourceManage
                     setIsLoading={props.setIsLoading}
                     setError={props.setError}
                     source={props.source} />
+                <SourceSeedsList
+                    sourceId={props.source.id} />
             </div>
         );
     },
@@ -266,6 +275,117 @@ const UpdateSourceForm = (props: UpdateSourceFormProps) => {
                 &nbsp;
             </Grid>
         </Grid>
+    );
+}
+
+type SourceSeedsListOwnProps = {
+    sourceId: string;
+}
+
+const SourceSeedsList = asBaseComponent<GetAllSourceSeedsForSourceResponse, SourceSeedsListOwnProps>(
+    (props: BaseComponentProps & GetAllSourceSeedsForSourceResponse & SourceSeedsListOwnProps) => {
+        const [ newSourceSeeds, setNewSourceSeeds ] = useState<Array<SourceSeed>>([]);
+
+        const handleNewSourceSeed = (s: SourceSeed) => {
+            setNewSourceSeeds(newSourceSeeds.concat(s));
+        }
+
+        const sourceSeeds = (props.sourceSeeds || []).concat(newSourceSeeds);
+        return (
+            <Grid container>
+                <Grid item xs={false} md={3}>
+                    &nbsp;
+                </Grid>
+                <Grid item xs={12} md={6}>
+                    <DisplayCard>
+                        <Heading3 color={TypographyColor.Primary}>
+                            Add new seed
+                        </Heading3>
+                        <AddNewSourceSeedForm
+                            sourceId={props.sourceId}
+                            handleNewSourceSeed={handleNewSourceSeed}
+                            setIsLoading={props.setIsLoading}
+                            setError={props.setError} />
+                    </DisplayCard>
+                </Grid>
+                <Grid item xs={false} md={3}>
+                    &nbsp;
+                </Grid>
+                {
+                    sourceSeeds.map((s: SourceSeed, idx: number) => (
+                        <Grid item xs={4}>
+                            <Paragraph>
+                                {s.url}
+                            </Paragraph>
+                        </Grid>
+                    ))
+                }
+            </Grid>
+        );
+    },
+    (
+        ownProps: SourceSeedsListOwnProps,
+        onSuccess: (resp: GetAllSourceSeedsForSourceResponse) => void,
+        onError: (err: Error) => void
+    ) => getAllSourceSeedsForSource({ sourceId: ownProps.sourceId }, onSuccess, onError),
+    false
+);
+
+type AddNewSourceSeedFormProps = {
+    sourceId: string;
+    handleNewSourceSeed: (s: SourceSeed) => void;
+
+    setIsLoading: (isLoading: boolean) => void;
+    setError: (err: Error) => void;
+}
+
+const AddNewSourceSeedForm = (props: AddNewSourceSeedFormProps) => {
+    const [ url, setURL ] = useState<string>(null);
+    const handleURLChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setURL((event.target as HTMLInputElement).value);
+    }
+
+    const handleSubmit = () => {
+        props.setIsLoading(true);
+        addSourceSeed({
+            sourceId: props.sourceId,
+            url: url,
+        },
+        (resp: AddSourceSeedResponse) => {
+            props.setIsLoading(false);
+            props.handleNewSourceSeed({
+                id: resp.id,
+                rootId: props.sourceId,
+                url: url,
+                isActive: false,
+            });
+        },
+        (err: Error) => {
+            props.setIsLoading(false);
+            props.setError(err);
+        });
+    }
+
+    const classes = styleClasses();
+    return (
+        <Form handleSubmit={handleSubmit}>
+            <Grid container>
+                <Grid className={classes.updateSourceFormCell} item xs={12} md={8}>
+                    <PrimaryTextField
+                        id="url"
+                        className={classes.updateSourceFormInput}
+                        label="URL"
+                        variant="outlined"
+                        defaultValue={url}
+                        onChange={handleURLChange} />
+                </Grid>
+                <Grid className={classes.updateSourceFormCell} item xs={3} md={4}>
+                    <PrimaryButton disabled={!url} type="submit">
+                        Add
+                    </PrimaryButton>
+                </Grid>
+            </Grid>
+        </Form>
     );
 }
 

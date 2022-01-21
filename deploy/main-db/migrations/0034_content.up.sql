@@ -67,6 +67,8 @@ CREATE TABLE IF NOT EXISTS content_source_seed(
     PRIMARY KEY (_id)
 );
 
+CREATE INDEX IF NOT EXISTS content_source_seed_root_idx ON content_source_seed(root_id);
+
 CREATE TABLE IF NOT EXISTS content_source_filter(
     _id uuid DEFAULT uuid_generate_v4 (),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()),

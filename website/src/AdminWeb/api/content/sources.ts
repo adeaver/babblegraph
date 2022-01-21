@@ -23,6 +23,13 @@ export type Source = {
     shouldUseUrlAsSeedUrl: boolean;
 }
 
+export type SourceSeed = {
+    id: string;
+    rootId: string;
+    url: string;
+    isActive: boolean;
+}
+
 export type GetAllSourcesRequest = {}
 
 export type GetAllSourcesResponse = {
@@ -116,6 +123,72 @@ export function updateSource(
 ) {
     makePostRequestWithStandardEncoding<UpdateSourceRequest, UpdateSourceResponse>(
         '/ops/api/content/update_source_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}
+
+export type GetAllSourceSeedsForSourceRequest = {
+    sourceId: string;
+}
+
+export type GetAllSourceSeedsForSourceResponse = {
+    sourceSeeds: Array<SourceSeed>;
+}
+
+export function getAllSourceSeedsForSource(
+    req: GetAllSourceSeedsForSourceRequest,
+    onSuccess: (resp: GetAllSourceSeedsForSourceResponse) => void,
+    onError: (e: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<GetAllSourceSeedsForSourceRequest, GetAllSourceSeedsForSourceResponse>(
+        '/ops/api/content/get_all_source_seeds_for_source_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}
+
+export type AddSourceSeedRequest = {
+    sourceId: string;
+    url: string;
+}
+
+export type AddSourceSeedResponse = {
+   id: string;
+}
+
+export function addSourceSeed(
+    req: AddSourceSeedRequest,
+    onSuccess: (resp: AddSourceSeedResponse) => void,
+    onError: (e: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<AddSourceSeedRequest, AddSourceSeedResponse>(
+        '/ops/api/content/add_source_seed_for_source_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}
+
+export type UpdateSourceSeedRequest = {
+    sourceSeedId: string;
+    url: string;
+    isActive: boolean;
+}
+
+export type UpdateSourceSeedResponse = {
+   success: boolean;
+}
+
+export function updateSourceSeed(
+    req: UpdateSourceSeedRequest,
+    onSuccess: (resp: UpdateSourceSeedResponse) => void,
+    onError: (e: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<UpdateSourceSeedRequest, UpdateSourceSeedResponse>(
+        '/ops/api/content/update_source_seed_1',
         req,
         onSuccess,
         onError,
