@@ -17,6 +17,8 @@ import BlogEditPage from 'AdminWeb/components/Blog/BlogEditPage/BlogEditPage';
 import ContentManagerDashboard from 'AdminWeb/components/ContentManager/ContentManagerDashboard';
 import TopicListPage from 'AdminWeb/components/ContentManager/topics/TopicListPage';
 import TopicManagementPage from 'AdminWeb/components/ContentManager/topics/TopicManagementPage';
+import SourcesListPage from 'AdminWeb/components/ContentManager/sources/SourcesListPage';
+import SourceManagementPage from 'AdminWeb/components/ContentManager/sources/SourceManagementPage';
 
 class App extends React.Component{
     render() {
@@ -31,6 +33,8 @@ class App extends React.Component{
 
                     <Route path="/content-manager/topics/:id" component={TopicManagementPage} />
                     <Route path="/content-manager/topics" component={TopicListPage} />
+                    <Route path="/content-manager/sources/:id" component={SourceManagementPage} />
+                    <Route path="/content-manager/sources" component={SourcesListPage} />
                     <Route path="/content-manager" component={ContentManagerDashboard} />
 
                     <Route path="/blog-manager/edit/:blogPath" component={BlogEditPage} />

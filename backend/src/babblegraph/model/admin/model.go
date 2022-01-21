@@ -55,11 +55,12 @@ type UserPermissionMapping struct {
 type Permission string
 
 const (
-	PermissionManagePermissions Permission = "manage-permissions"
-	PermissionViewUserMetrics   Permission = "view-user-metrics"
-	PermissionWriteBlog         Permission = "write-blog"
-	PermissionPublishBlog       Permission = "publish-blog"
-	PermissionEditContentTopics Permission = "edit-content-topics"
+	PermissionManagePermissions  Permission = "manage-permissions"
+	PermissionViewUserMetrics    Permission = "view-user-metrics"
+	PermissionWriteBlog          Permission = "write-blog"
+	PermissionPublishBlog        Permission = "publish-blog"
+	PermissionEditContentTopics  Permission = "edit-content-topics"
+	PermissionEditContentSources Permission = "edit-content-sources"
 )
 
 var validAdminEmailDomains = map[string]bool{

@@ -3,6 +3,7 @@ package content
 import (
 	"babblegraph/util/geo"
 	"babblegraph/wordsmith"
+	"fmt"
 	"strings"
 	"time"
 )
@@ -77,7 +78,7 @@ type dbSource struct {
 	IngestStrategy     IngestStrategy         `db:"ingest_strategy"`
 	LanguageCode       wordsmith.LanguageCode `db:"language_code"`
 	IsActive           bool                   `db:"is_active"`
-	MonthlyAccessLimit *int64                 `json:"monthly_access_limit"`
+	MonthlyAccessLimit *int64                 `db:"monthly_access_limit"`
 }
 
 func (d dbSource) ToNonDB() Source {
@@ -110,11 +111,45 @@ const (
 	SourceTypeNewsWebsite SourceType = "news-website"
 )
 
+func (s SourceType) Str() string {
+	return string(s)
+}
+
+func (s SourceType) Ptr() *SourceType {
+	return &s
+}
+
+func GetSourceTypeFromString(t string) (*SourceType, error) {
+	switch strings.ToLower(t) {
+	case SourceTypeNewsWebsite.Str():
+		return SourceTypeNewsWebsite.Ptr(), nil
+	default:
+		return nil, fmt.Errorf("Unsupported source type: %s", t)
+	}
+}
+
 type IngestStrategy string
 
 const (
 	IngestStrategyWebsiteHTML1 IngestStrategy = "website-html-1"
 )
+
+func (i IngestStrategy) Str() string {
+	return string(i)
+}
+
+func (i IngestStrategy) Ptr() *IngestStrategy {
+	return &i
+}
+
+func GetIngestStrategyFromString(i string) (*IngestStrategy, error) {
+	switch strings.ToLower(i) {
+	case IngestStrategyWebsiteHTML1.Str():
+		return IngestStrategyWebsiteHTML1.Ptr(), nil
+	default:
+		return nil, fmt.Errorf("Unsupported ingest strategy type: %s", i)
+	}
+}
 
 type SourceSeedID string
 
