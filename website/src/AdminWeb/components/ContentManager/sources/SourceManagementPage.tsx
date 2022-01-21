@@ -94,6 +94,12 @@ type UpdateSourceFormProps = {
 
 const UpdateSourceForm = (props: UpdateSourceFormProps) => {
     const [ isActive, setIsActive ] = useState<boolean>(props.source.isActive);
+    const [ shouldUseURLAsSeedURL, setShouldUseURLAsSeedURL ] = useState<boolean>(props.source.shouldUseUrlAsSeedUrl);
+
+    const [ title, setTitle ] = useState<string>(props.source.title);
+    const handleTitleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setTitle((event.target as HTMLInputElement).value);
+    }
 
     const [ url, setURL ] = useState<string>(props.source.url);
     const handleURLChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -130,12 +136,15 @@ const UpdateSourceForm = (props: UpdateSourceFormProps) => {
         props.setIsLoading(true);
         updateSource({
             id: props.source.id,
+            languageCode: languageCode,
+            title: title,
             url: url,
             type: sourceType,
             ingestStrategy: ingestStrategy,
             monthlyAccessLimit: monthlyAccessLimit,
             country: countryCode,
             isActive: isActive,
+            shouldUseUrlAsSeedUrl: shouldUseURLAsSeedURL,
         },
         (resp: UpdateSourceResponse) => {
             props.setIsLoading(false);
@@ -158,12 +167,12 @@ const UpdateSourceForm = (props: UpdateSourceFormProps) => {
                         <Grid container>
                             <Grid className={classes.updateSourceFormCell} item xs={12} md={8}>
                                 <PrimaryTextField
-                                    id="url"
+                                    id="title"
                                     className={classes.updateSourceFormInput}
-                                    label="URL"
+                                    label="Title"
                                     variant="outlined"
-                                    defaultValue={url}
-                                    onChange={handleURLChange} />
+                                    defaultValue={title}
+                                    onChange={handleTitleChange} />
                             </Grid>
                             <Grid className={classes.updateSourceFormCell} item xs={6} md={4}>
                                 <Autocomplete
@@ -174,6 +183,25 @@ const UpdateSourceForm = (props: UpdateSourceFormProps) => {
                                     getOptionLabel={(option: WordsmithLanguageCode) => getEnglishNameForLanguageCode(option)}
                                     getOptionSelected={(option: WordsmithLanguageCode) => option === languageCode}
                                     renderInput={(params) => <PrimaryTextField label="Select Language Code" {...params} />} />
+                            </Grid>
+                            <Grid className={classes.updateSourceFormCell} item xs={12} md={8}>
+                                <PrimaryTextField
+                                    id="url"
+                                    className={classes.updateSourceFormInput}
+                                    label="URL"
+                                    variant="outlined"
+                                    defaultValue={url}
+                                    onChange={handleURLChange} />
+                            </Grid>
+                            <Grid className={classes.updateSourceFormCell} item xs={6} md={4}>
+                                <FormControlLabel
+                                    control={
+                                        <PrimaryCheckbox
+                                            checked={shouldUseURLAsSeedURL}
+                                            onChange={() => { setShouldUseURLAsSeedURL(!shouldUseURLAsSeedURL) }}
+                                            name="checkbox-is-seed-url" />
+                                    }
+                                    label="Should use URL as seed URL??" />
                             </Grid>
                             <Grid className={classes.updateSourceFormCell} item xs={6} md={4}>
                                 <Autocomplete
@@ -216,14 +244,14 @@ const UpdateSourceForm = (props: UpdateSourceFormProps) => {
                                     onChange={handleMonthlyAccessLimitChange} />
                             </Grid>
                             <Grid className={classes.updateSourceFormCell} item xs={3}>
-                            <FormControlLabel
-                                control={
-                                    <PrimaryCheckbox
-                                        checked={isActive}
-                                        onChange={() => { setIsActive(!isActive) }}
-                                        name="checkbox-is-active" />
-                                }
-                                label="Is Active?" />
+                                <FormControlLabel
+                                    control={
+                                        <PrimaryCheckbox
+                                            checked={isActive}
+                                            onChange={() => { setIsActive(!isActive) }}
+                                            name="checkbox-is-active" />
+                                    }
+                                    label="Is Active?" />
                             </Grid>
                             <Grid className={classes.updateSourceFormCell} item xs={3} md={4}>
                                 <PrimaryButton disabled={!url || !sourceType || !languageCode || !ingestStrategy || !countryCode} type="submit">

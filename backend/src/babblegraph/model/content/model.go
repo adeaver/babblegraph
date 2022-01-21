@@ -69,40 +69,46 @@ type TopicDisplayName struct {
 type SourceID string
 
 type dbSource struct {
-	ID                 SourceID               `db:"_id"`
-	CreatedAt          time.Time              `db:"created_at"`
-	LastModifiedAt     time.Time              `db:"last_modified_at"`
-	URL                string                 `db:"url"`
-	Type               SourceType             `db:"type"`
-	Country            geo.CountryCode        `db:"country"`
-	IngestStrategy     IngestStrategy         `db:"ingest_strategy"`
-	LanguageCode       wordsmith.LanguageCode `db:"language_code"`
-	IsActive           bool                   `db:"is_active"`
-	MonthlyAccessLimit *int64                 `db:"monthly_access_limit"`
+	ID                    SourceID               `db:"_id"`
+	CreatedAt             time.Time              `db:"created_at"`
+	LastModifiedAt        time.Time              `db:"last_modified_at"`
+	Title                 string                 `db:"title"`
+	URL                   string                 `db:"url"`
+	Type                  SourceType             `db:"type"`
+	Country               geo.CountryCode        `db:"country"`
+	IngestStrategy        IngestStrategy         `db:"ingest_strategy"`
+	LanguageCode          wordsmith.LanguageCode `db:"language_code"`
+	IsActive              bool                   `db:"is_active"`
+	ShouldUseURLAsSeedURL bool                   `db:"should_use_url_as_seed_url"`
+	MonthlyAccessLimit    *int64                 `db:"monthly_access_limit"`
 }
 
 func (d dbSource) ToNonDB() Source {
 	return Source{
-		ID:                 d.ID,
-		URL:                d.URL,
-		Type:               d.Type,
-		Country:            d.Country,
-		IngestStrategy:     d.IngestStrategy,
-		LanguageCode:       d.LanguageCode,
-		IsActive:           d.IsActive,
-		MonthlyAccessLimit: d.MonthlyAccessLimit,
+		ID:                    d.ID,
+		URL:                   d.URL,
+		Title:                 d.Title,
+		Type:                  d.Type,
+		Country:               d.Country,
+		IngestStrategy:        d.IngestStrategy,
+		LanguageCode:          d.LanguageCode,
+		IsActive:              d.IsActive,
+		ShouldUseURLAsSeedURL: d.ShouldUseURLAsSeedURL,
+		MonthlyAccessLimit:    d.MonthlyAccessLimit,
 	}
 }
 
 type Source struct {
-	ID                 SourceID               `json:"id"`
-	URL                string                 `json:"url"`
-	Type               SourceType             `json:"type"`
-	Country            geo.CountryCode        `json:"country"`
-	IngestStrategy     IngestStrategy         `json:"ingest_strategy"`
-	LanguageCode       wordsmith.LanguageCode `json:"language_code"`
-	IsActive           bool                   `json:"is_active"`
-	MonthlyAccessLimit *int64                 `json:"monthly_access_limit"`
+	ID                    SourceID               `json:"id"`
+	Title                 string                 `json:"title"`
+	URL                   string                 `json:"url"`
+	Type                  SourceType             `json:"type"`
+	Country               geo.CountryCode        `json:"country"`
+	IngestStrategy        IngestStrategy         `json:"ingest_strategy"`
+	LanguageCode          wordsmith.LanguageCode `json:"language_code"`
+	IsActive              bool                   `json:"is_active"`
+	ShouldUseURLAsSeedURL bool                   `json:"should_use_url_as_seed_url"`
+	MonthlyAccessLimit    *int64                 `json:"monthly_access_limit"`
 }
 
 type SourceType string

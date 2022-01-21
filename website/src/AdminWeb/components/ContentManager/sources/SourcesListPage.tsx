@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 import Autocomplete from '@material-ui/lab/Autocomplete';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
 
 import { asBaseComponent, BaseComponentProps } from 'AdminWeb/common/Base/BaseComponent';
 import DisplayCard from 'common/components/DisplayCard/DisplayCard';
@@ -12,6 +13,7 @@ import { PrimaryTextField } from 'common/components/TextField/TextField';
 import { Heading1, Heading3 } from 'common/typography/Heading';
 import { TypographyColor } from 'common/typography/common';
 import { PrimarySwitch } from 'common/components/Switch/Switch';
+import { PrimaryCheckbox } from 'common/components/Checkbox/Checkbox';
 import Link, { LinkTarget } from 'common/components/Link/Link';
 import Paragraph from 'common/typography/Paragraph';
 
@@ -94,6 +96,11 @@ type AddSourceFormProps = {
 }
 
 const AddSourceForm = (props: AddSourceFormProps) => {
+    const [ title, setTitle ] = useState<string>(null);
+    const handleTitleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setTitle((event.target as HTMLInputElement).value);
+    }
+
     const [ url, setURL ] = useState<string>(null);
     const handleURLChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setURL((event.target as HTMLInputElement).value);
@@ -125,21 +132,25 @@ const AddSourceForm = (props: AddSourceFormProps) => {
         setMonthlyAccessLimit(!!value ? parseInt(value) : null);
     }
 
+    const [ shouldUseURLAsSeedURL, setShouldUseURLAsSeedURL ] = useState<boolean>(false);
 
     const handleSubmit = () => {
         props.setIsLoading(true);
         addSource({
+            title: title,
 	        url: url,
 	        type: sourceType,
 	        ingestStrategy: ingestStrategy,
 	        languageCode: languageCode,
             monthlyAccessLimit: monthlyAccessLimit,
 	        country: countryCode,
+            shouldUseUrlAsSeedUrl: shouldUseURLAsSeedURL,
         },
         (resp: AddSourceResponse) => {
             props.setIsLoading(false);
             props.handleNewSource({
 	            id: resp.id,
+                title: resp.title,
 	            url: url,
 	            type: sourceType,
 	            country: countryCode,
@@ -147,6 +158,7 @@ const AddSourceForm = (props: AddSourceFormProps) => {
 	            languageCode: languageCode,
 	            isActive: false,
 	            monthlyAccessLimit: monthlyAccessLimit,
+                shouldUseUrlAsSeedUrl: shouldUseURLAsSeedURL,
             });
         },
         (err: Error) => {
@@ -170,12 +182,12 @@ const AddSourceForm = (props: AddSourceFormProps) => {
                         <Grid container>
                             <Grid className={classes.addSourceFormCell} item xs={12} md={8}>
                                 <PrimaryTextField
-                                    id="url"
+                                    id="title"
                                     className={classes.addSourceFormInput}
-                                    label="URL"
+                                    label="Title (optional)"
                                     variant="outlined"
-                                    defaultValue={url}
-                                    onChange={handleURLChange} />
+                                    defaultValue={title}
+                                    onChange={handleTitleChange} />
                             </Grid>
                             <Grid className={classes.addSourceFormCell} item xs={6} md={4}>
                                 <Autocomplete
@@ -185,6 +197,25 @@ const AddSourceForm = (props: AddSourceFormProps) => {
                                     getOptionLabel={(option: WordsmithLanguageCode) => getEnglishNameForLanguageCode(option)}
                                     getOptionSelected={(option: WordsmithLanguageCode) => option === languageCode}
                                     renderInput={(params) => <PrimaryTextField label="Select Language Code" {...params} />} />
+                            </Grid>
+                            <Grid className={classes.addSourceFormCell} item xs={12} md={8}>
+                                <PrimaryTextField
+                                    id="url"
+                                    className={classes.addSourceFormInput}
+                                    label="URL"
+                                    variant="outlined"
+                                    defaultValue={url}
+                                    onChange={handleURLChange} />
+                            </Grid>
+                            <Grid className={classes.addSourceFormCell} item xs={6} md={4}>
+                                <FormControlLabel
+                                    control={
+                                        <PrimaryCheckbox
+                                            checked={shouldUseURLAsSeedURL}
+                                            onChange={() => { setShouldUseURLAsSeedURL(!shouldUseURLAsSeedURL) }}
+                                            name="checkbox-is-seed-url" />
+                                    }
+                                    label="Should use URL as seed URL??" />
                             </Grid>
                             <Grid className={classes.addSourceFormCell} item xs={6} md={4}>
                                 <Autocomplete
@@ -253,11 +284,14 @@ const SourceDisplay = (props: SourceDisplayProps) => {
         props.setIsLoading(true);
         updateSource({
             id: props.source.id,
+            title: props.source.title,
             url: props.source.url,
             type: props.source.type,
             ingestStrategy: props.source.ingestStrategy,
             monthlyAccessLimit: props.source.monthlyAccessLimit,
             country: props.source.country,
+            shouldUseUrlAsSeedUrl: props.source.shouldUseUrlAsSeedUrl,
+            languageCode: props.source.languageCode,
             isActive: !isActive,
         },
         (resp: UpdateSourceResponse) => {

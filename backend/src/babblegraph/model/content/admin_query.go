@@ -25,26 +25,31 @@ const (
 	insertSourceQuery  = `INSERT INTO
         content_source (
             language_code,
+            title,
             url,
             type,
             country,
             ingest_strategy,
+            should_use_url_as_seed_url,
             is_active,
             monthly_access_limit
         ) VALUES (
-            $1, $2, $3, $4, $5, $6, $7
+            $1, $2, $3, $4, $5, $6, $7, $8, $9
         ) RETURNING _id`
 	updateSourceQuery = `UPDATE
         content_source
     SET
-        url=$1,
-        type=$2,
-        country=$3,
-        ingest_strategy=$4,
-        is_active=$5,
-        monthly_access_limit=$6
+        language_code=$1,
+        title=$2,
+        url=$3,
+        type=$4,
+        country=$5,
+        ingest_strategy=$6,
+        should_use_url_as_seed_url=$7,
+        is_active=$8,
+        monthly_access_limit=$9
     WHERE
-        _id = $7
+        _id = $10
     `
 )
 
@@ -173,16 +178,19 @@ func GetSource(tx *sqlx.Tx, id SourceID) (*Source, error) {
 }
 
 type InsertSourceInput struct {
-	LanguageCode       wordsmith.LanguageCode
-	URL                string
-	Type               SourceType
-	IngestStrategy     IngestStrategy
-	Country            geo.CountryCode
-	MonthlyAccessLimit *int64
+	Title                 string
+	LanguageCode          wordsmith.LanguageCode
+	URL                   string
+	Type                  SourceType
+	IngestStrategy        IngestStrategy
+	Country               geo.CountryCode
+	ShouldUseURLAsSeedURL bool
+	IsActive              bool
+	MonthlyAccessLimit    *int64
 }
 
 func InsertSource(tx *sqlx.Tx, input InsertSourceInput) (*SourceID, error) {
-	rows, err := tx.Query(insertSourceQuery, input.LanguageCode, input.URL, input.Type, input.Country, input.IngestStrategy, false, input.MonthlyAccessLimit)
+	rows, err := tx.Query(insertSourceQuery, input.LanguageCode, input.Title, input.URL, input.Type, input.Country, input.IngestStrategy, input.ShouldUseURLAsSeedURL, input.IsActive, input.MonthlyAccessLimit)
 	if err != nil {
 		return nil, err
 	}
@@ -197,16 +205,19 @@ func InsertSource(tx *sqlx.Tx, input InsertSourceInput) (*SourceID, error) {
 }
 
 type UpdateSourceInput struct {
-	URL                string
-	Type               SourceType
-	IngestStrategy     IngestStrategy
-	IsActive           bool
-	MonthlyAccessLimit *int64
-	Country            geo.CountryCode
+	LanguageCode          wordsmith.LanguageCode
+	Title                 string
+	URL                   string
+	Type                  SourceType
+	IngestStrategy        IngestStrategy
+	IsActive              bool
+	MonthlyAccessLimit    *int64
+	Country               geo.CountryCode
+	ShouldUseURLAsSeedURL bool
 }
 
 func UpdateSource(tx *sqlx.Tx, id SourceID, input UpdateSourceInput) error {
-	if _, err := tx.Exec(updateSourceQuery, input.URL, input.Type, input.Country, input.IngestStrategy, input.IsActive, input.MonthlyAccessLimit, id); err != nil {
+	if _, err := tx.Exec(updateSourceQuery, input.LanguageCode, input.Title, input.URL, input.Type, input.Country, input.IngestStrategy, input.ShouldUseURLAsSeedURL, input.IsActive, input.MonthlyAccessLimit, id); err != nil {
 		return err
 	}
 	return nil

@@ -30,18 +30,31 @@ CREATE TABLE IF NOT EXISTS content_source(
     _id uuid DEFAULT uuid_generate_v4 (),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()),
     last_modified_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()),
+    title TEXT NOT NULL,
     url TEXT NOT NULL,
     type TEXT NOT NULL,
     country TEXT NOT NULL,
     ingest_strategy TEXT NOT NULL,
     language_code TEXT NOT NULL,
     is_active BOOLEAN NOT NULL,
+    should_use_url_as_seed_url BOOLEAN NOT NULL DEFAULT false,
     monthly_access_limit INTEGER,
 
     PRIMARY KEY (_id)
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS content_source_url ON content_source(url);
+
+CREATE TABLE IF NOT EXISTS content_source_topic_mapping(
+    _id uuid DEFAULT uuid_generate_v4 (),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()),
+    last_modified_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()),
+    root_id uuid REFERENCES content_source(_id),
+    topic_id uuid REFERENCES content_topic(_id),
+    is_active BOOLEAN NOT NULL,
+
+    PRIMARY KEY (_id)
+);
 
 CREATE TABLE IF NOT EXISTS content_source_seed(
     _id uuid DEFAULT uuid_generate_v4 (),
