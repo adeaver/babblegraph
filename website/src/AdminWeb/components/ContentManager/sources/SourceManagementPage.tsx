@@ -12,7 +12,7 @@ import DisplayCard from 'common/components/DisplayCard/DisplayCard';
 import Color from 'common/styles/colors';
 import { Heading1, Heading3, Heading5 } from 'common/typography/Heading';
 import { Alignment, TypographyColor } from 'common/typography/common';
-import Paragraph from 'common/typography/Paragraph';
+import Paragraph, { Size } from 'common/typography/Paragraph';
 import { PrimaryButton } from 'common/components/Button/Button';
 import { PrimaryTextField } from 'common/components/TextField/TextField';
 import { PrimaryCheckbox } from 'common/components/Checkbox/Checkbox';
@@ -576,6 +576,9 @@ const SourceSeedDisplay = (props: SourceSeedDisplayProps) => {
                             </PrimaryButton>
                         </Grid>
                     </Grid>
+                    <Paragraph color={TypographyColor.Primary} size={Size.Small}>
+                        Refresh after updating to see up-to-date topic mappings
+                    </Paragraph>
                 </Form>
             </DisplayCard>
         </Grid>
