@@ -2,9 +2,11 @@ package content
 
 import (
 	"babblegraph/util/geo"
+	"babblegraph/util/ptr"
 	"babblegraph/util/urlparser"
 	"babblegraph/wordsmith"
 	"fmt"
+	"strings"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -65,6 +67,16 @@ const (
         (source_seed_id, topic_id) DO UPDATE
         SET is_active = $3
     `
+
+	getSourceFilterForSourceQuery    = "SELECT * FROM content_source_filter WHERE root_id = $1"
+	upsertSourceFilterForSourceQuery = `INSERT INTO
+        content_source_filter (
+            root_id, is_active, use_ld_json_validation, paywall_classes, paywall_ids
+        ) VALUES (
+            $1, $2, $3, $4, $5
+        ) ON CONFLICT (root_id) DO UPDATE SET
+    is_active=$2, use_ld_json_validation=$3, paywall_classes=$4, paywall_ids=$5
+    RETURNING _id`
 )
 
 func GetAllTopics(tx *sqlx.Tx) ([]Topic, error) {
@@ -293,4 +305,49 @@ func UpsertSourceSeedMapping(tx *sqlx.Tx, sourceSeedID SourceSeedID, topicID Top
 		return err
 	}
 	return nil
+}
+
+func LookupSourceFilterForSource(tx *sqlx.Tx, sourceID SourceID) (*SourceFilter, error) {
+	var matches []dbSourceFilter
+	err := tx.Select(&matches, getSourceFilterForSourceQuery, sourceID)
+	switch {
+	case err != nil:
+		return nil, err
+	case len(matches) == 0:
+		return nil, nil
+	case len(matches) == 1:
+		m := matches[0].ToNonDB()
+		return &m, nil
+	default:
+		return nil, fmt.Errorf("Expected at most 1 source filter for source ID %s, but got %d", sourceID, len(matches))
+	}
+}
+
+type UpsertSourceFilterForSourceInput struct {
+	IsActive            bool
+	PaywallClasses      []string
+	PaywallIDs          []string
+	UseLDJSONValidation *bool
+}
+
+func UpsertSourceFilterForSource(tx *sqlx.Tx, sourceID SourceID, input UpsertSourceFilterForSourceInput) (*SourceFilterID, error) {
+	var paywallClassesStr, paywallIDsStr *string
+	if len(input.PaywallClasses) > 0 {
+		paywallClassesStr = ptr.String(strings.Join(input.PaywallClasses, paywallFilterDelimiter))
+	}
+	if len(input.PaywallIDs) > 0 {
+		paywallIDsStr = ptr.String(strings.Join(input.PaywallIDs, paywallFilterDelimiter))
+	}
+	rows, err := tx.Query(upsertSourceFilterForSourceQuery, sourceID, input.IsActive, input.UseLDJSONValidation, paywallClassesStr, paywallIDsStr)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var sourceFilterID SourceFilterID
+	for rows.Next() {
+		if err := rows.Scan(&sourceFilterID); err != nil {
+			return nil, err
+		}
+	}
+	return &sourceFilterID, nil
 }

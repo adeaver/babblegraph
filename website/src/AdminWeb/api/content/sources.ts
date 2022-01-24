@@ -37,6 +37,15 @@ export type SourceSeedTopicMapping = {
 	isActive: boolean;
 }
 
+export type SourceFilter = {
+	id: string;
+	rootId: string;
+	isActive: boolean;
+	useLdJsonValidation: boolean | undefined;
+	paywallClasses: string[];
+	paywallIds: string[];
+}
+
 export type GetAllSourcesRequest = {}
 
 export type GetAllSourcesResponse = {
@@ -244,6 +253,52 @@ export function upsertSourceSeedMappings(
 ) {
     makePostRequestWithStandardEncoding<UpsertSourceSeedMappingsRequest, UpsertSourceSeedMappingsResponse>(
         '/ops/api/content/upsert_source_seed_mappings_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}
+
+export type GetSourceFilterForSourceIDRequest = {
+    sourceId: string;
+}
+
+export type GetSourceFilterForSourceIDResponse = {
+    sourceFilter: SourceFilter | undefined;
+}
+
+export function getSourceFilterForSourceID(
+    req: GetSourceFilterForSourceIDRequest,
+    onSuccess: (resp: GetSourceFilterForSourceIDResponse) => void,
+    onError: (e: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<GetSourceFilterForSourceIDRequest, GetSourceFilterForSourceIDResponse>(
+        '/ops/api/content/get_source_filter_for_source_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}
+
+export type UpsertSourceFilterForSourceRequest = {
+    sourceId: string;
+	isActive: boolean;
+	useLdJsonValidation: boolean | undefined;
+	paywallClasses: string[];
+	paywallIds: string[];
+}
+
+export type UpsertSourceFilterForSourceResponse = {
+	sourceFilterId: string;
+}
+
+export function upsertSourceFilterForSource(
+    req: UpsertSourceFilterForSourceRequest,
+    onSuccess: (resp: UpsertSourceFilterForSourceResponse) => void,
+    onError: (e: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<UpsertSourceFilterForSourceRequest, UpsertSourceFilterForSourceResponse>(
+        '/ops/api/content/upsert_source_filter_for_source_1',
         req,
         onSuccess,
         onError,

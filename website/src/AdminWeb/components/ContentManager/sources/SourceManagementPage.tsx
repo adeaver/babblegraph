@@ -23,6 +23,7 @@ import { CountryCode, getEnglishNameForCountryCode } from 'common/model/geo/geo'
 import {
     Source,
     SourceSeed,
+    SourceFilter,
     SourceSeedTopicMapping,
     SourceType,
     IngestStrategy,
@@ -42,6 +43,12 @@ import {
 
     getSourceSourceSeedMappingsForSource,
     GetSourceSourceSeedMappingsForSourceResponse,
+
+    getSourceFilterForSourceID,
+    GetSourceFilterForSourceIDResponse,
+
+    upsertSourceFilterForSource,
+    UpsertSourceFilterForSourceResponse,
 } from 'AdminWeb/api/content/sources';
 import {
     Topic,
@@ -51,6 +58,13 @@ import {
 } from 'AdminWeb/api/content/topic';
 
 const styleClasses = makeStyles({
+    headerDisplayCard: {
+        padding: '5px',
+    },
+    headerWithCheckbox: {
+        display: 'flex',
+        alignItems: 'center',
+    },
     updateSourceFormCell: {
         display: 'flex',
         flexDirection: 'column',
@@ -101,10 +115,14 @@ const SourceManagementPage = asBaseComponent<SourceManagementPageProps, SourceMa
                 <Heading1 color={TypographyColor.Primary}>
                     {props.source.title}
                 </Heading1>
-                <UpdateSourceForm
-                    setIsLoading={props.setIsLoading}
-                    setError={props.setError}
-                    source={props.source} />
+                <Grid container>
+                    <UpdateSourceForm
+                        setIsLoading={props.setIsLoading}
+                        setError={props.setError}
+                        source={props.source} />
+                    <SourceFilterForm
+                        sourceId={props.source.id} />
+                </Grid>
                 <SourceSeedsList
                     allTopics={props.allTopics}
                     sourceId={props.source.id} />
@@ -207,117 +225,312 @@ const UpdateSourceForm = (props: UpdateSourceFormProps) => {
 
     const classes = styleClasses();
     return (
-        <Grid container>
-            <Grid item xs={false} md={3}>
-                &nbsp;
-            </Grid>
-            <Grid item xs={12} md={6}>
+        <Grid item xs={12} md={6} className={classes.headerDisplayCard}>
+            <DisplayCard>
+                <Form handleSubmit={handleSubmit}>
+                    <Grid container>
+                        <Grid className={classes.updateSourceFormCell} item xs={12} md={8}>
+                            <PrimaryTextField
+                                id="title"
+                                className={classes.updateSourceFormInput}
+                                label="Title"
+                                variant="outlined"
+                                defaultValue={title}
+                                onChange={handleTitleChange} />
+                        </Grid>
+                        <Grid className={classes.updateSourceFormCell} item xs={6} md={4}>
+                            <Autocomplete
+                                id="language-selector"
+                                onChange={handleLanguageCodeUpdate}
+                                options={Object.values(WordsmithLanguageCode)}
+                                value={languageCode}
+                                getOptionLabel={(option: WordsmithLanguageCode) => getEnglishNameForLanguageCode(option)}
+                                getOptionSelected={(option: WordsmithLanguageCode) => option === languageCode}
+                                renderInput={(params) => <PrimaryTextField label="Select Language Code" {...params} />} />
+                        </Grid>
+                        <Grid className={classes.updateSourceFormCell} item xs={12} md={8}>
+                            <PrimaryTextField
+                                id="url"
+                                className={classes.updateSourceFormInput}
+                                label="URL"
+                                variant="outlined"
+                                defaultValue={url}
+                                onChange={handleURLChange} />
+                        </Grid>
+                        <Grid className={classes.updateSourceFormCell} item xs={6} md={4}>
+                            <FormControlLabel
+                                control={
+                                    <PrimaryCheckbox
+                                        checked={shouldUseURLAsSeedURL}
+                                        onChange={() => { setShouldUseURLAsSeedURL(!shouldUseURLAsSeedURL) }}
+                                        name="checkbox-is-seed-url" />
+                                }
+                                label="Should use URL as seed URL??" />
+                        </Grid>
+                        <Grid className={classes.updateSourceFormCell} item xs={6} md={4}>
+                            <Autocomplete
+                                id="country-code-selector"
+                                onChange={handleCountyCodeUpdate}
+                                options={Object.values(CountryCode)}
+                                value={countryCode}
+                                getOptionLabel={(option: CountryCode) => getEnglishNameForCountryCode(option)}
+                                getOptionSelected={(option: CountryCode) => option === countryCode}
+                                renderInput={(params) => <PrimaryTextField label="Select Country" {...params} />} />
+                        </Grid>
+                        <Grid className={classes.updateSourceFormCell} item xs={6} md={4}>
+                            <Autocomplete
+                                id="source-type-selector"
+                                onChange={handleSourceTypeSelectorUpdate}
+                                options={Object.values(SourceType)}
+                                value={sourceType}
+                                getOptionLabel={(option: SourceType) => option}
+                                getOptionSelected={(option: SourceType) => option === sourceType}
+                                renderInput={(params) => <PrimaryTextField label="Select Source Type" {...params} />} />
+                        </Grid>
+                        <Grid className={classes.updateSourceFormCell} item xs={6} md={4}>
+                            <Autocomplete
+                                id="ingest-strategy-selector"
+                                onChange={handleIngestStrategySelectorUpdate}
+                                options={Object.values(IngestStrategy)}
+                                value={ingestStrategy}
+                                getOptionLabel={(option: IngestStrategy) => option}
+                                getOptionSelected={(option: IngestStrategy) => option === ingestStrategy}
+                                renderInput={(params) => <PrimaryTextField label="Select Ingest Strategy" {...params} />} />
+                        </Grid>
+                        <Grid className={classes.updateSourceFormCell} item xs={12} md={5}>
+                            <PrimaryTextField
+                                id="monthly-access-limit"
+                                label="Monthly Access Limit"
+                                className={classes.updateSourceFormInput}
+                                variant="outlined"
+                                type="number"
+                                defaultValue={monthlyAccessLimit}
+                                onChange={handleMonthlyAccessLimitChange} />
+                        </Grid>
+                        <Grid className={classes.updateSourceFormCell} item xs={3}>
+                            <FormControlLabel
+                                control={
+                                    <PrimaryCheckbox
+                                        checked={isActive}
+                                        onChange={() => { setIsActive(!isActive) }}
+                                        name="checkbox-is-active" />
+                                }
+                                label="Is Active?" />
+                        </Grid>
+                        <Grid className={classes.updateSourceFormCell} item xs={3} md={4}>
+                            <PrimaryButton disabled={!url || !sourceType || !languageCode || !ingestStrategy || !countryCode} type="submit">
+                                Update
+                            </PrimaryButton>
+                        </Grid>
+                    </Grid>
+                </Form>
+            </DisplayCard>
+        </Grid>
+    );
+}
+
+type SourceFilterFormOwnProps = {
+    sourceId: string;
+}
+
+type SourceFilterFormApiProps = {
+    hasLoaded: boolean;
+} & GetSourceFilterForSourceIDResponse;
+
+const SourceFilterForm = asBaseComponent<SourceFilterFormApiProps, SourceFilterFormOwnProps>(
+    (props: BaseComponentProps & SourceFilterFormApiProps & SourceFilterFormOwnProps) => {
+        if (!props.hasLoaded) {
+            return <Grid item xs={12} md={6} />;
+        }
+
+        const [ isActive, setIsActive ] = useState<boolean>(!!props.sourceFilter && props.sourceFilter.isActive);
+
+        const [ useLDJSONValidation, setUseLDJSONValidation ] = useState<boolean>(!!props.sourceFilter && props.sourceFilter.useLdJsonValidation);
+
+        const [ paywallClassInput, setPaywallClassInput ] = useState<string>(null);
+        const handlePaywallClassInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+            setPaywallClassInput((event.target as HTMLInputElement).value);
+        }
+        const [ paywallClasses, setPaywallClasses ] = useState<Array<string>>(
+            !props.sourceFilter || !props.sourceFilter.paywallClasses ? (
+                []
+            ) : (
+                props.sourceFilter.paywallClasses
+            )
+        );
+        const addPaywallClass = () => {
+            if (paywallClasses.some((paywallClass: string) => paywallClass === paywallClassInput)) {
+                return;
+            }
+            setPaywallClasses(paywallClasses.concat(paywallClassInput));
+            setPaywallClassInput(null);
+        }
+
+        const [ paywallIDInput, setPaywallIDInput ] = useState<string>(null);
+        const handlePaywallIDInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+            setPaywallIDInput((event.target as HTMLInputElement).value);
+        }
+        const [ paywallIDs, setPaywallIDs ] = useState<Array<string>>(
+            !props.sourceFilter || !props.sourceFilter.paywallIds ? (
+                []
+            ) : (
+                props.sourceFilter.paywallIds
+            )
+        );
+        const addPaywallID = () => {
+            if (paywallIDs.some((paywallID: string) => paywallID === paywallIDInput)) {
+                return;
+            }
+            setPaywallIDs(paywallIDs.concat(paywallIDInput));
+            setPaywallIDInput(null);
+        }
+
+        const handleUpdateSourceFilter = () => {
+            props.setIsLoading(true);
+            upsertSourceFilterForSource({
+                sourceId: props.sourceId,
+                isActive: isActive,
+                useLdJsonValidation: useLDJSONValidation,
+                paywallClasses: paywallClasses,
+                paywallIds: paywallIDs
+            },
+            (resp: UpsertSourceFilterForSourceResponse) => {
+                props.setIsLoading(false);
+            },
+            (err: Error) => {
+                props.setIsLoading(false);
+                props.setError(err);
+            });
+        }
+
+        const classes = styleClasses();
+        return (
+            <Grid item xs={12} md={6} className={classes.headerDisplayCard}>
                 <DisplayCard>
-                    <Form handleSubmit={handleSubmit}>
+                    <Grid container className={classes.headerWithCheckbox}>
+                        <Grid item xs={2} md={1}>
+                            <PrimaryCheckbox
+                                checked={isActive}
+                                onChange={() => { setIsActive(!isActive) }}
+                                name="checkbox-is-active" />
+                        </Grid>
+                        <Grid item xs={10} md={11}>
+                            <Heading3 align={Alignment.Left} color={TypographyColor.Primary}>
+                                Source Filter
+                            </Heading3>
+                        </Grid>
+                    </Grid>
+                    <Grid className={classes.updateSourceFormCell} item xs={12}>
+                        <FormControlLabel
+                            control={
+                                <PrimaryCheckbox
+                                    checked={useLDJSONValidation}
+                                    onChange={() => { setUseLDJSONValidation(!useLDJSONValidation) }}
+                                    name="checkbox-ld-json" />
+                            }
+                            label="Use LD+JSON Validation?" />
+                    </Grid>
+                    <Form handleSubmit={addPaywallClass}>
                         <Grid container>
-                            <Grid className={classes.updateSourceFormCell} item xs={12} md={8}>
+                            <Grid item xs={8} md={10} className={classes.updateSourceFormCell}>
                                 <PrimaryTextField
-                                    id="title"
+                                    id="paywall-classes"
                                     className={classes.updateSourceFormInput}
-                                    label="Title"
+                                    label="Add Paywall Classes"
                                     variant="outlined"
-                                    defaultValue={title}
-                                    onChange={handleTitleChange} />
+                                    value={paywallClassInput}
+                                    onChange={handlePaywallClassInputChange} />
                             </Grid>
-                            <Grid className={classes.updateSourceFormCell} item xs={6} md={4}>
-                                <Autocomplete
-                                    id="language-selector"
-                                    onChange={handleLanguageCodeUpdate}
-                                    options={Object.values(WordsmithLanguageCode)}
-                                    value={languageCode}
-                                    getOptionLabel={(option: WordsmithLanguageCode) => getEnglishNameForLanguageCode(option)}
-                                    getOptionSelected={(option: WordsmithLanguageCode) => option === languageCode}
-                                    renderInput={(params) => <PrimaryTextField label="Select Language Code" {...params} />} />
-                            </Grid>
-                            <Grid className={classes.updateSourceFormCell} item xs={12} md={8}>
-                                <PrimaryTextField
-                                    id="url"
-                                    className={classes.updateSourceFormInput}
-                                    label="URL"
-                                    variant="outlined"
-                                    defaultValue={url}
-                                    onChange={handleURLChange} />
-                            </Grid>
-                            <Grid className={classes.updateSourceFormCell} item xs={6} md={4}>
-                                <FormControlLabel
-                                    control={
-                                        <PrimaryCheckbox
-                                            checked={shouldUseURLAsSeedURL}
-                                            onChange={() => { setShouldUseURLAsSeedURL(!shouldUseURLAsSeedURL) }}
-                                            name="checkbox-is-seed-url" />
-                                    }
-                                    label="Should use URL as seed URL??" />
-                            </Grid>
-                            <Grid className={classes.updateSourceFormCell} item xs={6} md={4}>
-                                <Autocomplete
-                                    id="country-code-selector"
-                                    onChange={handleCountyCodeUpdate}
-                                    options={Object.values(CountryCode)}
-                                    value={countryCode}
-                                    getOptionLabel={(option: CountryCode) => getEnglishNameForCountryCode(option)}
-                                    getOptionSelected={(option: CountryCode) => option === countryCode}
-                                    renderInput={(params) => <PrimaryTextField label="Select Country" {...params} />} />
-                            </Grid>
-                            <Grid className={classes.updateSourceFormCell} item xs={6} md={4}>
-                                <Autocomplete
-                                    id="source-type-selector"
-                                    onChange={handleSourceTypeSelectorUpdate}
-                                    options={Object.values(SourceType)}
-                                    value={sourceType}
-                                    getOptionLabel={(option: SourceType) => option}
-                                    getOptionSelected={(option: SourceType) => option === sourceType}
-                                    renderInput={(params) => <PrimaryTextField label="Select Source Type" {...params} />} />
-                            </Grid>
-                            <Grid className={classes.updateSourceFormCell} item xs={6} md={4}>
-                                <Autocomplete
-                                    id="ingest-strategy-selector"
-                                    onChange={handleIngestStrategySelectorUpdate}
-                                    options={Object.values(IngestStrategy)}
-                                    value={ingestStrategy}
-                                    getOptionLabel={(option: IngestStrategy) => option}
-                                    getOptionSelected={(option: IngestStrategy) => option === ingestStrategy}
-                                    renderInput={(params) => <PrimaryTextField label="Select Ingest Strategy" {...params} />} />
-                            </Grid>
-                            <Grid className={classes.updateSourceFormCell} item xs={12} md={5}>
-                                <PrimaryTextField
-                                    id="monthly-access-limit"
-                                    label="Monthly Access Limit"
-                                    className={classes.updateSourceFormInput}
-                                    variant="outlined"
-                                    type="number"
-                                    defaultValue={monthlyAccessLimit}
-                                    onChange={handleMonthlyAccessLimitChange} />
-                            </Grid>
-                            <Grid className={classes.updateSourceFormCell} item xs={3}>
-                                <FormControlLabel
-                                    control={
-                                        <PrimaryCheckbox
-                                            checked={isActive}
-                                            onChange={() => { setIsActive(!isActive) }}
-                                            name="checkbox-is-active" />
-                                    }
-                                    label="Is Active?" />
-                            </Grid>
-                            <Grid className={classes.updateSourceFormCell} item xs={3} md={4}>
-                                <PrimaryButton disabled={!url || !sourceType || !languageCode || !ingestStrategy || !countryCode} type="submit">
-                                    Update
+                            <Grid item xs={4} md={2} className={classes.updateSourceFormCell}>
+                                <PrimaryButton disabled={!paywallClassInput} type="submit">
+                                    Add
                                 </PrimaryButton>
                             </Grid>
                         </Grid>
                     </Form>
+                    <Grid item xs={12}>
+                            {
+                                paywallClasses.map((paywallClass: string, idx: number) => (
+                                    <Grid container
+                                        className={classes.alignedContainer}>
+                                        <Grid item xs={10} md={11}>
+                                            <Paragraph align={Alignment.Left}>
+                                                { paywallClass }
+                                            </Paragraph>
+                                        </Grid>
+                                        <Grid item xs={2} md={1}>
+                                            <ClearIcon
+                                                className={classes.removeContentTopicIcon}
+                                                onClick={() => {
+                                                    setPaywallClasses(paywallClasses.filter((p: string) => p !== paywallClass))
+                                                }}  />
+                                        </Grid>
+                                    </Grid>
+                                ))
+                            }
+                    </Grid>
+                    <Form handleSubmit={addPaywallID}>
+                        <Grid container>
+                            <Grid item xs={8} md={10} className={classes.updateSourceFormCell}>
+                                <PrimaryTextField
+                                    id="paywall-id"
+                                    className={classes.updateSourceFormInput}
+                                    label="Add Paywall IDs"
+                                    variant="outlined"
+                                    value={paywallIDInput}
+                                    onChange={handlePaywallIDInputChange} />
+                            </Grid>
+                            <Grid item xs={4} md={2} className={classes.updateSourceFormCell}>
+                                <PrimaryButton disabled={!paywallIDInput} type="submit">
+                                    Add
+                                </PrimaryButton>
+                            </Grid>
+                        </Grid>
+                    </Form>
+                    <Grid item xs={12}>
+                            {
+                                paywallIDs.map((paywallID: string, idx: number) => (
+                                    <Grid container
+                                        className={classes.alignedContainer}>
+                                        <Grid item xs={10} md={11}>
+                                            <Paragraph align={Alignment.Left}>
+                                                { paywallID }
+                                            </Paragraph>
+                                        </Grid>
+                                        <Grid item xs={2} md={1}>
+                                            <ClearIcon
+                                                className={classes.removeContentTopicIcon}
+                                                onClick={() => {
+                                                    setPaywallIDs(paywallIDs.filter((p: string) => p !== paywallID))
+                                                }}  />
+                                        </Grid>
+                                    </Grid>
+                                ))
+                            }
+                    </Grid>
+                    <PrimaryButton onClick={handleUpdateSourceFilter} type="submit">
+                        Update Source Filter
+                    </PrimaryButton>
                 </DisplayCard>
             </Grid>
-            <Grid item xs={false} md={3}>
-                &nbsp;
-            </Grid>
-        </Grid>
-    );
-}
+        );
+    },
+    (
+        ownProps: SourceFilterFormOwnProps,
+        onSuccess: (resp: SourceFilterFormApiProps) => void,
+        onError: (err: Error) => void
+    ) => getSourceFilterForSourceID({
+        sourceId: ownProps.sourceId,
+    },
+    (resp: GetSourceFilterForSourceIDResponse) => {
+        onSuccess({
+            ...resp,
+            hasLoaded: true,
+        });
+    },
+    onError),
+    false,
+);
 
 type SourceSeedsListOwnProps = {
     sourceId: string;
@@ -577,7 +790,7 @@ const SourceSeedDisplay = (props: SourceSeedDisplayProps) => {
                         </Grid>
                     </Grid>
                     <Paragraph color={TypographyColor.Primary} size={Size.Small}>
-                        Refresh after updating to see up-to-date topic mappings
+                        Refresh after updating to see up-to-date topic mappings because there’s a bug and I'm moving too quickly to fix it
                     </Paragraph>
                 </Form>
             </DisplayCard>

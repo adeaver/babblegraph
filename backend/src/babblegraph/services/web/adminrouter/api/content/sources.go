@@ -345,3 +345,64 @@ func upsertSourceSeedMappings(adminID admin.ID, r *router.Request) (interface{},
 		Success: true,
 	}, nil
 }
+
+type getSourceFilterForSourceIDRequest struct {
+	SourceID content.SourceID `json:"source_id"`
+}
+
+type getSourceFilterForSourceIDResponse struct {
+	SourceFilter *content.SourceFilter `json:"source_filter"`
+}
+
+func getSourceFilterForSourceID(adminID admin.ID, r *router.Request) (interface{}, error) {
+	var req getSourceFilterForSourceIDRequest
+	if err := r.GetJSONBody(&req); err != nil {
+		return nil, err
+	}
+	var sourceFilter *content.SourceFilter
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		var err error
+		sourceFilter, err = content.LookupSourceFilterForSource(tx, req.SourceID)
+		return err
+	}); err != nil {
+		return nil, err
+	}
+	return getSourceFilterForSourceIDResponse{
+		SourceFilter: sourceFilter,
+	}, nil
+}
+
+type upsertSourceFilterForSourceRequest struct {
+	SourceID            content.SourceID `json:"source_id"`
+	IsActive            bool             `json:"is_active"`
+	UseLDJSONValidation *bool            `json:"use_ld_json_validation,omitempty"`
+	PaywallClasses      []string         `json:"paywall_classes"`
+	PaywallIDs          []string         `json:"paywall_ids"`
+}
+
+type upsertSourceFilterForSourceResponse struct {
+	SourceFilterID content.SourceFilterID `json:"source_filter_id"`
+}
+
+func upsertSourceFilterForSource(adminID admin.ID, r *router.Request) (interface{}, error) {
+	var req upsertSourceFilterForSourceRequest
+	if err := r.GetJSONBody(&req); err != nil {
+		return nil, err
+	}
+	var sourceFilterID *content.SourceFilterID
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		var err error
+		sourceFilterID, err = content.UpsertSourceFilterForSource(tx, req.SourceID, content.UpsertSourceFilterForSourceInput{
+			IsActive:            req.IsActive,
+			UseLDJSONValidation: req.UseLDJSONValidation,
+			PaywallClasses:      req.PaywallClasses,
+			PaywallIDs:          req.PaywallIDs,
+		})
+		return err
+	}); err != nil {
+		return nil, err
+	}
+	return upsertSourceFilterForSourceResponse{
+		SourceFilterID: *sourceFilterID,
+	}, nil
+}
