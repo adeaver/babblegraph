@@ -256,10 +256,12 @@ type SourceFilter struct {
 type SourceSeedTopicMappingID string
 
 type dbSourceSeedTopicMapping struct {
-	ID           SourceSeedTopicMappingID `db:"_id"`
-	SourceSeedID SourceSeedID             `db:"source_seed_id"`
-	TopicID      TopicID                  `db:"topic_id"`
-	IsActive     bool                     `db:"is_active"`
+	ID             SourceSeedTopicMappingID `db:"_id"`
+	CreatedAt      time.Time                `db:"created_at"`
+	LastModifiedAt time.Time                `db:"last_modified_at"`
+	SourceSeedID   SourceSeedID             `db:"source_seed_id"`
+	TopicID        TopicID                  `db:"topic_id"`
+	IsActive       bool                     `db:"is_active"`
 }
 
 func (d dbSourceSeedTopicMapping) ToNonDB() SourceSeedTopicMapping {

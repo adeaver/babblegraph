@@ -276,3 +276,72 @@ func updateSourceSeed(adminID admin.ID, r *router.Request) (interface{}, error) 
 		Success: true,
 	}, nil
 }
+
+type getSourceSourceSeedMappingsForSourceRequest struct {
+	SourceID content.SourceID `json:"source_id"`
+}
+
+type getSourceSourceSeedMappingsForSourceResponse struct {
+	SourceSeedMappings []content.SourceSeedTopicMapping `json:"source_seed_mappings"`
+}
+
+func getSourceSourceSeedMappingsForSource(adminID admin.ID, r *router.Request) (interface{}, error) {
+	var req getSourceSourceSeedMappingsForSourceRequest
+	if err := r.GetJSONBody(&req); err != nil {
+		return nil, err
+	}
+	var sourceSeedMappings []content.SourceSeedTopicMapping
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		sourceSeeds, err := content.GetAllSourceSeedsForSource(tx, req.SourceID)
+		if err != nil {
+			return err
+		}
+		var sourceSeedIDs []content.SourceSeedID
+		for _, s := range sourceSeeds {
+			sourceSeedIDs = append(sourceSeedIDs, s.ID)
+		}
+		sourceSeedMappings, err = content.GetAllSourceSeedTopicMappings(tx, sourceSeedIDs)
+		return err
+	}); err != nil {
+		return nil, err
+	}
+	return getSourceSourceSeedMappingsForSourceResponse{
+		SourceSeedMappings: sourceSeedMappings,
+	}, nil
+}
+
+type sourceSeedMappingsUpdate struct {
+	SourceSeedID content.SourceSeedID `json:"source_seed_id"`
+	TopicIDs     []content.TopicID    `json:"topic_ids"`
+	IsActive     bool                 `json:"is_active"`
+}
+
+type upsertSourceSeedMappingsRequest struct {
+	Updates []sourceSeedMappingsUpdate `json:"updates"`
+}
+
+type upsertSourceSeedMappingsResponse struct {
+	Success bool `json:"success"`
+}
+
+func upsertSourceSeedMappings(adminID admin.ID, r *router.Request) (interface{}, error) {
+	var req upsertSourceSeedMappingsRequest
+	if err := r.GetJSONBody(&req); err != nil {
+		return nil, err
+	}
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		for _, u := range req.Updates {
+			for _, t := range u.TopicIDs {
+				if err := content.UpsertSourceSeedMapping(tx, u.SourceSeedID, t, u.IsActive); err != nil {
+					return err
+				}
+			}
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	return upsertSourceSeedMappingsResponse{
+		Success: true,
+	}, nil
+}

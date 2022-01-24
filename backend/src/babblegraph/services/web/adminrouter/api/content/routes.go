@@ -99,6 +99,18 @@ var Routes = router.RouteGroup{
 				admin.PermissionEditContentSources,
 				updateSourceSeed,
 			),
+		}, {
+			Path: "upsert_source_seed_mappings_1",
+			Handler: middleware.WithPermission(
+				admin.PermissionEditContentSources,
+				upsertSourceSeedMappings,
+			),
+		}, {
+			Path: "get_source_seed_mappings_for_source_1",
+			Handler: middleware.WithPermission(
+				admin.PermissionEditContentSources,
+				getSourceSourceSeedMappingsForSource,
+			),
 		},
 	},
 }

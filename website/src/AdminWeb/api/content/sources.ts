@@ -30,6 +30,13 @@ export type SourceSeed = {
     isActive: boolean;
 }
 
+export type SourceSeedTopicMapping = {
+	id: string;
+	sourceSeedId: string;
+	topicId: string;
+	isActive: boolean;
+}
+
 export type GetAllSourcesRequest = {}
 
 export type GetAllSourcesResponse = {
@@ -189,6 +196,54 @@ export function updateSourceSeed(
 ) {
     makePostRequestWithStandardEncoding<UpdateSourceSeedRequest, UpdateSourceSeedResponse>(
         '/ops/api/content/update_source_seed_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}
+
+export type GetSourceSourceSeedMappingsForSourceRequest = {
+    sourceId: string;
+}
+
+export type GetSourceSourceSeedMappingsForSourceResponse = {
+    sourceSeedMappings: Array<SourceSeedTopicMapping>;
+}
+
+export function getSourceSourceSeedMappingsForSource(
+    req: GetSourceSourceSeedMappingsForSourceRequest,
+    onSuccess: (resp: GetSourceSourceSeedMappingsForSourceResponse) => void,
+    onError: (e: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<GetSourceSourceSeedMappingsForSourceRequest, GetSourceSourceSeedMappingsForSourceResponse>(
+        '/ops/api/content/get_source_seed_mappings_for_source_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}
+
+export type SourceSeedMappingsUpdate = {
+    sourceSeedId: string;
+    isActive: boolean;
+    topicIds: Array<string>;
+}
+
+export type UpsertSourceSeedMappingsRequest = {
+    updates: Array<SourceSeedMappingsUpdate>;
+}
+
+export type UpsertSourceSeedMappingsResponse = {
+    success: boolean;
+}
+
+export function upsertSourceSeedMappings(
+    req: UpsertSourceSeedMappingsRequest,
+    onSuccess: (resp: UpsertSourceSeedMappingsResponse) => void,
+    onError: (e: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<UpsertSourceSeedMappingsRequest, UpsertSourceSeedMappingsResponse>(
+        '/ops/api/content/upsert_source_seed_mappings_1',
         req,
         onSuccess,
         onError,

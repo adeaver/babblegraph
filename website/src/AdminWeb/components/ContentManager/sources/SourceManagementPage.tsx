@@ -5,11 +5,13 @@ import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 import Autocomplete from '@material-ui/lab/Autocomplete';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
+import ClearIcon from '@material-ui/icons/Clear';
 
 import { asBaseComponent, BaseComponentProps } from 'AdminWeb/common/Base/BaseComponent';
 import DisplayCard from 'common/components/DisplayCard/DisplayCard';
-import { Heading1, Heading3 } from 'common/typography/Heading';
-import { TypographyColor } from 'common/typography/common';
+import Color from 'common/styles/colors';
+import { Heading1, Heading3, Heading5 } from 'common/typography/Heading';
+import { Alignment, TypographyColor } from 'common/typography/common';
 import Paragraph from 'common/typography/Paragraph';
 import { PrimaryButton } from 'common/components/Button/Button';
 import { PrimaryTextField } from 'common/components/TextField/TextField';
@@ -21,6 +23,7 @@ import { CountryCode, getEnglishNameForCountryCode } from 'common/model/geo/geo'
 import {
     Source,
     SourceSeed,
+    SourceSeedTopicMapping,
     SourceType,
     IngestStrategy,
 
@@ -33,7 +36,19 @@ import {
     GetAllSourceSeedsForSourceResponse,
     addSourceSeed,
     AddSourceSeedResponse,
+
+    upsertSourceSeedMappings,
+    UpsertSourceSeedMappingsResponse,
+
+    getSourceSourceSeedMappingsForSource,
+    GetSourceSourceSeedMappingsForSourceResponse,
 } from 'AdminWeb/api/content/sources';
+import {
+    Topic,
+
+    getAllContentTopics,
+    GetAllContentTopicsResponse,
+} from 'AdminWeb/api/content/topic';
 
 const styleClasses = makeStyles({
     updateSourceFormCell: {
@@ -52,6 +67,16 @@ const styleClasses = makeStyles({
         display: 'flex',
         alignItems: 'center',
     },
+    sourceSeedDisplayContainer: {
+        padding: '5px',
+    },
+    alignedContainer: {
+        display: 'flex',
+        alignItems: 'center',
+    },
+    removeContentTopicIcon: {
+        color: Color.Warning,
+    },
 });
 
 type Params = {
@@ -60,8 +85,13 @@ type Params = {
 
 type SourceManagementPageOwnProps = RouteComponentProps<Params>;
 
-const SourceManagementPage = asBaseComponent<GetSourceByIDResponse, SourceManagementPageOwnProps>(
-    (props: BaseComponentProps & GetSourceByIDResponse & SourceManagementPageOwnProps) => {
+type SourceManagementPageProps = {
+    source: Source,
+    allTopics: Array<Topic>;
+}
+
+const SourceManagementPage = asBaseComponent<SourceManagementPageProps, SourceManagementPageOwnProps>(
+    (props: BaseComponentProps & SourceManagementPageProps & SourceManagementPageOwnProps) => {
         if (!props.source) {
             return <div />;
         }
@@ -76,19 +106,30 @@ const SourceManagementPage = asBaseComponent<GetSourceByIDResponse, SourceManage
                     setError={props.setError}
                     source={props.source} />
                 <SourceSeedsList
+                    allTopics={props.allTopics}
                     sourceId={props.source.id} />
             </div>
         );
     },
     (
         ownProps: SourceManagementPageOwnProps,
-        onSuccess: (resp: GetSourceByIDResponse) => void,
+        onSuccess: (resp: SourceManagementPageProps) => void,
         onError: (err: Error) => void,
     ) => {
         getSourceByID({
             id: ownProps.match.params.id,
         },
-        onSuccess,
+        (resp: GetSourceByIDResponse) => {
+            const source = resp.source;
+            getAllContentTopics({},
+            (resp: GetAllContentTopicsResponse) => {
+                onSuccess({
+                    source: source,
+                    allTopics: resp.topics,
+                });
+            },
+            onError);
+        },
         onError)
     },
     true
@@ -280,12 +321,22 @@ const UpdateSourceForm = (props: UpdateSourceFormProps) => {
 
 type SourceSeedsListOwnProps = {
     sourceId: string;
+    allTopics: Array<Topic>;
 }
 
-const SourceSeedsList = asBaseComponent<GetAllSourceSeedsForSourceResponse, SourceSeedsListOwnProps>(
-    (props: BaseComponentProps & GetAllSourceSeedsForSourceResponse & SourceSeedsListOwnProps) => {
-        const [ newSourceSeeds, setNewSourceSeeds ] = useState<Array<SourceSeed>>([]);
+type SourceSeedListApiProps = GetAllSourceSeedsForSourceResponse &  GetSourceSourceSeedMappingsForSourceResponse;
 
+const SourceSeedsList = asBaseComponent<SourceSeedListApiProps, SourceSeedsListOwnProps>(
+    (props: BaseComponentProps & SourceSeedListApiProps & SourceSeedsListOwnProps) => {
+
+        const sourceSeedMappingsBySourceSeedID = (props.sourceSeedMappings || []).reduce(
+            (acc: { [key: string]: Array<SourceSeedTopicMapping> }, s: SourceSeedTopicMapping) => ({
+                ...acc,
+                [s.sourceSeedId]: (acc[s.sourceSeedId] || []).concat(s),
+            }),
+        {});
+
+        const [ newSourceSeeds, setNewSourceSeeds ] = useState<Array<SourceSeed>>([]);
         const handleNewSourceSeed = (s: SourceSeed) => {
             setNewSourceSeeds(newSourceSeeds.concat(s));
         }
@@ -313,11 +364,13 @@ const SourceSeedsList = asBaseComponent<GetAllSourceSeedsForSourceResponse, Sour
                 </Grid>
                 {
                     sourceSeeds.map((s: SourceSeed, idx: number) => (
-                        <Grid item xs={4}>
-                            <Paragraph>
-                                {s.url}
-                            </Paragraph>
-                        </Grid>
+                        <SourceSeedDisplay
+                            key={`source-seed-display-${idx}`}
+                            sourceSeed={s}
+                            topicMappings={sourceSeedMappingsBySourceSeedID[s.id] || []}
+                            allTopics={props.allTopics}
+                            setIsLoading={props.setIsLoading}
+                            setError={props.setError} />
                     ))
                 }
             </Grid>
@@ -325,9 +378,25 @@ const SourceSeedsList = asBaseComponent<GetAllSourceSeedsForSourceResponse, Sour
     },
     (
         ownProps: SourceSeedsListOwnProps,
-        onSuccess: (resp: GetAllSourceSeedsForSourceResponse) => void,
+        onSuccess: (resp: SourceSeedListApiProps) => void,
         onError: (err: Error) => void
-    ) => getAllSourceSeedsForSource({ sourceId: ownProps.sourceId }, onSuccess, onError),
+    ) => getAllSourceSeedsForSource({
+        sourceId: ownProps.sourceId
+        },
+        (resp: GetAllSourceSeedsForSourceResponse) => {
+            const sourceSeeds = resp.sourceSeeds;
+            getSourceSourceSeedMappingsForSource({
+                sourceId: ownProps.sourceId,
+            },
+            (resp: GetSourceSourceSeedMappingsForSourceResponse) => {
+                onSuccess({
+                    ...resp,
+                    sourceSeeds: sourceSeeds,
+                })
+            },
+            onError);
+        },
+        onError),
     false
 );
 
@@ -386,6 +455,130 @@ const AddNewSourceSeedForm = (props: AddNewSourceSeedFormProps) => {
                 </Grid>
             </Grid>
         </Form>
+    );
+}
+
+type SourceSeedDisplayProps = {
+    sourceSeed: SourceSeed;
+    allTopics: Array<Topic>;
+    topicMappings: Array<SourceSeedTopicMapping>;
+
+    setIsLoading: (isLoading: boolean) => void;
+    setError: (err: Error) => void;
+}
+
+const SourceSeedDisplay = (props: SourceSeedDisplayProps) => {
+    const [ url, setURL ] = useState<string>(props.sourceSeed.url);
+    const handleURLChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setURL((event.target as HTMLInputElement).value);
+    }
+    const [ isActive, setIsActive ] = useState<boolean>(props.sourceSeed.isActive);
+
+    const [ activeTopicMappings, setActiveTopicMappings ] = useState<Array<Topic>>(
+        props.topicMappings
+            .filter((s: SourceSeedTopicMapping) => s.isActive && props.allTopics.some((t: Topic) => t.id === s.topicId))
+            .map((s: SourceSeedTopicMapping) => props.allTopics.reduce((acc: Topic | null, t: Topic) => t.id === s.topicId ? t : acc, null)!)
+    );
+    const [ inactiveTopicMappings, setInactiveTopicMappings ] = useState<Array<Topic>>(
+        props.topicMappings
+            .filter((s: SourceSeedTopicMapping) => !s.isActive && props.allTopics.some((t: Topic) => t.id === s.topicId))
+            .map((s: SourceSeedTopicMapping) => props.allTopics.reduce((acc: Topic | null, t: Topic) => t.id === s.topicId ? t : acc, null)!)
+);
+    const handleTopicMappingsSelectorUpdate = (_: React.ChangeEvent<HTMLSelectElement>, selectedTopic: Topic) => {
+        setActiveTopicMappings(activeTopicMappings.concat(selectedTopic));
+        setInactiveTopicMappings(inactiveTopicMappings.filter((t: Topic) => t !== selectedTopic));
+    }
+
+    const handleSubmit = () => {
+        props.setIsLoading(true);
+        const updates = [{
+            sourceSeedId: props.sourceSeed.id,
+            isActive: true,
+            topicIds: activeTopicMappings.map((t: Topic) => t.id),
+        }, {
+            sourceSeedId: props.sourceSeed.id,
+            isActive: false,
+            topicIds: inactiveTopicMappings.map((t: Topic) => t.id),
+        }];
+        upsertSourceSeedMappings({
+            updates: updates,
+        },
+        (resp: UpsertSourceSeedMappingsResponse) => {
+            props.setIsLoading(false);
+        },
+        (err: Error) => {
+            props.setIsLoading(false);
+            props.setError(err);
+        });
+    }
+
+    const classes = styleClasses();
+    return (
+        <Grid className={classes.sourceSeedDisplayContainer} item xs={4}>
+            <DisplayCard>
+                <Form handleSubmit={handleSubmit}>
+                    <Grid container>
+                        <Grid className={classes.updateSourceFormCell} item xs={12} md={8}>
+                            <PrimaryTextField
+                                id="url"
+                                className={classes.updateSourceFormInput}
+                                label="URL"
+                                variant="outlined"
+                                defaultValue={url}
+                                onChange={handleURLChange} />
+                        </Grid>
+                        <Grid className={classes.updateSourceFormCell} item xs={6} md={4}>
+                            <FormControlLabel
+                                control={
+                                    <PrimaryCheckbox
+                                        checked={isActive}
+                                        onChange={() => { setIsActive(!isActive) }}
+                                        name="checkbox-is-active" />
+                                }
+                                label="Active?" />
+                        </Grid>
+                        <Heading5 color={TypographyColor.Primary}>
+                            Topic Mappings
+                        </Heading5>
+                        <Grid item xs={12}>
+                            {
+                                activeTopicMappings.map((topic: Topic, idx: number) => (
+                                    <Grid container
+                                        className={classes.alignedContainer}>
+                                        <Grid item xs={10} md={11}>
+                                            <Paragraph align={Alignment.Left}>
+                                                { topic.label }
+                                            </Paragraph>
+                                        </Grid>
+                                        <Grid item xs={2} md={1}>
+                                            <ClearIcon
+                                                className={classes.removeContentTopicIcon}
+                                                onClick={() => {
+                                                    setActiveTopicMappings(activeTopicMappings.filter((t: Topic) => t !== topic))
+                                                    setInactiveTopicMappings(inactiveTopicMappings.concat(topic));
+                                                }}  />
+                                        </Grid>
+                                    </Grid>
+                                ))
+                            }
+                        </Grid>
+                        <Grid item xs={12}>
+                            <Autocomplete
+                                id="topic-mapping-selector"
+                                onChange={handleTopicMappingsSelectorUpdate}
+                                options={props.allTopics.filter((topic: Topic) => activeTopicMappings.indexOf(topic) === -1)}
+                                getOptionLabel={(option: Topic) => option.label}
+                                renderInput={(params) => <PrimaryTextField label="Add Topic" {...params} />} />
+                        </Grid>
+                        <Grid className={classes.updateSourceFormCell} item xs={3} md={4}>
+                            <PrimaryButton disabled={!url} type="submit">
+                                Update
+                            </PrimaryButton>
+                        </Grid>
+                    </Grid>
+                </Form>
+            </DisplayCard>
+        </Grid>
     );
 }
 

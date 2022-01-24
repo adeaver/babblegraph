@@ -76,12 +76,12 @@ const getLemmasByIDs = "SELECT * FROM lemmas WHERE _id IN (?)"
 func GetLemmasByIDs(tx *sqlx.Tx, ids []LemmaID) ([]Lemma, error) {
 	query, args, err := sqlx.In(getLemmasByIDs, ids)
 	if err != nil {
-		return nil, nil
+		return nil, err
 	}
 	sql := tx.Rebind(query)
 	var matches []dbLemma
 	if err := tx.Select(&matches, sql, args...); err != nil {
-		return nil, nil
+		return nil, err
 	}
 	var out []Lemma
 	for _, match := range matches {
