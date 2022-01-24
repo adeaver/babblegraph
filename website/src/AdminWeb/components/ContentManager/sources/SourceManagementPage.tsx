@@ -511,6 +511,9 @@ const SourceFilterForm = asBaseComponent<SourceFilterFormApiProps, SourceFilterF
                     <PrimaryButton onClick={handleUpdateSourceFilter} type="submit">
                         Update Source Filter
                     </PrimaryButton>
+                    <Paragraph color={TypographyColor.Primary} size={Size.Small}>
+                        Refresh after updating to see up-to-date topic mappings because there’s a bug and I'm moving too quickly to fix it
+                    </Paragraph>
                 </DisplayCard>
             </Grid>
         );
