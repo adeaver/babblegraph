@@ -111,6 +111,18 @@ var Routes = router.RouteGroup{
 				admin.PermissionEditContentSources,
 				getSourceSourceSeedMappingsForSource,
 			),
+		}, {
+			Path: "get_source_filter_for_source_1",
+			Handler: middleware.WithPermission(
+				admin.PermissionEditContentSources,
+				getSourceFilterForSourceID,
+			),
+		}, {
+			Path: "upsert_source_filter_for_source_1",
+			Handler: middleware.WithPermission(
+				admin.PermissionEditContentSources,
+				upsertSourceFilterForSource,
+			),
 		},
 	},
 }

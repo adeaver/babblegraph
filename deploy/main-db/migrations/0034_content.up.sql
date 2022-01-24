@@ -74,7 +74,6 @@ CREATE TABLE IF NOT EXISTS content_source_filter(
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()),
     last_modified_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()),
     root_id uuid NOT NULL REFERENCES content_source(_id),
-    url TEXT NOT NULL,
     is_active BOOLEAN NOT NULL,
     use_ld_json_validation BOOLEAN,
     paywall_classes TEXT,
