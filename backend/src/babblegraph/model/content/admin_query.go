@@ -56,6 +56,15 @@ const (
 	getAllSourceSeedsForSourceQuery = "SELECT * FROM content_source_seed WHERE root_id = $1"
 	addSourceSeedQuery              = "INSERT INTO content_source_seed (root_id, url, is_active) VALUES ($1, $2, $3) RETURNING _id"
 	updateSourceSeedQuery           = "UPDATE content_source_seed SET url=$1, is_active=$2 WHERE _id = $3"
+
+	getAllSourceSeedTopicMappingsQuery = "SELECT * FROM content_source_seed_topic_mapping WHERE source_seed_id IN (?)"
+	upsertSourceSeedTopicMapping       = `INSERT INTO
+        content_source_seed_topic_mapping (
+            source_seed_id, topic_id, is_active
+        ) VALUES ($1, $2, $3) ON CONFLICT
+        (source_seed_id, topic_id) DO UPDATE
+        SET is_active = $3
+    `
 )
 
 func GetAllTopics(tx *sqlx.Tx) ([]Topic, error) {
@@ -257,6 +266,30 @@ func AddSourceSeed(tx *sqlx.Tx, sourceID SourceID, u urlparser.ParsedURL, isActi
 
 func UpdateSourceSeed(tx *sqlx.Tx, sourceSeedID SourceSeedID, u urlparser.ParsedURL, isActive bool) error {
 	if _, err := tx.Exec(updateSourceSeedQuery, u.URL, isActive, sourceSeedID); err != nil {
+		return err
+	}
+	return nil
+}
+
+func GetAllSourceSeedTopicMappings(tx *sqlx.Tx, sourceSeedIDs []SourceSeedID) ([]SourceSeedTopicMapping, error) {
+	query, args, err := sqlx.In(getAllSourceSeedTopicMappingsQuery, sourceSeedIDs)
+	if err != nil {
+		return nil, err
+	}
+	sql := tx.Rebind(query)
+	var matches []dbSourceSeedTopicMapping
+	if err := tx.Select(&matches, sql, args...); err != nil {
+		return nil, err
+	}
+	var out []SourceSeedTopicMapping
+	for _, m := range matches {
+		out = append(out, m.ToNonDB())
+	}
+	return out, nil
+}
+
+func UpsertSourceSeedMapping(tx *sqlx.Tx, sourceSeedID SourceSeedID, topicID TopicID, isActive bool) error {
+	if _, err := tx.Exec(upsertSourceSeedTopicMapping, sourceSeedID, topicID, isActive); err != nil {
 		return err
 	}
 	return nil
