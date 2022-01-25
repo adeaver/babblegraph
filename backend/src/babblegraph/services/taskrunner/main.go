@@ -30,6 +30,7 @@ func main() {
         sync-stripe: sync failed stripe events
         product-updates: send product updates
         content-topics-length-backfill: backfill content topics length
+        admin-content-backfill: backfill all admin content
         create-admin: create admin`)
 	userEmail := flag.String("user-email", "none", "Email address of user to create")
 	flag.Parse()
@@ -92,6 +93,10 @@ func main() {
 			log.Fatal("no email specified")
 		}
 		if err := tasks.CreateAdminAndEmitToken(*userEmail); err != nil {
+			log.Fatal(err.Error())
+		}
+	case "admin-content-backfill":
+		if err := tasks.SyncHardcodedContent(); err != nil {
 			log.Fatal(err.Error())
 		}
 	default:
