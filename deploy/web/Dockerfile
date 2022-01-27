@@ -16,6 +16,7 @@ COPY website/dist/index.html ./dist
 COPY website/dist/blog_index.html ./dist
 COPY website/dist/ops_index.html ./dist
 COPY website/dist/logo.png ./dist
+COPY website/dist/favicon.ico ./dist
 COPY website/src ./src
 COPY website/webpack.common.js .
 COPY website/webpack.prod.js .
@@ -58,6 +59,7 @@ COPY --chown=$SERVICE_USER:$SERVICE_USER --from=frontend-builder /usr/app/dist/i
 COPY --chown=$SERVICE_USER:$SERVICE_USER --from=frontend-builder /usr/app/dist/blog_index.html ./static
 COPY --chown=$SERVICE_USER:$SERVICE_USER --from=frontend-builder /usr/app/dist/ops_index.html ./static
 COPY --chown=$SERVICE_USER:$SERVICE_USER --from=frontend-builder /usr/app/dist/logo.png ./static
+COPY --chown=$SERVICE_USER:$SERVICE_USER --from=frontend-builder /usr/app/dist/favicon.ico ./static
 
 COPY --chown=$SERVICE_USER:$SERVICE_USER --from=backend-builder /usr/local/go/bin/web .
 COPY --from=backend-builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt

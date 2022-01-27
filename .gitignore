@@ -13,9 +13,7 @@ website/dist/*
 !website/dist/blog_index.html
 !website/dist/index.html
 !website/dist/logo.png
-!website/dist/home-page.jpg
-!website/dist/reinforcement-example.png
-!website/dist/topics-example.png
+!website/dist/favicon.ico
 
 # Ops
 ops/wordsmith/setup/out/**

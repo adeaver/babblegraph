@@ -159,7 +159,7 @@
                                         </h2>
                                         {{if .Body.LemmaReinforcementSpotlight.Document.ImageURL}}
                                             <a href="{{.Body.LemmaReinforcementSpotlight.Document.URL}}" target="_blank" style="display: inline-block; cursor: pointer; text-decoration: none; margin: 0;">
-                                                <img src="{{.Body.LemmaReinforcementSpotlight.Document.ImageURL}}" alt="" width="100%" height="auto" />
+                                                <img src="{{.Body.LemmaReinforcementSpotlight.Document.ImageURL}}" style="width: 100%; height: auto; border: 0;" alt="" border="0" width="100%" height="auto" />
                                             </a>
                                             {{end}}
                                         <a href="{{.Body.LemmaReinforcementSpotlight.Document.URL}}" target="_blank" style="display: inline-block; color: #A663CC; cursor: pointer; text-decoration: none; font-size: 14px; font-weight: bold; margin: 0; padding: 12px 25px; text-transform: capitalize;">{{if .Body.LemmaReinforcementSpotlight.Document.Title}}{{.Body.LemmaReinforcementSpotlight.Document.Title}}{{else}}{{.Body.LemmaReinforcementSpotlight.Document.URL}}{{end}}</a>
@@ -202,7 +202,7 @@
                                               <td style="font-family: sans-serif; font-size: 14px; vertical-align: top; text-align: center;">
                                                 {{if $page.ImageURL}}
                                                     <a href="{{$page.URL}}" target="_blank" style="display: inline-block; cursor: pointer; text-decoration: none; margin: 0;">
-                                                        <img src="{{$page.ImageURL}}" alt="" width="100%" height="auto" />
+                                                        <img src="{{$page.ImageURL}}" style="width: 100%; height: auto; border: 0;" alt="" border="0" width="100%" height="auto" />
                                                     </a>
                                                     {{end}}
                                                 <a href="{{$page.URL}}" target="_blank" style="display: inline-block; color: #A663CC; cursor: pointer; text-decoration: none; font-size: 14px; font-weight: bold; margin: 0; padding: 12px 25px; text-transform: capitalize;">{{if $page.Title}}{{$page.Title}}{{else}}{{$page.URL}}{{end}}</a>
@@ -213,7 +213,7 @@
                                                   <tbody>
                                                     <tr>
                                                       <td style="font-family: sans-serif; font-size: 14px; vertical-align: top; text-align: center;">
-                                                        <img src="{{$page.Domain.FlagAsset}}" alt="" style="display: block; margin: auto;" width="auto" height="14px" />
+                                                        <img src="{{$page.Domain.FlagAsset}}" alt="" style="display: block; margin: auto; width: 21px; height: 14px; border: 0;" width="21" height="14" border="0" />
 
                                                         <p style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; Margin-bottom: 15px;">{{ $page.Domain.Name}}</p>
 
