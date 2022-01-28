@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS content_source(
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS content_source_url ON content_source(url);
+CREATE INDEX IF NOT EXISTS content_source_title ON content_source(title);
 
 CREATE TABLE IF NOT EXISTS content_source_topic_mapping(
     _id uuid DEFAULT uuid_generate_v4 (),

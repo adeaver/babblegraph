@@ -68,6 +68,10 @@ type TopicDisplayName struct {
 
 type SourceID string
 
+func (s SourceID) Ptr() *SourceID {
+	return &s
+}
+
 type dbSource struct {
 	ID                    SourceID               `db:"_id"`
 	CreatedAt             time.Time              `db:"created_at"`
