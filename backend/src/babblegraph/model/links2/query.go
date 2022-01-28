@@ -1,6 +1,7 @@
 package links2
 
 import (
+	"babblegraph/model/content"
 	"babblegraph/util/database"
 	"babblegraph/util/ptr"
 	"babblegraph/util/urlparser"
@@ -30,13 +31,20 @@ func GetDomainsWithUnfetchedLinks(tx *sqlx.Tx) ([]string, error) {
 const insertLinkQuery = "INSERT INTO links2 (url_identifier, domain, url) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING"
 
 func InsertLinks(tx *sqlx.Tx, urls []urlparser.ParsedURL) error {
-	queryBuilder, err := database.NewBulkInsertQueryBuilder("links2", "url_identifier", "domain", "url")
+	queryBuilder, err := database.NewBulkInsertQueryBuilder("links2", "url_identifier", "domain", "url", "source_id")
 	if err != nil {
 		return err
 	}
 	queryBuilder.AddConflictResolution("DO NOTHING")
 	for _, u := range urls {
-		if err := queryBuilder.AddValues(u.URLIdentifier, u.Domain, u.URL); err != nil {
+		sourceID, err := content.LookupSourceIDForParsedURL(tx, u)
+		switch {
+		case err != nil:
+			return err
+		case sourceID == nil:
+			continue
+		}
+		if err := queryBuilder.AddValues(u.URLIdentifier, u.Domain, u.URL, *sourceID); err != nil {
 			log.Println(fmt.Sprintf("Error inserting url with identifier %s: %s", u.URLIdentifier, err.Error()))
 		}
 	}
