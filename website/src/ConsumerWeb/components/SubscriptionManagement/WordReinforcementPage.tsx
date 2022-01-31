@@ -129,7 +129,7 @@ const WordReinforcementPage = (props: WordReinforcementPageProps) => {
         getLemmasMatchingText({
             languageCode: "es",
             token: token,
-            text: searchTerm.toLowerCase(),
+            text: searchTerm.toLowerCase().trim(),
         },
         (resp: GetLemmasMatchingTextResponse) => {
             setIsLoadingLemmas(false);
