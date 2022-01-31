@@ -82,7 +82,7 @@ func LookupBulkUnfetchedLinksForDomain(tx *sqlx.Tx, domain string, chunkSize int
 }
 
 func UpsertLinkWithEmptyFetchStatus(tx *sqlx.Tx, urls []urlparser.ParsedURL, includeTimestamp bool) error {
-	queryBuilder, err := database.NewBulkInsertQueryBuilder("links2", "url_identifier", "domain", "url", "seed_job_ingest_timestamp")
+	queryBuilder, err := database.NewBulkInsertQueryBuilder("links2", "url_identifier", "domain", "url", "source_id", "seed_job_ingest_timestamp")
 	if err != nil {
 		return err
 	}
@@ -92,6 +92,13 @@ func UpsertLinkWithEmptyFetchStatus(tx *sqlx.Tx, urls []urlparser.ParsedURL, inc
 		firstSeedFetchTimestamp = ptr.Int64(time.Now().Unix())
 	}
 	for _, u := range urls {
+		sourceID, err := content.LookupSourceIDForParsedURL(tx, u)
+		switch {
+		case err != nil:
+			return err
+		case sourceID == nil:
+			continue
+		}
 		if err := queryBuilder.AddValues(u.URLIdentifier, u.Domain, u.URL, firstSeedFetchTimestamp); err != nil {
 			log.Println(fmt.Sprintf("Error inserting url with identifier %s: %s", u.URLIdentifier, err.Error()))
 		}

@@ -283,3 +283,23 @@ type SourceSeedTopicMapping struct {
 	TopicID      TopicID                  `json:"topic_id"`
 	IsActive     bool                     `json:"is_active"`
 }
+
+// This ID represents the union between either a topic-source mapping or a topic-source seed mapping
+// since sources and source seeds can both contribute to topic mapping
+type TopicMappingID string
+
+type MakeTopicMappingIDInput struct {
+	SourceSeedTopicMappingID *SourceSeedTopicMappingID
+	SourceTopicMappingID     *SourceTopicMappingID
+}
+
+func MustMakeTopicMappingID(input MakeTopicMappingIDInput) TopicMappingID {
+	switch {
+	case input.SourceSeedTopicMappingID != nil:
+		return TopicMappingID(fmt.Sprintf("sourceseed-%s", input.SourceSeedTopicMappingID))
+	case input.SourceTopicMappingID != nil:
+		return TopicMappingID(fmt.Sprintf("source-%s", input.SourceTopicMappingID))
+	default:
+		panic("Neither source topic mapping or source seed topic mapping id are non-null")
+	}
+}
