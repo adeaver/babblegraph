@@ -1,6 +1,7 @@
 package documents
 
 import (
+	"babblegraph/model/content"
 	"babblegraph/model/contenttopics"
 	"babblegraph/util/ctx"
 	"babblegraph/util/elastic"
@@ -38,12 +39,14 @@ func (d documentIndex) GenerateIDForDocument(document interface{}) (*string, err
 
 type IndexDocumentInput struct {
 	URL                                urlparser.ParsedURL
+	SourceID                           *content.SourceID
 	Metadata                           map[string]string
 	Type                               Type
 	Version                            Version
 	LanguageCode                       wordsmith.LanguageCode
 	ReadabilityScore                   int64
 	Topics                             []contenttopics.ContentTopic
+	TopicMappingIDs                    []content.TopicMappingID
 	SeedJobIngestTimestamp             *int64
 	HasPaywall                         bool
 	LemmatizedDescription              *string
@@ -62,6 +65,7 @@ func AssignIDAndIndexDocument(c ctx.LogContext, input IndexDocumentInput) (*Docu
 		DocumentType:                       input.Type,
 		Domain:                             input.URL.Domain,
 		Topics:                             input.Topics,
+		TopicMappingIDs:                    input.TopicMappingIDs,
 		TopicsLength:                       ptr.Int64(int64(len(input.Topics))),
 		LemmatizedDescription:              input.LemmatizedDescription,
 		LemmatizedDescriptionIndexMappings: input.LemmatizedDescriptionIndexMappings,

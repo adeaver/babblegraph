@@ -1,12 +1,19 @@
 package links2
 
-import "time"
+import (
+	"babblegraph/model/content"
+	"babblegraph/util/urlparser"
+	"time"
+
+	"github.com/jmoiron/sqlx"
+)
 
 type URLIdentifier string
 
 type Link struct {
 	URLIdentifier    URLIdentifier
 	Domain           string
+	SourceID         *content.SourceID
 	URL              string
 	LastFetchVersion *FetchVersion
 	FetchedOn        *time.Time
@@ -16,6 +23,13 @@ type Link struct {
 	// IMPORTANT: The crawler should not populate this field.
 	// This is used as an approximation for publication date time.
 	SeedJobIngestTimestamp *int64
+}
+
+func (l *Link) GetSourceID(tx *sqlx.Tx) (*content.SourceID, error) {
+	if l.SourceID != nil {
+		return l.SourceID, nil
+	}
+	return content.GetSourceIDForParsedURL(tx, urlparser.MustParseURL(l.URL))
 }
 
 type FetchVersion int64
@@ -52,19 +66,21 @@ const (
 )
 
 type dbLink struct {
-	URLIdentifier          URLIdentifier `db:"url_identifier"`
-	Domain                 string        `db:"domain"`
-	URL                    string        `db:"url"`
-	LastFetchVersion       *FetchVersion `db:"last_fetch_version"`
-	FetchedOn              *time.Time    `db:"fetched_on"`
-	SeqNum                 int64         `db:"seq_num"`
-	SeedJobIngestTimestamp *int64        `db:"seed_job_ingest_timestamp"`
+	URLIdentifier          URLIdentifier     `db:"url_identifier"`
+	Domain                 string            `db:"domain"`
+	SourceID               *content.SourceID `db:"source_id"`
+	URL                    string            `db:"url"`
+	LastFetchVersion       *FetchVersion     `db:"last_fetch_version"`
+	FetchedOn              *time.Time        `db:"fetched_on"`
+	SeqNum                 int64             `db:"seq_num"`
+	SeedJobIngestTimestamp *int64            `db:"seed_job_ingest_timestamp"`
 }
 
 func (d dbLink) ToNonDB() Link {
 	return Link{
 		URLIdentifier:          d.URLIdentifier,
 		Domain:                 d.Domain,
+		SourceID:               d.SourceID,
 		URL:                    d.URL,
 		LastFetchVersion:       d.LastFetchVersion,
 		FetchedOn:              d.FetchedOn,

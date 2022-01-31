@@ -1,6 +1,7 @@
 package linkprocessing
 
 import (
+	"babblegraph/model/content"
 	"babblegraph/model/contenttopics"
 	"babblegraph/model/documents"
 	"babblegraph/model/domains"
@@ -302,10 +303,15 @@ func processSingleLink(threadComplete chan *links2.Link, addURLs chan []string, 
 			threadComplete <- link
 			return
 		}
+		var sourceID *content.SourceID
 		var topicsForURL []contenttopics.ContentTopic
 		if err := database.WithTx(func(tx *sqlx.Tx) error {
 			var err error
 			topicsForURL, err = contenttopics.GetTopicsForURL(tx, u)
+			if err != nil {
+				return err
+			}
+			sourceID, err = link.GetSourceID(tx)
 			return err
 		}); err != nil {
 			c.Warnf("Error getting topics for url %s: %s. Continuing...", u, err.Error())
@@ -319,6 +325,7 @@ func processSingleLink(threadComplete chan *links2.Link, addURLs chan []string, 
 			LanguageCode:           languageCode,
 			DocumentVersion:        documents.CurrentDocumentVersion,
 			URL:                    urlparser.MustParseURL(u),
+			SourceID:               sourceID,
 			TopicsForURL:           topicsForURL,
 			SeedJobIngestTimestamp: link.SeedJobIngestTimestamp,
 		})
