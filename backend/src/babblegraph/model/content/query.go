@@ -36,3 +36,7 @@ func LookupSourceIDForParsedURL(tx *sqlx.Tx, u urlparser.ParsedURL) (*SourceID, 
 		return matches[0].ID.Ptr(), nil
 	}
 }
+
+func LookupTopicMappingIDForURL(tx *sqlx.Tx, u urlparser.ParsedURL) (*TopicMappingID, error) {
+
+}

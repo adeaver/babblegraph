@@ -1,9 +1,9 @@
 package scheduler
 
 import (
-	"babblegraph/model/contenttopics"
 	"babblegraph/model/domains"
 	"babblegraph/model/links2"
+	"babblegraph/model/urltopicmapping"
 	"babblegraph/services/worker/ingesthtml"
 	"babblegraph/util/database"
 	"babblegraph/util/urlparser"
@@ -83,7 +83,8 @@ func processSeedURL(seedURL domains.SeedURL) error {
 			return nil
 		}
 		for _, u := range parsedURLs {
-			if err := contenttopics.ApplyContentTopicsToURL(tx, u.URL, seedURL.Topics); err != nil {
+			// TODO: fix this
+			if err := urltopicmapping.ApplyContentTopicsToURL(tx, u, seedURL.Topics); err != nil {
 				return err
 			}
 		}
