@@ -74,6 +74,7 @@ type dbSource struct {
 	LastModifiedAt        time.Time              `db:"last_modified_at"`
 	Title                 string                 `db:"title"`
 	URL                   string                 `db:"url"`
+	URLIdentifier         string                 `db:"url_identifier"`
 	Type                  SourceType             `db:"type"`
 	Country               geo.CountryCode        `db:"country"`
 	IngestStrategy        IngestStrategy         `db:"ingest_strategy"`
@@ -192,6 +193,7 @@ type dbSourceSeed struct {
 	LastModifiedAt time.Time    `db:"last_modified_at"`
 	RootID         SourceID     `db:"root_id"`
 	URL            string       `db:"url"`
+	URLIdentifier  string       `db:"url_identifier"`
 	IsActive       bool         `db:"is_active"`
 }
 
