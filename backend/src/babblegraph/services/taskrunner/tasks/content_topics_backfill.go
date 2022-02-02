@@ -1,9 +1,9 @@
 package tasks
 
 import (
-	"babblegraph/model/contenttopics"
 	"babblegraph/model/documents"
 	"babblegraph/model/links2"
+	"babblegraph/model/urltopicmapping"
 	"babblegraph/util/database"
 	"babblegraph/util/ptr"
 	"babblegraph/util/urlparser"
@@ -19,7 +19,7 @@ func BackfillContentTopicsLength() error {
 		err := links2.GetCursorForFetchVersion(tx, links2.FetchVersion7, func(link links2.Link) (bool, error) {
 			return false, database.WithTx(func(tx *sqlx.Tx) error {
 				log.Println(fmt.Sprintf("Processing document with URL %s", link.URL))
-				contentTopics, err := contenttopics.GetTopicsForURL(tx, link.URL)
+				contentTopics, err := urltopicmapping.GetTopicsForURL(tx, link.URL)
 				if err != nil {
 					log.Println(fmt.Sprintf("Document with URL %s has error getting content topics %s, skipping", link.URL, err.Error()))
 					countErrs++

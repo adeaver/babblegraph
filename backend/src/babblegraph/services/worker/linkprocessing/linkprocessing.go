@@ -6,6 +6,7 @@ import (
 	"babblegraph/model/documents"
 	"babblegraph/model/domains"
 	"babblegraph/model/links2"
+	"babblegraph/model/urltopicmapping"
 	"babblegraph/services/worker/indexing"
 	"babblegraph/services/worker/ingesthtml"
 	"babblegraph/services/worker/textprocessing"
@@ -244,8 +245,27 @@ func (l *LinkProcessor) startURLManager(addURLs chan []string) func(c async.Cont
 			}
 			for idx, u := range parsedURLs {
 				if len(contentTopics[idx]) > 0 {
-					if err := contenttopics.ApplyContentTopicsToURL(tx, u.URL, contentTopics[idx]); err != nil {
-						return err
+					var mappings []urltopicmapping.TopicMappingUnion
+					for _, t := range contentTopics[idx] {
+						topicID, err := content.GetTopicIDByContentTopic(tx, t)
+						if err != nil {
+							return err
+						}
+						topicMappingID, err := content.LookupTopicMappingIDForURL(tx, u, *topicID)
+						switch {
+						case err != nil:
+							return err
+						case topicMappingID != nil:
+							mappings = append(mappings, urltopicmapping.TopicMappingUnion{
+								Topic:          t,
+								TopicMappingID: *topicMappingID,
+							})
+						}
+					}
+					if len(mappings) != 0 {
+						if err := urltopicmapping.ApplyContentTopicsToURL(tx, u, mappings); err != nil {
+							return err
+						}
 					}
 				}
 			}
@@ -307,7 +327,7 @@ func processSingleLink(threadComplete chan *links2.Link, addURLs chan []string, 
 		var topicsForURL []contenttopics.ContentTopic
 		if err := database.WithTx(func(tx *sqlx.Tx) error {
 			var err error
-			topicsForURL, err = contenttopics.GetTopicsForURL(tx, u)
+			topicsForURL, err = urltopicmapping.GetTopicsForURL(tx, u)
 			if err != nil {
 				return err
 			}
@@ -407,6 +427,7 @@ func (l *LinkProcessor) AddURLs(urls []string, topics []contenttopics.ContentTop
 		return nil
 	}
 	return database.WithTx(func(tx *sqlx.Tx) error {
+		log.Println("here")
 		if err := links2.InsertLinks(tx, parsedURLs); err != nil {
 			return err
 		}
@@ -414,8 +435,27 @@ func (l *LinkProcessor) AddURLs(urls []string, topics []contenttopics.ContentTop
 			return nil
 		}
 		for _, u := range parsedURLs {
-			if err := contenttopics.ApplyContentTopicsToURL(tx, u.URL, topics); err != nil {
-				return err
+			var mappings []urltopicmapping.TopicMappingUnion
+			for _, t := range topics {
+				topicID, err := content.GetTopicIDByContentTopic(tx, t)
+				if err != nil {
+					return err
+				}
+				topicMappingID, err := content.LookupTopicMappingIDForURL(tx, u, *topicID)
+				switch {
+				case err != nil:
+					return err
+				case topicMappingID != nil:
+					mappings = append(mappings, urltopicmapping.TopicMappingUnion{
+						Topic:          t,
+						TopicMappingID: *topicMappingID,
+					})
+				}
+			}
+			if len(mappings) != 0 {
+				if err := urltopicmapping.ApplyContentTopicsToURL(tx, u, mappings); err != nil {
+					return err
+				}
 			}
 		}
 		return nil

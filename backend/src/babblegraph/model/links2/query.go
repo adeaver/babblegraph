@@ -42,7 +42,7 @@ func InsertLinks(tx *sqlx.Tx, urls []urlparser.ParsedURL) error {
 		case err != nil:
 			return err
 		case sourceID == nil:
-			continue
+			return fmt.Errorf("No source ID found for url %s", u.URL)
 		}
 		if err := queryBuilder.AddValues(u.URLIdentifier, u.Domain, u.URL, *sourceID); err != nil {
 			log.Println(fmt.Sprintf("Error inserting url with identifier %s: %s", u.URLIdentifier, err.Error()))
