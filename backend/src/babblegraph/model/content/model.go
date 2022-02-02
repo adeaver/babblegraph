@@ -78,6 +78,7 @@ type dbSource struct {
 	LastModifiedAt        time.Time              `db:"last_modified_at"`
 	Title                 string                 `db:"title"`
 	URL                   string                 `db:"url"`
+	URLIdentifier         string                 `db:"url_identifier"`
 	Type                  SourceType             `db:"type"`
 	Country               geo.CountryCode        `db:"country"`
 	IngestStrategy        IngestStrategy         `db:"ingest_strategy"`
@@ -190,12 +191,18 @@ type SourceTopicMapping struct {
 
 type SourceSeedID string
 
+func (s SourceSeedID) Ptr() *SourceSeedID {
+	return &s
+}
+
 type dbSourceSeed struct {
 	ID             SourceSeedID `db:"_id"`
 	CreatedAt      time.Time    `db:"created_at"`
 	LastModifiedAt time.Time    `db:"last_modified_at"`
 	RootID         SourceID     `db:"root_id"`
 	URL            string       `db:"url"`
+	URLIdentifier  string       `db:"url_identifier"`
+	URLParams      *string      `db:"url_params"`
 	IsActive       bool         `db:"is_active"`
 }
 
@@ -259,6 +266,10 @@ type SourceFilter struct {
 
 type SourceSeedTopicMappingID string
 
+func (s SourceSeedTopicMappingID) Ptr() *SourceSeedTopicMappingID {
+	return &s
+}
+
 type dbSourceSeedTopicMapping struct {
 	ID             SourceSeedTopicMappingID `db:"_id"`
 	CreatedAt      time.Time                `db:"created_at"`
@@ -288,6 +299,10 @@ type SourceSeedTopicMapping struct {
 // since sources and source seeds can both contribute to topic mapping
 type TopicMappingID string
 
+func (t TopicMappingID) Ptr() *TopicMappingID {
+	return &t
+}
+
 type MakeTopicMappingIDInput struct {
 	SourceSeedTopicMappingID *SourceSeedTopicMappingID
 	SourceTopicMappingID     *SourceTopicMappingID
@@ -296,9 +311,9 @@ type MakeTopicMappingIDInput struct {
 func MustMakeTopicMappingID(input MakeTopicMappingIDInput) TopicMappingID {
 	switch {
 	case input.SourceSeedTopicMappingID != nil:
-		return TopicMappingID(fmt.Sprintf("sourceseed-%s", input.SourceSeedTopicMappingID))
+		return TopicMappingID(fmt.Sprintf("sourceseed-%s", *input.SourceSeedTopicMappingID))
 	case input.SourceTopicMappingID != nil:
-		return TopicMappingID(fmt.Sprintf("source-%s", input.SourceTopicMappingID))
+		return TopicMappingID(fmt.Sprintf("source-%s", *input.SourceTopicMappingID))
 	default:
 		panic("Neither source topic mapping or source seed topic mapping id are non-null")
 	}

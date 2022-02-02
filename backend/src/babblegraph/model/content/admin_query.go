@@ -30,6 +30,7 @@ const (
             language_code,
             title,
             url,
+            url_identifier,
             type,
             country,
             ingest_strategy,
@@ -37,7 +38,7 @@ const (
             is_active,
             monthly_access_limit
         ) VALUES (
-            $1, $2, $3, $4, $5, $6, $7, $8, $9
+            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
         ) RETURNING _id`
 	updateSourceQuery = `UPDATE
         content_source
@@ -45,19 +46,20 @@ const (
         language_code=$1,
         title=$2,
         url=$3,
-        type=$4,
-        country=$5,
-        ingest_strategy=$6,
-        should_use_url_as_seed_url=$7,
-        is_active=$8,
-        monthly_access_limit=$9
+        url_identifier=$4,
+        type=$5,
+        country=$6,
+        ingest_strategy=$7,
+        should_use_url_as_seed_url=$8,
+        is_active=$9,
+        monthly_access_limit=$10
     WHERE
-        _id = $10
+        _id = $11
     `
 
 	getAllSourceSeedsForSourceQuery = "SELECT * FROM content_source_seed WHERE root_id = $1"
-	addSourceSeedQuery              = "INSERT INTO content_source_seed (root_id, url, is_active) VALUES ($1, $2, $3) RETURNING _id"
-	updateSourceSeedQuery           = "UPDATE content_source_seed SET url=$1, is_active=$2 WHERE _id = $3"
+	addSourceSeedQuery              = "INSERT INTO content_source_seed (root_id, url, url_identifier, url_params, is_active) VALUES ($1, $2, $3, $4, $5) RETURNING _id"
+	updateSourceSeedQuery           = "UPDATE content_source_seed SET url=$1, is_active=$2, url_identifier=$3, url_params=$4 WHERE _id = $5"
 
 	getAllSourceSeedTopicMappingsQuery = "SELECT * FROM content_source_seed_topic_mapping WHERE source_seed_id IN (?)"
 	upsertSourceSeedTopicMapping       = `INSERT INTO
@@ -216,7 +218,11 @@ type InsertSourceInput struct {
 }
 
 func InsertSource(tx *sqlx.Tx, input InsertSourceInput) (*SourceID, error) {
-	rows, err := tx.Query(insertSourceQuery, input.LanguageCode, input.Title, input.URL, input.Type, input.Country, input.IngestStrategy, input.ShouldUseURLAsSeedURL, input.IsActive, input.MonthlyAccessLimit)
+	parsedURL := urlparser.ParseURL(input.URL)
+	if parsedURL == nil {
+		return nil, fmt.Errorf("Invalid url")
+	}
+	rows, err := tx.Query(insertSourceQuery, input.LanguageCode, input.Title, input.URL, parsedURL.URLIdentifier, input.Type, input.Country, input.IngestStrategy, input.ShouldUseURLAsSeedURL, input.IsActive, input.MonthlyAccessLimit)
 	if err != nil {
 		return nil, err
 	}
@@ -243,7 +249,11 @@ type UpdateSourceInput struct {
 }
 
 func UpdateSource(tx *sqlx.Tx, id SourceID, input UpdateSourceInput) error {
-	if _, err := tx.Exec(updateSourceQuery, input.LanguageCode, input.Title, input.URL, input.Type, input.Country, input.IngestStrategy, input.ShouldUseURLAsSeedURL, input.IsActive, input.MonthlyAccessLimit, id); err != nil {
+	parsedURL := urlparser.ParseURL(input.URL)
+	if parsedURL == nil {
+		return fmt.Errorf("Invalid url")
+	}
+	if _, err := tx.Exec(updateSourceQuery, input.LanguageCode, input.Title, input.URL, parsedURL.URLIdentifier, input.Type, input.Country, input.IngestStrategy, input.ShouldUseURLAsSeedURL, input.IsActive, input.MonthlyAccessLimit, id); err != nil {
 		return err
 	}
 	return nil
@@ -262,7 +272,7 @@ func GetAllSourceSeedsForSource(tx *sqlx.Tx, sourceID SourceID) ([]SourceSeed, e
 }
 
 func AddSourceSeed(tx *sqlx.Tx, sourceID SourceID, u urlparser.ParsedURL, isActive bool) (*SourceSeedID, error) {
-	rows, err := tx.Query(addSourceSeedQuery, sourceID, u.URL, isActive)
+	rows, err := tx.Query(addSourceSeedQuery, sourceID, u.URL, u.URLIdentifier, u.Params, isActive)
 	if err != nil {
 		return nil, err
 	}
@@ -277,13 +287,16 @@ func AddSourceSeed(tx *sqlx.Tx, sourceID SourceID, u urlparser.ParsedURL, isActi
 }
 
 func UpdateSourceSeed(tx *sqlx.Tx, sourceSeedID SourceSeedID, u urlparser.ParsedURL, isActive bool) error {
-	if _, err := tx.Exec(updateSourceSeedQuery, u.URL, isActive, sourceSeedID); err != nil {
+	if _, err := tx.Exec(updateSourceSeedQuery, u.URL, isActive, u.URLIdentifier, u.Params, sourceSeedID); err != nil {
 		return err
 	}
 	return nil
 }
 
 func GetAllSourceSeedTopicMappings(tx *sqlx.Tx, sourceSeedIDs []SourceSeedID) ([]SourceSeedTopicMapping, error) {
+	if len(sourceSeedIDs) == 0 {
+		return []SourceSeedTopicMapping{}, nil
+	}
 	query, args, err := sqlx.In(getAllSourceSeedTopicMappingsQuery, sourceSeedIDs)
 	if err != nil {
 		return nil, err

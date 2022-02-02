@@ -44,7 +44,9 @@ CREATE TABLE IF NOT EXISTS content_source(
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS content_source_url ON content_source(url);
-CREATE INDEX IF NOT EXISTS content_source_title ON content_source(title);
+
+ALTER TABLE content_source ADD COLUMN IF NOT EXISTS url_identifier TEXT NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS content_source_url_identifier ON content_source(url_identifier);
 
 CREATE TABLE IF NOT EXISTS content_source_topic_mapping(
     _id uuid DEFAULT uuid_generate_v4 (),
@@ -67,6 +69,10 @@ CREATE TABLE IF NOT EXISTS content_source_seed(
 
     PRIMARY KEY (_id)
 );
+
+ALTER TABLE content_source_seed ADD COLUMN IF NOT EXISTS url_identifier TEXT NOT NULL;
+ALTER TABLE content_source_seed ADD COLUMN IF NOT EXISTS url_params TEXT;
+CREATE UNIQUE INDEX IF NOT EXISTS content_source_seed_url_identifier ON content_source_seed(url_identifier, url_params);
 
 CREATE INDEX IF NOT EXISTS content_source_seed_root_idx ON content_source_seed(root_id);
 
