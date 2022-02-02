@@ -9,7 +9,7 @@ import (
 
 const (
 	getSourceForURLQuery           = "SELECT * FROM content_source WHERE url_identifier = $1"
-	getSourceSeedForURLQuery       = "SELECT * FROM content_source_seed WHERE url_identifier = $1 AND url_params = $2"
+	getSourceSeedForURLQuery       = "SELECT * FROM content_source_seed WHERE url_identifier = $1 AND url_params IS NOT DISTINCT FROM $2"
 	getSourceSeedTopicMappingQuery = "SELECT * FROM content_source_seed_topic_mapping WHERE topic_id = $1 AND source_seed_id = $2"
 )
 
@@ -76,7 +76,10 @@ func LookupTopicMappingIDForURL(tx *sqlx.Tx, u urlparser.ParsedURL, topicID Topi
 		return nil, err
 	case sourceSeedID != nil:
 		sourceSeedTopicMappingID, err := lookupSourceSeedMappingID(tx, *sourceSeedID, topicID)
-		if err != nil {
+		switch {
+		case err != nil:
+			return nil, err
+		case sourceSeedTopicMappingID == nil:
 			return nil, nil
 		}
 		return MustMakeTopicMappingID(MakeTopicMappingIDInput{

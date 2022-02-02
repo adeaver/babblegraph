@@ -80,27 +80,27 @@ func processSeedURL(seedURL domains.SeedURL) error {
 		if err := links2.UpsertLinkWithEmptyFetchStatus(tx, toInsert, true); err != nil {
 			return err
 		}
-		if len(seedURL.Topics) == 0 {
+		var mappings []urltopicmapping.TopicMappingUnion
+		for _, t := range seedURL.Topics {
+			topicID, err := content.GetTopicIDByContentTopic(tx, t)
+			if err != nil {
+				return err
+			}
+			topicMappingID, err := content.LookupTopicMappingIDForURL(tx, *parsedSeedURL, *topicID)
+			switch {
+			case err != nil:
+				return err
+			case topicMappingID != nil:
+				mappings = append(mappings, urltopicmapping.TopicMappingUnion{
+					Topic:          t,
+					TopicMappingID: *topicMappingID,
+				})
+			}
+		}
+		if len(mappings) > 0 {
 			return nil
 		}
 		for _, u := range parsedURLs {
-			var mappings []urltopicmapping.TopicMappingUnion
-			for _, t := range seedURL.Topics {
-				topicID, err := content.GetTopicIDByContentTopic(tx, t)
-				if err != nil {
-					return err
-				}
-				topicMappingID, err := content.LookupTopicMappingIDForURL(tx, u, *topicID)
-				switch {
-				case err != nil:
-					return err
-				case topicMappingID != nil:
-					mappings = append(mappings, urltopicmapping.TopicMappingUnion{
-						Topic:          t,
-						TopicMappingID: *topicMappingID,
-					})
-				}
-			}
 			if err := urltopicmapping.ApplyContentTopicsToURL(tx, u, mappings); err != nil {
 				return err
 			}

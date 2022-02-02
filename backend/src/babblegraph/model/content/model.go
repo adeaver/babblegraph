@@ -202,7 +202,7 @@ type dbSourceSeed struct {
 	RootID         SourceID     `db:"root_id"`
 	URL            string       `db:"url"`
 	URLIdentifier  string       `db:"url_identifier"`
-	URLParams      string       `db:"url_params"`
+	URLParams      *string      `db:"url_params"`
 	IsActive       bool         `db:"is_active"`
 }
 
@@ -311,9 +311,9 @@ type MakeTopicMappingIDInput struct {
 func MustMakeTopicMappingID(input MakeTopicMappingIDInput) TopicMappingID {
 	switch {
 	case input.SourceSeedTopicMappingID != nil:
-		return TopicMappingID(fmt.Sprintf("sourceseed-%s", input.SourceSeedTopicMappingID))
+		return TopicMappingID(fmt.Sprintf("sourceseed-%s", *input.SourceSeedTopicMappingID))
 	case input.SourceTopicMappingID != nil:
-		return TopicMappingID(fmt.Sprintf("source-%s", input.SourceTopicMappingID))
+		return TopicMappingID(fmt.Sprintf("source-%s", *input.SourceTopicMappingID))
 	default:
 		panic("Neither source topic mapping or source seed topic mapping id are non-null")
 	}
