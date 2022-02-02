@@ -1,6 +1,7 @@
 package scheduler
 
 import (
+	"babblegraph/model/content"
 	"babblegraph/model/domains"
 	"babblegraph/model/links2"
 	"babblegraph/model/urltopicmapping"
@@ -83,8 +84,24 @@ func processSeedURL(seedURL domains.SeedURL) error {
 			return nil
 		}
 		for _, u := range parsedURLs {
-			// TODO: fix this
-			if err := urltopicmapping.ApplyContentTopicsToURL(tx, u, seedURL.Topics); err != nil {
+			var mappings []urltopicmapping.TopicMappingUnion
+			for _, t := range seedURL.Topics {
+				topicID, err := content.GetTopicIDByContentTopic(tx, t)
+				if err != nil {
+					return err
+				}
+				topicMappingID, err := content.LookupTopicMappingIDForURL(tx, u, *topicID)
+				switch {
+				case err != nil:
+					return err
+				case topicMappingID != nil:
+					mappings = append(mappings, urltopicmapping.TopicMappingUnion{
+						Topic:          t,
+						TopicMappingID: *topicMappingID,
+					})
+				}
+			}
+			if err := urltopicmapping.ApplyContentTopicsToURL(tx, u, mappings); err != nil {
 				return err
 			}
 		}

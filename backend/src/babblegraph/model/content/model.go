@@ -191,6 +191,10 @@ type SourceTopicMapping struct {
 
 type SourceSeedID string
 
+func (s SourceSeedID) Ptr() *SourceSeedID {
+	return &s
+}
+
 type dbSourceSeed struct {
 	ID             SourceSeedID `db:"_id"`
 	CreatedAt      time.Time    `db:"created_at"`
@@ -261,6 +265,10 @@ type SourceFilter struct {
 
 type SourceSeedTopicMappingID string
 
+func (s SourceSeedTopicMappingID) Ptr() *SourceSeedTopicMappingID {
+	return &s
+}
+
 type dbSourceSeedTopicMapping struct {
 	ID             SourceSeedTopicMappingID `db:"_id"`
 	CreatedAt      time.Time                `db:"created_at"`
@@ -289,6 +297,10 @@ type SourceSeedTopicMapping struct {
 // This ID represents the union between either a topic-source mapping or a topic-source seed mapping
 // since sources and source seeds can both contribute to topic mapping
 type TopicMappingID string
+
+func (t TopicMappingID) Ptr() *TopicMappingID {
+	return &t
+}
 
 type MakeTopicMappingIDInput struct {
 	SourceSeedTopicMappingID *SourceSeedTopicMappingID
