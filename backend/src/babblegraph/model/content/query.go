@@ -9,7 +9,7 @@ import (
 
 const (
 	getSourceForURLQuery           = "SELECT * FROM content_source WHERE url_identifier = $1"
-	getSourceSeedForURLQuery       = "SELECT * FROM content_source_seed WHERE url = $1"
+	getSourceSeedForURLQuery       = "SELECT * FROM content_source_seed WHERE url_identifier = $1 AND url_params = $2"
 	getSourceSeedTopicMappingQuery = "SELECT * FROM content_source_seed_topic_mapping WHERE topic_id = $1 AND source_seed_id = $2"
 )
 
@@ -41,7 +41,7 @@ func LookupSourceIDForParsedURL(tx *sqlx.Tx, u urlparser.ParsedURL) (*SourceID, 
 
 func lookupSourceSeedIDForParsedURL(tx *sqlx.Tx, u urlparser.ParsedURL) (*SourceSeedID, error) {
 	var matches []dbSourceSeed
-	err := tx.Select(&matches, getSourceSeedForURLQuery, u.URL)
+	err := tx.Select(&matches, getSourceSeedForURLQuery, u.URLIdentifier, u.Params)
 	switch {
 	case err != nil:
 		return nil, err

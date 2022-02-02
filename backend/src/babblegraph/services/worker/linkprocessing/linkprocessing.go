@@ -427,7 +427,6 @@ func (l *LinkProcessor) AddURLs(urls []string, topics []contenttopics.ContentTop
 		return nil
 	}
 	return database.WithTx(func(tx *sqlx.Tx) error {
-		log.Println("here")
 		if err := links2.InsertLinks(tx, parsedURLs); err != nil {
 			return err
 		}

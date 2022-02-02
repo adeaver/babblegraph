@@ -97,9 +97,9 @@ func UpsertLinkWithEmptyFetchStatus(tx *sqlx.Tx, urls []urlparser.ParsedURL, inc
 		case err != nil:
 			return err
 		case sourceID == nil:
-			continue
+			return fmt.Errorf("No source available for URL %s", u.URL)
 		}
-		if err := queryBuilder.AddValues(u.URLIdentifier, u.Domain, u.URL, firstSeedFetchTimestamp); err != nil {
+		if err := queryBuilder.AddValues(u.URLIdentifier, u.Domain, u.URL, *sourceID, firstSeedFetchTimestamp); err != nil {
 			log.Println(fmt.Sprintf("Error inserting url with identifier %s: %s", u.URLIdentifier, err.Error()))
 		}
 	}
