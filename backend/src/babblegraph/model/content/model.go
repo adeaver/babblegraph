@@ -202,6 +202,7 @@ type dbSourceSeed struct {
 	RootID         SourceID     `db:"root_id"`
 	URL            string       `db:"url"`
 	URLIdentifier  string       `db:"url_identifier"`
+	URLParams      string       `db:"url_params"`
 	IsActive       bool         `db:"is_active"`
 }
 
