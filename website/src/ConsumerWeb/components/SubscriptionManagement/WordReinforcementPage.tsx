@@ -129,7 +129,7 @@ const WordReinforcementPage = (props: WordReinforcementPageProps) => {
         getLemmasMatchingText({
             languageCode: "es",
             token: token,
-            text: searchTerm,
+            text: searchTerm.toLowerCase().trim(),
         },
         (resp: GetLemmasMatchingTextResponse) => {
             setIsLoadingLemmas(false);
@@ -427,9 +427,15 @@ const LemmaDisplay = (props: LemmaDisplayProps) => {
                 <Heading3 align={Alignment.Left} color={TypographyColor.Primary}>
                     { toTitleCase(props.lemma.text) } ({props.lemma.partOfSpeech.name.toLowerCase()})
                 </Heading3>
-                <Paragraph align={Alignment.Left}>
-                    { !!definitionText ? definitionText : 'No definition available' }
-                </Paragraph>
+                {
+                    !!definitionText ? (
+                        definitionText
+                    ) : (
+                        <Paragraph align={Alignment.Left}>
+                            No definition available
+                        </Paragraph>
+                    )
+            }
             </Grid>
             <Grid className={classes.buttonContainer} item xs={12} md={4}>
                 {

@@ -48,9 +48,12 @@ func handleGetUserLemmasForToken(body []byte) (interface{}, error) {
 		lemmaIDs = append(lemmaIDs, l.LemmaID)
 		activeStatusByLemmaID[l.LemmaID] = l.IsActive
 	}
-	lemmas, err := language_model.GetLemmasForLemmaIDs(lemmaIDs)
-	if err != nil {
-		return nil, err
+	var lemmas []language_model.Lemma
+	if len(lemmaIDs) > 0 {
+		lemmas, err = language_model.GetLemmasForLemmaIDs(lemmaIDs)
+		if err != nil {
+			return nil, err
+		}
 	}
 	var out []lemmaMapping
 	for _, l := range lemmas {
