@@ -45,6 +45,7 @@ type ParsedURL struct {
 	Domain        string
 	URLIdentifier string
 	URL           string
+	Params        *string
 }
 
 func MustParseURL(rawURL string) ParsedURL {
@@ -71,10 +72,15 @@ func ParseURL(rawURL string) *ParsedURL {
 	if len(*verifiedSubdomain) > 0 {
 		urlIdentifier = fmt.Sprintf("%s|%s", *verifiedSubdomain, urlIdentifier)
 	}
+	var params *string
+	if len(urlParts.Params) > 0 {
+		params = ptr.String(urlParts.Params)
+	}
 	return &ParsedURL{
 		Domain:        *verifiedDomain,
 		URLIdentifier: urlIdentifier,
 		URL:           rawURL,
+		Params:        params,
 	}
 }
 

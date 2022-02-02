@@ -58,8 +58,8 @@ const (
     `
 
 	getAllSourceSeedsForSourceQuery = "SELECT * FROM content_source_seed WHERE root_id = $1"
-	addSourceSeedQuery              = "INSERT INTO content_source_seed (root_id, url, url_identifier, is_active) VALUES ($1, $2, $3, $4) RETURNING _id"
-	updateSourceSeedQuery           = "UPDATE content_source_seed SET url=$1, is_active=$2, url_identifier=$3 WHERE _id = $4"
+	addSourceSeedQuery              = "INSERT INTO content_source_seed (root_id, url, url_identifier, url_params, is_active) VALUES ($1, $2, $3, $4, $5) RETURNING _id"
+	updateSourceSeedQuery           = "UPDATE content_source_seed SET url=$1, is_active=$2, url_identifier=$3, url_params=$4 WHERE _id = $5"
 
 	getAllSourceSeedTopicMappingsQuery = "SELECT * FROM content_source_seed_topic_mapping WHERE source_seed_id IN (?)"
 	upsertSourceSeedTopicMapping       = `INSERT INTO
@@ -272,7 +272,7 @@ func GetAllSourceSeedsForSource(tx *sqlx.Tx, sourceID SourceID) ([]SourceSeed, e
 }
 
 func AddSourceSeed(tx *sqlx.Tx, sourceID SourceID, u urlparser.ParsedURL, isActive bool) (*SourceSeedID, error) {
-	rows, err := tx.Query(addSourceSeedQuery, sourceID, u.URL, u.URLIdentifier, isActive)
+	rows, err := tx.Query(addSourceSeedQuery, sourceID, u.URL, u.URLIdentifier, u.Params, isActive)
 	if err != nil {
 		return nil, err
 	}
@@ -287,7 +287,7 @@ func AddSourceSeed(tx *sqlx.Tx, sourceID SourceID, u urlparser.ParsedURL, isActi
 }
 
 func UpdateSourceSeed(tx *sqlx.Tx, sourceSeedID SourceSeedID, u urlparser.ParsedURL, isActive bool) error {
-	if _, err := tx.Exec(updateSourceSeedQuery, u.URL, isActive, u.URLIdentifier, sourceSeedID); err != nil {
+	if _, err := tx.Exec(updateSourceSeedQuery, u.URL, isActive, u.URLIdentifier, u.Params, sourceSeedID); err != nil {
 		return err
 	}
 	return nil
