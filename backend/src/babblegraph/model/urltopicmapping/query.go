@@ -28,18 +28,22 @@ func ApplyContentTopicsToURL(tx *sqlx.Tx, parsedURL urlparser.ParsedURL, topicUn
 	return queryBuilder.Execute(tx)
 }
 
-func GetTopicsForURL(tx *sqlx.Tx, url string) ([]contenttopics.ContentTopic, error) {
+func GetTopicsAndMappingIDsForURL(tx *sqlx.Tx, url string) ([]contenttopics.ContentTopic, []content.TopicMappingID, error) {
 	parsedURL := urlparser.ParseURL(url)
 	if parsedURL == nil {
-		return nil, fmt.Errorf("url is invalid: %s", url)
+		return nil, nil, fmt.Errorf("url is invalid: %s", url)
 	}
 	var matches []dbContentTopicMapping
 	if err := tx.Select(&matches, "SELECT * FROM content_topic_mappings WHERE url_identifier = $1", parsedURL.URLIdentifier); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	var out []contenttopics.ContentTopic
+	var topics []contenttopics.ContentTopic
+	var topicMappingIDs []content.TopicMappingID
 	for _, m := range matches {
-		out = append(out, m.ContentTopic)
+		topics = append(topics, m.ContentTopic)
+		if m.TopicMappingID != nil {
+			topicMappingIDs = append(topicMappingIDs, *m.TopicMappingID)
+		}
 	}
-	return out, nil
+	return topics, topicMappingIDs, nil
 }

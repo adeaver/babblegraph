@@ -325,9 +325,10 @@ func processSingleLink(threadComplete chan *links2.Link, addURLs chan []string, 
 		}
 		var sourceID *content.SourceID
 		var topicsForURL []contenttopics.ContentTopic
+		var topicMappingIDs []content.TopicMappingID
 		if err := database.WithTx(func(tx *sqlx.Tx) error {
 			var err error
-			topicsForURL, err = urltopicmapping.GetTopicsForURL(tx, u)
+			topicsForURL, topicMappingIDs, err = urltopicmapping.GetTopicsAndMappingIDsForURL(tx, u)
 			if err != nil {
 				return err
 			}
@@ -347,6 +348,7 @@ func processSingleLink(threadComplete chan *links2.Link, addURLs chan []string, 
 			URL:                    urlparser.MustParseURL(u),
 			SourceID:               sourceID,
 			TopicsForURL:           topicsForURL,
+			TopicMappingIDs:        topicMappingIDs,
 			SeedJobIngestTimestamp: link.SeedJobIngestTimestamp,
 		})
 		if err != nil {

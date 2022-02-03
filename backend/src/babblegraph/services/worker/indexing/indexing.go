@@ -20,6 +20,7 @@ type IndexDocumentInput struct {
 	URL                    urlparser.ParsedURL
 	SourceID               *content.SourceID
 	TopicsForURL           []contenttopics.ContentTopic
+	TopicMappingIDs        []content.TopicMappingID
 	SeedJobIngestTimestamp *int64
 }
 
@@ -37,6 +38,7 @@ func IndexDocument(c ctx.LogContext, input IndexDocumentInput) error {
 		LanguageCode:                       input.LanguageCode,
 		Metadata:                           input.ParsedHTMLPage.Metadata,
 		Topics:                             input.TopicsForURL,
+		TopicMappingIDs:                    input.TopicMappingIDs,
 		LemmatizedDescription:              lemmatizedDescriptionText,
 		LemmatizedDescriptionIndexMappings: lemmatizedDescriptionIndexMappings,
 		SeedJobIngestTimestamp:             input.SeedJobIngestTimestamp,
