@@ -1,6 +1,7 @@
 package usernewsletterschedule
 
 import (
+	"babblegraph/model/content"
 	"babblegraph/model/contenttopics"
 	"babblegraph/model/users"
 	"babblegraph/util/ctx"
@@ -34,16 +35,28 @@ type dbUserNewsletterDayMetadata struct {
 	IsActive         bool                   `db:"is_active"`
 }
 
+type scheduleDayTopicMappingID string
+
+type dbUserNewsletterScheduleDayTopicMapping struct {
+	ID             scheduleDayTopicMappingID `db:"_id"`
+	CreatedAt      time.Time                 `db:"created_at"`
+	LastModifiedAt time.Time                 `db:"last_modified_at"`
+	TopicID        content.TopicID           `db:"topic_id"`
+	DayID          dayID                     `db:"day_id"`
+	IsActive       bool                      `db:"is_active"`
+}
+
 type UserNewsletterScheduleDayMetadata struct {
 	UserID           users.UserID
 	LanguageCode     wordsmith.LanguageCode
 	DayOfWeekIndex   int
 	ContentTopics    []contenttopics.ContentTopic
+	TopicIDs         []content.TopicID
 	NumberOfArticles int
 	IsActive         bool
 }
 
-func (d dbUserNewsletterDayMetadata) ToNonDB() (*UserNewsletterScheduleDayMetadata, error) {
+func (d dbUserNewsletterDayMetadata) ToNonDB(tx *sqlx.Tx) (*UserNewsletterScheduleDayMetadata, error) {
 	var topics []contenttopics.ContentTopic
 	if d.ContentTopics != nil {
 		topicStrings := strings.Split(*d.ContentTopics, contentTopicDelimiter)
@@ -55,11 +68,16 @@ func (d dbUserNewsletterDayMetadata) ToNonDB() (*UserNewsletterScheduleDayMetada
 			topics = append(topics, *t)
 		}
 	}
+	topicIDs, err := lookupTopicMappingsForDay(tx, d.ID)
+	if err != nil {
+		return nil, err
+	}
 	return &UserNewsletterScheduleDayMetadata{
 		UserID:           d.UserID,
 		DayOfWeekIndex:   d.DayOfWeekIndex,
 		LanguageCode:     d.LanguageCode,
 		ContentTopics:    topics,
+		TopicIDs:         topicIDs,
 		NumberOfArticles: d.NumberOfArticles,
 		IsActive:         d.IsActive,
 	}, nil
@@ -119,7 +137,7 @@ func GetUserNewsletterScheduleForUTCMidnight(c ctx.LogContext, tx *sqlx.Tx, inpu
 	case dbUserScheduleDay == nil:
 		// no-op
 	case dbUserScheduleDay != nil:
-		userScheduleDay, err = dbUserScheduleDay.ToNonDB()
+		userScheduleDay, err = dbUserScheduleDay.ToNonDB(tx)
 		if err != nil {
 			return nil, err
 		}
