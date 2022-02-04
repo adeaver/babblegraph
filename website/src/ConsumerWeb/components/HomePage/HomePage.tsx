@@ -212,6 +212,9 @@ const PostInitialContent = () => {
             <Link href="/about">
                 Learn more about Babblegraph
             </Link>
+            <Link href="/blog">
+                Read the blog
+            </Link>
         </div>
     );
 }

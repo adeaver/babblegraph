@@ -37,6 +37,18 @@ const styleClasses = makeStyles({
         fontSize: '16px',
         color: Color.TextGray,
     },
+    imageContainer: {
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    nonHeroImage: {
+        borderRadius: '5px',
+        maxWidth: '760px',
+        height: 'auto',
+        width: '100%',
+    },
 });
 
 type BlogDisplayProps = {
@@ -130,9 +142,9 @@ const ImageDisplay = (props: ImageContent) => {
             <Grid item xs={false} md={2}>
                 &nbsp;
             </Grid>
-            <Grid item xs={12} md={8}>
+            <Grid className={classes.imageContainer} item xs={12} md={8}>
                 <img
-                    className={classes.image}
+                    className={classes.nonHeroImage}
                     src={getStaticContentURLForPath(props.path)}
                     alt={props.altText} />
                 {
