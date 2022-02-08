@@ -93,6 +93,10 @@ func main() {
 		if err := tasks.SyncHardcodedContent(); err != nil {
 			log.Fatal(err.Error())
 		}
+	case "admin-content-values-backfill":
+		if err := tasks.BackfillAdminContentValues(); err != nil {
+			log.Fatal(err.Error())
+		}
 	default:
 		log.Fatal(fmt.Sprintf("Invalid task specified %s", *taskName))
 	}
