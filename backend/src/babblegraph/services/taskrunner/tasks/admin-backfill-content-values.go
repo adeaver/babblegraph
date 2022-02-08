@@ -14,6 +14,11 @@ import (
 
 func BackfillAdminContentValues() error {
 	c := ctx.GetDefaultLogContext()
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		return usercontenttopics.BackfillUserContentTopicMappings(c, tx)
+	}); err != nil {
+		return err
+	}
 	return database.WithTx(func(tx *sqlx.Tx) error {
 		if err := usercontenttopics.BackfillUserContentTopicMappings(c, tx); err != nil {
 			return err
