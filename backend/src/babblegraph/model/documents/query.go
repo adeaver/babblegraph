@@ -1,6 +1,7 @@
 package documents
 
 import (
+	"babblegraph/model/content"
 	"babblegraph/util/ctx"
 	"babblegraph/util/elastic/esquery"
 	"babblegraph/util/math/decimal"
@@ -123,8 +124,9 @@ func ExecuteDocumentQuery(c ctx.LogContext, query executableQuery, input Execute
 }
 
 type UpdateDocumentInput struct {
-	Version      Version `json:"version"`
-	TopicsLength *int64  `json:"topics_length,omitempty"`
+	Version         Version                  `json:"version"`
+	TopicMappingIDs []content.TopicMappingID `json:"topic_mapping_ids"`
+	SourceID        content.SourceID         `json:"source_id"`
 }
 
 func UpdateDocumentForURL(u urlparser.ParsedURL, input UpdateDocumentInput) error {

@@ -62,7 +62,11 @@ const (
 	// Added new elasticsearch instance, slowly reindexing everything
 	FetchVersion7 FetchVersion = 7
 
-	CurrentFetchVersion FetchVersion = FetchVersion7
+	// Version 8 Updates:
+	// Added new fields onto model/documents
+	FetchVersion8 FetchVersion = 8
+
+	CurrentFetchVersion FetchVersion = FetchVersion8
 )
 
 type dbLink struct {

@@ -31,7 +31,7 @@ const (
 	// Version 8 adds source ID and topic mapping
 	Version8 Version = 8
 
-	CurrentDocumentVersion Version = Version7
+	CurrentDocumentVersion Version = Version8
 )
 
 func (v Version) Ptr() *Version {
