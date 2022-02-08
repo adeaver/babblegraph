@@ -29,6 +29,8 @@ func main() {
         sync-stripe: sync failed stripe events
         product-updates: send product updates
         admin-content-backfill: backfill all admin content
+        admin-content-values-backfill: backfill all admin content values
+        admin-content-document-backfill: backfill all documents with new content
         create-admin: create admin`)
 	userEmail := flag.String("user-email", "none", "Email address of user to create")
 	flag.Parse()
@@ -95,6 +97,10 @@ func main() {
 		}
 	case "admin-content-values-backfill":
 		if err := tasks.BackfillAdminContentValues(); err != nil {
+			log.Fatal(err.Error())
+		}
+	case "admin-content-document-backfill":
+		if err := tasks.ReindexDocuments(); err != nil {
 			log.Fatal(err.Error())
 		}
 	default:
