@@ -125,7 +125,7 @@ func LookupTopicMappingIDForSourceAndTopic(c ctx.LogContext, tx *sqlx.Tx, source
 				SourceSeedTopicMappingID: mappings[0].ID.Ptr(),
 			}).Ptr(), nil
 		default:
-			c.Infof("Found %d mappings for source ID %s and topic %s, choosing the first one", len(mappings), sourceID, topicID)
+			c.Infof("Found %d mappings for source ID %s and topic %s: %+v, choosing the first one", len(mappings), sourceID, topicID, mappings)
 			return MustMakeTopicMappingID(MakeTopicMappingIDInput{
 				SourceSeedTopicMappingID: mappings[0].ID.Ptr(),
 			}).Ptr(), nil
