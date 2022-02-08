@@ -4,6 +4,7 @@ import (
 	"babblegraph/model/content"
 	"babblegraph/model/links2"
 	"babblegraph/model/urltopicmapping"
+	"babblegraph/model/usercontenttopics"
 	"babblegraph/util/ctx"
 	"babblegraph/util/database"
 	"babblegraph/util/urlparser"
@@ -14,6 +15,9 @@ import (
 func BackfillAdminContentValues() error {
 	c := ctx.GetDefaultLogContext()
 	return database.WithTx(func(tx *sqlx.Tx) error {
+		if err := usercontenttopics.BackfillUserContentTopicMappings(c, tx); err != nil {
+			return err
+		}
 		var count int
 		return links2.GetLinksCursor(tx, func(link links2.Link) (bool, error) {
 			return false, database.WithTx(func(tx *sqlx.Tx) error {
