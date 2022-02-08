@@ -67,7 +67,7 @@ func BackfillUserContentTopicMappings(c ctx.LogContext, tx *sqlx.Tx) error {
 		if err != nil {
 			return err
 		}
-		if _, err := tx.Exec("UPDATE user_content_topic_mappings SET content_topic = $1", *topicID); err != nil {
+		if _, err := tx.Exec("UPDATE user_content_topic_mappings SET content_topic = $1 WHERE _id = $2", *topicID, match.ID); err != nil {
 			return err
 		}
 		count++
