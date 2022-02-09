@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"net/http"
 	"text/template"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
@@ -40,26 +41,31 @@ func HandleServeBlogPost(staticFileDirName string) func(w http.ResponseWriter, r
 			c.Errorf("Error getting tracking ID: %s", err.Error())
 		case utmTrackingID != nil:
 			http.SetCookie(w, &http.Cookie{
-				Name:  utm.UTMTrackingIDCookieName,
-				Value: utmTrackingID.Str(),
+				Name:     utm.UTMTrackingIDCookieName,
+				Value:    utmTrackingID.Str(),
+				Secure:   true,
+				HttpOnly: true,
+				MaxAge:   int(utm.UTMTrackingIDMaxAge / time.Second),
+				Expires:  time.Now().Add(utm.UTMTrackingIDMaxAge),
+				Path:     "/",
 			})
+			errs := make(chan error)
+			async.WithContext(errs, "serve-blog", func(c async.Context) {
+				if err := database.WithTx(func(tx *sqlx.Tx) error {
+					if err := blog.RegisterBlogView(tx, blogPostMetadata.ID, utmTrackingID); err != nil {
+						return err
+					}
+					if utmTrackingID == nil {
+						return nil
+					}
+					return utm.RegisterUTMPageHit(tx, *utmTrackingID, *utmParameters)
+				}); err != nil {
+					c.Errorf("Error handling UTM Page hit: %s", err.Error())
+				}
+			}).Start()
 		default:
 			c.Infof("No tracking ID, but also no error")
 		}
-		errs := make(chan error)
-		async.WithContext(errs, "serve-blog", func(c async.Context) {
-			if err := database.WithTx(func(tx *sqlx.Tx) error {
-				if err := blog.RegisterBlogView(tx, blogPostMetadata.ID, utmTrackingID); err != nil {
-					return err
-				}
-				if utmTrackingID == nil {
-					return nil
-				}
-				return utm.RegisterUTMPageHit(tx, *utmTrackingID, *utmParameters)
-			}); err != nil {
-				c.Errorf("Error handling UTM Page hit: %s", err.Error())
-			}
-		}).Start()
 		w.Header().Add("Content-Type", "text/html")
 		var tmpl *template.Template
 		tmpl, err = template.New("blog_index.html").ParseFiles(fmt.Sprintf("%s/blog_index.html", staticFileDirName))

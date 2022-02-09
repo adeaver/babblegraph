@@ -4,6 +4,7 @@ import (
 	"babblegraph/util/ptr"
 	"babblegraph/util/random"
 	"net/http"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -23,6 +24,7 @@ const (
 	trackingIDLength = 40
 
 	UTMTrackingIDCookieName = "uttrid"
+	UTMTrackingIDMaxAge     = 30 * 24 * time.Hour
 )
 
 func GetParametersForRequest(r *http.Request) *Parameters {

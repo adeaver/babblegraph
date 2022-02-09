@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"runtime"
 	"text/template"
+	"time"
 
 	"github.com/getsentry/sentry-go"
 	"github.com/jmoiron/sqlx"
@@ -83,8 +84,13 @@ func handleUTMParameters(w http.ResponseWriter, r *http.Request) {
 				}
 			}()
 			http.SetCookie(w, &http.Cookie{
-				Name:  utm.UTMTrackingIDCookieName,
-				Value: trackingID.Str(),
+				Name:     utm.UTMTrackingIDCookieName,
+				Value:    trackingID.Str(),
+				Secure:   true,
+				HttpOnly: true,
+				MaxAge:   int(utm.UTMTrackingIDMaxAge / time.Second),
+				Expires:  time.Now().Add(utm.UTMTrackingIDMaxAge),
+				Path:     "/",
 			})
 		default:
 			log.Println("Unknown error making tracking ID for request, continuing...")
