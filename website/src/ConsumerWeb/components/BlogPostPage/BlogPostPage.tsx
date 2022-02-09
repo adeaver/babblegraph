@@ -27,6 +27,10 @@ import {
     ContentNode,
     BlogPostMetadata,
 } from 'common/api/blog/content';
+import {
+    SetPageLoadEventResponse,
+    setPageLoadEvent,
+} from 'ConsumerWeb/api/utm/utm';
 
 const styleClasses = makeStyles({
     signupFormContainer: {
@@ -61,6 +65,9 @@ const BlogPostPage = (props: BlogPostPageProps) => {
 
     useEffect(() => {
         loadCaptchaScript();
+        setPageLoadEvent({},
+            (resp: SetPageLoadEventResponse) => {},
+            (e: Error) => {});
         setHasLoadedCaptcha(true);
         getBlogMetadata({
             urlPath: blogPath,
