@@ -5,7 +5,7 @@ import Grid from '@material-ui/core/Grid';
 
 import DisplayCard from 'common/components/DisplayCard/DisplayCard';
 import ActionCard from 'common/components/ActionCard/ActionCard';
-import { asBaseComponent, BaseComponentProps } from 'AdminWeb/common/Base/BaseComponent';
+import { asBaseComponent, BaseComponentProps } from 'common/base/BaseComponent';
 import { Heading1, Heading3 } from 'common/typography/Heading';
 import { TypographyColor } from 'common/typography/common';
 import Form from 'common/components/Form/Form';
