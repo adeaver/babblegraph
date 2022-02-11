@@ -25,7 +25,7 @@ import PremiumInformationPage from 'ConsumerWeb/components/PremiumInformationPag
 import PaymentAndSubscriptionSettingsPage from 'ConsumerWeb/components/SubscriptionManagement/PaymentAndSubscriptionPage';
 
 import LoginPage from 'ConsumerWeb/components/UserAccounts/LoginPage';
-import SignupPage from 'ConsumerWeb/components/UserAccounts/SignupPage';
+import CreateUserAccountPage from 'ConsumerWeb/components/CreateUserAccountPage/CreateUserAccountPage';
 import ForgotPasswordPage from 'ConsumerWeb/components/UserAccounts/ForgotPasswordPage';
 import ResetPasswordPage from 'ConsumerWeb/components/UserAccounts/ResetPasswordPage';
 import SubscriptionCheckoutPage from 'ConsumerWeb/components/UserAccounts/SubscriptionCheckoutPage';
@@ -50,7 +50,7 @@ class App extends React.Component{
 
                     { /* User Account Management */ }
                     <Route path="/login" component={LoginPage} />
-                    <Route path="/signup/:token" component={SignupPage} />
+                    <Route path="/signup/:token" component={CreateUserAccountPage} />
                     <Route path="/checkout/:token" component={SubscriptionCheckoutPage} />
                     <Route path="/forgot-password" component={ForgotPasswordPage} />
                     <Route path="/password-reset/:token" component={ResetPasswordPage} />

@@ -47,7 +47,7 @@ type Params = {
     token: string;
 }
 
-type PremiumInformationPageOwnProps = RouteComponentProps<Params>
+type PremiumInformationPageOwnProps = RouteComponentProps<Params>;
 
 const PremiumInformationPage = withUserProfileInformation<PremiumInformationPageOwnProps>(
     RouteEncryptionKey.SubscriptionManagement,
@@ -55,6 +55,7 @@ const PremiumInformationPage = withUserProfileInformation<PremiumInformationPage
     (ownProps: PremiumInformationPageOwnProps) => {
         return ownProps.match.params.token;
     },
+    // TODO: Create Login Redirect for Premium Information
     undefined,
     (props: PremiumInformationPageOwnProps & UserProfileComponentProps) => {
         const { token } = props.match.params;
