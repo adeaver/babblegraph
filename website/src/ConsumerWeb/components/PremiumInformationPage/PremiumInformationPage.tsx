@@ -30,6 +30,9 @@ import {
     LoginRedirectKey,
 } from 'ConsumerWeb/api/routes/consts';
 
+import { DisplayLanguage } from 'common/model/language/language';
+import { TextBlock, getTextBlocksForLanguage } from './translations';
+
 const styleClasses = makeStyles({
     featureIcon: {
         color: Color.Primary,
@@ -59,6 +62,9 @@ const PremiumInformationPage = withUserProfileInformation<PremiumInformationPage
 
         const classes = styleClasses();
 
+        // TODO(i18n): convert this to Spanish
+        const translations = getTextBlocksForLanguage(DisplayLanguage.English);
+
         let callToAction;
         // Invariants here
         // If the user has an account, they are logged in because the higher level component will redirect them
@@ -68,7 +74,7 @@ const PremiumInformationPage = withUserProfileInformation<PremiumInformationPage
             // The user already has a subscription
             callToAction = (
                 <Heading4 color={TypographyColor.Primary}>
-                    You already have a premium subscription!
+                    {translations[TextBlock.AccountDisclaimer]}
                 </Heading4>
             );
         } else {
@@ -82,7 +88,7 @@ const PremiumInformationPage = withUserProfileInformation<PremiumInformationPage
                         ))}
                     className={classes.callToActionButton}
                     size="large">
-                    Start your Babblegraph Premium Subscription
+                    {translations[TextBlock.CallToAction]}
                 </PrimaryButton>
             );
         }
@@ -95,28 +101,28 @@ const PremiumInformationPage = withUserProfileInformation<PremiumInformationPage
                 <Grid item xs={12} md={6}>
                     <DisplayCard>
                         <DisplayCardHeader
-                            title={"Babblegraph Premium"}
+                            title="Babblegraph Premium"
                             backArrowDestination={`/manage/${token}`} />
                         <Heading3>
-                            Get access to new features that improve your learning and give you more control over how Babblegraph fits into your journey!
+                            {translations[TextBlock.Subheading]}
                         </Heading3>
                         <Divider />
                         <List>
                             <PremiumFeatureListItem
-                                title="Newsletter Scheduling"
-                                description="Choose which days you receive newsletters from Babblegraph and which days you don’t."
+                                title={translations[TextBlock.SchedulingTitle]}
+                                description={translations[TextBlock.SchedulingDescription]}
                                 icon={<DateRangeIcon className={classes.featureIcon} />} />
                             <PremiumFeatureListItem
-                                title="Newsletter Customization"
-                                description="Want fewer articles in your newsletter? Want guarantee that you’ll see a certain topic in every email? Premium Subscribers can do just that with the newsletter customization tool!"
+                                title={translations[TextBlock.CustomizationTitle]}
+                                description={translations[TextBlock.CustomizationDescription]}
                                 icon={<BallotIcon className={classes.featureIcon} />} />
                         </List>
                         <Heading3 color={TypographyColor.Primary}>
-                            US$29/year
+                            {translations[TextBlock.Price]}
                         </Heading3>
                         { /* TODO: update this */ }
                         <Heading3>
-                            The best part is that you can try it for free for 14 days!
+                            {translations[TextBlock.TrialText]}
                         </Heading3>
                         <Grid container>
                             <Grid item xs={2}>

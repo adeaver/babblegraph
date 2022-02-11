@@ -21,7 +21,7 @@ import UnsubscribePage from 'ConsumerWeb/components/SubscriptionManagement/Unsub
 import WordReinforcementPage from 'ConsumerWeb/components/SubscriptionManagement/WordReinforcementPage';
 import SchedulePage from 'ConsumerWeb/components/SchedulePage/SchedulePage';
 import NewsletterPreferencesPage from 'ConsumerWeb/components/SubscriptionManagement/NewsletterPreferencesPage';
-import SubscriptionManagementPremiumInformationPage from 'ConsumerWeb/components/PremiumInformationPage/PremiumInformationPage';
+import PremiumInformationPage from 'ConsumerWeb/components/PremiumInformationPage/PremiumInformationPage';
 import PaymentAndSubscriptionSettingsPage from 'ConsumerWeb/components/SubscriptionManagement/PaymentAndSubscriptionPage';
 
 import LoginPage from 'ConsumerWeb/components/UserAccounts/LoginPage';
@@ -43,7 +43,7 @@ class App extends React.Component{
                     <Route path="/manage/:token/vocabulary" component={WordReinforcementPage} />
                     <Route path="/manage/:token/schedule" component={SchedulePage} />
                     <Route path="/manage/:token/preferences" component={NewsletterPreferencesPage} />
-                    <Route exact path="/manage/:token/premium" component={SubscriptionManagementPremiumInformationPage} />
+                    <Route exact path="/manage/:token/premium" component={PremiumInformationPage} />
                     <Route path="/manage/:token/payment-settings" component={PaymentAndSubscriptionSettingsPage} />
                     <Route exact path="/manage/:token" component={SubscriptionManagementDashboardPage} />
                     <Route path="/paywall-thank-you/:token" component={PaywallReportPage} />
