@@ -3,10 +3,16 @@ package useraccounts
 import (
 	"babblegraph/model/routes"
 	"babblegraph/model/useraccounts"
+	"babblegraph/model/useraccountsnotifications"
+	"babblegraph/model/users"
 	"babblegraph/services/web/clientrouter/routermiddleware"
+	"babblegraph/services/web/clientrouter/util/auth"
 	"babblegraph/services/web/clientrouter/util/routetoken"
 	"babblegraph/services/web/router"
 	"babblegraph/util/database"
+	"babblegraph/util/email"
+	"net/http"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -18,6 +24,11 @@ var Routes = router.RouteGroup{
 			Path: "get_user_profile_information_1",
 			Handler: routermiddleware.WithNoBodyRequestLogger(
 				routermiddleware.MaybeWithAuthentication(getUserProfileInformation),
+			),
+		}, {
+			Path: "create_user_1",
+			Handler: routermiddleware.WithNoBodyRequestLogger(
+				routermiddleware.MaybeWithAuthentication(createUser),
 			),
 		},
 	},
@@ -116,4 +127,102 @@ func getUserProfileInformation(userAuth *routermiddleware.UserAuthentication, r 
 			NextTokens:        nextTokens,
 		},
 	}, nil
+}
+
+type createUserRequest struct {
+	CreateUserToken string `json:"create_user_token"`
+	EmailAddress    string `json:"email_address"`
+	Password        string `json:"password"`
+	ConfirmPassword string `json:"confirm_password"`
+}
+
+type createUserResponse struct {
+	CreateUserError *createUserError `json:"create_user_error"`
+}
+
+type createUserError string
+
+const (
+	createUserErrorAlreadyExists        createUserError = "already-exists"
+	createUserErrorInvalidToken         createUserError = "invalid-token"
+	createUserErrorPasswordRequirements createUserError = "pass-requirements"
+	createUserErrorNoSubscription       createUserError = "no-subscription"
+	createUserErrorPasswordsNoMatch     createUserError = "passwords-no-match"
+	createUserErrorInvalidState         createUserError = "invalid-state"
+)
+
+func (c createUserError) Ptr() *createUserError {
+	return &c
+}
+
+func createUser(userAuth *routermiddleware.UserAuthentication, r *router.Request) (interface{}, error) {
+	if userAuth != nil {
+		return createUserResponse{
+			CreateUserError: createUserErrorAlreadyExists.Ptr(),
+		}, nil
+	}
+	var req createUserRequest
+	if err := r.GetJSONBody(&req); err != nil {
+		return nil, err
+	}
+	formattedEmailAddress := email.FormatEmailAddress(req.EmailAddress)
+	userID, err := routetoken.ValidateTokenAndEmailAndGetUserID(req.CreateUserToken, routes.CreateUserKey, formattedEmailAddress)
+	switch {
+	case err != nil:
+		return createUserResponse{
+			CreateUserError: createUserErrorInvalidToken.Ptr(),
+		}, nil
+	case req.Password != req.ConfirmPassword:
+		return createUserResponse{
+			CreateUserError: createUserErrorPasswordsNoMatch.Ptr(),
+		}, nil
+	case !useraccounts.ValidatePasswordMeetsRequirements(req.Password):
+		return createUserResponse{
+			CreateUserError: createUserErrorPasswordRequirements.Ptr(),
+		}, nil
+	}
+	var cErr *createUserError
+	err = database.WithTx(func(tx *sqlx.Tx) error {
+		user, err := users.GetUser(tx, *userID)
+		if err != nil {
+			return err
+		}
+		if user.Status != users.UserStatusVerified {
+			cErr = createUserErrorInvalidState.Ptr()
+			return nil
+		}
+		alreadyHasAccount, err := useraccounts.DoesUserAlreadyHaveAccount(tx, *userID)
+		switch {
+		case err != nil:
+			return err
+		case alreadyHasAccount:
+			cErr = createUserErrorAlreadyExists.Ptr()
+			return nil
+		}
+		holdUntilTime := time.Now().Add(30 * time.Minute)
+		if _, err := useraccountsnotifications.EnqueueNotificationRequest(tx, *userID, useraccountsnotifications.NotificationTypeAccountCreated, holdUntilTime); err != nil {
+			return err
+		}
+		return useraccounts.CreateUserPasswordForUser(tx, *userID, req.Password)
+	})
+	switch {
+	case err != nil:
+		return nil, err
+	case cErr != nil:
+		return createUserResponse{
+			CreateUserError: cErr,
+		}, nil
+	}
+	token, err := auth.CreateJWTForUser(*userID)
+	if err != nil {
+		return nil, err
+	}
+	r.RespondWithCookie(&http.Cookie{
+		Name:     routermiddleware.AuthTokenCookieName,
+		Value:    *token,
+		HttpOnly: true,
+		Path:     "/",
+		Expires:  time.Now().Add(auth.SessionExpirationTime),
+	})
+	return createUserResponse{}, nil
 }

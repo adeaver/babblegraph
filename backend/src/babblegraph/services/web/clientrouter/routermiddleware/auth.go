@@ -12,7 +12,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-const authTokenCookieName = "session_token"
+const AuthTokenCookieName = "session_token"
 
 type UserAuthentication struct {
 	UserID            users.UserID
@@ -25,7 +25,7 @@ func MaybeWithAuthentication(handler MaybeWithAuthenticationHandler) router.Requ
 	return func(r *router.Request) (interface{}, error) {
 		var userAuth *UserAuthentication
 		for _, cookie := range r.GetCookies() {
-			if cookie.Name == authTokenCookieName {
+			if cookie.Name == AuthTokenCookieName {
 				token := cookie.Value
 				userID, isValid, err := auth.VerifyJWTAndGetUserID(token)
 				switch {

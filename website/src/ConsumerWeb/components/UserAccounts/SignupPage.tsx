@@ -19,7 +19,7 @@ import {
     createUser,
     CreateUserError,
     CreateUserResponse,
-} from 'ConsumerWeb/api/useraccounts/useraccounts';
+} from 'ConsumerWeb/api/useraccounts2/useraccounts';
 
 const styleClasses = makeStyles({
     displayCard: {
@@ -54,7 +54,6 @@ const createUserErrorMessages = {
    [CreateUserError.AlreadyExists]: "There’s already an existing account for that email address",
    [CreateUserError.InvalidToken]: "The email submitted didn’t match the email address this unique link is for. Make sure you entered the same email address that you received the signup link with.",
    [CreateUserError.PasswordRequirements]: "The password entered did not match the minimum password requirements",
-   [CreateUserError.NoSubscription]: "At this time, you need to be subscribed to create an account. Please see the BuyMeACoffee Link to subscribe",
    [CreateUserError.PasswordsNoMatch]: "The passwords entered did not match.",
    "default": "Something went wrong processing your request. Try again, or email hello@babblegraph.com for help.",
 }
@@ -86,9 +85,7 @@ const SignupPage = (props: SignupPageProps) => {
         },
         (resp: CreateUserResponse) => {
             setIsLoading(false);
-            if (!!resp.checkoutToken) {
-                history.push(`/checkout/${resp.checkoutToken}`);
-            } else if (!!resp.createUserError) {
+            if (!!resp.createUserError) {
                 setErrorMessage(createUserErrorMessages[resp.createUserError] || createUserErrorMessages["default"]);
             } else {
                 setErrorMessage(createUserErrorMessages["default"]);
