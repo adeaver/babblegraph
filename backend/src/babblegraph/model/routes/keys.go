@@ -46,7 +46,6 @@ func EncryptUserIDWithKey(userID users.UserID, key RouteEncryptionKey) (*string,
 	switch key {
 	case SubscriptionManagementRouteEncryptionKey,
 		UnsubscribeRouteEncryptionKey,
-		EmailOpenedKey,
 		UserVerificationKey,
 		WordReinforcementKey,
 		PremiumSubscriptionCheckoutKey,

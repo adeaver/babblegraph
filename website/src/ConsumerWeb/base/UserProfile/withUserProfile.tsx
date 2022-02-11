@@ -14,17 +14,20 @@ import {
     GetUserProfileInformationResponse,
     getUserProfileInformation,
 } from 'ConsumerWeb/api/useraccounts2/useraccounts';
+import {
+    RouteEncryptionKey,
+    LoginRedirectKey,
+} from 'ConsumerWeb/api/routes/consts';
 
 export type UserProfileComponentProps = {
     userProfile: UserProfileInformation;
 } & BaseComponentProps;
 
 export function withUserProfileInformation<P>(
-    // TODO: type these
-    key: string,
-    toKey: string | undefined,
+    key: RouteEncryptionKey,
+    nextKeys: Array<RouteEncryptionKey>,
     getToken: (ownProps: P) => string,
-    loginRedirectKey: string | undefined,
+    loginRedirectKey: LoginRedirectKey | undefined,
     WrappedComponent: React.ComponentType<P & UserProfileComponentProps>,
 ) {
     return asBaseComponent<GetUserProfileInformationResponse, P>(
@@ -51,7 +54,7 @@ export function withUserProfileInformation<P>(
             getUserProfileInformation({
                 key: key,
                 token: getToken(ownProps),
-                toKey: toKey,
+                nextKeys: nextKeys,
             },
             onSuccess,
             onError)

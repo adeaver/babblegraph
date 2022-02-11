@@ -24,9 +24,9 @@ var Routes = router.RouteGroup{
 }
 
 type getUserProfileInformationRequest struct {
-	Token string                     `json:"token"`
-	Key   routes.RouteEncryptionKey  `json:"key"`
-	ToKey *routes.RouteEncryptionKey `json:"to_key,omitempty"`
+	Token    string                      `json:"token"`
+	Key      routes.RouteEncryptionKey   `json:"key"`
+	NextKeys []routes.RouteEncryptionKey `json:"next_keys,omitempty"`
 }
 
 type getUserProfileInformationResponse struct {
@@ -38,7 +38,7 @@ type userProfileInformation struct {
 	HasAccount        bool                            `json:"has_account"`
 	IsLoggedIn        bool                            `json:"is_logged_in"`
 	SubscriptionLevel *useraccounts.SubscriptionLevel `json:"subscription_level,omitempty"`
-	NextToken         *string                         `json:"next_token"`
+	NextTokens        []string                        `json:"next_tokens,omitempty"`
 }
 
 type userProfileInformationError string
@@ -63,13 +63,16 @@ func getUserProfileInformation(userAuth *routermiddleware.UserAuthentication, r 
 			Error: userProfileInformationErrorInvalidKey.Ptr(),
 		}, nil
 	}
-	var nextToken *string
-	if req.ToKey != nil {
-		nextToken, err = routes.EncryptUserIDWithKey(*userID, *req.ToKey)
-		if err != nil {
-			return getUserProfileInformationResponse{
-				Error: userProfileInformationErrorInvalidKey.Ptr(),
-			}, nil
+	var nextTokens []string
+	if req.NextKeys != nil {
+		for _, key := range req.NextKeys {
+			nextToken, err := routes.EncryptUserIDWithKey(*userID, key)
+			if err != nil {
+				return getUserProfileInformationResponse{
+					Error: userProfileInformationErrorInvalidKey.Ptr(),
+				}, nil
+			}
+			nextTokens = append(nextTokens, *nextToken)
 		}
 	}
 	if userAuth == nil {
@@ -85,7 +88,7 @@ func getUserProfileInformation(userAuth *routermiddleware.UserAuthentication, r 
 			HasAccount: doesUserHaveAccount,
 		}
 		if !doesUserHaveAccount {
-			userProfile.NextToken = nextToken
+			userProfile.NextTokens = nextTokens
 		}
 		return getUserProfileInformationResponse{
 			UserProfile: userProfile,
@@ -110,7 +113,7 @@ func getUserProfileInformation(userAuth *routermiddleware.UserAuthentication, r 
 			HasAccount:        true,
 			IsLoggedIn:        true,
 			SubscriptionLevel: subscriptionLevel,
-			NextToken:         nextToken,
+			NextTokens:        nextTokens,
 		},
 	}, nil
 }

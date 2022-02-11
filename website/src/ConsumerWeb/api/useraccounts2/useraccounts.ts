@@ -1,4 +1,8 @@
 import { makePostRequestWithStandardEncoding } from 'util/bgfetch/bgfetch';
+import {
+    RouteEncryptionKey,
+    LoginRedirectKey,
+} from 'ConsumerWeb/api/routes/consts';
 
 export enum UserProfileInformationError {
     InvalidKey = 'invalid-key',
@@ -12,9 +16,8 @@ export enum SubscriptionLevel {
 
 export type GetUserProfileInformationRequest = {
     token: string;
-    // TODO: type this
-    key: string;
-    toKey: string | undefined;
+    key: RouteEncryptionKey;
+    nextKeys: Array<RouteEncryptionKey>;
 }
 
 export type GetUserProfileInformationResponse = {
@@ -26,7 +29,7 @@ export type UserProfileInformation = {
 	hasAccount: boolean;
     isLoggedIn: boolean;
 	subscriptionLevel: SubscriptionLevel | undefined;
-	nextToken: string | undefined;
+	nextTokens: Array<string>;
 }
 
 export function getUserProfileInformation(
