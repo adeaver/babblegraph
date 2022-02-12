@@ -1,6 +1,7 @@
 package documents
 
 import (
+	"babblegraph/model/content"
 	"babblegraph/model/contenttopics"
 	"babblegraph/wordsmith"
 	"time"
@@ -26,6 +27,9 @@ const (
 
 	// Version 7 adds content topics length filter
 	Version7 Version = 7
+
+	// Version 8 adds source ID and topic mapping
+	Version8 Version = 8
 
 	CurrentDocumentVersion Version = Version7
 )
@@ -66,12 +70,14 @@ type Document struct {
 	ID                                 DocumentID                   `json:"id"`
 	Version                            Version                      `json:"version"`
 	URL                                string                       `json:"url"`
+	SourceID                           *content.SourceID            `json:"source_id,omitempty"`
 	ReadabilityScore                   int64                        `json:"readability_score"`
 	LanguageCode                       wordsmith.LanguageCode       `json:"language_code"`
 	DocumentType                       Type                         `json:"document_type"`
 	Metadata                           Metadata                     `json:"metadata"`
 	Domain                             string                       `json:"domain"`
 	Topics                             []contenttopics.ContentTopic `json:"content_topics"`
+	TopicMappingIDs                    []content.TopicMappingID     `json:"topic_mapping_ids"`
 	TopicsLength                       *int64                       `json:"topics_length,omitempty"`
 	SeedJobIngestTimestamp             *int64                       `json:"seed_job_ingest_timestamp,omitempty"`
 	LemmatizedDescription              *string                      `json:"lemmatized_description,omitempty"`

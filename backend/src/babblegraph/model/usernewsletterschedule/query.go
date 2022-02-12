@@ -1,6 +1,7 @@
 package usernewsletterschedule
 
 import (
+	"babblegraph/model/content"
 	"babblegraph/model/contenttopics"
 	"babblegraph/model/users"
 	"babblegraph/util/ptr"
@@ -32,7 +33,8 @@ const (
         SET
             content_topics=$4,
             number_of_articles=$5,
-            is_active=$6`
+            is_active=$6
+        RETURNING _id`
 
 	getNewsletterScheduleForUserQuery    = "SELECT * FROM user_newsletter_schedule WHERE user_id = $1 AND language_code = $2"
 	upsertNewsletterScheduleForUserQuery = `INSERT INTO
@@ -51,6 +53,21 @@ const (
             iana_timezone=$3,
             hour_of_day_index=$4,
             quarter_hour_index=$5`
+
+	markAllTopicMappingsInactiveForQuery = "UPDATE user_newsletter_schedule_day_topic_mapping SET is_active = FALSE WHERE day_id = $1"
+	upsertTopicMappingsForDayQuery       = `INSERT INTO
+        user_newsletter_schedule_day_topic_mapping (
+            topic_id,
+            day_id,
+            is_active
+        ) VALUES (
+            $1, $2, $3
+        ) ON CONFLICT (
+            day_id, topic_id
+        ) DO UPDATE
+        SET
+            is_active=$3`
+	getAllTopicMappingsForDayQuery = "SELECT * FROM user_newsletter_schedule_day_topic_mapping WHERE day_id = $1 AND is_active = TRUE"
 )
 
 func lookupNewsletterDayMetadataForUserAndDay(tx *sqlx.Tx, userID users.UserID, dayOfWeekIndex int) (*dbUserNewsletterDayMetadata, error) {
@@ -69,6 +86,30 @@ func lookupNewsletterDayMetadataForUserAndDay(tx *sqlx.Tx, userID users.UserID, 
 	return nil, nil
 }
 
+func upsertTopicMappingsForDay(tx *sqlx.Tx, dayID dayID, topicIDs []content.TopicID) error {
+	if _, err := tx.Exec(markAllTopicMappingsInactiveForQuery, dayID); err != nil {
+		return err
+	}
+	for _, t := range topicIDs {
+		if _, err := tx.Exec(upsertTopicMappingsForDayQuery, t, dayID, true); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func lookupTopicMappingsForDay(tx *sqlx.Tx, dayID dayID) ([]content.TopicID, error) {
+	var matches []dbUserNewsletterScheduleDayTopicMapping
+	if err := tx.Select(&matches, getAllTopicMappingsForDayQuery, dayID); err != nil {
+		return nil, err
+	}
+	var out []content.TopicID
+	for _, m := range matches {
+		out = append(out, m.TopicID)
+	}
+	return out, nil
+}
+
 func GetNewsletterDayMetadataForUser(tx *sqlx.Tx, userID users.UserID) ([]UserNewsletterScheduleDayMetadata, error) {
 	var matches []dbUserNewsletterDayMetadata
 	if err := tx.Select(&matches, getAllNewsletterScheduleMetadataForUserQuery, userID); err != nil {
@@ -76,7 +117,7 @@ func GetNewsletterDayMetadataForUser(tx *sqlx.Tx, userID users.UserID) ([]UserNe
 	}
 	var out []UserNewsletterScheduleDayMetadata
 	for _, m := range matches {
-		metadata, err := m.ToNonDB()
+		metadata, err := m.ToNonDB(tx)
 		if err != nil {
 			return nil, err
 		}
@@ -98,17 +139,23 @@ func UpsertNewsletterDayMetadataForUser(tx *sqlx.Tx, input UpsertNewsletterDayMe
 	// Validate that all the topics passed are valid and only occur once
 	seenTopicNames := make(map[string]bool)
 	var topicNamesToInsert []string
+	var topicIDsToInsert []content.TopicID
 	for _, topicString := range input.ContentTopics {
 		if _, ok := seenTopicNames[topicString]; ok {
 			continue
 		}
-		_, err := contenttopics.GetContentTopicForString(topicString)
+		t, err := contenttopics.GetContentTopicForString(topicString)
 		if err != nil {
 			log.Println(fmt.Sprintf("Got invalid content topic %s", err.Error()))
 			continue
 		}
 		seenTopicNames[topicString] = true
 		topicNamesToInsert = append(topicNamesToInsert, topicString)
+		topicID, err := content.GetTopicIDByContentTopic(tx, *t)
+		if err != nil {
+			return err
+		}
+		topicIDsToInsert = append(topicIDsToInsert, *topicID)
 	}
 	switch {
 	case input.DayOfWeekIndex < 0 || input.DayOfWeekIndex > 6:
@@ -122,10 +169,18 @@ func UpsertNewsletterDayMetadataForUser(tx *sqlx.Tx, input UpsertNewsletterDayMe
 	if len(topicNamesToInsert) > 0 {
 		contentTopicString = ptr.String(strings.Join(topicNamesToInsert, contentTopicDelimiter))
 	}
-	if _, err := tx.Exec(upsertNewsletterScheduleMetadataQuery, input.UserID, input.DayOfWeekIndex, input.LanguageCode, contentTopicString, input.NumberOfArticles, input.IsActive); err != nil {
+	rows, err := tx.Query(upsertNewsletterScheduleMetadataQuery, input.UserID, input.DayOfWeekIndex, input.LanguageCode, contentTopicString, input.NumberOfArticles, input.IsActive)
+	if err != nil {
 		return err
 	}
-	return nil
+	defer rows.Close()
+	var dayID dayID
+	for rows.Next() {
+		if err := rows.Scan(&dayID); err != nil {
+			return err
+		}
+	}
+	return upsertTopicMappingsForDay(tx, dayID, topicIDsToInsert)
 }
 
 func lookupUserNewsletterScheduleForUser(tx *sqlx.Tx, userID users.UserID, languageCode wordsmith.LanguageCode) (*dbUserNewsletterSchedule, error) {

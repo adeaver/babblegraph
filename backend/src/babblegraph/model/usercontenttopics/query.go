@@ -1,6 +1,7 @@
 package usercontenttopics
 
 import (
+	"babblegraph/model/content"
 	"babblegraph/model/contenttopics"
 	"babblegraph/model/users"
 	"babblegraph/util/database"
@@ -25,17 +26,22 @@ func GetContentTopicsForUser(tx *sqlx.Tx, userID users.UserID) ([]contenttopics.
 	return out, nil
 }
 
-func UpdateContentTopicsForUser(tx *sqlx.Tx, userID users.UserID, contentTopics []contenttopics.ContentTopic) error {
+type ContentTopicWithTopicID struct {
+	Topic   contenttopics.ContentTopic
+	TopicID content.TopicID
+}
+
+func UpdateContentTopicsForUser(tx *sqlx.Tx, userID users.UserID, contentTopics []ContentTopicWithTopicID) error {
 	if _, err := tx.Exec(setAllContentTopicsToInactiveForUserQuery, userID); err != nil {
 		return err
 	}
-	queryBuilder, err := database.NewBulkInsertQueryBuilder("user_content_topic_mappings", "user_id", "content_topic", "is_active")
+	queryBuilder, err := database.NewBulkInsertQueryBuilder("user_content_topic_mappings", "user_id", "content_topic", "content_topic_id", "is_active")
 	if err != nil {
 		return err
 	}
 	queryBuilder.AddConflictResolution("(user_id, content_topic) DO UPDATE SET is_active = TRUE")
-	for _, contentTopic := range contentTopics {
-		if err := queryBuilder.AddValues(userID, contentTopic, true); err != nil {
+	for _, t := range contentTopics {
+		if err := queryBuilder.AddValues(userID, t.Topic, t.TopicID, true); err != nil {
 			return err
 		}
 	}

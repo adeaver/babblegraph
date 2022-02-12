@@ -1,6 +1,7 @@
 package user
 
 import (
+	"babblegraph/model/content"
 	"babblegraph/model/contenttopics"
 	"babblegraph/model/usercontenttopics"
 	"babblegraph/util/database"
@@ -60,7 +61,18 @@ func handleUpdateUserContentTopicsForToken(body []byte) (interface{}, error) {
 		return nil, err
 	}
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
-		return usercontenttopics.UpdateContentTopicsForUser(tx, *userID, req.ContentTopics)
+		var topicMappings []usercontenttopics.ContentTopicWithTopicID
+		for _, t := range req.ContentTopics {
+			topicID, err := content.GetTopicIDByContentTopic(tx, t)
+			if err != nil {
+				return err
+			}
+			topicMappings = append(topicMappings, usercontenttopics.ContentTopicWithTopicID{
+				Topic:   t,
+				TopicID: *topicID,
+			})
+		}
+		return usercontenttopics.UpdateContentTopicsForUser(tx, *userID, topicMappings)
 	}); err != nil {
 		return nil, err
 	}

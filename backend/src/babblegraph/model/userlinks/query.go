@@ -1,6 +1,7 @@
 package userlinks
 
 import (
+	"babblegraph/model/content"
 	"babblegraph/model/email"
 	"babblegraph/model/users"
 	"babblegraph/util/urlparser"
@@ -9,7 +10,7 @@ import (
 )
 
 const (
-	registerUserLinkClickQuery               = "INSERT INTO user_link_clicks (user_id, domain, url_identifier, email_record_id, access_month) VALUES ($1, $2, $3, $4, $5)"
+	registerUserLinkClickQuery               = "INSERT INTO user_link_clicks (user_id, domain, source_id, url_identifier, email_record_id, access_month) VALUES ($1, $2, $3, $4, $5, $6)"
 	getDomainCountsByCurrentAccessMonthQuery = "SELECT user_id, domain, COUNT(DISTINCT url_identifier) count FROM user_link_clicks WHERE user_id = $1 AND access_month = $2 GROUP BY user_id, domain"
 
 	reportPaywallQuery = "INSERT INTO paywall_reports (user_id, domain, url_identifier, email_record_id, access_month) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (user_id, url_identifier, access_month) DO NOTHING"
@@ -17,7 +18,11 @@ const (
 
 func RegisterUserLinkClick(tx *sqlx.Tx, userID users.UserID, u urlparser.ParsedURL, emailRecordID email.ID) error {
 	currentAccessMonth := getCurrentAccessMonth()
-	if _, err := tx.Exec(registerUserLinkClickQuery, userID, u.Domain, u.URLIdentifier, emailRecordID, currentAccessMonth); err != nil {
+	sourceID, err := content.GetSourceIDForParsedURL(tx, u)
+	if err != nil {
+		return err
+	}
+	if _, err := tx.Exec(registerUserLinkClickQuery, userID, u.Domain, sourceID, u.URLIdentifier, emailRecordID, currentAccessMonth); err != nil {
 		return err
 	}
 	return nil

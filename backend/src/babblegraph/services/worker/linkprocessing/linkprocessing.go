@@ -1,10 +1,12 @@
 package linkprocessing
 
 import (
+	"babblegraph/model/content"
 	"babblegraph/model/contenttopics"
 	"babblegraph/model/documents"
 	"babblegraph/model/domains"
 	"babblegraph/model/links2"
+	"babblegraph/model/urltopicmapping"
 	"babblegraph/services/worker/indexing"
 	"babblegraph/services/worker/ingesthtml"
 	"babblegraph/services/worker/textprocessing"
@@ -243,8 +245,27 @@ func (l *LinkProcessor) startURLManager(addURLs chan []string) func(c async.Cont
 			}
 			for idx, u := range parsedURLs {
 				if len(contentTopics[idx]) > 0 {
-					if err := contenttopics.ApplyContentTopicsToURL(tx, u.URL, contentTopics[idx]); err != nil {
-						return err
+					var mappings []urltopicmapping.TopicMappingUnion
+					for _, t := range contentTopics[idx] {
+						topicID, err := content.GetTopicIDByContentTopic(tx, t)
+						if err != nil {
+							return err
+						}
+						topicMappingID, err := content.LookupTopicMappingIDForURL(tx, u, *topicID)
+						switch {
+						case err != nil:
+							return err
+						case topicMappingID != nil:
+							mappings = append(mappings, urltopicmapping.TopicMappingUnion{
+								Topic:          t,
+								TopicMappingID: *topicMappingID,
+							})
+						}
+					}
+					if len(mappings) != 0 {
+						if err := urltopicmapping.ApplyContentTopicsToURL(tx, u, mappings); err != nil {
+							return err
+						}
 					}
 				}
 			}
@@ -302,10 +323,16 @@ func processSingleLink(threadComplete chan *links2.Link, addURLs chan []string, 
 			threadComplete <- link
 			return
 		}
+		var sourceID *content.SourceID
 		var topicsForURL []contenttopics.ContentTopic
+		var topicMappingIDs []content.TopicMappingID
 		if err := database.WithTx(func(tx *sqlx.Tx) error {
 			var err error
-			topicsForURL, err = contenttopics.GetTopicsForURL(tx, u)
+			topicsForURL, topicMappingIDs, err = urltopicmapping.GetTopicsAndMappingIDsForURL(tx, u)
+			if err != nil {
+				return err
+			}
+			sourceID, err = link.GetSourceID(tx)
 			return err
 		}); err != nil {
 			c.Warnf("Error getting topics for url %s: %s. Continuing...", u, err.Error())
@@ -319,7 +346,9 @@ func processSingleLink(threadComplete chan *links2.Link, addURLs chan []string, 
 			LanguageCode:           languageCode,
 			DocumentVersion:        documents.CurrentDocumentVersion,
 			URL:                    urlparser.MustParseURL(u),
+			SourceID:               sourceID,
 			TopicsForURL:           topicsForURL,
+			TopicMappingIDs:        topicMappingIDs,
 			SeedJobIngestTimestamp: link.SeedJobIngestTimestamp,
 		})
 		if err != nil {
@@ -407,8 +436,27 @@ func (l *LinkProcessor) AddURLs(urls []string, topics []contenttopics.ContentTop
 			return nil
 		}
 		for _, u := range parsedURLs {
-			if err := contenttopics.ApplyContentTopicsToURL(tx, u.URL, topics); err != nil {
-				return err
+			var mappings []urltopicmapping.TopicMappingUnion
+			for _, t := range topics {
+				topicID, err := content.GetTopicIDByContentTopic(tx, t)
+				if err != nil {
+					return err
+				}
+				topicMappingID, err := content.LookupTopicMappingIDForURL(tx, u, *topicID)
+				switch {
+				case err != nil:
+					return err
+				case topicMappingID != nil:
+					mappings = append(mappings, urltopicmapping.TopicMappingUnion{
+						Topic:          t,
+						TopicMappingID: *topicMappingID,
+					})
+				}
+			}
+			if len(mappings) != 0 {
+				if err := urltopicmapping.ApplyContentTopicsToURL(tx, u, mappings); err != nil {
+					return err
+				}
 			}
 		}
 		return nil
