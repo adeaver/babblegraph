@@ -4,6 +4,8 @@ import (
 	"babblegraph/model/content"
 	"babblegraph/model/contenttopics"
 	"babblegraph/model/users"
+	"babblegraph/util/ctx"
+	"babblegraph/util/database"
 	"babblegraph/util/ptr"
 	"babblegraph/wordsmith"
 	"fmt"
@@ -220,4 +222,35 @@ func UpsertUserNewsletterSchedule(tx *sqlx.Tx, input UpsertUserNewsletterSchedul
 	}
 	return nil
 
+}
+
+func BackfillNewsletterScheduleTopics(c ctx.LogContext, tx *sqlx.Tx) error {
+	rows, err := tx.Queryx("SELECT * FROM user_newsletter_schedule_day_metadata")
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var m dbUserNewsletterDayMetadata
+		if err := rows.StructScan(&m); err != nil {
+			return err
+		}
+		if err := database.WithTx(func(tx *sqlx.Tx) error {
+			var contentTopics []string
+			if m.ContentTopics != nil {
+				contentTopics = strings.Split(*m.ContentTopics, contentTopicDelimiter)
+			}
+			return UpsertNewsletterDayMetadataForUser(tx, UpsertNewsletterDayMetadataForUserInput{
+				UserID:           m.UserID,
+				DayOfWeekIndex:   m.DayOfWeekIndex,
+				LanguageCode:     m.LanguageCode,
+				ContentTopics:    contentTopics,
+				NumberOfArticles: m.NumberOfArticles,
+				IsActive:         m.IsActive,
+			})
+		}); err != nil {
+			c.Warnf("Error upserting newsletter schedule: %s", m.ID)
+		}
+	}
+	return nil
 }
