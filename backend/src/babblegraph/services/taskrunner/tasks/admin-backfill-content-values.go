@@ -5,6 +5,7 @@ import (
 	"babblegraph/model/links2"
 	"babblegraph/model/urltopicmapping"
 	"babblegraph/model/usercontenttopics"
+	"babblegraph/model/userlinks"
 	"babblegraph/model/usernewsletterschedule"
 	"babblegraph/util/ctx"
 	"babblegraph/util/database"
@@ -20,11 +21,20 @@ func BackfillAdminContentValues() error {
 	}); err != nil {
 		return err
 	}
+	c.Infof("Starting user link clicks backfill")
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		return userlinks.BackfillUserLinkClicks(c, tx)
+	}); err != nil {
+		return err
+	}
+	c.Infof("Finished user link clicks backfill")
+	c.Infof("Starting user newsletter schedule backfill")
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		return usernewsletterschedule.BackfillNewsletterScheduleTopics(c, tx)
 	}); err != nil {
 		return err
 	}
+	c.Infof("Finished user newsletter schedule backfill")
 	return database.WithTx(func(tx *sqlx.Tx) error {
 		var count int
 		return links2.GetLinksCursor(tx, func(link links2.Link) (bool, error) {

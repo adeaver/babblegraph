@@ -4,6 +4,8 @@ import (
 	"babblegraph/model/content"
 	"babblegraph/model/email"
 	"babblegraph/model/users"
+	"babblegraph/util/ctx"
+	"babblegraph/util/database"
 	"babblegraph/util/urlparser"
 
 	"github.com/jmoiron/sqlx"
@@ -41,6 +43,38 @@ func ReportPaywall(tx *sqlx.Tx, userID users.UserID, u urlparser.ParsedURL, emai
 	currentAccessMonth := getCurrentAccessMonth()
 	if _, err := tx.Exec(reportPaywallQuery, userID, u.Domain, u.URLIdentifier, emailRecordID, currentAccessMonth); err != nil {
 		return err
+	}
+	return nil
+}
+
+// TODO(content-migration): remove this
+func BackfillUserLinkClicks(c ctx.LogContext, tx *sqlx.Tx) error {
+	rows, err := tx.Queryx("SELECT * FROM user_link_clicks WHERE source_id IS NULL")
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var l dbUserLinkClick
+		if err := rows.StructScan(&l); err != nil {
+			return err
+		}
+		if err := database.WithTx(func(tx *sqlx.Tx) error {
+			sourceID, err := content.LookupSourceIDForParsedURL(tx, urlparser.ParsedURL{
+				Domain: l.Domain,
+			})
+			switch {
+			case err != nil:
+				return err
+			case sourceID == nil:
+				return nil
+			default:
+				_, err = tx.Exec("UPDATE user_link_clicks SET source_id = $1 WHERE _id = $2", *sourceID, l.ID)
+				return err
+			}
+		}); err != nil {
+			c.Infof("Error processing link click %s: %s", l.ID, err.Error())
+		}
 	}
 	return nil
 }

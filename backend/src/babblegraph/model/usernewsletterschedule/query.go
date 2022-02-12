@@ -224,6 +224,7 @@ func UpsertUserNewsletterSchedule(tx *sqlx.Tx, input UpsertUserNewsletterSchedul
 
 }
 
+// TODO(content-migration): remove this
 func BackfillNewsletterScheduleTopics(c ctx.LogContext, tx *sqlx.Tx) error {
 	rows, err := tx.Queryx("SELECT * FROM user_newsletter_schedule_day_metadata")
 	if err != nil {
