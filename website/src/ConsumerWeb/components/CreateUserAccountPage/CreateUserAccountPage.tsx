@@ -140,6 +140,7 @@ const CreateUserAccountPage = withUserProfileInformation<CreateUserAccountPageOw
                             <Paragraph align={Alignment.Left}>
                                 Security is a big concern when dealing with payment information. Accounts are more secure than managing your Babblegraph subscription.
                             </Paragraph>
+                            { /* Finish translations */ }
                             <Form
                                 className={classes.formContainer}
                                 handleSubmit={handleSubmit}>
