@@ -106,7 +106,7 @@ func UpsertLinkWithEmptyFetchStatus(tx *sqlx.Tx, urls []urlparser.ParsedURL, inc
 
 // This is useful for reindexing
 func GetLinksCursor(tx *sqlx.Tx, fn func(link Link) (bool, error)) error {
-	rows, err := tx.Queryx("SELECT * FROM links2 WHERE source_id IS NOT NULL")
+	rows, err := tx.Queryx("SELECT * FROM links2 WHERE source_id IS NULL ORDER BY seq_num ASC")
 	if err != nil {
 		return err
 	}
