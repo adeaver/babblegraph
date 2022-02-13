@@ -28,7 +28,7 @@ import LoginPage from 'ConsumerWeb/components/UserAccounts/LoginPage';
 import CreateUserAccountPage from 'ConsumerWeb/components/CreateUserAccountPage/CreateUserAccountPage';
 import ForgotPasswordPage from 'ConsumerWeb/components/UserAccounts/ForgotPasswordPage';
 import ResetPasswordPage from 'ConsumerWeb/components/UserAccounts/ResetPasswordPage';
-import SubscriptionCheckoutPage from 'ConsumerWeb/components/UserAccounts/SubscriptionCheckoutPage';
+import PremiumNewsletterSubscriptionCheckoutPage from 'ConsumerWeb/components/PremiumNewsletterSubscriptionCheckoutPage/PremiumNewsletterSubscriptionCheckoutPage';
 
 import NotFoundPage from 'ConsumerWeb/components/NotFoundPage/NotFoundPage';
 
@@ -51,7 +51,7 @@ class App extends React.Component{
                     { /* User Account Management */ }
                     <Route path="/login" component={LoginPage} />
                     <Route path="/signup/:token" component={CreateUserAccountPage} />
-                    <Route path="/checkout/:token" component={SubscriptionCheckoutPage} />
+                    <Route path="/checkout/:token" component={PremiumNewsletterSubscriptionCheckoutPage} />
                     <Route path="/forgot-password" component={ForgotPasswordPage} />
                     <Route path="/password-reset/:token" component={ResetPasswordPage} />
 

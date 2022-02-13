@@ -2,6 +2,7 @@ package clientrouter
 
 import (
 	"babblegraph/services/web/clientrouter/api"
+	"babblegraph/services/web/clientrouter/api/billing"
 	"babblegraph/services/web/clientrouter/api/blog"
 	"babblegraph/services/web/clientrouter/api/language"
 	"babblegraph/services/web/clientrouter/api/ses"
@@ -22,6 +23,7 @@ func RegisterClientRouter(r *mux.Router) error {
 	}
 	if err := router.WithAPIRouter(r, "api", []router.RouteGroup{
 		useraccounts.Routes,
+		billing.Routes,
 	}); err != nil {
 		return err
 	}
