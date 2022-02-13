@@ -58,9 +58,7 @@ func BackfillAdminContentValues() error {
 					c.Infof("Successfully processed %d links", count)
 				}
 				// Update link
-				if err := links2.InsertLinks(tx, []urlparser.ParsedURL{
-					*parsedURL,
-				}); err != nil {
+				if err := links2.UpdateLinkSource(tx, *parsedURL, *sourceID); err != nil {
 					return err
 				}
 				topics, mappings, err := urltopicmapping.GetTopicsAndMappingIDsForURL(tx, link.URL)
