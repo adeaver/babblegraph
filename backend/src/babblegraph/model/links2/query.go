@@ -33,7 +33,7 @@ func InsertLinks(tx *sqlx.Tx, urls []urlparser.ParsedURL) error {
 	if err != nil {
 		return err
 	}
-	queryBuilder.AddConflictResolution("(url_identifier) DO UPDATE SET source_id = excluded.source_id")
+	queryBuilder.AddConflictResolution("DO NOTHING")
 	for _, u := range urls {
 		sourceID, err := content.LookupSourceIDForParsedURL(tx, u)
 		switch {
@@ -123,6 +123,14 @@ func GetLinksCursor(tx *sqlx.Tx, fn func(link Link) (bool, error)) error {
 		case err != nil && !shouldEndIteration:
 			log.Println(fmt.Sprintf("Got error: %s, continuing...", err.Error()))
 		}
+	}
+	return nil
+}
+
+// TODO(content-migration): get rid of this
+func UpdateLinkSource(tx *sqlx.Tx, u urlparser.ParsedURL, sourceID content.SourceID) error {
+	if _, err := tx.Exec("UPDATE links2 SET source_id = $1 WHERE url_identifier = $2", sourceID, u.URLIdentifier); err != nil {
+		return err
 	}
 	return nil
 }
