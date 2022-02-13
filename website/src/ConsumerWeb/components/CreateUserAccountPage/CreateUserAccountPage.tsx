@@ -31,6 +31,12 @@ import {
     CreateUserError,
     CreateUserResponse,
 } from 'ConsumerWeb/api/useraccounts2/useraccounts';
+import { DisplayLanguage } from 'common/model/language/language';
+
+import {
+    TextBlock,
+    getTextBlocksForLanguage,
+} from './translations';
 
 const styleClasses = makeStyles({
     formContainer: {
@@ -51,11 +57,11 @@ const styleClasses = makeStyles({
 });
 
 const createUserErrorMessages = {
-   [CreateUserError.AlreadyExists]: "There’s already an existing account for that email address",
-   [CreateUserError.InvalidToken]: "The email submitted didn’t match the email address this unique link is for. Make sure you entered the same email address that you received the signup link with.",
-   [CreateUserError.PasswordRequirements]: "The password entered did not match the minimum password requirements",
-   [CreateUserError.PasswordsNoMatch]: "The passwords entered did not match.",
-   "default": "Something went wrong processing your request. Try again, or email hello@babblegraph.com for help.",
+   [CreateUserError.AlreadyExists]: TextBlock.UserAlreadyExistsError,
+   [CreateUserError.InvalidToken]: TextBlock.InvalidTokenError,
+   [CreateUserError.PasswordRequirements]: TextBlock.PasswordRequirementsError,
+   [CreateUserError.PasswordsNoMatch]: TextBlock.PasswordsNoMatchError,
+   "default": TextBlock.GenericPasswordError,
 }
 
 type Params = {
@@ -97,6 +103,8 @@ const CreateUserAccountPage = withUserProfileInformation<CreateUserAccountPageOw
         const [ isLoading, setIsLoading ] = useState<boolean>(false);
         const [ errorMessage, setErrorMessage ] = useState<string>(null);
 
+        // TODO(multiple-languages): Make this dynamic
+        const translations = getTextBlocksForLanguage(DisplayLanguage.English);
 
         const handleSubmit = () => {
             setIsLoading(true);
@@ -112,11 +120,11 @@ const CreateUserAccountPage = withUserProfileInformation<CreateUserAccountPageOw
                     setLocation(`/checkout/${premiumSubscriptionCheckoutToken}`);
                     return;
                 }
-                setErrorMessage(createUserErrorMessages[resp.createUserError] || createUserErrorMessages["default"]);
+                setErrorMessage(translations[createUserErrorMessages[resp.createUserError] || createUserErrorMessages["default"]]);
             },
             (err: Error) => {
                 setIsLoading(false);
-                setErrorMessage(createUserErrorMessages["default"]);
+                setErrorMessage(translations[createUserErrorMessages["default"]]);
             });
         }
 
@@ -129,61 +137,60 @@ const CreateUserAccountPage = withUserProfileInformation<CreateUserAccountPageOw
                 <Grid item xs={12} md={6}>
                     <DisplayCard>
                         <DisplayCardHeader
-                            title="Create an account"
+                            title={translations[TextBlock.PageTitle]}
                             backArrowDestination={`/manage/${subscriptionManagementToken}`} />
                             <Paragraph align={Alignment.Left}>
-                                First step, sign up for a Babblegraph account
+                                {translations[TextBlock.IntroParagraph1]}
                             </Paragraph>
                             <Paragraph align={Alignment.Left}>
-                                Why do you need to sign up for an account to access Babblegraph Premium?
+                                {translations[TextBlock.IntroParagraph2]}
                             </Paragraph>
                             <Paragraph align={Alignment.Left}>
-                                Security is a big concern when dealing with payment information. Accounts are more secure than managing your Babblegraph subscription.
+                                {translations[TextBlock.IntroParagraph3]}
                             </Paragraph>
-                            { /* Finish translations */ }
                             <Form
                                 className={classes.formContainer}
                                 handleSubmit={handleSubmit}>
                                 <PrimaryTextField
                                     className={classes.createUserFormTextField}
                                     id="email"
-                                    label="Confirm Your Email Address"
+                                    label={translations[TextBlock.EmailAddress]}
                                     variant="outlined"
                                     defaultValue={emailAddress}
                                     disabled={isLoading}
                                     onChange={handleEmailAddressChange} />
                                 <Paragraph align={Alignment.Left}>
-                                    Password Requirements:
+                                    {translations[TextBlock.PasswordRequirementsTitle]}
                                 </Paragraph>
                                 <ul>
                                     <PasswordConstraint isConstraintMet={password && password.length > 8}>
-                                        At least 8 characters
+                                        {translations[TextBlock.PasswordRequirementsMinimumLength]}
                                     </PasswordConstraint>
                                     <PasswordConstraint isConstraintMet={password && password.length < 32} >
-                                        No more than 32 characters
+                                        {translations[TextBlock.PasswordRequirementsMaximumLength]}
                                     </PasswordConstraint>
                                     <PasswordConstraint isConstraintMet={false}>
-                                        At least three of the following:
+                                        {translations[TextBlock.PasswordRequirementsCharactersTitle]}
                                     </PasswordConstraint>
                                         <ul>
                                             <PasswordConstraint isConstraintMet={password && !!password.match(/[a-z]/)}>
-                                                Lower Case Latin Letter (a-z)
+                                                {translations[TextBlock.PasswordRequirementsLowerCase]}
                                             </PasswordConstraint>
                                             <PasswordConstraint isConstraintMet={password && !!password.match(/[A-Z]/)}>
-                                                Upper Case Latin Letter (A-Z)
+                                                {translations[TextBlock.PasswordRequirementsUpperCase]}
                                             </PasswordConstraint>
                                             <PasswordConstraint isConstraintMet={password && !!password.match(/[0-9]/)}>
-                                                Number (0-9)
+                                                {translations[TextBlock.PasswordRequirementsNumbers]}
                                             </PasswordConstraint>
                                             <PasswordConstraint isConstraintMet={password && !!password.match(/[^0-9a-zA-Z]/)}>
-                                                Special Character (such as !@#$%^&*)
+                                                {translations[TextBlock.PasswordRequirementsSpecialCharacters]}
                                             </PasswordConstraint>
                                         </ul>
                                 </ul>
                                 <PrimaryTextField
                                     className={classes.createUserFormTextField}
                                     id="password"
-                                    label="Password"
+                                    label={translations[TextBlock.PasswordField]}
                                     type="password"
                                     variant="outlined"
                                     defaultValue={password}
@@ -192,7 +199,7 @@ const CreateUserAccountPage = withUserProfileInformation<CreateUserAccountPageOw
                                 <PrimaryTextField
                                     className={classes.createUserFormTextField}
                                     id="confirm-password"
-                                    label="Confirm Password"
+                                    label={translations[TextBlock.ConfirmPasswordField]}
                                     type="password"
                                     variant="outlined"
                                     disabled={isLoading}
@@ -207,7 +214,7 @@ const CreateUserAccountPage = withUserProfileInformation<CreateUserAccountPageOw
                                             <CircularProgress className={classes.loadingSpinner} />
                                         )
                                     }
-                                    Sign Up
+                                    {translations[TextBlock.CreateButtonText]}
                                 </PrimaryButton>
                             </Form>
                             <Snackbar open={!!errorMessage} autoHideDuration={6000} onClose={() => {setErrorMessage(null)}}>

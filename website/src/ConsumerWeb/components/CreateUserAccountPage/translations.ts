@@ -12,6 +12,19 @@ export enum TextBlock {
     IntroParagraph2 = 'intro-paragraph-2',
     IntroParagraph3 = 'intro-paragraph-3',
 
+    EmailAddress = 'email-address',
+    PasswordRequirementsTitle = 'password-requirements-title',
+    PasswordRequirementsMinimumLength = 'password-requirements-minimum-length',
+    PasswordRequirementsMaximumLength = 'password-requirements-maximum-length',
+    PasswordRequirementsCharactersTitle = 'password-requirements-characters-title',
+    PasswordRequirementsLowerCase = 'password-requirements-lower-case',
+    PasswordRequirementsUpperCase = 'password-requirements-upper-case',
+    PasswordRequirementsNumbers = 'password-requirements-numbers',
+    PasswordRequirementsSpecialCharacters = 'password-requirements-special-characters',
+
+    PasswordField = 'password-field',
+    ConfirmPasswordField = 'confirm-password-field',
+    CreateButtonText = 'create-button',
 }
 
 const translations = {
@@ -25,6 +38,18 @@ const translations = {
         [TextBlock.IntroParagraph1]: "First step, sign up for a Babblegraph account",
         [TextBlock.IntroParagraph2]: "Why do you need to sign up for an account to access Babblegraph Premium?",
         [TextBlock.IntroParagraph3]: "Security is a big concern when dealing with payment information. Accounts are more secure than managing your Babblegraph subscription.",
+        [TextBlock.EmailAddress]: "Confirm Your Email Address",
+        [TextBlock.PasswordRequirementsTitle]: "Password Requirements:",
+        [TextBlock.PasswordRequirementsMinimumLength]: "At least 8 characters",
+        [TextBlock.PasswordRequirementsMaximumLength]: "No more than 32 characters",
+        [TextBlock.PasswordRequirementsCharactersTitle]: "At least three of the following:",
+        [TextBlock.PasswordRequirementsLowerCase]: "Lower Case Latin Letter (a-z)",
+        [TextBlock.PasswordRequirementsUpperCase]: "Upper Case Latin Letter (A-Z)",
+        [TextBlock.PasswordRequirementsNumbers]: "Number (0-9)",
+        [TextBlock.PasswordRequirementsSpecialCharacters]: "Special Character (such as !@#$%^&*)",
+        [TextBlock.PasswordField]: "Password",
+        [TextBlock.ConfirmPasswordField]: "Confirm Password",
+        [TextBlock.CreateButtonText]: "Create Account",
     },
     [DisplayLanguage.Spanish]: {
         [TextBlock.UserAlreadyExistsError]: "Ya existe una cuenta para esa dirección de email.",
@@ -36,6 +61,18 @@ const translations = {
         [TextBlock.IntroParagraph1]: "Primero, es necesario crear una cuenta de Babblegraph",
         [TextBlock.IntroParagraph2]: "¿Por qué es necesario crear una cuenta para usar Babblegraph Premium?",
         [TextBlock.IntroParagraph3]: "La seguridad es muy importante cuando usas los detalles de pagamiento. Una cuenta es más segura.",
+        [TextBlock.EmailAddress]: "Confirma la dirección de correo electrónico",
+        [TextBlock.PasswordRequirementsTitle]: "Requisitos de contraseña:",
+        [TextBlock.PasswordRequirementsMinimumLength]: "Al menos 8 caracteres",
+        [TextBlock.PasswordRequirementsMaximumLength]: "No más de 32 caracteres",
+        [TextBlock.PasswordRequirementsCharactersTitle]: "Al menos tres de los siguientes:",
+        [TextBlock.PasswordRequirementsLowerCase]: "Letras Minúsculas (a-z)",
+        [TextBlock.PasswordRequirementsUpperCase]: "Letras Mayúsculas (A-Z)",
+        [TextBlock.PasswordRequirementsNumbers]: "Números (0-9)",
+        [TextBlock.PasswordRequirementsSpecialCharacters]: "Caracteres Especiales (como !@#$%^&*)",
+        [TextBlock.PasswordField]: "Contraseña",
+        [TextBlock.ConfirmPasswordField]: "Confirma la contraseña",
+        [TextBlock.CreateButtonText]: "Crea la cuenta",
     },
 }
 
