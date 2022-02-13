@@ -28,14 +28,12 @@ func GetDomainsWithUnfetchedLinks(tx *sqlx.Tx) ([]string, error) {
 	return out, nil
 }
 
-const insertLinkQuery = "INSERT INTO links2 (url_identifier, domain, url) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING"
-
 func InsertLinks(tx *sqlx.Tx, urls []urlparser.ParsedURL) error {
 	queryBuilder, err := database.NewBulkInsertQueryBuilder("links2", "url_identifier", "domain", "url", "source_id")
 	if err != nil {
 		return err
 	}
-	queryBuilder.AddConflictResolution("DO NOTHING")
+	queryBuilder.AddConflictResolution("(url_identifier) DO UPDATE SET source_id = excluded.source_id")
 	for _, u := range urls {
 		sourceID, err := content.LookupSourceIDForParsedURL(tx, u)
 		switch {
@@ -107,8 +105,8 @@ func UpsertLinkWithEmptyFetchStatus(tx *sqlx.Tx, urls []urlparser.ParsedURL, inc
 }
 
 // This is useful for reindexing
-func GetCursorForFetchVersion(tx *sqlx.Tx, fetchVersion FetchVersion, fn func(link Link) (bool, error)) error {
-	rows, err := tx.Queryx("SELECT * FROM links2 WHERE last_fetch_version = $1", fetchVersion)
+func GetLinksCursor(tx *sqlx.Tx, fn func(link Link) (bool, error)) error {
+	rows, err := tx.Queryx("SELECT * FROM links2 WHERE source_id IS NOT NULL")
 	if err != nil {
 		return err
 	}

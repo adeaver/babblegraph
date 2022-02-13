@@ -19,7 +19,7 @@ func GetTopicIDByContentTopic(tx *sqlx.Tx, t contenttopics.ContentTopic) (*Topic
 		return nil, err
 	case len(matches) > 1,
 		len(matches) == 0:
-		return nil, fmt.Errorf("Expected at most one topic, but got %d", len(matches))
+		return nil, fmt.Errorf("Expected exactly one topic for topic %s, but got %d", t, len(matches))
 	default:
 		return matches[0].ID.Ptr(), nil
 	}

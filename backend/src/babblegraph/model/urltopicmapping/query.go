@@ -21,7 +21,7 @@ func ApplyContentTopicsToURL(tx *sqlx.Tx, parsedURL urlparser.ParsedURL, topicUn
 	if err != nil {
 		return err
 	}
-	queryBuilder.AddConflictResolution("DO NOTHING")
+	queryBuilder.AddConflictResolution("(url_identifier, content_topic) DO UPDATE SET topic_mapping_id = EXCLUDED.topic_mapping_id")
 	for _, u := range topicUnions {
 		queryBuilder.AddValues(parsedURL.URLIdentifier, u.Topic, u.TopicMappingID)
 	}
