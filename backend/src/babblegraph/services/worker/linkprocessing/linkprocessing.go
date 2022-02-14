@@ -111,9 +111,11 @@ func (l *LinkProcessor) ProcessLinks(maxWorkers int) func(c async.Context) {
 		async.WithContext(urlManagerErrs, "url-manager", l.startURLManager(addURLs)).Start()
 		for {
 			select {
-			case _ = <-workerManagerErrs:
+			case err := <-workerManagerErrs:
+				c.Warnf("Error with worker manager %s", err.Error())
 				async.WithContext(workerManagerErrs, "worker-manager", l.startWorkerManager(maxWorkers, addURLs)).Start()
-			case _ = <-urlManagerErrs:
+			case err := <-urlManagerErrs:
+				c.Warnf("Error with URL manager %s", err.Error())
 				async.WithContext(urlManagerErrs, "url-manager", l.startURLManager(addURLs)).Start()
 			case _ = <-timer.C:
 				c.Infof("Refreshing link processor")
@@ -134,7 +136,7 @@ func (l *LinkProcessor) startWorkerManager(maxWorkers int, addURLs chan []string
 		var link *links2.Link
 		var numWorkers int
 		spinOffWorkerOrWait := func() (_shouldBreak bool) {
-			link, duration, err := l.getLink()
+			link, duration, err := l.getLink(c)
 			switch {
 			case err != nil:
 				c.Errorf("Error getting links: %s, will retry", err.Error())
@@ -160,20 +162,20 @@ func (l *LinkProcessor) startWorkerManager(maxWorkers int, addURLs chan []string
 		// maxWorkers # of workers, in which case we wait for errors or thread completes
 		// or a timer, in which case, we wait for a timer
 		var duration *time.Duration
-		link, _, err := l.getLink()
+		link, _, err := l.getLink(c)
 		if err != nil {
 			c.Errorf("Error getting links: %s", err.Error())
 		}
 		for {
 			select {
 			case _ = <-threadComplete:
-				c.Debugf("Thread is complete")
+				c.Infof("Thread is complete")
 				numWorkers--
 				if link != nil {
 					async.WithContext(workerErrs, "ingest-worker", processSingleLink(threadComplete, addURLs, link)).Start()
 					link = nil
 				} else {
-					link, duration, err = l.getLink()
+					link, duration, err = l.getLink(c)
 					switch {
 					case err != nil:
 						c.Errorf("Error getting links: %s", err.Error())
@@ -185,14 +187,14 @@ func (l *LinkProcessor) startWorkerManager(maxWorkers int, addURLs chan []string
 						link = nil
 					}
 				}
-			case _ = <-workerErrs:
-				c.Debugf("Thread is complete")
+			case err := <-workerErrs:
+				c.Infof("Thread encountered error %s", err.Error())
 				numWorkers--
 				if link != nil {
 					async.WithContext(workerErrs, "ingest-worker", processSingleLink(threadComplete, addURLs, link)).Start()
 					link = nil
 				} else {
-					link, duration, err = l.getLink()
+					link, duration, err = l.getLink(c)
 					switch {
 					case err != nil:
 						c.Errorf("Error getting links: %s", err.Error())
@@ -205,19 +207,19 @@ func (l *LinkProcessor) startWorkerManager(maxWorkers int, addURLs chan []string
 					}
 				}
 			case _ = <-timer.C:
-				c.Debugf("Timer done")
+				c.Infof("Worker manager timer has finished. Currently there are %d workers", numWorkers)
 				switch {
 				case numWorkers == maxWorkers && link != nil:
 					c.Infof("All workers are busy, and link is non-nil, continuing...")
 				case numWorkers == maxWorkers && link == nil:
 					c.Infof("All workers are busy, but link needs replenshing")
-					link, duration, err = l.getLink()
+					link, duration, err = l.getLink(c)
 					if err != nil {
 						c.Errorf("Error getting link: %s", err.Error())
 						timer = time.NewTimer(2 * time.Minute)
 					}
 				case numWorkers < maxWorkers && link == nil:
-					link, duration, err = l.getLink()
+					link, duration, err = l.getLink(c)
 					switch {
 					case err != nil:
 						c.Errorf("Error getting links: %s", err.Error())
@@ -335,7 +337,9 @@ func processSingleLink(threadComplete chan *links2.Link, addURLs chan []string, 
 			return
 		}
 		languageCode := domainMetadata.LanguageCode
+		c.Infof("Attempting to add URLs")
 		addURLs <- parsedHTMLPage.Links
+		c.Infof("Successfully added URLs")
 		c.Debugf("Processing text for url %s", u)
 		var description *string
 		if d, ok := parsedHTMLPage.Metadata[opengraph.DescriptionTag.Str()]; ok {
@@ -384,16 +388,20 @@ func processSingleLink(threadComplete chan *links2.Link, addURLs chan []string, 
 			threadComplete <- link
 			return
 		}
+		c.Infof("Thread is complete, sending terminate request")
 		threadComplete <- nil
 		c.Debugf("Finished")
 	}
 }
 
-func (l *LinkProcessor) getLink() (*links2.Link, *time.Duration, error) {
+func (l *LinkProcessor) getLink(c ctx.LogContext) (*links2.Link, *time.Duration, error) {
+	c.Infof("Trying to get lock for links")
 	l.mu.Lock()
 	defer l.mu.Unlock()
+	c.Infof("Acquired lock")
 	firstDomain := l.OrderedDomains[0]
 	if firstDomain.FreeAt.After(time.Now()) {
+		c.Infof("First domain is not free yet")
 		waitTime := firstDomain.FreeAt.Sub(time.Now())
 		return nil, &waitTime, nil
 	}
@@ -402,6 +410,7 @@ func (l *LinkProcessor) getLink() (*links2.Link, *time.Duration, error) {
 		if !shouldKeepDomain {
 			delete(l.DomainSet, firstDomain.Domain)
 		}
+		c.Infof("Removing domain %s, now the set is %d domains long", firstDomain.Domain, len(l.DomainSet))
 	}()
 	l.OrderedDomains = append([]Domain{}, l.OrderedDomains[1:]...)
 	var link *links2.Link
