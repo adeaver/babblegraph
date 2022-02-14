@@ -207,7 +207,7 @@ func (l *LinkProcessor) startWorkerManager(maxWorkers int, addURLs chan []string
 					}
 				}
 			case _ = <-timer.C:
-				c.Infof("Worker manager timer has finished")
+				c.Infof("Worker manager timer has finished. Currently there are %d workers", numWorkers)
 				switch {
 				case numWorkers == maxWorkers && link != nil:
 					c.Infof("All workers are busy, and link is non-nil, continuing...")
