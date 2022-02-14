@@ -27,7 +27,7 @@ type dbExternalIDMapping struct {
 	LastModifiedAt time.Time           `db:"last_modified_at"`
 	ID             externalIDMappingID `db:"_id"`
 	IDType         externalIDType      `db:"id_type"`
-	ExternalID     string              `json:"external_id"`
+	ExternalID     string              `db:"external_id"`
 }
 
 type externalIDType string
@@ -35,3 +35,23 @@ type externalIDType string
 const (
 	externalIDTypeStripe externalIDType = "stripe"
 )
+
+type PremiumNewsletterSubscriptionID string
+
+type PremiumNewsletterSubscription struct {
+}
+
+type dbPremiumNewsletterSubscription struct {
+	CreatedAt            time.Time                       `db:"created_at"`
+	LastModifiedAt       time.Time                       `db:"last_modified_at"`
+	ID                   PremiumNewsletterSubscriptionID `db:"_id"`
+	BillingInformationID BillingInformationID            `db:"billing_information_id"`
+	ExternalIDMappingID  externalIDMappingID             `db:"external_id_mapping_id"`
+	IsTerminated         bool                            `db:"is_terminated"`
+}
+
+type dbPremiumNewsletterSubscriptionDebounceRecord struct {
+	CreatedAt            time.Time            `db:"created_at"`
+	LastModifiedAt       time.Time            `db:"last_modified_at"`
+	BillingInformationID BillingInformationID `db:"billing_information_id"`
+}

@@ -18,6 +18,9 @@ const (
 
 	getExternalIDMappingByIDQuery = "SELECT * FROM billing_external_id_mapping WHERE _id = $1"
 	insertExternalIDMappingQuery  = "INSERT INTO billing_external_id_mapping (id_type, external_id) VALUES ($1, $2) RETURNING _id"
+
+	lookupPremiumNewsletterSubscriptionQuery = "SELECT * FROM billing_premium_newsletter_subscription WHERE billing_information_id = $1 AND is_terminated = FALSE"
+	insertPremiumNewsletterSubscriptionQuery = "INSERT INTO billing_premium_newsletter_subscription (billing_information_id, external_id_mapping_id) VALUES ($1, $2) RETURNING _id"
 )
 
 func GetOrCreateBillingInformationForUser(c ctx.LogContext, tx *sqlx.Tx, userID users.UserID) (*BillingInformation, error) {
@@ -78,6 +81,65 @@ func GetOrCreateBillingInformationForUser(c ctx.LogContext, tx *sqlx.Tx, userID 
 	}
 }
 
+func lookupBillingInformationForUserID(tx *sqlx.Tx, userID users.UserID) (*dbBillingInformation, error) {
+	var matches []dbBillingInformation
+	err := tx.Select(&matches, lookupBillingInformationForUserIDQuery, userID)
+	switch {
+	case err != nil:
+		return nil, err
+	case len(matches) == 0:
+		return nil, nil
+	case len(matches) > 1:
+		return nil, fmt.Errorf("Expected at most one billing information for user ID %s, but got %d", userID, len(matches))
+	}
+	return &matches[0], nil
+}
+
+func insertBillingInformationForUserID(tx *sqlx.Tx, userID users.UserID, externalID externalIDMappingID) error {
+	if _, err := tx.Exec(insertBillingInformationForUserIDQuery, userID, externalID); err != nil {
+		return err
+	}
+	return nil
+}
+
+func GetOrCreatePremiumNewsletterSubscriptionForUser(c ctx.LogContext, tx *sqlx.Tx, userID users.UserID) (*PremiumNewsletterSubscription, error) {
+	stripe.Key = env.MustEnvironmentVariable("STRIPE_KEY")
+	premiumNewsletterSubscription, err := lookupActivePremiumNewsletterSubscriptionForUser(tx, userID)
+	switch {
+	case err != nil:
+		return nil, err
+	case premiumNewsletterSubscription == nil:
+		return nil, nil
+	case premiumNewsletterSubscription != nil:
+		return nil, nil
+	default:
+		panic("unreachable")
+	}
+}
+
+func lookupActivePremiumNewsletterSubscriptionForUser(tx *sqlx.Tx, userID users.UserID) (*dbPremiumNewsletterSubscription, error) {
+	billingInformation, err := lookupBillingInformationForUserID(tx, userID)
+	switch {
+	case err != nil:
+		return nil, err
+	case billingInformation == nil:
+		return nil, fmt.Errorf("Expected there to be a billing information for user %s, but none exists", userID)
+	default:
+		var matches []dbPremiumNewsletterSubscription
+		err := tx.Select(&matches, lookupPremiumNewsletterSubscriptionQuery, billingInformation.ID)
+		switch {
+		case err != nil:
+			return nil, err
+		case len(matches) == 0:
+			return nil, nil
+		case len(matches) > 1:
+			return nil, fmt.Errorf("Expected at most one active premium newsletter subscription for user %s but got %d", userID, len(matches))
+		default:
+			return &matches[0], nil
+		}
+	}
+}
+
 func getExternalIDMapping(tx *sqlx.Tx, id externalIDMappingID) (*dbExternalIDMapping, error) {
 	var matches []dbExternalIDMapping
 	err := tx.Select(&matches, getExternalIDMappingByIDQuery, id)
@@ -105,25 +167,4 @@ func insertExternalIDMapping(tx *sqlx.Tx, externalID string) (*externalIDMapping
 		}
 	}
 	return &id, nil
-}
-
-func lookupBillingInformationForUserID(tx *sqlx.Tx, userID users.UserID) (*dbBillingInformation, error) {
-	var matches []dbBillingInformation
-	err := tx.Select(&matches, lookupBillingInformationForUserIDQuery, userID)
-	switch {
-	case err != nil:
-		return nil, err
-	case len(matches) == 0:
-		return nil, nil
-	case len(matches) > 1:
-		return nil, fmt.Errorf("Expected at most one billing information for user ID %s, but got %d", userID, len(matches))
-	}
-	return &matches[0], nil
-}
-
-func insertBillingInformationForUserID(tx *sqlx.Tx, userID users.UserID, externalID externalIDMappingID) error {
-	if _, err := tx.Exec(insertBillingInformationForUserIDQuery, userID, externalID); err != nil {
-		return err
-	}
-	return nil
 }

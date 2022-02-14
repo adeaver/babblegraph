@@ -9,6 +9,7 @@ import DisplayCardHeader from 'common/components/DisplayCard/DisplayCardHeader';
 import Paragraph from 'common/typography/Paragraph';
 import { Heading3 } from 'common/typography/Heading';
 import { Alignment, TypographyColor } from 'common/typography/common';
+import { setLocation } from 'util/window/Location';
 
 import {
     RouteEncryptionKey,
@@ -36,14 +37,22 @@ type PremiumNewsletterSubscriptionCheckoutPageProps = RouteComponentProps<Params
 
 const PremiumNewsletterSubscriptionCheckoutPage = withUserProfileInformation<PremiumNewsletterSubscriptionCheckoutPageProps>(
     RouteEncryptionKey.PremiumSubscriptionCheckout,
-    [RouteEncryptionKey.SubscriptionManagement],
+    [RouteEncryptionKey.SubscriptionManagement, RouteEncryptionKey.CreateUser],
     (ownProps: PremiumNewsletterSubscriptionCheckoutPageProps) => {
         return ownProps.match.params.token;
     },
     LoginRedirectKey.CheckoutPage,
     (props: PremiumNewsletterSubscriptionCheckoutPageProps & UserProfileComponentProps) => {
         const { token } = props.match.params;
-        const [ subscriptionManagementToken ] = props.userProfile.nextTokens;
+        const [ subscriptionManagementToken, createUserToken ] = props.userProfile.nextTokens;
+
+        if (!props.userProfile.hasAccount) {
+            setLocation(`/signup/${createUserToken}`);
+            return;
+        } else if (!!props.userProfile.subscriptionLevel) {
+            setLocation(`/manage/${subscriptionManagementToken}`);
+            return;
+        }
 
         return (
             <Grid container>
