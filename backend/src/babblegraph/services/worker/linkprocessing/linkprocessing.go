@@ -12,6 +12,7 @@ import (
 	"babblegraph/services/worker/textprocessing"
 	"babblegraph/util/async"
 	"babblegraph/util/bufferedfetch"
+	"babblegraph/util/ctx"
 	"babblegraph/util/database"
 	"babblegraph/util/opengraph"
 	"babblegraph/util/ptr"
@@ -27,6 +28,7 @@ import (
 const (
 	defaultChunkSize     = 500
 	defaultTimeUntilFree = 5 * time.Second
+	defaultRefreshPeriod = 1 * time.Hour
 )
 
 type Domain struct {
@@ -60,6 +62,25 @@ func CreateLinkProcessor() (*LinkProcessor, error) {
 	}, nil
 }
 
+func (l *LinkProcessor) resetDomains(c ctx.LogContext) error {
+	domains := domains.GetDomains()
+	var orderedDomains []Domain
+	domainHash := make(map[string]bool)
+	for _, d := range domains {
+		domainHash[d] = true
+		orderedDomains = append(orderedDomains, Domain{
+			Domain: d,
+			FreeAt: time.Now(),
+		})
+		if err := bufferedfetch.ForceRefill(c, getBufferedFetchKeyForDomain(d)); err != nil {
+			return err
+		}
+	}
+	l.DomainSet = domainHash
+	l.OrderedDomains = orderedDomains
+	return nil
+}
+
 func makeBufferedFetchForDomain(domain string) func() (interface{}, error) {
 	return func() (interface{}, error) {
 		var links []links2.Link
@@ -85,6 +106,7 @@ func (l *LinkProcessor) ProcessLinks(maxWorkers int) func(c async.Context) {
 		addURLs := make(chan []string)
 		workerManagerErrs := make(chan error)
 		urlManagerErrs := make(chan error)
+		timer := time.NewTimer(defaultRefreshPeriod)
 		async.WithContext(workerManagerErrs, "worker-manager", l.startWorkerManager(maxWorkers, addURLs)).Start()
 		async.WithContext(urlManagerErrs, "url-manager", l.startURLManager(addURLs)).Start()
 		for {
@@ -93,6 +115,12 @@ func (l *LinkProcessor) ProcessLinks(maxWorkers int) func(c async.Context) {
 				async.WithContext(workerManagerErrs, "worker-manager", l.startWorkerManager(maxWorkers, addURLs)).Start()
 			case _ = <-urlManagerErrs:
 				async.WithContext(urlManagerErrs, "url-manager", l.startURLManager(addURLs)).Start()
+			case _ = <-timer.C:
+				c.Infof("Refreshing link processor")
+				if err := l.resetDomains(c); err != nil {
+					c.Errorf("Error resetting domains: %s", err.Error())
+				}
+				timer = time.NewTimer(defaultRefreshPeriod)
 			}
 		}
 	}
