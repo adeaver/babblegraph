@@ -18,6 +18,15 @@ import {
     withUserProfileInformation,
     UserProfileComponentProps
 } from 'ConsumerWeb/base/UserProfile/withUserProfile';
+import {
+    asBaseComponent,
+    BaseComponentProps,
+} from 'common/base/BaseComponent';
+
+import {
+    GetOrCreateBillingInformationResponse,
+    getOrCreateBillingInformation,
+} from 'ConsumerWeb/api/billing/billing';
 
 type Params = {
     token: string;
@@ -46,34 +55,7 @@ const PremiumNewsletterSubscriptionCheckoutPage = withUserProfileInformation<Pre
                         <DisplayCardHeader
                             title="Babblegraph Premium Checkout"
                             backArrowDestination={`/manage/${subscriptionManagementToken}`} />
-                        <Grid container>
-                            <Grid item xs={12}>
-                                <Heading3 align={Alignment.Left}>
-                                    Your Order
-                                </Heading3>
-                            </Grid>
-                            <Grid item xs={10}>
-                                <Paragraph align={Alignment.Left}>
-                                    1-year Babblegraph Premium Subscription
-                                </Paragraph>
-                            </Grid>
-                            <Grid item xs={2}>
-                                <Paragraph align={Alignment.Right}>
-                                    US$29.00
-                                </Paragraph>
-                            </Grid>
-                            <Divider />
-                            <Grid item xs={10}>
-                                <Paragraph align={Alignment.Left}>
-                                    Total Due Now
-                                </Paragraph>
-                            </Grid>
-                            <Grid item xs={2}>
-                                <Paragraph align={Alignment.Right}>
-                                    US$29.00
-                                </Paragraph>
-                            </Grid>
-                        </Grid>
+                        <OrderDetailsSection premiumSubscriptionCheckoutToken={token} />
                     </DisplayCard>
                 </Grid>
             </Grid>
@@ -81,4 +63,54 @@ const PremiumNewsletterSubscriptionCheckoutPage = withUserProfileInformation<Pre
     }
 );
 
+type OrderDetailsSectionProps = {
+    premiumSubscriptionCheckoutToken: string;
+}
+
+const OrderDetailsSection = asBaseComponent<GetOrCreateBillingInformationResponse, OrderDetailsSectionProps>(
+    (props: GetOrCreateBillingInformationResponse & OrderDetailsSectionProps & BaseComponentProps) => {
+        return (
+            <Grid container>
+                <Grid item xs={12}>
+                    <Heading3 align={Alignment.Left}>
+                        Your Order
+                    </Heading3>
+                </Grid>
+                <Grid item xs={10}>
+                    <Paragraph align={Alignment.Left}>
+                        1-year Babblegraph Premium Subscription
+                    </Paragraph>
+                </Grid>
+                <Grid item xs={2}>
+                    <Paragraph align={Alignment.Right}>
+                        US$29.00
+                    </Paragraph>
+                </Grid>
+                <Divider />
+                <Grid item xs={10}>
+                    <Paragraph align={Alignment.Left}>
+                        Total Due Now
+                    </Paragraph>
+                </Grid>
+                <Grid item xs={2}>
+                    <Paragraph align={Alignment.Right}>
+                        US$29.00
+                    </Paragraph>
+                </Grid>
+            </Grid>
+        );
+    },
+    (
+        ownProps: OrderDetailsSectionProps,
+        onSuccess: (GetOrCreateBillingInformationResponse) => void,
+        onError: (err: Error) => void,
+    ) => {
+        getOrCreateBillingInformation({
+            premiumSubscriptionCheckoutToken: ownProps.premiumSubscriptionCheckoutToken,
+        },
+        onSuccess,
+        onError);
+    },
+    false,
+);
 export default PremiumNewsletterSubscriptionCheckoutPage;
