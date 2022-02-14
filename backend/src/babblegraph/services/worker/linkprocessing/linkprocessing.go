@@ -185,6 +185,8 @@ func (l *LinkProcessor) startWorkerManager(maxWorkers int, addURLs chan []string
 					case link != nil:
 						async.WithContext(workerErrs, "ingest-worker", processSingleLink(threadComplete, addURLs, link)).Start()
 						link = nil
+					default:
+						panic("unreachable")
 					}
 				}
 			case err := <-workerErrs:
@@ -204,6 +206,8 @@ func (l *LinkProcessor) startWorkerManager(maxWorkers int, addURLs chan []string
 					case link != nil:
 						async.WithContext(workerErrs, "ingest-worker", processSingleLink(threadComplete, addURLs, link)).Start()
 						link = nil
+					default:
+						panic("unreachable")
 					}
 				}
 			case _ = <-timer.C:
@@ -228,6 +232,8 @@ func (l *LinkProcessor) startWorkerManager(maxWorkers int, addURLs chan []string
 						timer = time.NewTimer(*duration)
 					case link != nil:
 						async.WithContext(workerErrs, "ingest-worker", processSingleLink(threadComplete, addURLs, link)).Start()
+					default:
+						panic("unreachable")
 					}
 				case numWorkers < maxWorkers && link != nil:
 					async.WithContext(workerErrs, "ingest-worker", processSingleLink(threadComplete, addURLs, link)).Start()
@@ -258,8 +264,12 @@ func (l *LinkProcessor) startURLManager(addURLs chan []string) func(c async.Cont
 		if len(parsedURLs) == 0 {
 			return
 		}
+		c.Infof("Acquiring lock for URLs")
 		l.mu.Lock()
 		defer l.mu.Unlock()
+		defer func() {
+			c.Infof("Releasing lock for URLs")
+		}()
 		for domain := range domainSet {
 			if _, ok := l.DomainSet[domain]; !ok {
 				l.DomainSet[domain] = true
@@ -316,6 +326,7 @@ func (l *LinkProcessor) startURLManager(addURLs chan []string) func(c async.Cont
 
 func processSingleLink(threadComplete chan *links2.Link, addURLs chan []string, link *links2.Link) func(c async.Context) {
 	return func(c async.Context) {
+		c.Infof("Starting new thread")
 		u := link.URL
 		domain := link.Domain
 		if p := urlparser.ParseURL(u); p != nil && domains.IsSeedURL(*p) {
@@ -390,54 +401,61 @@ func processSingleLink(threadComplete chan *links2.Link, addURLs chan []string, 
 		}
 		c.Infof("Thread is complete, sending terminate request")
 		threadComplete <- nil
-		c.Debugf("Finished")
+		c.Infof("Thread is exiting")
 	}
 }
 
 func (l *LinkProcessor) getLink(c ctx.LogContext) (*links2.Link, *time.Duration, error) {
 	c.Infof("Trying to get lock for links")
 	l.mu.Lock()
-	defer l.mu.Unlock()
 	c.Infof("Acquired lock")
-	firstDomain := l.OrderedDomains[0]
-	if firstDomain.FreeAt.After(time.Now()) {
-		c.Infof("First domain is not free yet")
-		waitTime := firstDomain.FreeAt.Sub(time.Now())
-		return nil, &waitTime, nil
-	}
-	var shouldKeepDomain bool
+	var firstNonEmptyDomainIdx *int
 	defer func() {
-		if !shouldKeepDomain {
-			delete(l.DomainSet, firstDomain.Domain)
+		if firstNonEmptyDomainIdx != nil {
+			c.Infof("Removing all domains up to %d that are empty", *firstNonEmptyDomainIdx)
+			l.OrderedDomains = append([]Domain{}, l.OrderedDomains[*firstNonEmptyDomainIdx:]...)
+			c.Infof("Available domains are now of length %d", len(l.OrderedDomains))
 		}
-		c.Infof("Removing domain %s, now the set is %d domains long", firstDomain.Domain, len(l.DomainSet))
+		c.Infof("Releasing lock")
+		l.mu.Unlock()
 	}()
-	l.OrderedDomains = append([]Domain{}, l.OrderedDomains[1:]...)
-	var link *links2.Link
-	if err := bufferedfetch.WithNextBufferedValue(getBufferedFetchKeyForDomain(firstDomain.Domain), func(i interface{}) error {
-		l, ok := i.(links2.Link)
-		if !ok {
-			return fmt.Errorf("error getting next value for domain %s: incorrect type in buffered fetch", firstDomain.Domain)
+	for idx, domain := range l.OrderedDomains {
+		if domain.FreeAt.After(time.Now()) {
+			c.Infof("Domain %s is not free, sending wait", domain.Domain)
+			waitTime := domain.FreeAt.Sub(time.Now())
+			return nil, &waitTime, nil
 		}
-		link = &l
-		return nil
-	}); err != nil {
-		return nil, nil, err
+		var link *links2.Link
+		err := bufferedfetch.WithNextBufferedValue(getBufferedFetchKeyForDomain(domain.Domain), func(i interface{}) error {
+			l, ok := i.(links2.Link)
+			if !ok {
+				return fmt.Errorf("error getting next value for domain %s: incorrect type in buffered fetch", domain.Domain)
+			}
+			link = &l
+			return nil
+		})
+		switch {
+		case err != nil:
+			return nil, nil, err
+		case link == nil:
+			c.Infof("Domain %s has no links, skipping", domain.Domain)
+			firstNonEmptyDomainIdx = ptr.Int(idx + 1)
+		case link != nil:
+			firstNonEmptyDomainIdx = ptr.Int(idx + 1)
+			l.OrderedDomains = append(l.OrderedDomains, Domain{
+				Domain: domain.Domain,
+				FreeAt: time.Now().Add(defaultTimeUntilFree),
+			})
+			if err := database.WithTx(func(tx *sqlx.Tx) error {
+				return links2.SetURLAsFetched(tx, link.URLIdentifier)
+			}); err != nil {
+				return nil, nil, err
+			}
+			return link, nil, nil
+		}
 	}
-	if link == nil {
-		return nil, nil, nil
-	}
-	shouldKeepDomain = true
-	l.OrderedDomains = append(l.OrderedDomains, Domain{
-		Domain: firstDomain.Domain,
-		FreeAt: time.Now().Add(defaultTimeUntilFree),
-	})
-	if err := database.WithTx(func(tx *sqlx.Tx) error {
-		return links2.SetURLAsFetched(tx, link.URLIdentifier)
-	}); err != nil {
-		return nil, nil, err
-	}
-	return link, nil, nil
+	c.Infof("No links available, sending wait")
+	return nil, ptr.Duration(defaultRefreshPeriod), nil
 }
 
 func (l *LinkProcessor) AddURLs(urls []string, topics []contenttopics.ContentTopic) error {
