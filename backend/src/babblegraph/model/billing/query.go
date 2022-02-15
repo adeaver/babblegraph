@@ -1,11 +1,14 @@
 package billing
 
 import (
+	"babblegraph/config"
 	"babblegraph/model/users"
 	"babblegraph/util/ctx"
 	"babblegraph/util/env"
+	"babblegraph/util/math/decimal"
 	"babblegraph/util/ptr"
 	"fmt"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/stripe/stripe-go/v72"
@@ -19,8 +22,9 @@ const (
 	getExternalIDMappingByIDQuery = "SELECT * FROM billing_external_id_mapping WHERE _id = $1"
 	insertExternalIDMappingQuery  = "INSERT INTO billing_external_id_mapping (id_type, external_id) VALUES ($1, $2) RETURNING _id"
 
-	lookupPremiumNewsletterSubscriptionQuery = "SELECT * FROM billing_premium_newsletter_subscription WHERE billing_information_id = $1 AND is_terminated = FALSE"
-	insertPremiumNewsletterSubscriptionQuery = "INSERT INTO billing_premium_newsletter_subscription (billing_information_id, external_id_mapping_id) VALUES ($1, $2) RETURNING _id"
+	lookupPremiumNewsletterSubscriptionQuery              = "SELECT * FROM billing_premium_newsletter_subscription WHERE billing_information_id = $1"
+	lookupPremiumNewsletterNonTerminatedSubscriptionQuery = "SELECT * FROM billing_premium_newsletter_subscription WHERE billing_information_id = $1 AND is_terminated = FALSE"
+	insertPremiumNewsletterSubscriptionQuery              = "INSERT INTO billing_premium_newsletter_subscription (billing_information_id, external_id_mapping_id) VALUES ($1, $2) RETURNING _id"
 )
 
 func GetOrCreateBillingInformationForUser(c ctx.LogContext, tx *sqlx.Tx, userID users.UserID) (*BillingInformation, error) {
@@ -104,11 +108,34 @@ func insertBillingInformationForUserID(tx *sqlx.Tx, userID users.UserID, externa
 
 func GetOrCreatePremiumNewsletterSubscriptionForUser(c ctx.LogContext, tx *sqlx.Tx, userID users.UserID) (*PremiumNewsletterSubscription, error) {
 	stripe.Key = env.MustEnvironmentVariable("STRIPE_KEY")
-	premiumNewsletterSubscription, err := lookupActivePremiumNewsletterSubscriptionForUser(tx, userID)
+	billingInformation, err := lookupBillingInformationForUserID(tx, userID)
+	switch {
+	case err != nil:
+		return nil, err
+	case billingInformation == nil:
+		return nil, fmt.Errorf("Expected there to be a billing information for user %s, but none exists", userID)
+	}
+	premiumNewsletterSubscription, err := lookupActivePremiumNewsletterSubscriptionForUser(tx, *billingInformation)
 	switch {
 	case err != nil:
 		return nil, err
 	case premiumNewsletterSubscription == nil:
+		// There is no active subscription, but there may have been a previous one, so we need
+		// to check the trial eligibility
+		trialEligibilityDays, err := GetPremiumNewsletterSubscriptionTrialEligibilityForUser(tx, userID)
+		if err != nil {
+			return nil, err
+		}
+		subscriptionParams := &stripe.SubscriptionParams{
+			Customer: stripe.String(string(stripeCustomer.StripeCustomerID)),
+			Items: []*stripe.SubscriptionItemsParams{
+				&stripe.SubscriptionItemsParams{
+					Price: ptr.String(stripeProductID.Str()),
+				},
+			},
+			PaymentBehavior: stripe.String("default_incomplete"),
+		}
+		subscriptionParams.AddExpand("latest_invoice.payment_intent")
 		return nil, nil
 	case premiumNewsletterSubscription != nil:
 		return nil, nil
@@ -117,13 +144,28 @@ func GetOrCreatePremiumNewsletterSubscriptionForUser(c ctx.LogContext, tx *sqlx.
 	}
 }
 
-func lookupActivePremiumNewsletterSubscriptionForUser(tx *sqlx.Tx, userID users.UserID) (*dbPremiumNewsletterSubscription, error) {
+func lookupActivePremiumNewsletterSubscriptionForUser(tx *sqlx.Tx, billingInformation dbBillingInformation) (*dbPremiumNewsletterSubscription, error) {
+	var matches []dbPremiumNewsletterSubscription
+	err := tx.Select(&matches, lookupPremiumNewsletterNonTerminatedSubscriptionQuery, billingInformation.ID)
+	switch {
+	case err != nil:
+		return nil, err
+	case len(matches) == 0:
+		return nil, nil
+	case len(matches) > 1:
+		return nil, fmt.Errorf("Expected at most one active premium newsletter subscription for user %s but got %d", *billingInformation.UserID, len(matches))
+	default:
+		return &matches[0], nil
+	}
+}
+
+func GetPremiumNewsletterSubscriptionTrialEligibilityForUser(tx *sqlx.Tx, userID users.UserID) (*int64, error) {
 	billingInformation, err := lookupBillingInformationForUserID(tx, userID)
 	switch {
 	case err != nil:
 		return nil, err
 	case billingInformation == nil:
-		return nil, fmt.Errorf("Expected there to be a billing information for user %s, but none exists", userID)
+		return ptr.Int64(config.PremiumNewsletterSubscriptionTrialLengthDays), nil
 	default:
 		var matches []dbPremiumNewsletterSubscription
 		err := tx.Select(&matches, lookupPremiumNewsletterSubscriptionQuery, billingInformation.ID)
@@ -131,11 +173,17 @@ func lookupActivePremiumNewsletterSubscriptionForUser(tx *sqlx.Tx, userID users.
 		case err != nil:
 			return nil, err
 		case len(matches) == 0:
-			return nil, nil
-		case len(matches) > 1:
-			return nil, fmt.Errorf("Expected at most one active premium newsletter subscription for user %s but got %d", userID, len(matches))
+			return ptr.Int64(config.PremiumNewsletterSubscriptionTrialLengthDays), nil
 		default:
-			return &matches[0], nil
+			var oldestMatch *time.Time
+			for _, m := range matches {
+				if oldestMatch == nil || oldestMatch.After(m.CreatedAt) {
+					oldestMatch = &m.CreatedAt
+				}
+			}
+			hoursSinceOldestTrialStarted := decimal.FromInt64(int64(time.Now().Sub(*oldestMatch) / time.Hour))
+			roundedDaysSinceOldestTrialStarted := hoursSinceOldestTrialStarted.Divide(decimal.FromInt64(24)).ToInt64Rounded()
+			return &roundedDaysSinceOldestTrialStarted, nil
 		}
 	}
 }
