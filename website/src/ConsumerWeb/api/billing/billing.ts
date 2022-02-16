@@ -32,6 +32,8 @@ export enum PaymentState {
 
 export type PremiumNewsletterSubscription = {
     paymentState: PaymentState;
+    stripePaymentIntentId: string | undefined;
+    currentPeriodEnd: Date;
 }
 
 export type GetOrCreatePremiumNewsletterSubscriptionRequest = {

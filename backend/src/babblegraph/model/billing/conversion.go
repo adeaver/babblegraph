@@ -1,13 +1,22 @@
 package billing
 
 import (
+	"babblegraph/util/ptr"
 	"fmt"
+	"time"
 
 	"github.com/stripe/stripe-go/v72"
 )
 
 func convertStripeSubscriptionToPremiumNewsletterSubscription(stripeSubscription *stripe.Subscription) (*PremiumNewsletterSubscription, error) {
-	premiumNewsletterSubscription := PremiumNewsletterSubscription{}
+	var paymentIntentID *string
+	if stripeSubscription.LatestInvoice != nil && stripeSubscription.LatestInvoice.PaymentIntent != nil {
+		paymentIntentID = ptr.String(stripeSubscription.LatestInvoice.PaymentIntent.ClientSecret)
+	}
+	premiumNewsletterSubscription := PremiumNewsletterSubscription{
+		StripePaymentIntentID: paymentIntentID,
+		CurrentPeriodEnd:      time.Unix(stripeSubscription.CurrentPeriodEnd, 0),
+	}
 	switch stripeSubscription.Status {
 	case stripe.SubscriptionStatusTrialing:
 		premiumNewsletterSubscription.PaymentState = PaymentStateTrialNoPaymentMethod

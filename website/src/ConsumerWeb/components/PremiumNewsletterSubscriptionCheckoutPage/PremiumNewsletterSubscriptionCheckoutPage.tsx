@@ -84,6 +84,7 @@ const PremiumNewsletterSubscriptionCheckoutPage = withUserProfileInformation<Pre
                         <OrderDetailsSection
                             trialEligibilityDays={props.userProfile.trialEligibilityDays}
                             premiumSubscriptionCheckoutToken={token}
+                            isButtonDisabled={shouldShowCheckoutForm}
                             handleProceedToCheckout={() => setShouldShowCheckoutForm(true)} />
                         {
                             shouldShowCheckoutForm && (
@@ -101,6 +102,7 @@ const PremiumNewsletterSubscriptionCheckoutPage = withUserProfileInformation<Pre
 type OrderDetailsSectionProps = {
     premiumSubscriptionCheckoutToken: string;
     trialEligibilityDays: number | undefined;
+    isButtonDisabled: boolean;
 
     handleProceedToCheckout: () => void;
 }
@@ -163,8 +165,11 @@ const OrderDetailsSection = asBaseComponent<GetOrCreateBillingInformationRespons
                     <PrimaryButton
                         onClick={props.handleProceedToCheckout}
                         className={classes.callToActionButton}
+                        disabled={props.isButtonDisabled}
                         size="large">
-                        Proceed to checkout
+                        {
+                            !props.trialEligibilityDays ? "Proceed to checkout" : "Start your trial"
+                        }
                     </PrimaryButton>
                 </Grid>
             </Grid>
