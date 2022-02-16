@@ -45,6 +45,8 @@ const styleClasses = makeStyles({
     },
 });
 
+declare const window: any;
+
 type SignupFormProps = {
     disabled: boolean;
     shouldShowVerificationForm: boolean;
@@ -120,6 +122,7 @@ const SignupComponent = (props: SignupComponentProps) => {
                 if (!!resp.errorMessage) {
                     setErrorMessage(translations[errorMessages[resp.errorMessage] || errorMessages["default"]]);
                 } else if (resp.success) {
+                    window.gtag_report_conversion(undefined);
                     setErrorMessage(null);
                     props.onSuccess(props.emailAddress);
                 } else {

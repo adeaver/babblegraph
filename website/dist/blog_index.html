@@ -22,6 +22,28 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" />
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300&family=Roboto&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+    <!-- Global site tag (gtag.js) - Google Ads: 430556216 -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=AW-430556216"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+        gtag('js', new Date());
+        gtag('config', 'AW-430556216');
+        window.gtag_report_conversion = function(url) {
+            var callback = function () {
+                if (typeof(url) != 'undefined') {
+                    window.location = url;
+                }
+            };
+            gtag('event', 'conversion', {
+                'send_to': 'AW-430556216/5DyRCO-9kfsBELiIp80B',
+                'event_callback': callback
+            });
+            return false;
+        }
+    </script>
 </head>
 <body style="margin: 0;">
     <div id="content"></div>
