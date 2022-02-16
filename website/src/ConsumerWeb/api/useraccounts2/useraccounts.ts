@@ -29,6 +29,7 @@ export type UserProfileInformation = {
 	hasAccount: boolean;
     isLoggedIn: boolean;
 	subscriptionLevel: SubscriptionLevel | undefined;
+    trialEligibilityDays: number | undefined;
 	nextTokens: Array<string>;
 }
 

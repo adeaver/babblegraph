@@ -1,6 +1,7 @@
 package useraccounts
 
 import (
+	"babblegraph/model/billing"
 	"babblegraph/model/routes"
 	"babblegraph/model/useraccounts"
 	"babblegraph/model/useraccountsnotifications"
@@ -46,10 +47,11 @@ type getUserProfileInformationResponse struct {
 }
 
 type userProfileInformation struct {
-	HasAccount        bool                            `json:"has_account"`
-	IsLoggedIn        bool                            `json:"is_logged_in"`
-	SubscriptionLevel *useraccounts.SubscriptionLevel `json:"subscription_level,omitempty"`
-	NextTokens        []string                        `json:"next_tokens,omitempty"`
+	HasAccount           bool                            `json:"has_account"`
+	IsLoggedIn           bool                            `json:"is_logged_in"`
+	SubscriptionLevel    *useraccounts.SubscriptionLevel `json:"subscription_level,omitempty"`
+	TrialEligibilityDays *int64                          `json:"trial_eligibility_days,omitempty"`
+	NextTokens           []string                        `json:"next_tokens,omitempty"`
 }
 
 type userProfileInformationError string
@@ -88,15 +90,18 @@ func getUserProfileInformation(userAuth *routermiddleware.UserAuthentication, r 
 	}
 	if userAuth == nil {
 		var doesUserHaveAccount bool
+		var trialEligibilityDays *int64
 		if err := database.WithTx(func(tx *sqlx.Tx) error {
 			var err error
 			doesUserHaveAccount, err = useraccounts.DoesUserAlreadyHaveAccount(tx, *userID)
+			trialEligibilityDays, err = billing.GetPremiumNewsletterSubscriptionTrialEligibilityForUser(tx, *userID)
 			return err
 		}); err != nil {
 			return nil, err
 		}
 		userProfile := &userProfileInformation{
-			HasAccount: doesUserHaveAccount,
+			HasAccount:           doesUserHaveAccount,
+			TrialEligibilityDays: trialEligibilityDays,
 		}
 		if !doesUserHaveAccount {
 			userProfile.NextTokens = nextTokens
@@ -112,19 +117,24 @@ func getUserProfileInformation(userAuth *routermiddleware.UserAuthentication, r 
 		}, nil
 	}
 	var subscriptionLevel *useraccounts.SubscriptionLevel
+	var trialEligibilityDays *int64
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		var err error
 		subscriptionLevel, err = useraccounts.LookupSubscriptionLevelForUser(tx, *userID)
+		if subscriptionLevel == nil {
+			trialEligibilityDays, err = billing.GetPremiumNewsletterSubscriptionTrialEligibilityForUser(tx, *userID)
+		}
 		return err
 	}); err != nil {
 		return nil, err
 	}
 	return getUserProfileInformationResponse{
 		UserProfile: &userProfileInformation{
-			HasAccount:        true,
-			IsLoggedIn:        true,
-			SubscriptionLevel: subscriptionLevel,
-			NextTokens:        nextTokens,
+			HasAccount:           true,
+			IsLoggedIn:           true,
+			SubscriptionLevel:    subscriptionLevel,
+			TrialEligibilityDays: trialEligibilityDays,
+			NextTokens:           nextTokens,
 		},
 	}, nil
 }

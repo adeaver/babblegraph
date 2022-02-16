@@ -13,6 +13,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/stripe/stripe-go/v72"
 	"github.com/stripe/stripe-go/v72/customer"
+	"github.com/stripe/stripe-go/v72/sub"
 )
 
 const (
@@ -24,7 +25,11 @@ const (
 
 	lookupPremiumNewsletterSubscriptionQuery              = "SELECT * FROM billing_premium_newsletter_subscription WHERE billing_information_id = $1"
 	lookupPremiumNewsletterNonTerminatedSubscriptionQuery = "SELECT * FROM billing_premium_newsletter_subscription WHERE billing_information_id = $1 AND is_terminated = FALSE"
-	insertPremiumNewsletterSubscriptionQuery              = "INSERT INTO billing_premium_newsletter_subscription (billing_information_id, external_id_mapping_id) VALUES ($1, $2) RETURNING _id"
+	insertPremiumNewsletterSubscriptionQuery              = "INSERT INTO billing_premium_newsletter_subscription (billing_information_id, external_id_mapping_id) VALUES ($1, $2)"
+	terminatePremiumNewsletterSubscriptionQuery           = "UPDATE billing_premium_newsletter_subscription SET is_terminated = TRUE WHERE _id = $1"
+
+	insertPremiumNewsletterSubscriptionDebounceRecordQuery = "INSERT INTO billing_premium_newsletter_subscription_debounce_record (billing_information_id) VALUES ($1)"
+	deletePremiumNewsletterSubscriptionDebounceRecordQuery = "DELETE FROM billing_premium_newsletter_subscription_debounce_record WHERE billing_information_id = $1"
 )
 
 func GetOrCreateBillingInformationForUser(c ctx.LogContext, tx *sqlx.Tx, userID users.UserID) (*BillingInformation, error) {
@@ -115,36 +120,124 @@ func GetOrCreatePremiumNewsletterSubscriptionForUser(c ctx.LogContext, tx *sqlx.
 	case billingInformation == nil:
 		return nil, fmt.Errorf("Expected there to be a billing information for user %s, but none exists", userID)
 	}
-	premiumNewsletterSubscription, err := lookupActivePremiumNewsletterSubscriptionForUser(tx, *billingInformation)
+	premiumNewsletterSubscription, err := lookupActivePremiumNewsletterSubscriptionForUser(c, tx, *billingInformation)
 	switch {
 	case err != nil:
 		return nil, err
+	case premiumNewsletterSubscription != nil:
+		return premiumNewsletterSubscription, nil
 	case premiumNewsletterSubscription == nil:
+		if _, err := tx.Exec(insertPremiumNewsletterSubscriptionDebounceRecordQuery, billingInformation.ID); err != nil {
+			return nil, err
+		}
+		stripeProductID, err := getStripeProductIDForEnvironment()
+		if err != nil {
+			return nil, err
+		}
+		subscriptionParams := &stripe.SubscriptionParams{
+			PaymentBehavior: stripe.String("default_incomplete"),
+			Items: []*stripe.SubscriptionItemsParams{
+				{
+					Price: stripeProductID,
+				},
+			},
+		}
+		subscriptionParams.AddExpand("latest_invoice.payment_intent")
+		subscriptionParams.AddExpand("default_payment_method")
+		externalID, err := getExternalIDMapping(tx, billingInformation.ExternalIDMappingID)
+		if err != nil {
+			return nil, err
+		}
+		switch externalID.IDType {
+		case externalIDTypeStripe:
+			subscriptionParams.Customer = ptr.String(externalID.ExternalID)
+		default:
+			return nil, fmt.Errorf("Unrecognized external ID type %s", externalID.IDType)
+		}
 		// There is no active subscription, but there may have been a previous one, so we need
 		// to check the trial eligibility
 		trialEligibilityDays, err := GetPremiumNewsletterSubscriptionTrialEligibilityForUser(tx, userID)
 		if err != nil {
 			return nil, err
 		}
-		subscriptionParams := &stripe.SubscriptionParams{
-			Customer: stripe.String(string(stripeCustomer.StripeCustomerID)),
-			Items: []*stripe.SubscriptionItemsParams{
-				&stripe.SubscriptionItemsParams{
-					Price: ptr.String(stripeProductID.Str()),
-				},
-			},
-			PaymentBehavior: stripe.String("default_incomplete"),
+		if trialEligibilityDays != nil && *trialEligibilityDays > 0 {
+			subscriptionParams.TrialPeriodDays = trialEligibilityDays
 		}
-		subscriptionParams.AddExpand("latest_invoice.payment_intent")
-		return nil, nil
-	case premiumNewsletterSubscription != nil:
-		return nil, nil
+		stripeSubscription, err := sub.New(subscriptionParams)
+		if err != nil {
+			return nil, err
+		}
+		if err := insertActivePremiumNewsletterSubscriptionForUser(tx, billingInformation.ID, stripeSubscription); err != nil {
+			c.Warnf("Attempting to rollback stripe subscription with Stripe ID %s and Babblegraph User ID %s", stripeSubscription.ID, userID)
+			if _, sErr := sub.Cancel(stripeSubscription.ID, &stripe.SubscriptionCancelParams{}); sErr != nil {
+				c.Errorf("Error rolling back subscription ID %s in Stripe for user ID %s because of error %s", stripeSubscription.ID, userID, sErr.Error())
+			}
+			return nil, err
+		}
+		return convertStripeSubscriptionToPremiumNewsletterSubscription(stripeSubscription)
 	default:
 		panic("unreachable")
 	}
 }
 
-func lookupActivePremiumNewsletterSubscriptionForUser(tx *sqlx.Tx, billingInformation dbBillingInformation) (*dbPremiumNewsletterSubscription, error) {
+func lookupActivePremiumNewsletterSubscriptionForUser(c ctx.LogContext, tx *sqlx.Tx, billingInformation dbBillingInformation) (*PremiumNewsletterSubscription, error) {
+	stripe.Key = env.MustEnvironmentVariable("STRIPE_KEY")
+	// There are three possible scenarios for this function:
+	// The database returns no active subscriptions - in which case we assume that there are no active subscriptions in the provider
+	// The database returns an active subscription, but the payment provider returns a non-active subscription
+	// --> in this case we need to delete any debounce records and update the db record, this function will return nil, nil
+	// The database returns an active subscription, which maps to an active subscription in the provider, in which case we're good
+	var premiumNewsletterSubscription *PremiumNewsletterSubscription
+	dbPremiumNewsletterSubscription, err := lookupDBActivePremiumNewsletterSubscriptionForUser(tx, billingInformation)
+	switch {
+	case err != nil:
+		return nil, err
+	case dbPremiumNewsletterSubscription == nil:
+		return nil, nil
+	case dbPremiumNewsletterSubscription != nil:
+		externalID, err := getExternalIDMapping(tx, dbPremiumNewsletterSubscription.ExternalIDMappingID)
+		if err != nil {
+			return nil, err
+		}
+		switch externalID.IDType {
+		case externalIDTypeStripe:
+			subscriptionParams := &stripe.SubscriptionParams{}
+			subscriptionParams.AddExpand("latest_invoice.payment_intent")
+			subscriptionParams.AddExpand("default_payment_method")
+			stripeSubscription, err := sub.Get(externalID.ExternalID, subscriptionParams)
+			if err != nil {
+				return nil, err
+			}
+			premiumNewsletterSubscription, err = convertStripeSubscriptionToPremiumNewsletterSubscription(stripeSubscription)
+			if err != nil {
+				return nil, err
+			}
+		default:
+			return nil, fmt.Errorf("Unrecognized external ID type %s", externalID.IDType)
+		}
+	}
+	switch premiumNewsletterSubscription.PaymentState {
+	case PaymentStateCreatedUnpaid,
+		PaymentStateTrialNoPaymentMethod,
+		PaymentStateTrialPaymentMethodAdded,
+		PaymentStateActive,
+		PaymentStateErrored:
+		return premiumNewsletterSubscription, nil
+	case PaymentStateTerminated:
+		c.Infof("Provider subscription with external ID mapping %s is terminated, but corresponding Babblegraph subscription %s is not. Resolving...", dbPremiumNewsletterSubscription.ExternalIDMappingID, dbPremiumNewsletterSubscription.ID)
+		if _, err := tx.Exec(terminatePremiumNewsletterSubscriptionQuery, dbPremiumNewsletterSubscription.ID); err != nil {
+			return nil, err
+		}
+		if _, err := tx.Exec(deletePremiumNewsletterSubscriptionDebounceRecordQuery, billingInformation.ID); err != nil {
+			return nil, err
+		}
+		return nil, nil
+	default:
+		return nil, fmt.Errorf("Unrecognized payment state %d", premiumNewsletterSubscription.PaymentState)
+	}
+}
+
+func lookupDBActivePremiumNewsletterSubscriptionForUser(tx *sqlx.Tx, billingInformation dbBillingInformation) (*dbPremiumNewsletterSubscription, error) {
 	var matches []dbPremiumNewsletterSubscription
 	err := tx.Select(&matches, lookupPremiumNewsletterNonTerminatedSubscriptionQuery, billingInformation.ID)
 	switch {
@@ -157,6 +250,17 @@ func lookupActivePremiumNewsletterSubscriptionForUser(tx *sqlx.Tx, billingInform
 	default:
 		return &matches[0], nil
 	}
+}
+
+func insertActivePremiumNewsletterSubscriptionForUser(tx *sqlx.Tx, billingInformationID BillingInformationID, stripeSubscription *stripe.Subscription) error {
+	externalIDMappingID, err := insertExternalIDMapping(tx, stripeSubscription.ID)
+	if err != nil {
+		return err
+	}
+	if _, err := tx.Exec(insertPremiumNewsletterSubscriptionQuery, billingInformationID, externalIDMappingID); err != nil {
+		return err
+	}
+	return nil
 }
 
 func GetPremiumNewsletterSubscriptionTrialEligibilityForUser(tx *sqlx.Tx, userID users.UserID) (*int64, error) {

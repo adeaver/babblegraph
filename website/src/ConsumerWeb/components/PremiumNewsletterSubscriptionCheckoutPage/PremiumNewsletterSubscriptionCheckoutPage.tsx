@@ -1,15 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { RouteComponentProps } from 'react-router-dom';
 
+import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 import Divider from '@material-ui/core/Divider';
 
 import DisplayCard from 'common/components/DisplayCard/DisplayCard';
 import DisplayCardHeader from 'common/components/DisplayCard/DisplayCardHeader';
-import Paragraph from 'common/typography/Paragraph';
+import Paragraph, { Size } from 'common/typography/Paragraph';
 import { Heading3 } from 'common/typography/Heading';
 import { Alignment, TypographyColor } from 'common/typography/common';
 import { setLocation } from 'util/window/Location';
+import { PrimaryButton } from 'common/components/Button/Button';
 
 import {
     RouteEncryptionKey,
@@ -25,9 +27,22 @@ import {
 } from 'common/base/BaseComponent';
 
 import {
+    PaymentState,
+    PremiumNewsletterSubscription,
+
     GetOrCreateBillingInformationResponse,
     getOrCreateBillingInformation,
+
+    GetOrCreatePremiumNewsletterSubscriptionResponse,
+    getOrCreatePremiumNewsletterSubscription,
 } from 'ConsumerWeb/api/billing/billing';
+
+const styleClasses = makeStyles({
+    callToActionButton: {
+        margin: '15px 0',
+        width: '100%',
+    },
+});
 
 type Params = {
     token: string;
@@ -45,6 +60,8 @@ const PremiumNewsletterSubscriptionCheckoutPage = withUserProfileInformation<Pre
     (props: PremiumNewsletterSubscriptionCheckoutPageProps & UserProfileComponentProps) => {
         const { token } = props.match.params;
         const [ subscriptionManagementToken, createUserToken ] = props.userProfile.nextTokens;
+
+        const [ shouldShowCheckoutForm, setShouldShowCheckoutForm ] = useState<boolean>(false);
 
         if (!props.userProfile.hasAccount) {
             setLocation(`/signup/${createUserToken}`);
@@ -64,7 +81,16 @@ const PremiumNewsletterSubscriptionCheckoutPage = withUserProfileInformation<Pre
                         <DisplayCardHeader
                             title="Babblegraph Premium Checkout"
                             backArrowDestination={`/manage/${subscriptionManagementToken}`} />
-                        <OrderDetailsSection premiumSubscriptionCheckoutToken={token} />
+                        <OrderDetailsSection
+                            trialEligibilityDays={props.userProfile.trialEligibilityDays}
+                            premiumSubscriptionCheckoutToken={token}
+                            handleProceedToCheckout={() => setShouldShowCheckoutForm(true)} />
+                        {
+                            shouldShowCheckoutForm && (
+                                <PaymentSection
+                                    premiumSubscriptionCheckoutToken={token} />
+                            )
+                        }
                     </DisplayCard>
                 </Grid>
             </Grid>
@@ -74,10 +100,14 @@ const PremiumNewsletterSubscriptionCheckoutPage = withUserProfileInformation<Pre
 
 type OrderDetailsSectionProps = {
     premiumSubscriptionCheckoutToken: string;
+    trialEligibilityDays: number | undefined;
+
+    handleProceedToCheckout: () => void;
 }
 
 const OrderDetailsSection = asBaseComponent<GetOrCreateBillingInformationResponse, OrderDetailsSectionProps>(
     (props: GetOrCreateBillingInformationResponse & OrderDetailsSectionProps & BaseComponentProps) => {
+        const classes = styleClasses();
         return (
             <Grid container>
                 <Grid item xs={12}>
@@ -85,26 +115,57 @@ const OrderDetailsSection = asBaseComponent<GetOrCreateBillingInformationRespons
                         Your Order
                     </Heading3>
                 </Grid>
-                <Grid item xs={10}>
+                <Grid item xs={12}>
+                    <Divider />
+                </Grid>
+                <Grid item xs={8}>
                     <Paragraph align={Alignment.Left}>
                         1-year Babblegraph Premium Subscription
                     </Paragraph>
                 </Grid>
-                <Grid item xs={2}>
+                <Grid item xs={4}>
                     <Paragraph align={Alignment.Right}>
                         US$29.00
                     </Paragraph>
                 </Grid>
-                <Divider />
-                <Grid item xs={10}>
+                <Grid item xs={12}>
+                    <Divider />
+                </Grid>
+                <Grid item xs={8}>
                     <Paragraph align={Alignment.Left}>
                         Total Due Now
                     </Paragraph>
                 </Grid>
-                <Grid item xs={2}>
+                <Grid item xs={4}>
                     <Paragraph align={Alignment.Right}>
-                        US$29.00
+                        { !!props.trialEligibilityDays ? "US$0.00" : "US$29.00"}
                     </Paragraph>
+                </Grid>
+                {
+                    !!props.trialEligibilityDays && (
+                        <Grid item xs={8}>
+                            <Paragraph align={Alignment.Left}>
+                                Total Due In {props.trialEligibilityDays} Days
+                            </Paragraph>
+                        </Grid>
+                    )
+                }
+                {
+                    !!props.trialEligibilityDays && (
+                        <Grid item xs={4}>
+                            <Paragraph align={Alignment.Right}>
+                                US$29.00
+                            </Paragraph>
+                        </Grid>
+                    )
+                }
+                <Grid item xs={12}>
+                    <PrimaryButton
+                        onClick={props.handleProceedToCheckout}
+                        className={classes.callToActionButton}
+                        size="large">
+                        Proceed to checkout
+                    </PrimaryButton>
                 </Grid>
             </Grid>
         );
@@ -122,4 +183,27 @@ const OrderDetailsSection = asBaseComponent<GetOrCreateBillingInformationRespons
     },
     false,
 );
+
+type PaymentSectionProps = {
+    premiumSubscriptionCheckoutToken: string;
+}
+
+const PaymentSection = asBaseComponent<GetOrCreatePremiumNewsletterSubscriptionResponse, PaymentSectionProps>(
+    (props: GetOrCreatePremiumNewsletterSubscriptionResponse & PaymentSectionProps & BaseComponentProps) => {
+        return <div />
+    },
+    (
+        ownProps: PaymentSectionProps,
+        onSuccess: (GetOrCreatePremiumNewsletterSubscriptionResponse) => void,
+        onError: (err: Error) => void,
+    ) => {
+        getOrCreatePremiumNewsletterSubscription({
+            premiumSubscriptionCheckoutToken: ownProps.premiumSubscriptionCheckoutToken,
+        },
+        onSuccess,
+        onError);
+    },
+    false,
+)
+
 export default PremiumNewsletterSubscriptionCheckoutPage;
