@@ -89,7 +89,18 @@ func getOrCreatePremiumNewsletterSubscription(userAuth *routermiddleware.UserAut
 	var premiumNewsletterSubscription *billing.PremiumNewsletterSubscription
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		var err error
-		premiumNewsletterSubscription, err = billing.GetOrCreatePremiumNewsletterSubscriptionForUser(r, tx, *userID)
+		premiumNewsletterSubscription, err = billing.LookupPremiumNewsletterSubscriptionForUser(r, tx, *userID)
+		switch {
+		case err != nil:
+			return err
+		case premiumNewsletterSubscription != nil:
+			return nil
+		}
+		premiumNewsletterSubscriptionID := billing.NewPremiumNewsletterSubscriptionID()
+		if err := billing.InsertPremiumNewsletterSyncRequest(tx, premiumNewsletterSubscriptionID, billing.PremiumNewsletterSubscriptionUpdateTypeTransitionToActive); err != nil {
+			return err
+		}
+		premiumNewsletterSubscription, err = billing.CreatePremiumNewsletterSubscriptionForUserWithID(r, tx, *userID, premiumNewsletterSubscriptionID)
 		return err
 	}); err != nil {
 		return nil, err

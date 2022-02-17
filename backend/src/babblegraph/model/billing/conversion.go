@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/stripe/stripe-go/v72"
 )
 
-func convertStripeSubscriptionToPremiumNewsletterSubscription(stripeSubscription *stripe.Subscription) (*PremiumNewsletterSubscription, error) {
+func convertStripeSubscriptionToPremiumNewsletterSubscription(tx *sqlx.Tx, stripeSubscription *stripe.Subscription, dbNewsletterSubscription *dbPremiumNewsletterSubscription) (*PremiumNewsletterSubscription, error) {
 	var paymentIntentID *string
 	if stripeSubscription.LatestInvoice != nil && stripeSubscription.LatestInvoice.PaymentIntent != nil {
 		paymentIntentID = ptr.String(stripeSubscription.LatestInvoice.PaymentIntent.ClientSecret)
@@ -16,6 +17,13 @@ func convertStripeSubscriptionToPremiumNewsletterSubscription(stripeSubscription
 	premiumNewsletterSubscription := PremiumNewsletterSubscription{
 		StripePaymentIntentID: paymentIntentID,
 		CurrentPeriodEnd:      time.Unix(stripeSubscription.CurrentPeriodEnd, 0),
+	}
+	if dbNewsletterSubscription != nil {
+		billingInformation, err := getBillingInformation(tx, dbNewsletterSubscription.BillingInformationID)
+		if err != nil {
+			return nil, err
+		}
+		premiumNewsletterSubscription.userID = billingInformation.UserID
 	}
 	switch stripeSubscription.Status {
 	case stripe.SubscriptionStatusTrialing:

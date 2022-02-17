@@ -2,6 +2,7 @@ package billing
 
 import (
 	"babblegraph/model/users"
+	"fmt"
 	"time"
 )
 
@@ -39,9 +40,18 @@ const (
 type PremiumNewsletterSubscriptionID string
 
 type PremiumNewsletterSubscription struct {
+	userID *users.UserID
+
 	PaymentState          PaymentState `json:"payment_state"`
 	CurrentPeriodEnd      time.Time    `json:"current_period_end"`
 	StripePaymentIntentID *string      `json:"stripe_payment_intent_id,omitempty"`
+}
+
+func (p *PremiumNewsletterSubscription) GetUserID() (*users.UserID, error) {
+	if p.userID == nil {
+		return nil, fmt.Errorf("Premium Newsletter Subscription User ID query called in a context without UserID")
+	}
+	return p.UserID, nil
 }
 
 type dbPremiumNewsletterSubscription struct {
@@ -84,4 +94,19 @@ const (
 
 	// This subscription has ended
 	PaymentStateTerminated PaymentState = 5
+)
+
+type dbPremiumNewsletterSubscriptionSyncRequest struct {
+	CreatedAt                       time.Time                               `db:"created_at"`
+	LastModifiedAt                  time.Time                               `db:"last_modified_at"`
+	PremiumNewsletterSubscriptionID PremiumNewsletterSubscriptionID         `db:"premium_newsletter_subscription_id"`
+	UpdateType                      PremiumNewsletterSubscriptionUpdateType `db:"update_type"`
+	AttemptNumber                   int64                                   `db:"attempt_number"`
+	HoldUntil                       *time.Time                              `db:"hold_until"`
+}
+
+type PremiumNewsletterSubscriptionUpdateType string
+
+const (
+	PremiumNewsletterSubscriptionUpdateTypeTransitionToActive PremiumNewsletterSubscriptionUpdateType = "transition-to-active"
 )
