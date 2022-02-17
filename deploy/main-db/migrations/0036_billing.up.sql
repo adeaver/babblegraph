@@ -1,5 +1,4 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
 CREATE TABLE IF NOT EXISTS billing_external_id_mapping(
     _id uuid DEFAULT uuid_generate_v4 (),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()),
@@ -41,4 +40,15 @@ CREATE TABLE IF NOT EXISTS billing_premium_newsletter_subscription_debounce_reco
     billing_information_id UUID NOT NULL REFERENCES billing_information(_id),
 
     PRIMARY KEY(billing_information_id) -- get free unique index here
+);
+
+CREATE TABLE IF NOT EXISTS billing_premium_newsletter_sync_request(
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()),
+    last_modified_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()),
+    premium_newsletter_subscription_id UUID NOT NULL REFERENCES billing_premium_newsletter_subscription(_id),
+    update_type TEXT NOT NULL,
+    attempt_number NUMBER NOT NULL DEFAULT 0,
+    hold_until TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()),
+
+    PRIMARY KEY(premium_newsletter_subscription_id)
 );

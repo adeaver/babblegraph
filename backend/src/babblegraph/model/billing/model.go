@@ -51,7 +51,7 @@ func (p *PremiumNewsletterSubscription) GetUserID() (*users.UserID, error) {
 	if p.userID == nil {
 		return nil, fmt.Errorf("Premium Newsletter Subscription User ID query called in a context without UserID")
 	}
-	return p.UserID, nil
+	return p.userID, nil
 }
 
 type dbPremiumNewsletterSubscription struct {
@@ -110,3 +110,12 @@ type PremiumNewsletterSubscriptionUpdateType string
 const (
 	PremiumNewsletterSubscriptionUpdateTypeTransitionToActive PremiumNewsletterSubscriptionUpdateType = "transition-to-active"
 )
+
+type PaymentMethodID string
+
+type dbPaymentMethod struct {
+	ID                   PaymentMethodID      `db:"_id"`
+	BillingInformationID BillingInformationID `db:"billing_information_id"`
+	IsDefault            bool                 `db:"is_default"`
+	ExternalIDMappingID  externalIDMappingID  `db:"external_id_mapping_id"`
+}

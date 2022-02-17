@@ -21,6 +21,15 @@ const (
 	lookupBillingInformationForUserIDQuery = "SELECT * FROM billing_information WHERE user_id = $1"
 	insertBillingInformationForUserIDQuery = "INSERT INTO billing_information (user_id, external_id_mapping_id) VALUES ($1, $2)"
 
+	insertPaymentMethodQuery        = "INSERT INTO billing_payment_method (billing_information_id, external_id_mapping_id, is_default) VALUES ($1, $2, $3)"
+	getPaymentMethodsQuery          = "SELECT * FROM billing_payment_method WHERE billing_information_id = $1"
+	deletePaymentMethodsQuery       = "DELETE FROM billing_payment_method WHERE _id = $1"
+	updateDefaultPaymentMethodQuery = `UPDATE billing_payment_method SET is_default = CASE
+        WHEN is_default=TRUE THEN FALSE
+        WHEN _id = $1 THEN TRUE
+    END
+    WHERE billing_information_id = $2`
+
 	getExternalIDMappingByIDQuery = "SELECT * FROM billing_external_id_mapping WHERE _id = $1"
 	insertExternalIDMappingQuery  = "INSERT INTO billing_external_id_mapping (id_type, external_id) VALUES ($1, $2) RETURNING _id"
 
