@@ -345,7 +345,7 @@ func GetPremiumNewsletterSubscriptionTrialEligibilityForUser(tx *sqlx.Tx, userID
 			}
 			hoursSinceOldestTrialStarted := decimal.FromInt64(int64(time.Now().Sub(*oldestMatch) / time.Hour))
 			roundedDaysSinceOldestTrialStarted := hoursSinceOldestTrialStarted.Divide(decimal.FromInt64(24)).ToInt64Rounded()
-			return &roundedDaysSinceOldestTrialStarted, nil
+			return ptr.Int64(config.PremiumNewsletterSubscriptionTrialLengthDays - roundedDaysSinceOldestTrialStarted), nil
 		}
 	}
 }

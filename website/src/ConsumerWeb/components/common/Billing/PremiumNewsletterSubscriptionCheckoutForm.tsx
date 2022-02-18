@@ -23,22 +23,16 @@ const PremiumNewsletterSubscriptionCardForm = (props: PremiumNewsletterSubscript
         case PaymentState.CreatedUnpaid:
             if (!!props.premiumNewsletterSusbcription.stripePaymentIntentId) {
                 return (
-                    <div>
-                        <ResolvePaymentIntentForm
+                    <ResolvePaymentIntentForm
                             stripePaymentIntentClientSecret={props.premiumNewsletterSusbcription.stripePaymentIntentId} />
-                    </div>
-                )
+                );
             }
             throw new Error("Payment intent ID is not set")
         case PaymentState.TrialNoPaymentMethod:
         case PaymentState.TrialPaymentMethodAdded:
         case PaymentState.Active:
         case PaymentState.Errored:
-            return (
-                <div>
-                    <ResolveSetupIntentForm />
-                </div>
-            );
+            return <ResolveSetupIntentForm />;
         case PaymentState.Terminated:
             // TODO: add redirect to premium information page
             return (

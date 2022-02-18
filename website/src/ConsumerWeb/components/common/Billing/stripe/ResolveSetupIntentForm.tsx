@@ -24,6 +24,7 @@ const ResolveSetupIntentForm = asBaseComponent<StripeBeginPaymentMethodSetupResp
         (props: ResolveSetupIntentFormOwnProps & StripeBeginPaymentMethodSetupResponse & BaseComponentProps & WithStripeProps) => {
             const [ cardholderName, setCardholderName ] = useState<string>(null);
             const [ postalCode, setPostalCode ] = useState<string>(null);
+
             const [ isLoading, setIsLoading ] = useState<boolean>(false);
 
             const handleSubmit = () => {
@@ -33,32 +34,17 @@ const ResolveSetupIntentForm = asBaseComponent<StripeBeginPaymentMethodSetupResp
 
             return (
                 <Form handleSubmit={handleSubmit}>
-                    <Grid container>
-                        <Grid item xs={false} md={3}>
-                            &nbsp;
-                        </Grid>
-                        <Grid item xs={12} md={6}>
-                            <GenericCardForm
-                                cardholderName={cardholderName}
-                                postalCode={postalCode}
-                                isDisabled={isLoading}
-                                setCardholderName={setCardholderName}
-                                setPostalCode={setPostalCode} />
-                        </Grid>
-                        <Grid item xs={false} md={3}>
-                            &nbsp;
-                        </Grid>
-                        <Grid item xs={false} md={3}>
-                            &nbsp;
-                        </Grid>
-                        <Grid item xs={12} md={6}>
-                            <PrimaryButton
-                                type='submit'
-                                disabled={isLoading}>
-                                Add Payment Method
-                            </PrimaryButton>
-                        </Grid>
-                    </Grid>
+                    <GenericCardForm
+                        cardholderName={cardholderName}
+                        postalCode={postalCode}
+                        isDisabled={isLoading}
+                        setCardholderName={setCardholderName}
+                        setPostalCode={setPostalCode} />
+                    <PrimaryButton
+                        type='submit'
+                        disabled={isLoading}>
+                        Add Payment Method
+                    </PrimaryButton>
                 </Form>
             );
         }
