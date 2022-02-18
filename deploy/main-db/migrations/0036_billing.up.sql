@@ -45,9 +45,9 @@ CREATE TABLE IF NOT EXISTS billing_premium_newsletter_subscription_debounce_reco
 CREATE TABLE IF NOT EXISTS billing_premium_newsletter_sync_request(
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()),
     last_modified_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()),
-    premium_newsletter_subscription_id UUID NOT NULL REFERENCES billing_premium_newsletter_subscription(_id),
+    premium_newsletter_subscription_id UUID NOT NULL,
     update_type TEXT NOT NULL,
-    attempt_number NUMBER NOT NULL DEFAULT 0,
+    attempt_number NUMERIC NOT NULL DEFAULT 0,
     hold_until TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()),
 
     PRIMARY KEY(premium_newsletter_subscription_id)

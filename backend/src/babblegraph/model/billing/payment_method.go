@@ -40,6 +40,7 @@ func getStripePaymentMethodsForUser(tx *sqlx.Tx, stripeCustomerID string) ([]Pay
 	stripe.Key = env.MustEnvironmentVariable("STRIPE_KEY")
 	stripePaymentMethods := paymentmethod.List(&stripe.PaymentMethodListParams{
 		Customer: ptr.String(stripeCustomerID),
+		Type:     ptr.String("card"),
 	})
 	var out []PaymentMethod
 	for _, paymentMethod := range stripePaymentMethods.PaymentMethodList().Data {

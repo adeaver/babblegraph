@@ -8,7 +8,7 @@ const (
 	getAllPremiumNewsletterSyncRequestQuery = "SELECT * FROM billing_premium_newsletter_sync_request"
 	// This model might need to change, but the current idea is that this should act as more of queue.
 	// Where each subscription can only have whatever the latest update type is. As of right now, the only update type is that it makes a switch to active
-	insertPremiumNewsletterSyncRequestQuery    = "INSERT INTO billing_premium_newsletter_sync_request VALUES (premium_newsletter_subscription_id, update_type) VALUES ($1, $2) ON CONFLICT DO NOTHING"
+	insertPremiumNewsletterSyncRequestQuery    = "INSERT INTO billing_premium_newsletter_sync_request (premium_newsletter_subscription_id, update_type) VALUES ($1, $2) ON CONFLICT DO NOTHING"
 	deletePremiumNewsletterSyncRequestQuery    = "DELETE FROM billing_premium_newsletter_sync_request WHERE premium_newsletter_subscription_id = $1"
 	incrementPremiumNewsletterSyncRequestQuery = "UPDATE billing_premium_newsletter_sync_request SET attempt_number = attempt_number + 1 WHERE premium_newsletter_subscription_id = $1"
 )

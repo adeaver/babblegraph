@@ -221,13 +221,18 @@ func GetPremiumNewsletterSubscriptionTrialEligibilityForUser(tx *sqlx.Tx, userID
 		default:
 			var oldestMatch *time.Time
 			for _, m := range matches {
+				m := m
 				if oldestMatch == nil || oldestMatch.After(m.CreatedAt) {
 					oldestMatch = &m.CreatedAt
 				}
 			}
 			hoursSinceOldestTrialStarted := decimal.FromInt64(int64(time.Now().Sub(*oldestMatch) / time.Hour))
 			roundedDaysSinceOldestTrialStarted := hoursSinceOldestTrialStarted.Divide(decimal.FromInt64(24)).ToInt64Rounded()
-			return ptr.Int64(config.PremiumNewsletterSubscriptionTrialLengthDays - roundedDaysSinceOldestTrialStarted), nil
+			trialEligibilityDays := config.PremiumNewsletterSubscriptionTrialLengthDays - roundedDaysSinceOldestTrialStarted
+			if trialEligibilityDays < 0 {
+				trialEligibilityDays = 0
+			}
+			return ptr.Int64(trialEligibilityDays), nil
 		}
 	}
 }

@@ -25,7 +25,7 @@ func (r Route) makeMuxRoute() func(http.ResponseWriter, *http.Request) {
 		contextKey := random.MustMakeRandomString(12)
 		ctx := Context{
 			ctx:    context.Background(),
-			logger: bglog.NewLoggerForContext(r.Path, contextKey, 3),
+			logger: bglog.NewLoggerForContext(r.Path, contextKey, 4),
 		}
 		wrappedRequest := &Request{
 			c: ctx,

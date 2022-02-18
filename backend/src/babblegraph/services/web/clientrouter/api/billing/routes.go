@@ -93,6 +93,7 @@ func getOrCreatePremiumNewsletterSubscription(userAuth routermiddleware.UserAuth
 		r.RespondWithStatus(http.StatusForbidden)
 		return nil, nil
 	}
+	premiumNewsletterSubscriptionID := billing.NewPremiumNewsletterSubscriptionID()
 	var premiumNewsletterSubscription *billing.PremiumNewsletterSubscription
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		var err error
@@ -103,7 +104,6 @@ func getOrCreatePremiumNewsletterSubscription(userAuth routermiddleware.UserAuth
 		case premiumNewsletterSubscription != nil:
 			return nil
 		}
-		premiumNewsletterSubscriptionID := billing.NewPremiumNewsletterSubscriptionID()
 		if err := billing.InsertPremiumNewsletterSyncRequest(tx, premiumNewsletterSubscriptionID, billing.PremiumNewsletterSubscriptionUpdateTypeTransitionToActive); err != nil {
 			return err
 		}
@@ -112,6 +112,8 @@ func getOrCreatePremiumNewsletterSubscription(userAuth routermiddleware.UserAuth
 	}); err != nil {
 		return nil, err
 	}
+	// THIS IS A HACK
+	premiumNewsletterSubscription.ID = &premiumNewsletterSubscriptionID
 	return getOrCreatePremiumNewsletterSubscriptionResponse{
 		PremiumNewsletterSubscription: *premiumNewsletterSubscription,
 	}, nil
@@ -142,7 +144,9 @@ func preparePremiumNewsletterSubscriptionSync(userAuth routermiddleware.UserAuth
 	}); err != nil {
 		return nil, err
 	}
-	return nil, nil
+	return preparePremiumNewsletterSubscriptionSyncResponse{
+		Success: true,
+	}, nil
 }
 
 type getPaymentMethodsForUserRequest struct{}
