@@ -12,27 +12,10 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/stripe/stripe-go/v72"
-	"github.com/stripe/stripe-go/v72/customer"
 	"github.com/stripe/stripe-go/v72/sub"
 )
 
 const (
-	getBillingInformationQuery             = "SELECT * FROM billing_information WHERE _id = $1"
-	lookupBillingInformationForUserIDQuery = "SELECT * FROM billing_information WHERE user_id = $1"
-	insertBillingInformationForUserIDQuery = "INSERT INTO billing_information (user_id, external_id_mapping_id) VALUES ($1, $2)"
-
-	insertPaymentMethodQuery        = "INSERT INTO billing_payment_method (billing_information_id, external_id_mapping_id, is_default) VALUES ($1, $2, $3)"
-	getPaymentMethodsQuery          = "SELECT * FROM billing_payment_method WHERE billing_information_id = $1"
-	deletePaymentMethodsQuery       = "DELETE FROM billing_payment_method WHERE _id = $1"
-	updateDefaultPaymentMethodQuery = `UPDATE billing_payment_method SET is_default = CASE
-        WHEN is_default=TRUE THEN FALSE
-        WHEN _id = $1 THEN TRUE
-    END
-    WHERE billing_information_id = $2`
-
-	getExternalIDMappingByIDQuery = "SELECT * FROM billing_external_id_mapping WHERE _id = $1"
-	insertExternalIDMappingQuery  = "INSERT INTO billing_external_id_mapping (id_type, external_id) VALUES ($1, $2) RETURNING _id"
-
 	lookupPremiumNewsletterSubscriptionByIDQuery          = "SELECT * FROM billing_premium_newsletter_subscription WHERE _id = $1"
 	lookupPremiumNewsletterSubscriptionQuery              = "SELECT * FROM billing_premium_newsletter_subscription WHERE billing_information_id = $1"
 	lookupPremiumNewsletterNonTerminatedSubscriptionQuery = "SELECT * FROM billing_premium_newsletter_subscription WHERE billing_information_id = $1 AND is_terminated = FALSE"
@@ -41,108 +24,7 @@ const (
 
 	insertPremiumNewsletterSubscriptionDebounceRecordQuery = "INSERT INTO billing_premium_newsletter_subscription_debounce_record (billing_information_id) VALUES ($1)"
 	deletePremiumNewsletterSubscriptionDebounceRecordQuery = "DELETE FROM billing_premium_newsletter_subscription_debounce_record WHERE billing_information_id = $1"
-
-	// TODO: add hold_until to these queries if need be.
-	getAllPremiumNewsletterSyncRequestQuery = "SELECT * FROM billing_premium_newsletter_sync_request"
-	// This model might need to change, but the current idea is that this should act as more of queue.
-	// Where each subscription can only have whatever the latest update type is. As of right now, the only update type is that it makes a switch to active
-	insertPremiumNewsletterSyncRequestQuery    = "INSERT INTO billing_premium_newsletter_sync_request VALUES (premium_newsletter_subscription_id, update_type) VALUES ($1, $2) ON CONFLICT DO NOTHING"
-	deletePremiumNewsletterSyncRequestQuery    = "DELETE FROM billing_premium_newsletter_sync_request WHERE premium_newsletter_subscription_id = $1"
-	incrementPremiumNewsletterSyncRequestQuery = "UPDATE billing_premium_newsletter_sync_request SET attempt_number = attempt_number + 1 WHERE premium_newsletter_subscription_id = $1"
 )
-
-func GetOrCreateBillingInformationForUser(c ctx.LogContext, tx *sqlx.Tx, userID users.UserID) (*BillingInformation, error) {
-	billingInformation, err := lookupBillingInformationForUserID(tx, userID)
-	switch {
-	case err != nil:
-		return nil, err
-	case billingInformation != nil:
-		externalID, err := getExternalIDMapping(tx, billingInformation.ExternalIDMappingID)
-		if err != nil {
-			return nil, err
-		}
-		out := &BillingInformation{
-			UserID: &userID,
-		}
-		switch externalID.IDType {
-		case externalIDTypeStripe:
-			out.StripeCustomerID = ptr.String(externalID.ExternalID)
-		default:
-			return nil, fmt.Errorf("Unrecognized external ID type %s", externalID.IDType)
-		}
-		return out, nil
-	default:
-		stripe.Key = env.MustEnvironmentVariable("STRIPE_KEY")
-		user, err := users.GetUser(tx, userID)
-		switch {
-		case err != nil:
-			return nil, err
-		case user.Status != users.UserStatusVerified:
-			return nil, fmt.Errorf("user is in the wrong state")
-		}
-		customerParams := &stripe.CustomerParams{
-			Email: stripe.String(user.EmailAddress),
-		}
-		stripeCustomer, err := customer.New(customerParams)
-		if err != nil {
-			return nil, err
-		}
-		externalMappingID, err := insertExternalIDMapping(tx, stripeCustomer.ID)
-		if err != nil {
-			c.Warnf("Attempting to rollback customer with Stripe ID %s and Babblegraph User ID %s", stripeCustomer.ID, userID)
-			if _, sErr := customer.Del(stripeCustomer.ID, &stripe.CustomerParams{}); sErr != nil {
-				c.Errorf("Error rolling back customer ID %s in Stripe for user ID %s because of error %s", stripeCustomer.ID, userID, sErr.Error())
-			}
-			return nil, err
-		}
-		if err := insertBillingInformationForUserID(tx, userID, *externalMappingID); err != nil {
-			c.Warnf("Attempting to rollback customer with Stripe ID %s and Babblegraph User ID %s", stripeCustomer.ID, userID)
-			if _, sErr := customer.Del(stripeCustomer.ID, &stripe.CustomerParams{}); sErr != nil {
-				c.Errorf("Error rolling back customer ID %s in Stripe for user ID %s because of error %s", stripeCustomer.ID, userID, sErr.Error())
-			}
-			return nil, err
-		}
-		return &BillingInformation{
-			UserID:           &userID,
-			StripeCustomerID: ptr.String(stripeCustomer.ID),
-		}, nil
-	}
-}
-
-func getBillingInformation(tx *sqlx.Tx, id BillingInformationID) (*dbBillingInformation, error) {
-	var matches []dbBillingInformation
-	err := tx.Select(&matches, getBillingInformationQuery, id)
-	switch {
-	case err != nil:
-		return nil, err
-	case len(matches) == 0,
-		len(matches) > 1:
-		return nil, fmt.Errorf("Expected exactly one match for billing information id %s, but got %d", id, len(matches))
-	default:
-		return &matches[0], nil
-	}
-}
-
-func lookupBillingInformationForUserID(tx *sqlx.Tx, userID users.UserID) (*dbBillingInformation, error) {
-	var matches []dbBillingInformation
-	err := tx.Select(&matches, lookupBillingInformationForUserIDQuery, userID)
-	switch {
-	case err != nil:
-		return nil, err
-	case len(matches) == 0:
-		return nil, nil
-	case len(matches) > 1:
-		return nil, fmt.Errorf("Expected at most one billing information for user ID %s, but got %d", userID, len(matches))
-	}
-	return &matches[0], nil
-}
-
-func insertBillingInformationForUserID(tx *sqlx.Tx, userID users.UserID, externalID externalIDMappingID) error {
-	if _, err := tx.Exec(insertBillingInformationForUserIDQuery, userID, externalID); err != nil {
-		return err
-	}
-	return nil
-}
 
 func LookupPremiumNewsletterSubscriptionForUser(c ctx.LogContext, tx *sqlx.Tx, userID users.UserID) (*PremiumNewsletterSubscription, error) {
 	stripe.Key = env.MustEnvironmentVariable("STRIPE_KEY")
@@ -348,66 +230,4 @@ func GetPremiumNewsletterSubscriptionTrialEligibilityForUser(tx *sqlx.Tx, userID
 			return ptr.Int64(config.PremiumNewsletterSubscriptionTrialLengthDays - roundedDaysSinceOldestTrialStarted), nil
 		}
 	}
-}
-
-func InsertPremiumNewsletterSyncRequest(tx *sqlx.Tx, id PremiumNewsletterSubscriptionID, updateType PremiumNewsletterSubscriptionUpdateType) error {
-	if _, err := tx.Exec(insertPremiumNewsletterSyncRequestQuery, id, updateType); err != nil {
-		return err
-	}
-	return nil
-}
-
-func GetPremiumNewsletterSyncRequests(tx *sqlx.Tx) (map[PremiumNewsletterSubscriptionID]PremiumNewsletterSubscriptionUpdateType, error) {
-	var matches []dbPremiumNewsletterSubscriptionSyncRequest
-	if err := tx.Select(&matches, getAllPremiumNewsletterSyncRequestQuery); err != nil {
-		return nil, err
-	}
-	out := make(map[PremiumNewsletterSubscriptionID]PremiumNewsletterSubscriptionUpdateType)
-	for _, m := range matches {
-		out[m.PremiumNewsletterSubscriptionID] = m.UpdateType
-	}
-	return out, nil
-}
-
-func MarkPremiumNewsletterSyncRequestDone(tx *sqlx.Tx, id PremiumNewsletterSubscriptionID) error {
-	if _, err := tx.Exec(deletePremiumNewsletterSyncRequestQuery, id); err != nil {
-		return err
-	}
-	return nil
-}
-
-func MarkPremiumNewsletterSyncRequestForRetry(tx *sqlx.Tx, id PremiumNewsletterSubscriptionID) error {
-	if _, err := tx.Exec(incrementPremiumNewsletterSyncRequestQuery, id); err != nil {
-		return err
-	}
-	return nil
-}
-
-func getExternalIDMapping(tx *sqlx.Tx, id externalIDMappingID) (*dbExternalIDMapping, error) {
-	var matches []dbExternalIDMapping
-	err := tx.Select(&matches, getExternalIDMappingByIDQuery, id)
-	switch {
-	case err != nil:
-		return nil, err
-	case len(matches) == 0,
-		len(matches) > 1:
-		return nil, fmt.Errorf("Expected exactly one external id mapping for id %s, but got %d", id, len(matches))
-	default:
-		return &matches[0], nil
-	}
-}
-
-func insertExternalIDMapping(tx *sqlx.Tx, externalID string) (*externalIDMappingID, error) {
-	rows, err := tx.Query(insertExternalIDMappingQuery, externalIDTypeStripe, externalID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var id externalIDMappingID
-	for rows.Next() {
-		if err := rows.Scan(&id); err != nil {
-			return nil, err
-		}
-	}
-	return &id, nil
 }

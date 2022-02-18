@@ -111,11 +111,19 @@ const (
 	PremiumNewsletterSubscriptionUpdateTypeTransitionToActive PremiumNewsletterSubscriptionUpdateType = "transition-to-active"
 )
 
-type PaymentMethodID string
-
-type dbPaymentMethod struct {
-	ID                   PaymentMethodID      `db:"_id"`
-	BillingInformationID BillingInformationID `db:"billing_information_id"`
-	IsDefault            bool                 `db:"is_default"`
-	ExternalIDMappingID  externalIDMappingID  `db:"external_id_mapping_id"`
+type PaymentMethod struct {
+	ExternalID     string   `json:"external_id"`
+	DisplayMask    string   `json:"display_mask"`
+	CardExpiration string   `json:"card_expiration"`
+	CardType       CardType `json:"card_type"`
 }
+
+type CardType string
+
+const (
+	CardTypeAmex       CardType = "amex"
+	CardTypeVisa       CardType = "visa"
+	CardTypeMastercard CardType = "mc"
+	CardTypeDiscover   CardType = "discover"
+	CardTypeOther      CardType = "other"
+)

@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
+
+import { Heading3 } from 'common/typography/Heading';
 
 import {
     asBaseComponent,
@@ -19,6 +21,17 @@ type PremiumNewsletterSubscriptionCardFormProps = {
 
 const PremiumNewsletterSubscriptionCardForm = (props: PremiumNewsletterSubscriptionCardFormProps) => {
     const { paymentState } = props.premiumNewsletterSusbcription;
+
+    const [ shouldShowSuccessPage, setShouldShowSuccessPage ] = useState<boolean>(false);
+
+    if (shouldShowSuccessPage) {
+        return (
+            <Heading3>
+                Your payment details have been saved successfully
+            </Heading3>
+        );
+    }
+
     switch (paymentState) {
         case PaymentState.CreatedUnpaid:
             if (!!props.premiumNewsletterSusbcription.stripePaymentIntentId) {
@@ -32,7 +45,10 @@ const PremiumNewsletterSubscriptionCardForm = (props: PremiumNewsletterSubscript
         case PaymentState.TrialPaymentMethodAdded:
         case PaymentState.Active:
         case PaymentState.Errored:
-            return <ResolveSetupIntentForm />;
+            return (
+                <ResolveSetupIntentForm
+                    toggleSuccessMessage={setShouldShowSuccessPage} />
+            );
         case PaymentState.Terminated:
             // TODO: add redirect to premium information page
             return (
