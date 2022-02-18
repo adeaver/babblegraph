@@ -37,8 +37,8 @@ export function asBaseComponent<P, V>(WrappedComponent: React.ComponentType<V & 
         }, []);
 
         let component;
-        if (isLoading) {
-             component = <LoadingSpinner />;
+        if (!!wrappedComponentProps) {
+            component = <WrappedComponent setIsLoading={setIsLoading} setError={setError} {...props} {...wrappedComponentProps} />;
         } else if (!!error) {
             component = (
                 <Heading3 color={TypographyColor.Warning}>
@@ -46,7 +46,7 @@ export function asBaseComponent<P, V>(WrappedComponent: React.ComponentType<V & 
                 </Heading3>
             );
         } else {
-            component = <WrappedComponent setIsLoading={setIsLoading} setError={setError} {...props} {...wrappedComponentProps} />;
+             component = <LoadingSpinner />;
         }
         if (isPage) {
             component = (

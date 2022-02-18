@@ -1,4 +1,4 @@
-import React, { useState, useRef, useImperativeHandle } from 'react';
+import React, { useRef, useImperativeHandle } from 'react';
 
 import {
     CardNumberElement,
@@ -10,9 +10,7 @@ import {
 import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 
-import { PrimaryButton } from 'common/components/Button/Button';
 import { PrimaryTextField } from 'common/components/TextField/TextField';
-import Form from 'common/components/Form/Form';
 
 const styleClasses = makeStyles({
     checkoutFormObject: {
@@ -56,122 +54,106 @@ export type StripeError = {
 }
 
 type GenericCardFormProps = {
-    actionTitle: string;
-    isLoading: boolean;
-    elements: any;
+    cardholderName: string;
+    postalCode: string;
+    isDisabled: boolean;
 
-    handleSubmit: (cardElement: typeof CardElement, cardholderName: string, postalCode: string) => void;
+    setCardholderName: (name: string) => void;
+    setPostalCode: (postalCode: string) => void;
 }
 
 const GenericCardForm = (props: GenericCardFormProps) => {
-    const [ cardholderName, setCardholderName ] = useState<string>("");
-    const [ postalCode, setPostalCode ] = useState<string>("");
-
     const handleCardholderNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setCardholderName((event.target as HTMLInputElement).value);
+        props.setCardholderName((event.target as HTMLInputElement).value);
     }
     const handlePostalCodeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setPostalCode((event.target as HTMLInputElement).value);
-    }
-    const handleSubmit = () => {
-        const cardElement = props.elements.getElement(CardNumberElement);
-        props.handleSubmit(cardElement, cardholderName, postalCode);
+        props.setPostalCode((event.target as HTMLInputElement).value);
     }
 
     const classes = styleClasses();
     return (
-        <Form handleSubmit={handleSubmit}>
-            <Grid container>
+        <Grid container>
+            <Grid item xs={12}>
+                <PrimaryTextField
+                    className={classes.checkoutFormObject}
+                    id="cardholder-name"
+                    label="Cardholder Name"
+                    variant="outlined"
+                    defaultValue={props.cardholderName}
+                    onChange={handleCardholderNameChange}
+                    disabled={props.isDisabled}
+                    required
+                    fullWidth />
+                </Grid>
                 <Grid item xs={12}>
                     <PrimaryTextField
                         className={classes.checkoutFormObject}
-                        id="cardholder-name"
-                        label="Cardholder Name"
-                        variant="outlined"
-                        defaultValue={cardholderName}
-                        onChange={handleCardholderNameChange}
-                        disabled={props.isLoading}
-                        required
-                        fullWidth />
-                    </Grid>
-                    <Grid item xs={12}>
-                        <PrimaryTextField
-                            className={classes.checkoutFormObject}
-                            id="credit-card-number"
-                            label="Credit Card Number"
-                            variant="outlined"
-                            InputLabelProps={{ shrink: true }}
-                            InputProps={{
-                                inputComponent: StripeInput,
-                                inputProps: {
-                                    component: CardNumberElement
-                                },
-                            }}
-                            disabled={props.isLoading}
-                            required
-                            fullWidth />
-                </Grid>
-                <Grid item xs={6}>
-                    <PrimaryTextField
-                        className={classes.checkoutFormObject}
-                        id="credit-card-expiration"
-                        label="Expiration Date"
+                        id="credit-card-number"
+                        label="Credit Card Number"
                         variant="outlined"
                         InputLabelProps={{ shrink: true }}
                         InputProps={{
                             inputComponent: StripeInput,
                             inputProps: {
-                                component: CardExpiryElement
+                                component: CardNumberElement
                             },
                         }}
-                        disabled={props.isLoading}
+                        disabled={props.isDisabled}
                         required
                         fullWidth />
-                </Grid>
-                <Grid item xs={6}>
-                    <PrimaryTextField
-                        className={classes.checkoutFormObject}
-                        id="credit-card-cvc"
-                        label="CVC"
-                        variant="outlined"
-                        InputLabelProps={{ shrink: true }}
-                        InputProps={{
-                            inputComponent: StripeInput,
-                            inputProps: {
-                                component: CardCvcElement
-                            },
-                        }}
-                        disabled={props.isLoading}
-                        required
-                        fullWidth />
-                </Grid>
-                <Grid item xs={12}>
-                    <PrimaryTextField
-                        id="zip"
-                        className={classes.checkoutFormObject}
-                        label="Postal Code"
-                        variant="outlined"
-                        defaultValue={postalCode}
-                        onChange={handlePostalCodeChange}
-                        disabled={props.isLoading}
-                        required
-                        fullWidth />
-                </Grid>
-                <Grid item xs={12}>
-                    <PrimaryButton
-                        type="submit"
-                        className={classes.checkoutFormObject}
-                        disabled={!postalCode || !cardholderName || props.isLoading}>
-                        { props.actionTitle }
-                    </PrimaryButton>
-                </Grid>
-                <Grid item xs={12}>
-                    <a className={classes.stripeLink} href="https://stripe.com/" target="_blank">
-                        <div className={classes.stripeBadge} />
-                    </a>
-                </Grid>
             </Grid>
-        </Form>
+            <Grid item xs={6}>
+                <PrimaryTextField
+                    className={classes.checkoutFormObject}
+                    id="credit-card-expiration"
+                    label="Expiration Date"
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{
+                        inputComponent: StripeInput,
+                        inputProps: {
+                            component: CardExpiryElement
+                        },
+                    }}
+                    disabled={props.isDisabled}
+                    required
+                    fullWidth />
+            </Grid>
+            <Grid item xs={6}>
+                <PrimaryTextField
+                    className={classes.checkoutFormObject}
+                    id="credit-card-cvc"
+                    label="CVC"
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{
+                        inputComponent: StripeInput,
+                        inputProps: {
+                            component: CardCvcElement
+                        },
+                    }}
+                    disabled={props.isDisabled}
+                    required
+                    fullWidth />
+            </Grid>
+            <Grid item xs={12}>
+                <PrimaryTextField
+                    id="zip"
+                    className={classes.checkoutFormObject}
+                    label="Postal Code"
+                    variant="outlined"
+                    defaultValue={props.postalCode}
+                    onChange={handlePostalCodeChange}
+                    disabled={props.isDisabled}
+                    required
+                    fullWidth />
+            </Grid>
+            <Grid item xs={12}>
+                <a className={classes.stripeLink} href="https://stripe.com/" target="_blank">
+                    <div className={classes.stripeBadge} />
+                </a>
+            </Grid>
+        </Grid>
     );
 }
 

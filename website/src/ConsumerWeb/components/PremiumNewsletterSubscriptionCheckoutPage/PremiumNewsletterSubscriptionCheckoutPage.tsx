@@ -25,6 +25,7 @@ import {
     asBaseComponent,
     BaseComponentProps,
 } from 'common/base/BaseComponent';
+import PremiumNewsletterSubscriptionCardForm from 'ConsumerWeb/components/common/Billing/PremiumNewsletterSubscriptionCheckoutForm';
 
 import {
     PaymentState,
@@ -195,7 +196,10 @@ type PaymentSectionProps = {
 
 const PaymentSection = asBaseComponent<GetOrCreatePremiumNewsletterSubscriptionResponse, PaymentSectionProps>(
     (props: GetOrCreatePremiumNewsletterSubscriptionResponse & PaymentSectionProps & BaseComponentProps) => {
-        return <div />
+        return (
+            <PremiumNewsletterSubscriptionCardForm
+                premiumNewsletterSusbcription={props.premiumNewsletterSubscription} />
+        );
     },
     (
         ownProps: PaymentSectionProps,
