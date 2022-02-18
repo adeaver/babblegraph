@@ -26,6 +26,16 @@ var Routes = router.RouteGroup{
 				routermiddleware.WithAuthentication(getOrCreatePremiumNewsletterSubscription),
 			),
 		}, {
+			Path: "prepare_premium_newsletter_subscription_sync_1",
+			Handler: routermiddleware.WithRequestBodyLogger(
+				routermiddleware.WithAuthentication(preparePremiumNewsletterSubscriptionSync),
+			),
+		}, {
+			Path: "get_payment_methods_for_user_1",
+			Handler: routermiddleware.WithRequestBodyLogger(
+				routermiddleware.WithAuthentication(getPaymentMethodsForUser),
+			),
+		}, {
 			Path: "stripe_begin_payment_method_setup_1",
 			Handler: routermiddleware.WithNoBodyRequestLogger(
 				routermiddleware.WithAuthentication(stripeBeginPaymentMethodSetup),
@@ -104,5 +114,53 @@ func getOrCreatePremiumNewsletterSubscription(userAuth routermiddleware.UserAuth
 	}
 	return getOrCreatePremiumNewsletterSubscriptionResponse{
 		PremiumNewsletterSubscription: *premiumNewsletterSubscription,
+	}, nil
+}
+
+type preparePremiumNewsletterSubscriptionSyncRequest struct {
+	ID         billing.PremiumNewsletterSubscriptionID `json:"id"`
+	UpdateType string                                  `json:"update_type"`
+}
+
+type preparePremiumNewsletterSubscriptionSyncResponse struct {
+	Success bool `json:"success"`
+}
+
+func preparePremiumNewsletterSubscriptionSync(userAuth routermiddleware.UserAuthentication, r *router.Request) (interface{}, error) {
+	var req preparePremiumNewsletterSubscriptionSyncRequest
+	if err := r.GetJSONBody(&req); err != nil {
+		return nil, err
+	}
+	updateType, err := billing.GetPremiumNewsletterSubscriptionUpdateTypeFromString(req.UpdateType)
+	if err != nil {
+		return preparePremiumNewsletterSubscriptionSyncResponse{
+			Success: false,
+		}, nil
+	}
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		return billing.InsertPremiumNewsletterSyncRequest(tx, req.ID, *updateType)
+	}); err != nil {
+		return nil, err
+	}
+	return nil, nil
+}
+
+type getPaymentMethodsForUserRequest struct{}
+
+type getPaymentMethodsForUserResponse struct {
+	PaymentMethods []billing.PaymentMethod `json:"payment_methods"`
+}
+
+func getPaymentMethodsForUser(userAuth routermiddleware.UserAuthentication, r *router.Request) (interface{}, error) {
+	var paymentMethods []billing.PaymentMethod
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		var err error
+		paymentMethods, err = billing.GetPaymentMethodsForUser(tx, userAuth.UserID)
+		return err
+	}); err != nil {
+		return nil, err
+	}
+	return getPaymentMethodsForUserResponse{
+		PaymentMethods: paymentMethods,
 	}, nil
 }

@@ -37,7 +37,8 @@ const PremiumNewsletterSubscriptionCardForm = (props: PremiumNewsletterSubscript
             if (!!props.premiumNewsletterSusbcription.stripePaymentIntentId) {
                 return (
                     <ResolvePaymentIntentForm
-                            stripePaymentIntentClientSecret={props.premiumNewsletterSusbcription.stripePaymentIntentId} />
+                            stripePaymentIntentClientSecret={props.premiumNewsletterSusbcription.stripePaymentIntentId}
+                            toggleSuccessMessage={setShouldShowSuccessPage} />
                 );
             }
             throw new Error("Payment intent ID is not set")

@@ -8,6 +8,7 @@ import GenericCardForm from './GenericCardForm';
 
 type ResolvePaymentIntentFormProps = {
     stripePaymentIntentClientSecret: string;
+    toggleSuccessMessage: (shouldShowSuccessMessage) => void;
 }
 
 const ResolvePaymentIntentForm = withStripe<ResolvePaymentIntentFormProps>(

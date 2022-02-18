@@ -111,6 +111,23 @@ const (
 	PremiumNewsletterSubscriptionUpdateTypeTransitionToActive PremiumNewsletterSubscriptionUpdateType = "transition-to-active"
 )
 
+func (u PremiumNewsletterSubscriptionUpdateType) Str() string {
+	return string(u)
+}
+
+func (u PremiumNewsletterSubscriptionUpdateType) Ptr() *PremiumNewsletterSubscriptionUpdateType {
+	return &u
+}
+
+func GetPremiumNewsletterSubscriptionUpdateTypeFromString(u string) (*PremiumNewsletterSubscriptionUpdateType, error) {
+	switch u {
+	case PremiumNewsletterSubscriptionUpdateTypeTransitionToActive.Str():
+		return PremiumNewsletterSubscriptionUpdateTypeTransitionToActive.Ptr(), nil
+	default:
+		return nil, fmt.Errorf("unrecognized update type %s", u)
+	}
+}
+
 type PaymentMethod struct {
 	ExternalID     string   `json:"external_id"`
 	DisplayMask    string   `json:"display_mask"`
