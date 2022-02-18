@@ -4,8 +4,17 @@ import {
     CardNumberElement,
 } from "@stripe/react-stripe-js";
 
+import { makeStyles } from '@material-ui/core/styles';
+import Grid from '@material-ui/core/Grid';
+import Snackbar from '@material-ui/core/Snackbar';
+
 import Form from 'common/components/Form/Form';
 import { PrimaryButton } from 'common/components/Button/Button';
+import { PrimarySwitch } from 'common/components/Switch/Switch';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import PaymentMethodDisplay from 'ConsumerWeb/components/common/billing/PaymentMethodDisplay';
+import Alert from 'common/components/Alert/Alert';
+import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
 
 import { withStripe, WithStripeProps } from './withStripe';
 import GenericCardForm, { StripeError } from './GenericCardForm';
@@ -16,6 +25,8 @@ import {
 } from 'common/base/BaseComponent';
 
 import {
+    PaymentMethod,
+
     GetPaymentMethodsForUserResponse,
     getPaymentMethodsForUser,
 
@@ -23,6 +34,12 @@ import {
     PreparePremiumNewsletterSubscriptionSyncResponse,
     preparePremiumNewsletterSubscriptionSync,
 } from 'ConsumerWeb/api/billing/billing';
+
+const styleClasses = makeStyles({
+    paymentMethodDisplayContainer: {
+        padding: '5px',
+    },
+});
 
 type StripePaymentIntentResult = {
     error?: StripeError | null;
@@ -38,6 +55,25 @@ type ResolvePaymentIntentFormOwnProps = {
 const ResolvePaymentIntentForm = asBaseComponent<GetPaymentMethodsForUserResponse, ResolvePaymentIntentFormOwnProps>(
     withStripe<GetPaymentMethodsForUserResponse & ResolvePaymentIntentFormOwnProps & BaseComponentProps>(
         (props: GetPaymentMethodsForUserResponse & ResolvePaymentIntentFormOwnProps & BaseComponentProps & WithStripeProps) => {
+            const [ existingPaymentMethodIDToUse, setExistingPaymentMethodIDToUse ] = useState<string>(null);
+            const [ showCardForm, setShouldShowCardForm ] = useState<boolean>(true);
+            const handleSelectPaymentMethodID = (paymentMethodExternalID: string) => {
+                if (!isLoading) {
+                    setShouldShowCardForm(false);
+                    setExistingPaymentMethodIDToUse(paymentMethodExternalID);
+                }
+            }
+            const handleToggleShowCardForm = () => {
+                if (props.paymentMethods.length) {
+                    if (showCardForm) {
+                        setShouldShowCardForm(false);
+                    } else {
+                        setShouldShowCardForm(true);
+                        setExistingPaymentMethodIDToUse(null);
+                    }
+                }
+            }
+
             const [ cardholderName, setCardholderName ] = useState<string>(null);
             const [ postalCode, setPostalCode ] = useState<string>(null);
 
@@ -58,16 +94,17 @@ const ResolvePaymentIntentForm = asBaseComponent<GetPaymentMethodsForUserRespons
                         return
                     }
                     const cardElement = props.elements.getElement(CardNumberElement);
-                    props.stripe.confirmCardPayment(props.stripePaymentIntentClientSecret, {
-                        payment_method: {
-                            card: cardElement,
-                            billing_details: {
-                                name: cardholderName,
-                                address: {
-                                    postal_code: postalCode,
-                                },
+                    const paymentMethod = !!existingPaymentMethodIDToUse ? existingPaymentMethodIDToUse : {
+                        card: cardElement,
+                        billing_details: {
+                            name: cardholderName,
+                            address: {
+                                postal_code: postalCode,
                             },
                         },
+                    }
+                    props.stripe.confirmCardPayment(props.stripePaymentIntentClientSecret, {
+                        payment_method: paymentMethod,
                     }).then((result: StripePaymentIntentResult) => {
                         setIsLoading(false);
                         if (!!result.paymentIntent && result.paymentIntent.status === "succeeded") {
@@ -84,19 +121,50 @@ const ResolvePaymentIntentForm = asBaseComponent<GetPaymentMethodsForUserRespons
                 props.setError);
             }
 
+            const classes = styleClasses();
             return (
                 <Form handleSubmit={handleSubmit}>
-                    <GenericCardForm
-                        cardholderName={cardholderName}
-                        postalCode={postalCode}
-                        isDisabled={isLoading}
-                        setCardholderName={setCardholderName}
-                        setPostalCode={setPostalCode} />
+                    <Grid container>
+                    {
+                        (props.paymentMethods || []).map((paymentMethod: PaymentMethod) => (
+                            <Grid item xs={12} md={6}
+                                className={classes.paymentMethodDisplayContainer}
+                                key={paymentMethod.externalId}>
+                                <PaymentMethodDisplay onClick={handleSelectPaymentMethodID} paymentMethod={paymentMethod} />
+                            </Grid>
+                        ))
+                    }
+                    </Grid>
+                    <FormControlLabel
+                        control={
+                            <PrimarySwitch
+                                checked={showCardForm}
+                                onChange={handleToggleShowCardForm}
+                                disabled={isLoading}
+                                name="checkbox-show-card-form" />
+                        }
+                        label="Use new card" />
+                    {
+                        showCardForm && (
+                            <GenericCardForm
+                                cardholderName={cardholderName}
+                                postalCode={postalCode}
+                                isDisabled={isLoading}
+                                setCardholderName={setCardholderName}
+                                setPostalCode={setPostalCode} />
+                        )
+                    }
                     <PrimaryButton
                         type='submit'
                         disabled={isLoading}>
                         Pay
                     </PrimaryButton>
+                    {
+                        isLoading && <LoadingSpinner />
+                    }
+                    <Snackbar open={!!errorMessage} autoHideDuration={6000} onClose={() => setErrorMessage(null)}>
+                        <Alert severity="error">{errorMessage}</Alert>
+                    </Snackbar>
                 </Form>
             );
         }
