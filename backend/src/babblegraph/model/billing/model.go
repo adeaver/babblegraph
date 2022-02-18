@@ -42,9 +42,10 @@ type PremiumNewsletterSubscriptionID string
 type PremiumNewsletterSubscription struct {
 	userID *users.UserID
 
-	PaymentState          PaymentState `json:"payment_state"`
-	CurrentPeriodEnd      time.Time    `json:"current_period_end"`
-	StripePaymentIntentID *string      `json:"stripe_payment_intent_id,omitempty"`
+	ID                    *PremiumNewsletterSubscriptionID `json:"id,omitempty"`
+	PaymentState          PaymentState                     `json:"payment_state"`
+	CurrentPeriodEnd      time.Time                        `json:"current_period_end"`
+	StripePaymentIntentID *string                          `json:"stripe_payment_intent_id,omitempty"`
 }
 
 func (p *PremiumNewsletterSubscription) GetUserID() (*users.UserID, error) {

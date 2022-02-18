@@ -60,6 +60,7 @@ func convertStripeSubscriptionToPremiumNewsletterSubscription(tx *sqlx.Tx, strip
 			return nil, err
 		}
 		premiumNewsletterSubscription.userID = billingInformation.UserID
+		premiumNewsletterSubscription.ID = &dbNewsletterSubscription.ID
 	}
 	switch stripeSubscription.Status {
 	case stripe.SubscriptionStatusTrialing:

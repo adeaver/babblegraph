@@ -31,6 +31,7 @@ export enum PaymentState {
 }
 
 export type PremiumNewsletterSubscription = {
+    id: string | undefined;
     paymentState: PaymentState;
     stripePaymentIntentId: string | undefined;
     currentPeriodEnd: Date;
@@ -51,6 +52,66 @@ export function getOrCreatePremiumNewsletterSubscription(
 ) {
     makePostRequestWithStandardEncoding<GetOrCreatePremiumNewsletterSubscriptionRequest, GetOrCreatePremiumNewsletterSubscriptionResponse>(
         '/api/billing/get_or_create_premium_newsletter_subscription_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}
+
+export enum PremiumNewsletterSubscriptionUpdateType {
+    TransitionToActive = 'transition-to-active',
+}
+
+export type PreparePremiumNewsletterSubscriptionSyncRequest = {
+    id: string;
+    updateType: PremiumNewsletterSubscriptionUpdateType;
+}
+
+export type PreparePremiumNewsletterSubscriptionSyncResponse = {
+    success: boolean;
+}
+
+export function preparePremiumNewsletterSubscriptionSync(
+    req: PreparePremiumNewsletterSubscriptionSyncRequest,
+    onSuccess: (resp: PreparePremiumNewsletterSubscriptionSyncResponse) => void,
+    onError: (err: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<PreparePremiumNewsletterSubscriptionSyncRequest, PreparePremiumNewsletterSubscriptionSyncResponse>(
+        '/api/billing/prepare_premium_newsletter_subscription_sync_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}
+
+export enum CardType {
+    Amex = 'amex',
+    Visa = 'visa',
+    Mastercard = 'mc',
+    Discover = 'discover',
+    Other = 'other',
+}
+
+export type PaymentMethod = {
+    externalId: string;
+    displayMask: string;
+    cardExpiration: string;
+    cardType: CardType;
+}
+
+export type GetPaymentMethodsForUserRequest = {}
+
+export type GetPaymentMethodsForUserResponse = {
+    paymentMethods: Array<PaymentMethod>;
+}
+
+export function getPaymentMethodsForUser(
+    req: GetPaymentMethodsForUserRequest,
+    onSuccess: (resp: GetPaymentMethodsForUserResponse) => void,
+    onError: (err: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<GetPaymentMethodsForUserRequest, GetPaymentMethodsForUserResponse>(
+        '/api/billing/get_payment_methods_for_user_1',
         req,
         onSuccess,
         onError,

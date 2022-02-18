@@ -66,6 +66,8 @@ const ResolveSetupIntentForm = asBaseComponent<StripeBeginPaymentMethodSetupResp
                     } else {
                         setErrorMessage("There was an error setting up your card");
                     }
+                }).catch((err: Error) => {
+                    setErrorMessage("There was an error setting up your card");
                 });
             }
 

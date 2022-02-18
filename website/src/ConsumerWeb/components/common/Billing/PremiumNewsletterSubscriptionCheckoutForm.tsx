@@ -37,6 +37,7 @@ const PremiumNewsletterSubscriptionCardForm = (props: PremiumNewsletterSubscript
             if (!!props.premiumNewsletterSusbcription.stripePaymentIntentId) {
                 return (
                     <ResolvePaymentIntentForm
+                            premiumNewsletterSubscriptionID={props.premiumNewsletterSusbcription.id}
                             stripePaymentIntentClientSecret={props.premiumNewsletterSusbcription.stripePaymentIntentId}
                             toggleSuccessMessage={setShouldShowSuccessPage} />
                 );
