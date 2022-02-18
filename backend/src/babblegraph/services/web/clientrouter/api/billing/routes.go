@@ -18,12 +18,17 @@ var Routes = router.RouteGroup{
 		{
 			Path: "get_or_create_billing_information_1",
 			Handler: routermiddleware.WithRequestBodyLogger(
-				routermiddleware.MaybeWithAuthentication(getOrCreateBillingInformation),
+				routermiddleware.WithAuthentication(getOrCreateBillingInformation),
 			),
 		}, {
 			Path: "get_or_create_premium_newsletter_subscription_1",
 			Handler: routermiddleware.WithRequestBodyLogger(
-				routermiddleware.MaybeWithAuthentication(getOrCreatePremiumNewsletterSubscription),
+				routermiddleware.WithAuthentication(getOrCreatePremiumNewsletterSubscription),
+			),
+		}, {
+			Path: "stripe_begin_payment_method_setup_1",
+			Handler: routermiddleware.WithNoBodyRequestLogger(
+				routermiddleware.WithAuthentication(stripeBeginPaymentMethodSetup),
 			),
 		},
 	},
@@ -37,11 +42,7 @@ type getOrCreateBillingInformationResponse struct {
 	StripeCustomerID string `json:"stripe_customer_id,omitempty"`
 }
 
-func getOrCreateBillingInformation(userAuth *routermiddleware.UserAuthentication, r *router.Request) (interface{}, error) {
-	if userAuth == nil {
-		r.RespondWithStatus(http.StatusForbidden)
-		return nil, nil
-	}
+func getOrCreateBillingInformation(userAuth routermiddleware.UserAuthentication, r *router.Request) (interface{}, error) {
 	var req getOrCreateBillingInformationRequest
 	if err := r.GetJSONBody(&req); err != nil {
 		return nil, err
@@ -72,11 +73,7 @@ type getOrCreatePremiumNewsletterSubscriptionResponse struct {
 	PremiumNewsletterSubscription billing.PremiumNewsletterSubscription `json:"premium_newsletter_subscription"`
 }
 
-func getOrCreatePremiumNewsletterSubscription(userAuth *routermiddleware.UserAuthentication, r *router.Request) (interface{}, error) {
-	if userAuth == nil {
-		r.RespondWithStatus(http.StatusForbidden)
-		return nil, nil
-	}
+func getOrCreatePremiumNewsletterSubscription(userAuth routermiddleware.UserAuthentication, r *router.Request) (interface{}, error) {
 	var req getOrCreatePremiumNewsletterSubscriptionRequest
 	if err := r.GetJSONBody(&req); err != nil {
 		return nil, err

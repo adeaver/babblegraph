@@ -69,9 +69,21 @@ func MaybeWithAuthentication(handler MaybeWithAuthenticationHandler) router.Requ
 	}
 }
 
-type WithAuthenticationHandler func(userID users.UserID, r *router.Request) (interface{}, error)
+type WithAuthenticationHandler func(auth UserAuthentication, r *router.Request) (interface{}, error)
 
-func WithRequiredSubscription(validSubscriptionLevels []useraccounts.SubscriptionLevel, handler WithAuthenticationHandler) router.RequestHandler {
+func WithAuthentication(handler WithAuthenticationHandler) router.RequestHandler {
+	return MaybeWithAuthentication(func(auth *UserAuthentication, r *router.Request) (interface{}, error) {
+		if auth == nil {
+			r.RespondWithStatus(http.StatusForbidden)
+			return nil, nil
+		}
+		return handler(*auth, r)
+	})
+}
+
+type WithRequiredSubscriptionHandler func(userID users.UserID, r *router.Request) (interface{}, error)
+
+func WithRequiredSubscription(validSubscriptionLevels []useraccounts.SubscriptionLevel, handler WithRequiredSubscriptionHandler) router.RequestHandler {
 	return MaybeWithAuthentication(func(auth *UserAuthentication, r *router.Request) (interface{}, error) {
 		switch {
 		case auth == nil,

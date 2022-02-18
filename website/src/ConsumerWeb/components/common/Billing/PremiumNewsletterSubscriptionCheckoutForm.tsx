@@ -1,6 +1,9 @@
 import React from 'react';
 
-import Grid from '@material-ui/core/Grid';
+import {
+    asBaseComponent,
+    BaseComponentProps,
+} from 'common/base/BaseComponent';
 
 import {
     PaymentState,
@@ -8,6 +11,7 @@ import {
 } from 'ConsumerWeb/api/billing/billing';
 
 import ResolvePaymentIntentForm from './stripe/ResolvePaymentIntentForm';
+import ResolveSetupIntentForm from './stripe/ResolveSetupIntentForm';
 
 type PremiumNewsletterSubscriptionCardFormProps = {
     premiumNewsletterSusbcription: PremiumNewsletterSubscription;
@@ -19,15 +23,10 @@ const PremiumNewsletterSubscriptionCardForm = (props: PremiumNewsletterSubscript
         case PaymentState.CreatedUnpaid:
             if (!!props.premiumNewsletterSusbcription.stripePaymentIntentId) {
                 return (
-                    <Grid container>
-                        <Grid item xs={false} md={3}>
-                            &nbsp;
-                        </Grid>
-                        <Grid item xs={12} md={6}>
-                            <ResolvePaymentIntentForm
-                                stripePaymentIntentClientSecret={props.premiumNewsletterSusbcription.stripePaymentIntentId} />
-                        </Grid>
-                    </Grid>
+                    <div>
+                        <ResolvePaymentIntentForm
+                            stripePaymentIntentClientSecret={props.premiumNewsletterSusbcription.stripePaymentIntentId} />
+                    </div>
                 )
             }
             throw new Error("Payment intent ID is not set")
@@ -36,9 +35,12 @@ const PremiumNewsletterSubscriptionCardForm = (props: PremiumNewsletterSubscript
         case PaymentState.Active:
         case PaymentState.Errored:
             return (
-                <p>This will show a form to add a payment method</p>
+                <div>
+                    <ResolveSetupIntentForm />
+                </div>
             );
         case PaymentState.Terminated:
+            // TODO: add redirect to premium information page
             return (
                 <p>Your subscription has already ended.</p>
             );
