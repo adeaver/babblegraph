@@ -13,7 +13,7 @@ import Form from 'common/components/Form/Form';
 import { PrimaryButton } from 'common/components/Button/Button';
 import { PrimarySwitch } from 'common/components/Switch/Switch';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
-import PaymentMethodDisplay from 'ConsumerWeb/components/common/billing/PaymentMethodDisplay';
+import PaymentMethodDisplay from 'ConsumerWeb/components/common/Billing/PaymentMethodDisplay';
 import Alert from 'common/components/Alert/Alert';
 import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
 

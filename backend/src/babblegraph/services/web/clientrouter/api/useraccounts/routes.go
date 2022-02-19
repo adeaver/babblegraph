@@ -57,8 +57,7 @@ type userProfileInformation struct {
 type userProfileInformationError string
 
 const (
-	userProfileInformationErrorInvalidKey     userProfileInformationError = "invalid-key"
-	userProfileInformationErrorInvalidAccount userProfileInformationError = "invalid-token" // This is deliberately ambiguous since it's exposed to the client
+	userProfileInformationErrorInvalidKey userProfileInformationError = "invalid-key"
 )
 
 func (u userProfileInformationError) Ptr() *userProfileInformationError {
@@ -112,7 +111,7 @@ func getUserProfileInformation(userAuth *routermiddleware.UserAuthentication, r 
 				},
 			}, nil
 		}
-		r.Infof("User ID does not match user that is logged in")
+		r.Infof("User ID does not match user that is logged in, removing cookie...")
 		r.RespondWithCookie(&http.Cookie{
 			Name:     routermiddleware.AuthTokenCookieName,
 			Value:    "",

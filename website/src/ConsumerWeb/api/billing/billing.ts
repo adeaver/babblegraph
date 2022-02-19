@@ -138,3 +138,45 @@ export function getPaymentMethodsForUser(
         onError,
     );
 }
+
+export type MarkPaymentMethodAsDefaultRequest = {
+    paymentMethodId: string;
+}
+
+export type MarkPaymentMethodAsDefaultResponse = {
+    success: boolean;
+}
+
+export function markPaymentMethodAsDefault(
+    req: MarkPaymentMethodAsDefaultRequest,
+    onSuccess: (resp: MarkPaymentMethodAsDefaultResponse) => void,
+    onError: (err: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<MarkPaymentMethodAsDefaultRequest, MarkPaymentMethodAsDefaultResponse>(
+        '/api/billing/mark_payment_method_as_default_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}
+
+export type DeletePaymentMethodForUserRequest = {
+    paymentMethodId: string;
+}
+
+export type DeletePaymentMethodForUserResponse = {
+    success: boolean;
+}
+
+export function deletePaymentMethodForUser(
+    req: DeletePaymentMethodForUserRequest,
+    onSuccess: (resp: DeletePaymentMethodForUserResponse) => void,
+    onError: (err: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<DeletePaymentMethodForUserRequest, DeletePaymentMethodForUserResponse>(
+        '/api/billing/delete_payment_method_for_user_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}

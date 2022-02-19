@@ -1,5 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { RouteComponentProps } from 'react-router-dom';
+
+import { makeStyles } from '@material-ui/core/styles';
+import Grid from '@material-ui/core/Grid';
+import Snackbar from '@material-ui/core/Snackbar';
 
 import CenteredComponent from 'common/components/CenteredComponent/CenteredComponent';
 import DisplayCard from 'common/components/DisplayCard/DisplayCard';
@@ -8,6 +12,9 @@ import { Heading3 } from 'common/typography/Heading';
 import { Alignment, TypographyColor } from 'common/typography/common';
 import Link, { LinkTarget } from 'common/components/Link/Link';
 import Paragraph, { Size } from 'common/typography/Paragraph';
+import PaymentMethodDisplay from 'ConsumerWeb/components/common/Billing/PaymentMethodDisplay';
+import { PrimaryButton, WarningButton } from 'common/components/Button/Button';
+import Alert from 'common/components/Alert/Alert';
 
 import {
     asBaseComponent,
@@ -24,11 +31,32 @@ import {
 import PremiumNewsletterSubscriptionCardForm from 'ConsumerWeb/components/common/Billing/PremiumNewsletterSubscriptionCheckoutForm';
 
 import {
+    PaymentMethod,
     PremiumNewsletterSubscription,
     PaymentState,
+
     LookupActivePremiumNewsletterSubscriptionResponse,
     lookupActivePremiumNewsletterSubscription,
+
+    GetPaymentMethodsForUserResponse,
+    getPaymentMethodsForUser,
+
+    DeletePaymentMethodForUserResponse,
+    deletePaymentMethodForUser,
+
+    MarkPaymentMethodAsDefaultResponse,
+    markPaymentMethodAsDefault,
 } from 'ConsumerWeb/api/billing/billing';
+
+const styleClasses = makeStyles({
+    paymentMethodDisplayContainer: {
+        padding: '5px',
+    },
+    paymentMethodButton: {
+        width: '100%',
+        margin: '10px 0',
+    },
+});
 
 type Params = {
     token: string;
@@ -54,6 +82,7 @@ const PremiumNewsletterSubscriptionManagementPage = withUserProfileInformation<P
                         backArrowDestination={`/manage/${token}`} />
                     <PremiumSubscriptionManagementComponent
                         subscriptionManagementToken={token} />
+                    <PaymentMethodManagementComponent />
                 </DisplayCard>
             </CenteredComponent>
         )
@@ -164,6 +193,101 @@ const PremiumSubscriptionManagementComponent = asBaseComponent<LookupActivePremi
         onSuccess: (resp: LookupActivePremiumNewsletterSubscriptionResponse) => void,
         onError: (err: Error) => void,
     ) => lookupActivePremiumNewsletterSubscription({subscriptionManagementToken: ownProps.subscriptionManagementToken}, onSuccess, onError),
+    false
+);
+
+type PaymentMethodManagementComponentOwnProps = {}
+
+const PaymentMethodManagementComponent = asBaseComponent<GetPaymentMethodsForUserResponse, PaymentMethodManagementComponentOwnProps>(
+    (props: GetPaymentMethodsForUserResponse & PaymentMethodManagementComponentOwnProps & BaseComponentProps) => {
+        const [ selectedPaymentMethodID, setSelectedPaymentMethodID ] = useState<string>(null);
+
+        const [ wasSuccessful, setWasSuccessful ] = useState<boolean>(false);
+
+        const handleMarkPaymentMethodAsDefault = () => {
+            props.setIsLoading(true);
+            markPaymentMethodAsDefault({
+                paymentMethodId: selectedPaymentMethodID,
+            },
+            (resp: MarkPaymentMethodAsDefaultResponse) => {
+                props.setIsLoading(false);
+                setWasSuccessful(true);
+            },
+            (err: Error) => {
+                props.setIsLoading(false);
+                props.setError(err);
+            });
+        }
+
+        const handleDeletePaymentMethod = () => {
+            props.setIsLoading(true);
+            deletePaymentMethodForUser({
+                paymentMethodId: selectedPaymentMethodID,
+            },
+            (resp: DeletePaymentMethodForUserResponse) => {
+                props.setIsLoading(false);
+                setWasSuccessful(true);
+            },
+            (err: Error) => {
+                props.setIsLoading(false);
+                props.setError(err);
+            });
+        }
+
+        const classes = styleClasses();
+        return (
+            <div>
+                <Heading3 color={TypographyColor.Primary}>
+                    Existing Payment Methods
+                </Heading3>
+                {
+                    !props.paymentMethods ? (
+                        <Paragraph>
+                            You currently have no payment methods
+                        </Paragraph>
+                    ) : (
+                        <div>
+                            <Grid container>
+                            {
+                                props.paymentMethods.map((paymentMethod: PaymentMethod) => (
+                                    <Grid item xs={12} md={6}
+                                        className={classes.paymentMethodDisplayContainer}
+                                        key={paymentMethod.externalId}>
+                                        <PaymentMethodDisplay onClick={setSelectedPaymentMethodID} paymentMethod={paymentMethod} isHighlighted={paymentMethod.externalId === selectedPaymentMethodID} />
+                                    </Grid>
+                                ))
+                            }
+                            </Grid>
+                            <CenteredComponent>
+                                <PrimaryButton
+                                    onClick={handleMarkPaymentMethodAsDefault}
+                                    className={classes.paymentMethodButton}
+                                    disabled={!selectedPaymentMethodID}>
+                                    Make Default Payment Method
+                                </PrimaryButton>
+                            </CenteredComponent>
+                            <CenteredComponent>
+                                <WarningButton
+                                    onClick={handleDeletePaymentMethod}
+                                    className={classes.paymentMethodButton}
+                                    disabled={!selectedPaymentMethodID}>
+                                    Delete Payment Method
+                                </WarningButton>
+                            </CenteredComponent>
+                            <Snackbar open={wasSuccessful} autoHideDuration={6000} onClose={() => setWasSuccessful(false)}>
+                                <Alert severity="success">Your request was successful! Please allow a few minutes for our systems to update.</Alert>
+                            </Snackbar>
+                        </div>
+                    )
+                }
+            </div>
+        );
+    },
+    (
+        ownProps: PaymentMethodManagementComponentOwnProps,
+        onSuccess: (resp: GetPaymentMethodsForUserResponse) => void,
+        onError: (err: Error) => void,
+    ) => getPaymentMethodsForUser({}, onSuccess, onError),
     false
 );
 

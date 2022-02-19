@@ -8,6 +8,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/stripe/stripe-go/v72"
+	"github.com/stripe/stripe-go/v72/customer"
 	"github.com/stripe/stripe-go/v72/paymentmethod"
 )
 
@@ -32,8 +33,49 @@ func GetPaymentMethodsForUser(tx *sqlx.Tx, userID users.UserID) ([]PaymentMethod
 	}
 }
 
+func MarkPaymentMethodAsDefaultForUser(tx *sqlx.Tx, userID users.UserID, externalPaymentMethodID string) error {
+	billingInformation, err := lookupBillingInformationForUserID(tx, userID)
+	switch {
+	case err != nil:
+		return err
+	case billingInformation == nil:
+		return fmt.Errorf("Expected billing information for user %s, but got none", userID)
+	default:
+		externalID, err := getExternalIDMapping(tx, billingInformation.ExternalIDMappingID)
+		if err != nil {
+			return err
+		}
+		switch externalID.IDType {
+		case externalIDTypeStripe:
+			return markPaymentMethodAsDefaultForUser(externalID.ExternalID, externalPaymentMethodID)
+		default:
+			return fmt.Errorf("Unrecognized external ID type %s", externalID.IDType)
+		}
+	}
+}
+
+func DeletePaymentMethodForUser(tx *sqlx.Tx, userID users.UserID, externalPaymentMethodID string) error {
+	billingInformation, err := lookupBillingInformationForUserID(tx, userID)
+	switch {
+	case err != nil:
+		return err
+	case billingInformation == nil:
+		return fmt.Errorf("Expected billing information for user %s, but got none", userID)
+	default:
+		externalID, err := getExternalIDMapping(tx, billingInformation.ExternalIDMappingID)
+		if err != nil {
+			return err
+		}
+		switch externalID.IDType {
+		case externalIDTypeStripe:
+			return deletePaymentMethod(externalID.ExternalID, externalPaymentMethodID)
+		default:
+			return fmt.Errorf("Unrecognized external ID type %s", externalID.IDType)
+		}
+	}
+}
+
 // TODO: delete payment method
-// TODO: update default payment method
 // --> also needs a getDefaultPaymentMethodID for user, which should actually get Customer
 
 func getStripePaymentMethodsForUser(tx *sqlx.Tx, stripeCustomerID string) ([]PaymentMethod, error) {
@@ -51,6 +93,26 @@ func getStripePaymentMethodsForUser(tx *sqlx.Tx, stripeCustomerID string) ([]Pay
 		out = append(out, *convertedPaymentMethod)
 	}
 	return out, nil
+}
+
+func markPaymentMethodAsDefaultForUser(stripeCustomerID, paymentMethodID string) error {
+	stripe.Key = env.MustEnvironmentVariable("STRIPE_KEY")
+	if _, err := customer.Update(stripeCustomerID, &stripe.CustomerParams{
+		InvoiceSettings: &stripe.CustomerInvoiceSettingsParams{
+			DefaultPaymentMethod: ptr.String(paymentMethodID),
+		},
+	}); err != nil {
+		return err
+	}
+	return nil
+}
+
+func deletePaymentMethod(stripeCustomerID, paymentMethodID string) error {
+	stripe.Key = env.MustEnvironmentVariable("STRIPE_KEY")
+	if _, err := paymentmethod.Detach(paymentMethodID, nil); err != nil {
+		return err
+	}
+	return nil
 }
 
 func convertStripePaymentMethod(stripePaymentMethod *stripe.PaymentMethod) (*PaymentMethod, error) {

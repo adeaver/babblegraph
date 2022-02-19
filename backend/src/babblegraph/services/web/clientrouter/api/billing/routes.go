@@ -41,6 +41,16 @@ var Routes = router.RouteGroup{
 				routermiddleware.WithAuthentication(getPaymentMethodsForUser),
 			),
 		}, {
+			Path: "mark_payment_method_as_default_1",
+			Handler: routermiddleware.WithRequestBodyLogger(
+				routermiddleware.WithAuthentication(markPaymentMethodAsDefault),
+			),
+		}, {
+			Path: "delete_payment_method_for_user_1",
+			Handler: routermiddleware.WithRequestBodyLogger(
+				routermiddleware.WithAuthentication(deletePaymentMethodForUser),
+			),
+		}, {
 			Path: "stripe_begin_payment_method_setup_1",
 			Handler: routermiddleware.WithNoBodyRequestLogger(
 				routermiddleware.WithAuthentication(stripeBeginPaymentMethodSetup),
@@ -202,5 +212,51 @@ func getPaymentMethodsForUser(userAuth routermiddleware.UserAuthentication, r *r
 	}
 	return getPaymentMethodsForUserResponse{
 		PaymentMethods: paymentMethods,
+	}, nil
+}
+
+type markPaymentMethodAsDefaultRequest struct {
+	PaymentMethodID string `json:"payment_method_id"`
+}
+
+type markPaymentMethodAsDefaultResponse struct {
+	Success bool `json:"success"`
+}
+
+func markPaymentMethodAsDefault(userAuth routermiddleware.UserAuthentication, r *router.Request) (interface{}, error) {
+	var req markPaymentMethodAsDefaultRequest
+	if err := r.GetJSONBody(&req); err != nil {
+		return nil, err
+	}
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		return billing.MarkPaymentMethodAsDefaultForUser(tx, userAuth.UserID, req.PaymentMethodID)
+	}); err != nil {
+		return nil, err
+	}
+	return markPaymentMethodAsDefaultResponse{
+		Success: true,
+	}, nil
+}
+
+type deletePaymentMethodForUserRequest struct {
+	PaymentMethodID string `json:"payment_method_id"`
+}
+
+type deletePaymentMethodForUserResponse struct {
+	Success bool `json:"success"`
+}
+
+func deletePaymentMethodForUser(userAuth routermiddleware.UserAuthentication, r *router.Request) (interface{}, error) {
+	var req deletePaymentMethodForUserRequest
+	if err := r.GetJSONBody(&req); err != nil {
+		return nil, err
+	}
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		return billing.DeletePaymentMethodForUser(tx, userAuth.UserID, req.PaymentMethodID)
+	}); err != nil {
+		return nil, err
+	}
+	return deletePaymentMethodForUserResponse{
+		Success: true,
 	}, nil
 }
