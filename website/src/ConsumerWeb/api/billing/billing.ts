@@ -58,6 +58,27 @@ export function getOrCreatePremiumNewsletterSubscription(
     );
 }
 
+export type LookupActivePremiumNewsletterSubscriptionRequest = {
+    subscriptionManagementToken: string;
+}
+
+export type LookupActivePremiumNewsletterSubscriptionResponse = {
+    premiumNewsletterSubscription: PremiumNewsletterSubscription | undefined;
+}
+
+export function lookupActivePremiumNewsletterSubscription(
+    req: LookupActivePremiumNewsletterSubscriptionRequest,
+    onSuccess: (resp: LookupActivePremiumNewsletterSubscriptionResponse) => void,
+    onError: (err: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<LookupActivePremiumNewsletterSubscriptionRequest, LookupActivePremiumNewsletterSubscriptionResponse>(
+        '/api/billing/lookup_active_premium_newsletter_subscription_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}
+
 export enum PremiumNewsletterSubscriptionUpdateType {
     TransitionToActive = 'transition-to-active',
 }

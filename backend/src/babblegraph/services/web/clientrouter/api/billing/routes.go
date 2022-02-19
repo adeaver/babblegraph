@@ -26,6 +26,11 @@ var Routes = router.RouteGroup{
 				routermiddleware.WithAuthentication(getOrCreatePremiumNewsletterSubscription),
 			),
 		}, {
+			Path: "lookup_active_premium_newsletter_subscription_1",
+			Handler: routermiddleware.WithRequestBodyLogger(
+				routermiddleware.WithAuthentication(lookupActivePremiumNewsletterSubscription),
+			),
+		}, {
 			Path: "prepare_premium_newsletter_subscription_sync_1",
 			Handler: routermiddleware.WithRequestBodyLogger(
 				routermiddleware.WithAuthentication(preparePremiumNewsletterSubscriptionSync),
@@ -116,6 +121,37 @@ func getOrCreatePremiumNewsletterSubscription(userAuth routermiddleware.UserAuth
 	}
 	return getOrCreatePremiumNewsletterSubscriptionResponse{
 		PremiumNewsletterSubscription: *premiumNewsletterSubscription,
+	}, nil
+}
+
+type lookupActivePremiumNewsletterSubscriptionRequest struct {
+	SubscriptionManagementToken string `json:"subscription_management_token"`
+}
+
+type lookupActivePremiumNewsletterSubscriptionResponse struct {
+	PremiumNewsletterSubscription *billing.PremiumNewsletterSubscription `json:"premium_newsletter_subscription,omitempty"`
+}
+
+func lookupActivePremiumNewsletterSubscription(userAuth routermiddleware.UserAuthentication, r *router.Request) (interface{}, error) {
+	var req lookupActivePremiumNewsletterSubscriptionRequest
+	if err := r.GetJSONBody(&req); err != nil {
+		return nil, err
+	}
+	userID, err := routetoken.ValidateTokenAndGetUserID(req.SubscriptionManagementToken, routes.SubscriptionManagementRouteEncryptionKey)
+	if err != nil || *userID != userAuth.UserID {
+		r.RespondWithStatus(http.StatusForbidden)
+		return nil, nil
+	}
+	var premiumNewsletterSubscription *billing.PremiumNewsletterSubscription
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		var err error
+		premiumNewsletterSubscription, err = billing.LookupPremiumNewsletterSubscriptionForUser(r, tx, *userID)
+		return err
+	}); err != nil {
+		return nil, err
+	}
+	return lookupActivePremiumNewsletterSubscriptionResponse{
+		PremiumNewsletterSubscription: premiumNewsletterSubscription,
 	}, nil
 }
 
