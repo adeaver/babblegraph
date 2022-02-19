@@ -34,7 +34,7 @@ export type PremiumNewsletterSubscription = {
     id: string | undefined;
     paymentState: PaymentState;
     stripePaymentIntentId: string | undefined;
-    currentPeriodEnd: Date;
+    currentPeriodEnd: string;
 }
 
 export type GetOrCreatePremiumNewsletterSubscriptionRequest = {
