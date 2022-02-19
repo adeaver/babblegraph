@@ -83,6 +83,7 @@ func handleSyncBilling(c async.Context) {
 			continue
 		}
 		if err := database.WithTx(func(tx *sqlx.Tx) error {
+			// TODO: Get the subscription and check if the subscription is still valid
 			if err := useraccounts.ExpireSubscriptionForUser(tx, userID); err != nil {
 				return err
 			}

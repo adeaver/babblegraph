@@ -108,12 +108,12 @@ func getOrCreatePremiumNewsletterSubscription(userAuth routermiddleware.UserAuth
 			return err
 		}
 		premiumNewsletterSubscription, err = billing.CreatePremiumNewsletterSubscriptionForUserWithID(r, tx, *userID, premiumNewsletterSubscriptionID)
+		// THIS IS A HACK
+		premiumNewsletterSubscription.ID = &premiumNewsletterSubscriptionID
 		return err
 	}); err != nil {
 		return nil, err
 	}
-	// THIS IS A HACK
-	premiumNewsletterSubscription.ID = &premiumNewsletterSubscriptionID
 	return getOrCreatePremiumNewsletterSubscriptionResponse{
 		PremiumNewsletterSubscription: *premiumNewsletterSubscription,
 	}, nil

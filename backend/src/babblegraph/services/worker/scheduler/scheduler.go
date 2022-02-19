@@ -4,6 +4,7 @@ import (
 	"babblegraph/services/worker/linkprocessing"
 	"babblegraph/util/async"
 	"babblegraph/util/env"
+	"fmt"
 	"time"
 
 	cron "github.com/robfig/cron/v3"
@@ -15,8 +16,10 @@ func StartScheduler(linkProcessor *linkprocessing.LinkProcessor, errs chan error
 		return err
 	}
 	c := cron.New(cron.WithLocation(usEastern))
-	switch env.GetEnvironmentVariableOrDefault("ENV", "prod") {
-	case "prod":
+	environmentName := env.MustEnvironmentName()
+	switch environmentName {
+	case env.EnvironmentProd,
+		env.EnvironmentStage:
 		c.AddFunc("30 0 * * *", async.WithContext(errs, "archive-forgot-passwords", handleArchiveForgotPasswordAttempts).Func())
 		c.AddFunc("30 2 * * *", async.WithContext(errs, "refetch", makeRefetchSeedDomainJob(linkProcessor)).Func())
 		c.AddFunc("30 3 * * *", async.WithContext(errs, "admin-2fa-cleanup", handleCleanUpAdminTwoFactorCodesAndAccessTokens).Func())
@@ -27,8 +30,8 @@ func StartScheduler(linkProcessor *linkprocessing.LinkProcessor, errs chan error
 		c.AddFunc("*/5 * * * *", async.WithContext(errs, "account-notifications", handlePendingUserAccountNotificationRequests).Func())
 		c.AddFunc("*/1 * * * *", async.WithContext(errs, "send-2fa-codes", handleSendAdminTwoFactorAuthenticationCode).Func())
 		c.AddFunc("*/10 * * * *", async.WithContext(errs, "sync-billing", handleSyncBilling).Func())
-	case "local-test-emails",
-		"local":
+	case env.EnvironmentLocal,
+		env.EnvironmentLocalTestEmail:
 		c.AddFunc("*/1 * * * *", async.WithContext(errs, "cleanup-newsletters", handleCleanupOldNewsletter).Func())
 		c.AddFunc("*/1 * * * *", async.WithContext(errs, "admin-2fa-cleanup", handleCleanUpAdminTwoFactorCodesAndAccessTokens).Func())
 		c.AddFunc("*/1 * * * *", async.WithContext(errs, "account-notifications", handlePendingUserAccountNotificationRequests).Func())
@@ -39,9 +42,14 @@ func StartScheduler(linkProcessor *linkprocessing.LinkProcessor, errs chan error
 		c.AddFunc("*/1 * * * *", async.WithContext(errs, "send-2fa-codes", handleSendAdminTwoFactorAuthenticationCode).Func())
 		c.AddFunc("*/1 * * * *", async.WithContext(errs, "sync-billing", handleSyncBilling).Func())
 		async.WithContext(errs, "user-feedback", sendUserFeedbackEmails).Func()()
-	case "local-no-email":
+	case env.EnvironmentLocalNoEmail:
+		async.WithContext(errs, "sync-billing", handleSyncBilling).Func()()
 		async.WithContext(errs, "refetch", makeRefetchSeedDomainJob(linkProcessor)).Func()()
 		async.WithContext(errs, "cleanup-newsletters", handleCleanupOldNewsletter).Func()()
+	case env.EnvironmentTest:
+		// no-op
+	default:
+		panic(fmt.Sprintf("Unrecognized environment %s", environmentName))
 	}
 	c.Start()
 	return nil
