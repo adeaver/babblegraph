@@ -88,54 +88,58 @@ func getUserProfileInformation(userAuth *routermiddleware.UserAuthentication, r 
 			nextTokens = append(nextTokens, *nextToken)
 		}
 	}
-	if userAuth == nil {
-		var doesUserHaveAccount bool
-		var trialEligibilityDays *int64
-		if err := database.WithTx(func(tx *sqlx.Tx) error {
-			var err error
-			doesUserHaveAccount, err = useraccounts.DoesUserAlreadyHaveAccount(tx, *userID)
-			trialEligibilityDays, err = billing.GetPremiumNewsletterSubscriptionTrialEligibilityForUser(tx, *userID)
-			return err
-		}); err != nil {
-			return nil, err
+	if userAuth != nil {
+		if userAuth.UserID == *userID {
+			var subscriptionLevel *useraccounts.SubscriptionLevel
+			var trialEligibilityDays *int64
+			if err := database.WithTx(func(tx *sqlx.Tx) error {
+				var err error
+				subscriptionLevel, err = useraccounts.LookupSubscriptionLevelForUser(tx, *userID)
+				if subscriptionLevel == nil {
+					trialEligibilityDays, err = billing.GetPremiumNewsletterSubscriptionTrialEligibilityForUser(tx, *userID)
+				}
+				return err
+			}); err != nil {
+				return nil, err
+			}
+			return getUserProfileInformationResponse{
+				UserProfile: &userProfileInformation{
+					HasAccount:           true,
+					IsLoggedIn:           true,
+					SubscriptionLevel:    subscriptionLevel,
+					TrialEligibilityDays: trialEligibilityDays,
+					NextTokens:           nextTokens,
+				},
+			}, nil
 		}
-		userProfile := &userProfileInformation{
-			HasAccount:           doesUserHaveAccount,
-			TrialEligibilityDays: trialEligibilityDays,
-		}
-		if !doesUserHaveAccount {
-			userProfile.NextTokens = nextTokens
-		}
-		return getUserProfileInformationResponse{
-			UserProfile: userProfile,
-		}, nil
+		r.Infof("User ID does not match user that is logged in")
+		r.RespondWithCookie(&http.Cookie{
+			Name:     routermiddleware.AuthTokenCookieName,
+			Value:    "",
+			HttpOnly: true,
+			Path:     "/",
+			Expires:  time.Now().Add(-5 * 60 * time.Second),
+		})
 	}
-	if userAuth.UserID != *userID {
-		// TODO: clear token
-		return getUserProfileInformationResponse{
-			Error: userProfileInformationErrorInvalidAccount.Ptr(),
-		}, nil
-	}
-	var subscriptionLevel *useraccounts.SubscriptionLevel
+	var doesUserHaveAccount bool
 	var trialEligibilityDays *int64
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		var err error
-		subscriptionLevel, err = useraccounts.LookupSubscriptionLevelForUser(tx, *userID)
-		if subscriptionLevel == nil {
-			trialEligibilityDays, err = billing.GetPremiumNewsletterSubscriptionTrialEligibilityForUser(tx, *userID)
-		}
+		doesUserHaveAccount, err = useraccounts.DoesUserAlreadyHaveAccount(tx, *userID)
+		trialEligibilityDays, err = billing.GetPremiumNewsletterSubscriptionTrialEligibilityForUser(tx, *userID)
 		return err
 	}); err != nil {
 		return nil, err
 	}
+	userProfile := &userProfileInformation{
+		HasAccount:           doesUserHaveAccount,
+		TrialEligibilityDays: trialEligibilityDays,
+	}
+	if !doesUserHaveAccount {
+		userProfile.NextTokens = nextTokens
+	}
 	return getUserProfileInformationResponse{
-		UserProfile: &userProfileInformation{
-			HasAccount:           true,
-			IsLoggedIn:           true,
-			SubscriptionLevel:    subscriptionLevel,
-			TrialEligibilityDays: trialEligibilityDays,
-			NextTokens:           nextTokens,
-		},
+		UserProfile: userProfile,
 	}, nil
 }
 

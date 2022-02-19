@@ -107,7 +107,7 @@ type NavigationCardProps = {
 const NavigationCard = (props: NavigationCardProps) => {
     const classes = styleClasses();
     return (
-        <Grid className={classes.navigationCard} item xs={12} md={6} lg={4}>
+        <Grid className={classes.navigationCard} item xs={12} md={6} xl={4}>
             <ActionCard className={classes.navigationCardActionCard} onClick={() => setLocation(props.location)}>
                 <Heading2
                     align={Alignment.Left}
