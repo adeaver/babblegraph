@@ -4,9 +4,11 @@ import {
     CardNumberElement,
 } from "@stripe/react-stripe-js";
 
+import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 import Snackbar from '@material-ui/core/Snackbar';
 
+import CenteredComponent from 'common/components/CenteredComponent/CenteredComponent';
 import Form from 'common/components/Form/Form';
 import { PrimaryButton } from 'common/components/Button/Button';
 import Alert from 'common/components/Alert/Alert';
@@ -29,6 +31,12 @@ type StripeSetupIntentResult = {
     error?: StripeError | null;
     setupIntent?: any; // TODO(fill this in?)
 }
+
+const styleClasses = makeStyles({
+    submitButton: {
+        width: '100%',
+    },
+});
 
 type ResolveSetupIntentFormOwnProps = {
     toggleSuccessMessage: (shouldShowSuccessMessage) => void;
@@ -71,6 +79,7 @@ const ResolveSetupIntentForm = asBaseComponent<StripeBeginPaymentMethodSetupResp
                 });
             }
 
+            const classes = styleClasses();
             return (
                 <Form handleSubmit={handleSubmit}>
                     <GenericCardForm
@@ -79,11 +88,14 @@ const ResolveSetupIntentForm = asBaseComponent<StripeBeginPaymentMethodSetupResp
                         isDisabled={isLoading}
                         setCardholderName={setCardholderName}
                         setPostalCode={setPostalCode} />
-                    <PrimaryButton
-                        type='submit'
-                        disabled={isLoading}>
-                        Add Payment Method
-                    </PrimaryButton>
+                    <CenteredComponent>
+                        <PrimaryButton
+                            className={classes.submitButton}
+                            type='submit'
+                            disabled={isLoading}>
+                            Add Payment Method
+                        </PrimaryButton>
+                    </CenteredComponent>
                     {
                         isLoading && <LoadingSpinner />
                     }

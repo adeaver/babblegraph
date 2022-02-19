@@ -8,6 +8,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 import Snackbar from '@material-ui/core/Snackbar';
 
+import CenteredComponent from 'common/components/CenteredComponent/CenteredComponent';
 import Form from 'common/components/Form/Form';
 import { PrimaryButton } from 'common/components/Button/Button';
 import { PrimarySwitch } from 'common/components/Switch/Switch';
@@ -38,6 +39,9 @@ import {
 const styleClasses = makeStyles({
     paymentMethodDisplayContainer: {
         padding: '5px',
+    },
+    submitButton: {
+        width: '100%',
     },
 });
 
@@ -154,11 +158,14 @@ const ResolvePaymentIntentForm = asBaseComponent<GetPaymentMethodsForUserRespons
                                 setPostalCode={setPostalCode} />
                         )
                     }
-                    <PrimaryButton
-                        type='submit'
-                        disabled={isLoading}>
-                        Pay
-                    </PrimaryButton>
+                    <CenteredComponent>
+                        <PrimaryButton
+                            className={classes.submitButton}
+                            type='submit'
+                            disabled={isLoading}>
+                            Pay
+                        </PrimaryButton>
+                    </CenteredComponent>
                     {
                         isLoading && <LoadingSpinner />
                     }
