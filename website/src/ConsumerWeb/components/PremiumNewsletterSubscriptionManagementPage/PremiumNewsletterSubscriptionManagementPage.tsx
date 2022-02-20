@@ -201,6 +201,7 @@ type PaymentMethodManagementComponentOwnProps = {}
 const PaymentMethodManagementComponent = asBaseComponent<GetPaymentMethodsForUserResponse, PaymentMethodManagementComponentOwnProps>(
     (props: GetPaymentMethodsForUserResponse & PaymentMethodManagementComponentOwnProps & BaseComponentProps) => {
         const [ selectedPaymentMethodID, setSelectedPaymentMethodID ] = useState<string>(null);
+        const [ paymentMethods, setPaymentMethods ] = useState<Array<PaymentMethod>>(props.paymentMethods);
 
         const [ wasSuccessful, setWasSuccessful ] = useState<boolean>(false);
 
@@ -227,6 +228,7 @@ const PaymentMethodManagementComponent = asBaseComponent<GetPaymentMethodsForUse
             (resp: DeletePaymentMethodForUserResponse) => {
                 props.setIsLoading(false);
                 setWasSuccessful(true);
+                setPaymentMethods(paymentMethods.filter((p: PaymentMethod) => p.externalId !== selectedPaymentMethodID));
             },
             (err: Error) => {
                 props.setIsLoading(false);
@@ -241,7 +243,7 @@ const PaymentMethodManagementComponent = asBaseComponent<GetPaymentMethodsForUse
                     Existing Payment Methods
                 </Heading3>
                 {
-                    !props.paymentMethods ? (
+                    (!paymentMethods || !paymentMethods.length) ? (
                         <Paragraph>
                             You currently have no payment methods
                         </Paragraph>
@@ -249,7 +251,7 @@ const PaymentMethodManagementComponent = asBaseComponent<GetPaymentMethodsForUse
                         <div>
                             <Grid container>
                             {
-                                props.paymentMethods.map((paymentMethod: PaymentMethod) => (
+                                paymentMethods.map((paymentMethod: PaymentMethod) => (
                                     <Grid item xs={12} md={6}
                                         className={classes.paymentMethodDisplayContainer}
                                         key={paymentMethod.externalId}>
@@ -274,12 +276,12 @@ const PaymentMethodManagementComponent = asBaseComponent<GetPaymentMethodsForUse
                                     Delete Payment Method
                                 </WarningButton>
                             </CenteredComponent>
-                            <Snackbar open={wasSuccessful} autoHideDuration={6000} onClose={() => setWasSuccessful(false)}>
-                                <Alert severity="success">Your request was successful! Please allow a few minutes for our systems to update.</Alert>
-                            </Snackbar>
                         </div>
                     )
                 }
+                <Snackbar open={wasSuccessful} autoHideDuration={6000} onClose={() => setWasSuccessful(false)}>
+                    <Alert severity="success">Your request was successful! Please allow a few minutes for our systems to update.</Alert>
+                </Snackbar>
             </div>
         );
     },
