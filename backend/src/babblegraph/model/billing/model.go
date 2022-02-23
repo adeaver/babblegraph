@@ -134,6 +134,7 @@ type PaymentMethod struct {
 	DisplayMask    string   `json:"display_mask"`
 	CardExpiration string   `json:"card_expiration"`
 	CardType       CardType `json:"card_type"`
+	IsDefault      bool     `json:"is_default"`
 }
 
 type CardType string

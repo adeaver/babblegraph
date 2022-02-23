@@ -118,6 +118,7 @@ export type PaymentMethod = {
     displayMask: string;
     cardExpiration: string;
     cardType: CardType;
+    isDefault: boolean;
 }
 
 export type GetPaymentMethodsForUserRequest = {}

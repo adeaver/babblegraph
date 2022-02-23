@@ -4,10 +4,11 @@ import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 import CreditCardIcon from '@material-ui/icons/CreditCard';
 
+import Color from 'common/styles/colors';
 import ActionCard from 'common/components/ActionCard/ActionCard';
 import { Alignment, TypographyColor } from 'common/typography/common';
 import { Heading1, Heading2 } from 'common/typography/Heading';
-import Paragraph from 'common/typography/Paragraph';
+import Paragraph, { Size } from 'common/typography/Paragraph';
 
 import {
     CardType,
@@ -21,7 +22,31 @@ type PaymentMethodDisplayProps = {
     onClick: (externalID: string) => void;
 }
 
+const styleClasses = makeStyles({
+    cardIconRoot: (props: CardIconProps) => {
+        const baseProperties = {
+            height: '42px',
+            width: 'auto'
+        };
+        if (!!validCardTypes[props.cardType]) {
+            return {
+                ...baseProperties,
+                backgroundImage: `url("https://static.babblegraph.com/assets/payment/${props.cardType}.png")`,
+                backgroundSize: 'contain',
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'left',
+            };
+        }
+        return baseProperties;
+    },
+    highlightedContainer: {
+        'backgroundColor': Color.Primary,
+    },
+});
+
+
 const PaymentMethodDisplay = (props: PaymentMethodDisplayProps) => {
+    const classes = styleClasses();
     return (
         <ActionCard onClick={() => props.onClick(props.paymentMethod.externalId)}>
             <Grid container>
@@ -41,12 +66,21 @@ const PaymentMethodDisplay = (props: PaymentMethodDisplayProps) => {
                     </Paragraph>
                 </Grid>
                 {
-                    !!props.isHighlighted && (
+                    !!props.paymentMethod.isDefault && (
                         <Grid item xs={12} md={6}>
                             <Paragraph
                                 align={Alignment.Right}
-                                color={props.isHighlighted ? TypographyColor.Primary : TypographyColor.Gray}>
-                                selected
+                                color={TypographyColor.Primary}>
+                                Default
+                            </Paragraph>
+                        </Grid>
+                    )
+                }
+                {
+                    !!props.isHighlighted && (
+                        <Grid className={classes.highlightedContainer} item xs={12}>
+                            <Paragraph color={TypographyColor.White} size={Size.Small}>
+                                Selected
                             </Paragraph>
                         </Grid>
                     )
@@ -55,25 +89,6 @@ const PaymentMethodDisplay = (props: PaymentMethodDisplayProps) => {
         </ActionCard>
     );
 }
-
-const styleClasses = makeStyles({
-    cardIconRoot: (props: CardIconProps) => {
-        const baseProperties = {
-            height: '42px',
-            width: 'auto'
-        };
-        if (!!validCardTypes[props.cardType]) {
-            return {
-                ...baseProperties,
-                backgroundImage: `url("https://static.babblegraph.com/assets/payment/${props.cardType}.png")`,
-                backgroundSize: 'contain',
-                backgroundRepeat: 'no-repeat',
-                backgroundPosition: 'left',
-            };
-        }
-        return baseProperties;
-    }
-});
 
 const validCardTypes = {
     [CardType.Amex]: true,

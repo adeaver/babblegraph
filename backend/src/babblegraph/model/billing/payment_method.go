@@ -26,7 +26,7 @@ func GetPaymentMethodsForUser(tx *sqlx.Tx, userID users.UserID) ([]PaymentMethod
 		}
 		switch externalID.IDType {
 		case externalIDTypeStripe:
-			return getStripePaymentMethodsForUser(tx, externalID.ExternalID)
+			return getStripePaymentMethodsForUser(externalID.ExternalID)
 		default:
 			return nil, fmt.Errorf("Unrecognized external ID type %s", externalID.IDType)
 		}
@@ -75,18 +75,33 @@ func DeletePaymentMethodForUser(tx *sqlx.Tx, userID users.UserID, externalPaymen
 	}
 }
 
-// TODO: delete payment method
-// --> also needs a getDefaultPaymentMethodID for user, which should actually get Customer
+func getStripeDefaultPaymentMethodID(stripeCustomerID string) (*string, error) {
+	customer, err := customer.Get(stripeCustomerID, &stripe.CustomerParams{})
+	switch {
+	case err != nil:
+		return nil, err
+	case customer.InvoiceSettings == nil:
+		return nil, nil
+	case customer.InvoiceSettings.DefaultPaymentMethod == nil:
+		return nil, nil
+	default:
+		return ptr.String(customer.InvoiceSettings.DefaultPaymentMethod.ID), nil
+	}
+}
 
-func getStripePaymentMethodsForUser(tx *sqlx.Tx, stripeCustomerID string) ([]PaymentMethod, error) {
+func getStripePaymentMethodsForUser(stripeCustomerID string) ([]PaymentMethod, error) {
 	stripe.Key = env.MustEnvironmentVariable("STRIPE_KEY")
 	stripePaymentMethods := paymentmethod.List(&stripe.PaymentMethodListParams{
 		Customer: ptr.String(stripeCustomerID),
 		Type:     ptr.String("card"),
 	})
+	defaultPaymentMethodID, err := getStripeDefaultPaymentMethodID(stripeCustomerID)
+	if err != nil {
+		return nil, err
+	}
 	var out []PaymentMethod
 	for _, paymentMethod := range stripePaymentMethods.PaymentMethodList().Data {
-		convertedPaymentMethod, err := convertStripePaymentMethod(paymentMethod)
+		convertedPaymentMethod, err := convertStripePaymentMethod(defaultPaymentMethodID, paymentMethod)
 		if err != nil {
 			return nil, err
 		}
@@ -115,7 +130,7 @@ func deletePaymentMethod(stripeCustomerID, paymentMethodID string) error {
 	return nil
 }
 
-func convertStripePaymentMethod(stripePaymentMethod *stripe.PaymentMethod) (*PaymentMethod, error) {
+func convertStripePaymentMethod(defaultPaymentMethodID *string, stripePaymentMethod *stripe.PaymentMethod) (*PaymentMethod, error) {
 	if stripePaymentMethod.Card == nil {
 		return nil, fmt.Errorf("Card is null, but expected only card type")
 	}
@@ -124,6 +139,7 @@ func convertStripePaymentMethod(stripePaymentMethod *stripe.PaymentMethod) (*Pay
 		DisplayMask:    stripePaymentMethod.Card.Last4,
 		CardExpiration: fmt.Sprintf("%2d/%d", stripePaymentMethod.Card.ExpMonth, stripePaymentMethod.Card.ExpYear),
 		CardType:       getCardTypeForStripeBrand(stripePaymentMethod.Card.Brand),
+		IsDefault:      defaultPaymentMethodID != nil && stripePaymentMethod.ID == *defaultPaymentMethodID,
 	}, nil
 }
 
