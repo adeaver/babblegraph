@@ -7,6 +7,7 @@ export enum Permission {
 	PublishBlog = "publish-blog",
 	EditContentTopics = "edit-content-topics",
 	EditContentSources = "edit-content-sources",
+	ManageBilling = 'manage-billing',
 }
 
 export type ManageUserPermissionsRequest = {

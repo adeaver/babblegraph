@@ -32,9 +32,11 @@ import {
 import PremiumNewsletterSubscriptionCardForm from 'ConsumerWeb/components/common/Billing/PremiumNewsletterSubscriptionCheckoutForm';
 
 import {
-    PaymentMethod,
-    PremiumNewsletterSubscription,
     PaymentState,
+    PremiumNewsletterSubscription
+} from 'common/api/billing/billing';
+import {
+    PaymentMethod,
 
     LookupActivePremiumNewsletterSubscriptionResponse,
     lookupActivePremiumNewsletterSubscription,

@@ -1,10 +1,11 @@
 package ses
 
 import (
-	"babblegraph/externalapis/bgstripe"
+	"babblegraph/model/billing"
 	"babblegraph/model/sesnotifications"
 	"babblegraph/model/users"
 	"babblegraph/services/web/clientrouter/api"
+	"babblegraph/util/ctx"
 	"babblegraph/util/database"
 	"babblegraph/util/ses"
 	"encoding/json"
@@ -51,6 +52,7 @@ func handleBounceNotification(body []byte) (interface{}, error) {
 		}); err != nil {
 			return nil, err
 		}
+		c := ctx.GetDefaultLogContext()
 		for _, recipient := range b.Bounce.BouncedRecipients {
 			if err := database.WithTx(func(tx *sqlx.Tx) error {
 				didUpdate, err := users.AddUserToBlocklistByEmailAddress(tx, recipient.EmailAddress, users.UserStatusBlocklistBounced)
@@ -66,14 +68,14 @@ func handleBounceNotification(body []byte) (interface{}, error) {
 					case user == nil:
 						log.Println(fmt.Sprintf("No user found %s", recipient.EmailAddress))
 					default:
-						subscription, err := bgstripe.LookupActiveSubscriptionForUser(tx, user.ID)
+						subscription, err := billing.LookupPremiumNewsletterSubscriptionForUser(c, tx, user.ID)
 						switch {
 						case err != nil:
 							return fmt.Errorf("error cancelling subscription for user %s: %s", recipient.EmailAddress, err.Error())
 						case subscription == nil:
 							// no-op
 						default:
-							return bgstripe.CancelSubscription(tx, user.ID)
+							return billing.CancelPremiumNewsletterSubscriptionForUser(c, tx, user.ID)
 						}
 					}
 				} else {
@@ -110,6 +112,7 @@ func handleComplaintNotification(body []byte) (interface{}, error) {
 		}); err != nil {
 			sentry.CaptureException(fmt.Errorf("Error persisting SES notification: %s. Continuing...", err.Error()))
 		}
+		c := ctx.GetDefaultLogContext()
 		for _, recipient := range b.Complaint.ComplainedRecipients {
 			if err := database.WithTx(func(tx *sqlx.Tx) error {
 				didUpdate, err := users.AddUserToBlocklistByEmailAddress(tx, recipient.EmailAddress, users.UserStatusBlocklistComplaint)
@@ -125,14 +128,14 @@ func handleComplaintNotification(body []byte) (interface{}, error) {
 					case user == nil:
 						log.Println(fmt.Sprintf("No user found %s", recipient.EmailAddress))
 					default:
-						subscription, err := bgstripe.LookupActiveSubscriptionForUser(tx, user.ID)
+						subscription, err := billing.LookupPremiumNewsletterSubscriptionForUser(c, tx, user.ID)
 						switch {
 						case err != nil:
 							return fmt.Errorf("error cancelling subscription for user %s: %s", recipient.EmailAddress, err.Error())
 						case subscription == nil:
 							// no-op
 						default:
-							return bgstripe.CancelSubscription(tx, user.ID)
+							return billing.CancelPremiumNewsletterSubscriptionForUser(c, tx, user.ID)
 						}
 					}
 				} else {

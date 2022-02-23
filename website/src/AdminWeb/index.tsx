@@ -11,6 +11,7 @@ import RegistrationPage from 'AdminWeb/components/RegistrationPage/RegistrationP
 import LoginPage from 'AdminWeb/components/LoginPage/LoginPage';
 import Dashboard from 'AdminWeb/components/Dashboard/Dashboard';
 import UserMetricsPage from 'AdminWeb/components/UserMetricsPage/UserMetricsPage';
+import BillingManagementPage from 'AdminWeb/components/BillingManagementPage/BillingManagementPage';
 import PermissionManagerPage from 'AdminWeb/components/PermissionManagerPage/PermissionManagerPage';
 import BlogListPage from 'AdminWeb/components/Blog/BlogListPage/BlogListPage';
 import BlogEditPage from 'AdminWeb/components/Blog/BlogEditPage/BlogEditPage';
@@ -30,6 +31,7 @@ class App extends React.Component{
                     <Route path="/permission-manager" component={PermissionManagerPage} />
 
                     <Route path="/user-metrics" component={UserMetricsPage} />
+                    <Route path="/billing-manager" component={BillingManagementPage} />
 
                     <Route path="/content-manager/topics/:id" component={TopicManagementPage} />
                     <Route path="/content-manager/topics" component={TopicListPage} />

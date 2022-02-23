@@ -29,8 +29,9 @@ import PremiumNewsletterSubscriptionCardForm from 'ConsumerWeb/components/common
 
 import {
     PaymentState,
-    PremiumNewsletterSubscription,
-
+    PremiumNewsletterSubscription
+} from 'common/api/billing/billing';
+import {
     GetOrCreateBillingInformationResponse,
     getOrCreateBillingInformation,
 

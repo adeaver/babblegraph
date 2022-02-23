@@ -10,8 +10,8 @@ import {
 
 import {
     PaymentState,
-    PremiumNewsletterSubscription,
-} from 'ConsumerWeb/api/billing/billing';
+    PremiumNewsletterSubscription
+} from 'common/api/billing/billing';
 
 import ResolvePaymentIntentForm from './stripe/ResolvePaymentIntentForm';
 import ResolveSetupIntentForm from './stripe/ResolveSetupIntentForm';

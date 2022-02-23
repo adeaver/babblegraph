@@ -8,7 +8,9 @@ import {
 import { setLocation } from 'util/window/Location';
 
 import {
-    SubscriptionLevel,
+    SubscriptionLevel
+} from 'common/api/useraccounts/useraccounts';
+import {
     UserProfileInformationError,
     UserProfileInformation,
     GetUserProfileInformationResponse,

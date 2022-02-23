@@ -6,7 +6,6 @@ import (
 	"babblegraph/services/web/clientrouter/api/blog"
 	"babblegraph/services/web/clientrouter/api/language"
 	"babblegraph/services/web/clientrouter/api/ses"
-	"babblegraph/services/web/clientrouter/api/stripe"
 	"babblegraph/services/web/clientrouter/api/token"
 	"babblegraph/services/web/clientrouter/api/user"
 	"babblegraph/services/web/clientrouter/api/useraccounts"
@@ -46,9 +45,6 @@ func registerAPI(r *mux.Router) error {
 		return err
 	}
 	if err := token.RegisterRouteGroups(); err != nil {
-		return err
-	}
-	if err := stripe.RegisterRouteGroups(); err != nil {
 		return err
 	}
 	if err := blog.RegisterRouteGroups(); err != nil {

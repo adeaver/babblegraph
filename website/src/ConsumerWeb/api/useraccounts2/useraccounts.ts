@@ -3,15 +3,11 @@ import {
     RouteEncryptionKey,
     LoginRedirectKey,
 } from 'ConsumerWeb/api/routes/consts';
+import { SubscriptionLevel } from 'common/api/useraccounts/useraccounts';
 
 export enum UserProfileInformationError {
     InvalidKey = 'invalid-key',
     InvalidToken = 'invalid-token',
-}
-
-export enum SubscriptionLevel {
-    Premium = 'premium',
-    BetaPremium = 'beta-premium',
 }
 
 export type GetUserProfileInformationRequest = {

@@ -17,7 +17,7 @@ import (
 
 const (
 	lookupPremiumNewsletterSubscriptionByIDQuery          = "SELECT * FROM billing_premium_newsletter_subscription WHERE _id = $1"
-	lookupPremiumNewsletterSubscriptionQuery              = "SELECT * FROM billing_premium_newsletter_subscription WHERE billing_information_id = $1"
+	lookupPremiumNewsletterSubscriptionQuery              = "SELECT * FROM billing_premium_newsletter_subscription WHERE billing_information_id = $1 ORDER BY created_at DESC"
 	lookupPremiumNewsletterNonTerminatedSubscriptionQuery = "SELECT * FROM billing_premium_newsletter_subscription WHERE billing_information_id = $1 AND is_terminated = FALSE"
 	insertPremiumNewsletterSubscriptionQuery              = "INSERT INTO billing_premium_newsletter_subscription (_id, billing_information_id, external_id_mapping_id) VALUES ($1, $2, $3)"
 	terminatePremiumNewsletterSubscriptionQuery           = "UPDATE billing_premium_newsletter_subscription SET is_terminated = TRUE WHERE _id = $1"
