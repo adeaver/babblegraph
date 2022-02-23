@@ -80,6 +80,28 @@ export function lookupActivePremiumNewsletterSubscription(
     );
 }
 
+export type SetPremiumNewsletterSubscriptionAutoRenewRequest = {
+    isAutoRenewEnabled: boolean;
+    subscriptionManagementToken: string;
+}
+
+export type SetPremiumNewsletterSubscriptionAutoRenewResponse = {
+    success: boolean;
+}
+
+export function setPremiumNewsletterSubscriptionAutoRenew(
+    req: SetPremiumNewsletterSubscriptionAutoRenewRequest,
+    onSuccess: (resp: SetPremiumNewsletterSubscriptionAutoRenewResponse) => void,
+    onError: (err: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<SetPremiumNewsletterSubscriptionAutoRenewRequest, SetPremiumNewsletterSubscriptionAutoRenewResponse>(
+        '/api/billing/set_premium_newsletter_subscription_auto_renew_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}
+
 export enum PremiumNewsletterSubscriptionUpdateType {
     TransitionToActive = 'transition-to-active',
 }

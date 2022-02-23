@@ -31,6 +31,11 @@ var Routes = router.RouteGroup{
 				routermiddleware.WithAuthentication(lookupActivePremiumNewsletterSubscription),
 			),
 		}, {
+			Path: "set_premium_newsletter_subscription_auto_renew_1",
+			Handler: routermiddleware.WithRequestBodyLogger(
+				routermiddleware.WithAuthentication(setPremiumNewsletterSubscriptionAutoRenew),
+			),
+		}, {
 			Path: "prepare_premium_newsletter_subscription_sync_1",
 			Handler: routermiddleware.WithRequestBodyLogger(
 				routermiddleware.WithAuthentication(preparePremiumNewsletterSubscriptionSync),
@@ -162,6 +167,35 @@ func lookupActivePremiumNewsletterSubscription(userAuth routermiddleware.UserAut
 	}
 	return lookupActivePremiumNewsletterSubscriptionResponse{
 		PremiumNewsletterSubscription: premiumNewsletterSubscription,
+	}, nil
+}
+
+type setPremiumNewsletterSubscriptionAutoRenewRequest struct {
+	SubscriptionManagementToken string `json:"subscription_management_token"`
+	IsAutoRenewEnabled          bool   `json:"is_auto_renew_enabled"`
+}
+
+type setPremiumNewsletterSubscriptionAutoRenewResponse struct {
+	Success bool `json:"success"`
+}
+
+func setPremiumNewsletterSubscriptionAutoRenew(userAuth routermiddleware.UserAuthentication, r *router.Request) (interface{}, error) {
+	var req setPremiumNewsletterSubscriptionAutoRenewRequest
+	if err := r.GetJSONBody(&req); err != nil {
+		return nil, err
+	}
+	userID, err := routetoken.ValidateTokenAndGetUserID(req.SubscriptionManagementToken, routes.SubscriptionManagementRouteEncryptionKey)
+	if err != nil || *userID != userAuth.UserID {
+		r.RespondWithStatus(http.StatusForbidden)
+		return nil, nil
+	}
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		return billing.UpdateSubscriptionAutoRenewForUser(tx, *userID, req.IsAutoRenewEnabled)
+	}); err != nil {
+		return nil, err
+	}
+	return setPremiumNewsletterSubscriptionAutoRenewResponse{
+		Success: true,
 	}, nil
 }
 

@@ -90,7 +90,8 @@ const PremiumNewsletterSubscriptionCheckoutPage = withUserProfileInformation<Pre
                         {
                             shouldShowCheckoutForm && (
                                 <PaymentSection
-                                    premiumSubscriptionCheckoutToken={token} />
+                                    premiumSubscriptionCheckoutToken={token}
+                                    subscriptionManagementToken={subscriptionManagementToken} />
                             )
                         }
                     </DisplayCard>
@@ -192,13 +193,15 @@ const OrderDetailsSection = asBaseComponent<GetOrCreateBillingInformationRespons
 
 type PaymentSectionProps = {
     premiumSubscriptionCheckoutToken: string;
+    subscriptionManagementToken: string;
 }
 
 const PaymentSection = asBaseComponent<GetOrCreatePremiumNewsletterSubscriptionResponse, PaymentSectionProps>(
     (props: GetOrCreatePremiumNewsletterSubscriptionResponse & PaymentSectionProps & BaseComponentProps) => {
         return (
             <PremiumNewsletterSubscriptionCardForm
-                premiumNewsletterSusbcription={props.premiumNewsletterSubscription} />
+                premiumNewsletterSusbcription={props.premiumNewsletterSubscription}
+                subscriptionManagementToken={props.subscriptionManagementToken} />
         );
     },
     (

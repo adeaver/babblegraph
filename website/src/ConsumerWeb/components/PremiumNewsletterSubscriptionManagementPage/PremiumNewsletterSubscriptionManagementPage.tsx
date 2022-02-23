@@ -39,6 +39,9 @@ import {
     LookupActivePremiumNewsletterSubscriptionResponse,
     lookupActivePremiumNewsletterSubscription,
 
+    SetPremiumNewsletterSubscriptionAutoRenewResponse,
+    setPremiumNewsletterSubscriptionAutoRenew,
+
     GetPaymentMethodsForUserResponse,
     getPaymentMethodsForUser,
 
@@ -57,6 +60,10 @@ const styleClasses = makeStyles({
         width: '100%',
         margin: '10px 0',
     },
+    autoRenewButton: {
+        width: '100%',
+        margin: '10px 0',
+    }
 });
 
 type Params = {
@@ -108,7 +115,29 @@ const PremiumSubscriptionManagementComponent = asBaseComponent<LookupActivePremi
                 </div>
             );
         }
+
+        const [ isLoadingAutoRenew, setIsLoadingAutoRenew ] = useState<boolean>(false);
+        const [ isAutoRenewEnabled, setIsAutoRenewEnabled ] = useState<boolean>(props.premiumNewsletterSubscription.isAutoRenewEnabled);
+        const handleUpdateAutoRenew = (isAutoRenewEnabled: boolean) => {
+            return () => {
+                setIsLoadingAutoRenew(true);
+                setPremiumNewsletterSubscriptionAutoRenew({
+                    subscriptionManagementToken: props.subscriptionManagementToken,
+                    isAutoRenewEnabled: isAutoRenewEnabled,
+                },
+                (resp: SetPremiumNewsletterSubscriptionAutoRenewResponse) => {
+                    setIsLoadingAutoRenew(false);
+                    setIsAutoRenewEnabled(isAutoRenewEnabled);
+                },
+                (err: Error) => {
+                    setIsLoadingAutoRenew(false);
+                    props.setError(err);
+                });
+            }
+        }
         const { paymentState } = props.premiumNewsletterSubscription;
+
+        const classes = styleClasses();
         switch (paymentState) {
             case PaymentState.CreatedUnpaid:
                 return (
@@ -145,9 +174,45 @@ const PremiumSubscriptionManagementComponent = asBaseComponent<LookupActivePremi
                         <Heading3 color={TypographyColor.Primary}>
                             You’re currently trialing Babblegraph Premium until {new Date(props.premiumNewsletterSubscription.currentPeriodEnd).toLocaleDateString()}
                         </Heading3>
-                        { /* TODO: add auto-renew information here */ }
+                        {
+                            isAutoRenewEnabled ? (
+                                <div>
+                                    <Paragraph>
+                                        You will be charged on that date. If you do not want to be charged, you can disable your auto-renew below
+                                    </Paragraph>
+                                    {
+                                        isLoadingAutoRenew ? (
+                                            <LoadingSpinner />
+                                        ) : (
+                                            <CenteredComponent>
+                                                <WarningButton className={classes.autoRenewButton} onClick={handleUpdateAutoRenew(false)}>
+                                                    Disable auto-renew
+                                                </WarningButton>
+                                            </CenteredComponent>
+                                        )
+                                    }
+                                </div>
+                            ) : (
+                                <div>
+                                    <Paragraph color={TypographyColor.Warning}>
+                                        Auto-renew is currently disabled, so you’ll lose access to Babblegraph Premium features at that date. You can enable it below.
+                                    </Paragraph>
+                                    {
+                                        isLoadingAutoRenew ? (
+                                            <LoadingSpinner />
+                                        ) : (
+                                            <CenteredComponent>
+                                                <PrimaryButton className={classes.autoRenewButton} onClick={handleUpdateAutoRenew(true)}>
+                                                    Enable auto-renew
+                                                </PrimaryButton>
+                                            </CenteredComponent>
+                                        )
+                                    }
+                                </div>
+                            )
+                        }
                         <Paragraph>
-                            You will be charged on that date. You can add a new payment method below.
+                             You can also add a new payment method below.
                         </Paragraph>
                         <PremiumNewsletterSubscriptionCardForm
                             premiumNewsletterSusbcription={props.premiumNewsletterSubscription} />
@@ -159,9 +224,45 @@ const PremiumSubscriptionManagementComponent = asBaseComponent<LookupActivePremi
                         <Heading3 color={TypographyColor.Primary}>
                             You’re currently on Babblegraph Premium
                         </Heading3>
-                        { /* TODO: add auto-renew information here */ }
+                        {
+                            isAutoRenewEnabled ? (
+                                <div>
+                                    <Paragraph>
+                                        You will be charged next on {new Date(props.premiumNewsletterSubscription.currentPeriodEnd).toLocaleDateString()}. If you do not want to be charged, you can disable your auto-renew below
+                                    </Paragraph>
+                                    {
+                                        isLoadingAutoRenew ? (
+                                            <LoadingSpinner />
+                                        ) : (
+                                            <CenteredComponent>
+                                                <WarningButton className={classes.autoRenewButton} onClick={handleUpdateAutoRenew(false)}>
+                                                    Disable auto-renew
+                                                </WarningButton>
+                                            </CenteredComponent>
+                                        )
+                                    }
+                                </div>
+                            ) : (
+                                <div>
+                                    <Paragraph color={TypographyColor.Warning}>
+                                        Auto-renew is currently disabled, so you’ll lose access to Babblegraph Premium features on {new Date(props.premiumNewsletterSubscription.currentPeriodEnd).toLocaleDateString()}. You can enable it below.
+                                    </Paragraph>
+                                    {
+                                        isLoadingAutoRenew ? (
+                                            <LoadingSpinner />
+                                        ) : (
+                                            <CenteredComponent>
+                                                <PrimaryButton className={classes.autoRenewButton} onClick={handleUpdateAutoRenew(true)}>
+                                                    Enable auto-renew
+                                                </PrimaryButton>
+                                            </CenteredComponent>
+                                        )
+                                    }
+                                </div>
+                            )
+                        }
                         <Paragraph>
-                            You will be charged next on {new Date(props.premiumNewsletterSubscription.currentPeriodEnd).toLocaleDateString()} You can add a new payment method below.
+                             You can also add a new payment method below.
                         </Paragraph>
                         <PremiumNewsletterSubscriptionCardForm
                             premiumNewsletterSusbcription={props.premiumNewsletterSubscription} />

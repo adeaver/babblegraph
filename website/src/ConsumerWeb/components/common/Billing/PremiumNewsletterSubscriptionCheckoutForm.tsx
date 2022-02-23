@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 
 import { Heading3 } from 'common/typography/Heading';
+import Link, { LinkTarget } from 'common/components/Link/Link';
 
 import {
     asBaseComponent,
@@ -17,6 +18,8 @@ import ResolveSetupIntentForm from './stripe/ResolveSetupIntentForm';
 
 type PremiumNewsletterSubscriptionCardFormProps = {
     premiumNewsletterSusbcription: PremiumNewsletterSubscription;
+
+    subscriptionManagementToken?: string;
 }
 
 const PremiumNewsletterSubscriptionCardForm = (props: PremiumNewsletterSubscriptionCardFormProps) => {
@@ -26,9 +29,18 @@ const PremiumNewsletterSubscriptionCardForm = (props: PremiumNewsletterSubscript
 
     if (shouldShowSuccessPage) {
         return (
-            <Heading3>
-                Your payment details have been saved successfully
-            </Heading3>
+            <div>
+                <Heading3>
+                    Your payment details have been saved successfully it may take up to 10 minutes for your details to successfully appear on your account.
+                </Heading3>
+                {
+                    !!props.subscriptionManagementToken && (
+                        <Link href={`/manage/${props.subscriptionManagementToken}`} target={LinkTarget.Self}>
+                            Manage your subscription settings
+                        </Link>
+                    )
+                }
+            </div>
         );
     }
 

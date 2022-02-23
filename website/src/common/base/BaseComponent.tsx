@@ -37,9 +37,9 @@ export function asBaseComponent<P, V>(WrappedComponent: React.ComponentType<V & 
         }, []);
 
         let component;
-        if (!!wrappedComponentProps) {
+        if (!!wrappedComponentProps && !isLoading) {
             component = <WrappedComponent setIsLoading={setIsLoading} setError={setError} {...props} {...wrappedComponentProps} />;
-        } else if (!!error) {
+        } else if (!!error && !isLoading) {
             component = (
                 <Heading3 color={TypographyColor.Warning}>
                     An error occurred.
