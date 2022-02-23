@@ -2,12 +2,13 @@ import React, { useState } from 'react';
 
 import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
+import Divider from '@material-ui/core/Divider';
 
 import Page from 'common/components/Page/Page';
 import DisplayCard from 'common/components/DisplayCard/DisplayCard';
 import DisplayCardHeader from 'common/components/DisplayCard/DisplayCardHeader';
-import { TypographyColor } from 'common/typography/common';
-import { Heading1, Heading3 } from 'common/typography/Heading';
+import { Alignment, TypographyColor } from 'common/typography/common';
+import { Heading1, Heading3, Heading4 } from 'common/typography/Heading';
 import Paragraph from 'common/typography/Paragraph';
 import Form from 'common/components/Form/Form';
 import { PrimaryButton } from 'common/components/Button/Button';
@@ -16,10 +17,17 @@ import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
 import CenteredComponent from 'common/components/CenteredComponent/CenteredComponent';
 
 import {
+    PremiumNewsletterSubscription,
+    PaymentState,
+} from 'common/api/billing/billing';
+import {
     UserBillingInformation,
 
     GetBillingInformationForEmailAddressResponse,
     getBillingInformationForEmailAddress,
+
+    ForceSyncForUserResponse,
+    forceSyncForUser,
 } from 'AdminWeb/api/billing/billing';
 
 const styleClasses = makeStyles({
@@ -112,6 +120,25 @@ type UserBillingInformationDisplayProps = {
 }
 
 const UserBillingInformationDisplay = (props: UserBillingInformationDisplayProps) => {
+
+    const [ isLoading, setIsLoading ] = useState<boolean>(false);
+    const [ error, setError ] = useState<Error>(null);
+
+    const handleSubmit = () => {
+        setIsLoading(true);
+        forceSyncForUser({
+            userId: props.userBillingInformation.userId,
+        },
+        (resp: ForceSyncForUserResponse) => {
+            setIsLoading(false);
+        },
+        (err: Error) => {
+            setIsLoading(false);
+            setError(err);
+        });
+    }
+
+    const classes = styleClasses();
     return (
         <CenteredComponent>
             <DisplayCard>
@@ -121,8 +148,75 @@ const UserBillingInformationDisplay = (props: UserBillingInformationDisplayProps
                 <Paragraph>
                     Account Type: {props.userBillingInformation.externalIdType}
                 </Paragraph>
+                {
+                    isLoading ? (
+                        <LoadingSpinner />
+                    ) : (
+                        <CenteredComponent>
+                            <PrimaryButton className={classes.formComponent} onClick={handleSubmit}>
+                                Force Sync
+                            </PrimaryButton>
+                        </CenteredComponent>
+                    )
+                }
+                {
+                    props.userBillingInformation.subscriptions.map((s: PremiumNewsletterSubscription) => (
+                        <div>
+                            <PremiumNewsletterSubscriptionView key={`subscription-${s.id}`} subscription={s} />
+                            <Divider />
+                        </div>
+                    ))
+                }
             </DisplayCard>
         </CenteredComponent>
+    );
+}
+
+type PremiumNewsletterSubscriptionViewProps = {
+    subscription: PremiumNewsletterSubscription;
+}
+
+const PremiumNewsletterSubscriptionView = (props: PremiumNewsletterSubscriptionViewProps) => {
+    let stateDisplay;
+    let titleColor = TypographyColor.Gray;
+    const { paymentState } = props.subscription;
+    switch (paymentState) {
+        case PaymentState.CreatedUnpaid:
+            stateDisplay = "Created, Unpaid";
+            break;
+        case PaymentState.TrialNoPaymentMethod:
+            titleColor = TypographyColor.Primary;
+            stateDisplay = "Trial, No Payment Method";
+            break;
+        case PaymentState.TrialPaymentMethodAdded:
+            titleColor = TypographyColor.Primary;
+            stateDisplay = "Trial, Added Payment Method";
+            break;
+        case PaymentState.Active:
+            titleColor = TypographyColor.Primary;
+            stateDisplay = "Active";
+            break;
+        case PaymentState.Errored:
+            titleColor = TypographyColor.Warning;
+            stateDisplay = "Errored";
+            break;
+        case PaymentState.Terminated:
+            stateDisplay = "Terminated";
+            break;
+        default:
+            throw new Error(`Unrecognized payment state ${paymentState}`);
+    }
+    return (
+        <div>
+            <Heading4 align={Alignment.Left} color={titleColor}>
+                {stateDisplay} subscription, ending period {new Date(props.subscription.currentPeriodEnd).toLocaleDateString()}
+            </Heading4>
+            <Paragraph align={Alignment.Left} color={props.subscription.isAutoRenewEnabled ? TypographyColor.Confirmation : TypographyColor.Gray}>
+                {
+                    props.subscription.isAutoRenewEnabled ? "Auto-Renew is enabled" : "Auto-Renew is disabled"
+                }
+            </Paragraph>
+        </div>
     );
 }
 

@@ -30,3 +30,24 @@ export function getBillingInformationForEmailAddress(
         onError,
     );
 }
+
+export type ForceSyncForUserRequest = {
+    userId: string;
+}
+
+export type ForceSyncForUserResponse = {
+    success: boolean;
+}
+
+export function forceSyncForUser(
+    req: ForceSyncForUserRequest,
+    onSuccess: (resp: ForceSyncForUserResponse) => void,
+    onError: (e: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<ForceSyncForUserRequest, ForceSyncForUserResponse>(
+        '/ops/api/billing/force_sync_for_user_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}
