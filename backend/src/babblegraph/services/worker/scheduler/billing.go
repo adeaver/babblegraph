@@ -83,15 +83,25 @@ func handleSyncBilling(c async.Context) {
 			continue
 		}
 		if err := database.WithTx(func(tx *sqlx.Tx) error {
-			// TODO: Get the subscription and check if the subscription is still valid
+			premiumNewsletterSubscription, err := billing.LookupPremiumNewsletterSubscriptionForUser(c, tx, userID)
+			switch {
+			case err != nil:
+				return err
+			case premiumNewsletterSubscription == nil:
+				// no-op
+			case time.Now().Before(premiumNewsletterSubscription.CurrentPeriodEnd):
+				c.Infof("User ID has an active subscription. Updating...")
+				return useraccounts.UpdateSubscriptionExpirationTime(tx, userID, premiumNewsletterSubscription.CurrentPeriodEnd)
+			default:
+				// no-op
+			}
 			if err := useraccounts.ExpireSubscriptionForUser(tx, userID); err != nil {
 				return err
 			}
 			if _, err := useraccountsnotifications.EnqueueNotificationRequest(tx, userID, useraccountsnotifications.NotificationTypePremiumSubscriptionCanceled, time.Now().Add(5*time.Minute)); err != nil {
 				return err
 			}
-			// TODO: ensure stripe subscription is canceled
-			return nil
+			return billing.CancelPremiumNewsletterSubscriptionForUser(c, tx, userID)
 		}); err != nil {
 			c.Errorf("Error canceling subscription for User %s: %s", userID, err.Error())
 		}

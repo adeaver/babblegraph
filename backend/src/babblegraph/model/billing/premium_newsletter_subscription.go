@@ -147,6 +147,43 @@ func UpdateSubscriptionAutoRenewForUser(tx *sqlx.Tx, userID users.UserID, isAuto
 	}
 }
 
+func CancelPremiumNewsletterSubscriptionForUser(c ctx.LogContext, tx *sqlx.Tx, userID users.UserID) error {
+	billingInformation, err := lookupBillingInformationForUserID(tx, userID)
+	switch {
+	case err != nil:
+		return err
+	case billingInformation == nil:
+		return fmt.Errorf("Expected there to be a billing information for user %s, but none exists", userID)
+	}
+	dbPremiumNewsletterSubscription, err := lookupDBActivePremiumNewsletterSubscriptionForUser(tx, *billingInformation)
+	switch {
+	case err != nil:
+		return err
+	case dbPremiumNewsletterSubscription == nil:
+		return nil
+	case dbPremiumNewsletterSubscription != nil:
+		if _, err := tx.Exec(terminatePremiumNewsletterSubscriptionQuery, dbPremiumNewsletterSubscription.ID); err != nil {
+			return err
+		}
+		externalID, err := getExternalIDMapping(tx, dbPremiumNewsletterSubscription.ExternalIDMappingID)
+		if err != nil {
+			return err
+		}
+		switch externalID.IDType {
+		case externalIDTypeStripe:
+			stripe.Key = env.MustEnvironmentVariable("STRIPE_KEY")
+			if _, err := sub.Cancel(externalID.ExternalID, nil); err != nil {
+				return err
+			}
+			return nil
+		default:
+			return fmt.Errorf("Invalid ID Type %s", externalID.IDType)
+		}
+	default:
+		panic("unreachable")
+	}
+}
+
 func lookupActivePremiumNewsletterSubscriptionForUser(c ctx.LogContext, tx *sqlx.Tx, billingInformation dbBillingInformation) (*PremiumNewsletterSubscription, error) {
 	// There are three possible scenarios for this function:
 	// The database returns no active subscriptions - in which case we assume that there are no active subscriptions in the provider

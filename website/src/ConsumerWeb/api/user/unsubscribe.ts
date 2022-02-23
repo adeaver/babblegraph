@@ -3,12 +3,21 @@ import { makePostRequestWithStandardEncoding } from 'util/bgfetch/bgfetch';
 export type UnsubscribeRequest = {
     token: string;
     unsubscribeReason: string | null;
-    emailAddress: string;
+    emailAddress: string | undefined;
 }
 
 
 export type UnsubscribeResponse = {
     success: boolean;
+    error: UnsubscribeError | undefined;
+}
+
+export enum UnsubscribeError {
+    MissingEmail = 'missing-email',
+    IncorrectEmail = 'incorrect-email',
+    NoAuth = 'no-auth',
+    IncorrectKey = 'incorrect-key',
+    InvalidToken = 'invalid-token',
 }
 
 export const unsubscribeUser = (

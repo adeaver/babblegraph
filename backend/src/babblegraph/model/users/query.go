@@ -115,3 +115,8 @@ func SetUserStatusToVerified(tx *sqlx.Tx, id UserID) error {
 	_, err := tx.Exec(updateUserStatusByID, UserStatusVerified, id)
 	return err
 }
+
+func UnsubscribeUserByID(tx *sqlx.Tx, id UserID) error {
+	_, err := tx.Exec(updateUserStatusByID, UserStatusUnsubscribed, id)
+	return err
+}

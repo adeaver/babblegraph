@@ -24,6 +24,7 @@ func RegisterClientRouter(r *mux.Router) error {
 	if err := router.WithAPIRouter(r, "api", []router.RouteGroup{
 		useraccounts.Routes,
 		billing.Routes,
+		user.Routes,
 	}); err != nil {
 		return err
 	}

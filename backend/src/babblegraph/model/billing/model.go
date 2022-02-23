@@ -111,6 +111,7 @@ type PremiumNewsletterSubscriptionUpdateType string
 
 const (
 	PremiumNewsletterSubscriptionUpdateTypeTransitionToActive PremiumNewsletterSubscriptionUpdateType = "transition-to-active"
+	PremiumNewsletterSubscriptionUpdateTypeCanceled           PremiumNewsletterSubscriptionUpdateType = "canceled"
 )
 
 func (u PremiumNewsletterSubscriptionUpdateType) Str() string {
