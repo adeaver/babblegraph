@@ -11,7 +11,6 @@ import MailOutlineIcon from '@material-ui/icons/MailOutline';
 import LibraryAddCheckIcon from '@material-ui/icons/LibraryAddCheck';
 import AutorenewIcon from '@material-ui/icons/Autorenew';
 
-import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
 import Color from 'common/styles/colors';
 import Page from 'common/components/Page/Page';
 import Paragraph, { Size } from 'common/typography/Paragraph';
