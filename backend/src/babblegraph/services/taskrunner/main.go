@@ -23,13 +23,11 @@ func main() {
 	taskName := flag.String("task", "none", `Name of task to run
         sample-email: send sample
         privacy-policy: send privacy policy
-        email-for-addresses: send email for EMAIL_ADDRESSES environment variable
         create-user: create beta-premium user
         expire-user: expire user
         create-elastic-indexes: create new indices in ElasticSearch
         sync-stripe: sync failed stripe events
         product-updates: send product updates
-        content-topics-length-backfill: backfill content topics length
         admin-content-backfill: backfill all admin content
         create-admin: create admin`)
 	userEmail := flag.String("user-email", "none", "Email address of user to create")
@@ -84,10 +82,6 @@ func main() {
 		tasks.ForceSyncStripeEvents(ctx.GetDefaultLogContext())
 	case "product-updates":
 		tasks.SendProductUpdates()
-	case "content-topics-length-backfill":
-		if err := tasks.BackfillContentTopicsLength(); err != nil {
-			log.Fatal(err.Error())
-		}
 	case "create-admin":
 		if userEmail == nil {
 			log.Fatal("no email specified")
@@ -97,6 +91,10 @@ func main() {
 		}
 	case "admin-content-backfill":
 		if err := tasks.SyncHardcodedContent(); err != nil {
+			log.Fatal(err.Error())
+		}
+	case "admin-content-values-backfill":
+		if err := tasks.BackfillAdminContentValues(); err != nil {
 			log.Fatal(err.Error())
 		}
 	default:

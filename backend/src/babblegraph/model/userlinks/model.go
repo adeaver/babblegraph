@@ -1,6 +1,7 @@
 package userlinks
 
 import (
+	"babblegraph/model/content"
 	"babblegraph/model/email"
 	"babblegraph/model/users"
 	"fmt"
@@ -10,13 +11,14 @@ import (
 type userLinkClickID string
 
 type dbUserLinkClick struct {
-	ID              userLinkClickID `db:"_id"`
-	UserID          users.UserID    `db:"user_id"`
-	Domain          string          `db:"domain"`
-	URLIdentifier   string          `db:"url_identifier"`
-	EmailRecordID   email.ID        `db:"email_record_id"`
-	AccessMonth     AccessMonth     `db:"access_month"`
-	FirstAccessedAt time.Time       `db:"first_accessed_at"`
+	ID              userLinkClickID   `db:"_id"`
+	UserID          users.UserID      `db:"user_id"`
+	Domain          string            `db:"domain"`
+	SourceID        *content.SourceID `db:"source_id"`
+	URLIdentifier   string            `db:"url_identifier"`
+	EmailRecordID   email.ID          `db:"email_record_id"`
+	AccessMonth     AccessMonth       `db:"access_month"`
+	FirstAccessedAt time.Time         `db:"first_accessed_at"`
 }
 
 type AccessMonth string

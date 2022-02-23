@@ -1,6 +1,7 @@
 package links2
 
 import (
+	"babblegraph/model/content"
 	"babblegraph/util/database"
 	"babblegraph/util/ptr"
 	"babblegraph/util/urlparser"
@@ -27,16 +28,21 @@ func GetDomainsWithUnfetchedLinks(tx *sqlx.Tx) ([]string, error) {
 	return out, nil
 }
 
-const insertLinkQuery = "INSERT INTO links2 (url_identifier, domain, url) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING"
-
 func InsertLinks(tx *sqlx.Tx, urls []urlparser.ParsedURL) error {
-	queryBuilder, err := database.NewBulkInsertQueryBuilder("links2", "url_identifier", "domain", "url")
+	queryBuilder, err := database.NewBulkInsertQueryBuilder("links2", "url_identifier", "domain", "url", "source_id")
 	if err != nil {
 		return err
 	}
 	queryBuilder.AddConflictResolution("DO NOTHING")
 	for _, u := range urls {
-		if err := queryBuilder.AddValues(u.URLIdentifier, u.Domain, u.URL); err != nil {
+		sourceID, err := content.LookupSourceIDForParsedURL(tx, u)
+		switch {
+		case err != nil:
+			return err
+		case sourceID == nil:
+			return fmt.Errorf("No source ID found for url %s", u.URL)
+		}
+		if err := queryBuilder.AddValues(u.URLIdentifier, u.Domain, u.URL, *sourceID); err != nil {
 			log.Println(fmt.Sprintf("Error inserting url with identifier %s: %s", u.URLIdentifier, err.Error()))
 		}
 	}
@@ -74,7 +80,7 @@ func LookupBulkUnfetchedLinksForDomain(tx *sqlx.Tx, domain string, chunkSize int
 }
 
 func UpsertLinkWithEmptyFetchStatus(tx *sqlx.Tx, urls []urlparser.ParsedURL, includeTimestamp bool) error {
-	queryBuilder, err := database.NewBulkInsertQueryBuilder("links2", "url_identifier", "domain", "url", "seed_job_ingest_timestamp")
+	queryBuilder, err := database.NewBulkInsertQueryBuilder("links2", "url_identifier", "domain", "url", "source_id", "seed_job_ingest_timestamp")
 	if err != nil {
 		return err
 	}
@@ -84,7 +90,14 @@ func UpsertLinkWithEmptyFetchStatus(tx *sqlx.Tx, urls []urlparser.ParsedURL, inc
 		firstSeedFetchTimestamp = ptr.Int64(time.Now().Unix())
 	}
 	for _, u := range urls {
-		if err := queryBuilder.AddValues(u.URLIdentifier, u.Domain, u.URL, firstSeedFetchTimestamp); err != nil {
+		sourceID, err := content.LookupSourceIDForParsedURL(tx, u)
+		switch {
+		case err != nil:
+			return err
+		case sourceID == nil:
+			return fmt.Errorf("No source available for URL %s", u.URL)
+		}
+		if err := queryBuilder.AddValues(u.URLIdentifier, u.Domain, u.URL, *sourceID, firstSeedFetchTimestamp); err != nil {
 			log.Println(fmt.Sprintf("Error inserting url with identifier %s: %s", u.URLIdentifier, err.Error()))
 		}
 	}
@@ -92,8 +105,8 @@ func UpsertLinkWithEmptyFetchStatus(tx *sqlx.Tx, urls []urlparser.ParsedURL, inc
 }
 
 // This is useful for reindexing
-func GetCursorForFetchVersion(tx *sqlx.Tx, fetchVersion FetchVersion, fn func(link Link) (bool, error)) error {
-	rows, err := tx.Queryx("SELECT * FROM links2 WHERE last_fetch_version = $1", fetchVersion)
+func GetLinksCursor(tx *sqlx.Tx, fn func(link Link) (bool, error)) error {
+	rows, err := tx.Queryx("SELECT * FROM links2 WHERE source_id IS NULL ORDER BY seq_num ASC")
 	if err != nil {
 		return err
 	}
@@ -110,6 +123,14 @@ func GetCursorForFetchVersion(tx *sqlx.Tx, fetchVersion FetchVersion, fn func(li
 		case err != nil && !shouldEndIteration:
 			log.Println(fmt.Sprintf("Got error: %s, continuing...", err.Error()))
 		}
+	}
+	return nil
+}
+
+// TODO(content-migration): get rid of this
+func UpdateLinkSource(tx *sqlx.Tx, u urlparser.ParsedURL, sourceID content.SourceID) error {
+	if _, err := tx.Exec("UPDATE links2 SET source_id = $1 WHERE url_identifier = $2", sourceID, u.URLIdentifier); err != nil {
+		return err
 	}
 	return nil
 }

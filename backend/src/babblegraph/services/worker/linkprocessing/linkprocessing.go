@@ -1,15 +1,18 @@
 package linkprocessing
 
 import (
+	"babblegraph/model/content"
 	"babblegraph/model/contenttopics"
 	"babblegraph/model/documents"
 	"babblegraph/model/domains"
 	"babblegraph/model/links2"
+	"babblegraph/model/urltopicmapping"
 	"babblegraph/services/worker/indexing"
 	"babblegraph/services/worker/ingesthtml"
 	"babblegraph/services/worker/textprocessing"
 	"babblegraph/util/async"
 	"babblegraph/util/bufferedfetch"
+	"babblegraph/util/ctx"
 	"babblegraph/util/database"
 	"babblegraph/util/opengraph"
 	"babblegraph/util/ptr"
@@ -25,6 +28,7 @@ import (
 const (
 	defaultChunkSize     = 500
 	defaultTimeUntilFree = 5 * time.Second
+	defaultRefreshPeriod = 1 * time.Hour
 )
 
 type Domain struct {
@@ -58,6 +62,25 @@ func CreateLinkProcessor() (*LinkProcessor, error) {
 	}, nil
 }
 
+func (l *LinkProcessor) resetDomains(c ctx.LogContext) error {
+	domains := domains.GetDomains()
+	var orderedDomains []Domain
+	domainHash := make(map[string]bool)
+	for _, d := range domains {
+		domainHash[d] = true
+		orderedDomains = append(orderedDomains, Domain{
+			Domain: d,
+			FreeAt: time.Now(),
+		})
+		if err := bufferedfetch.ForceRefill(c, getBufferedFetchKeyForDomain(d)); err != nil {
+			return err
+		}
+	}
+	l.DomainSet = domainHash
+	l.OrderedDomains = orderedDomains
+	return nil
+}
+
 func makeBufferedFetchForDomain(domain string) func() (interface{}, error) {
 	return func() (interface{}, error) {
 		var links []links2.Link
@@ -83,14 +106,23 @@ func (l *LinkProcessor) ProcessLinks(maxWorkers int) func(c async.Context) {
 		addURLs := make(chan []string)
 		workerManagerErrs := make(chan error)
 		urlManagerErrs := make(chan error)
+		timer := time.NewTimer(defaultRefreshPeriod)
 		async.WithContext(workerManagerErrs, "worker-manager", l.startWorkerManager(maxWorkers, addURLs)).Start()
 		async.WithContext(urlManagerErrs, "url-manager", l.startURLManager(addURLs)).Start()
 		for {
 			select {
-			case _ = <-workerManagerErrs:
+			case err := <-workerManagerErrs:
+				c.Warnf("Error with worker manager %s", err.Error())
 				async.WithContext(workerManagerErrs, "worker-manager", l.startWorkerManager(maxWorkers, addURLs)).Start()
-			case _ = <-urlManagerErrs:
+			case err := <-urlManagerErrs:
+				c.Warnf("Error with URL manager %s", err.Error())
 				async.WithContext(urlManagerErrs, "url-manager", l.startURLManager(addURLs)).Start()
+			case _ = <-timer.C:
+				c.Infof("Refreshing link processor")
+				if err := l.resetDomains(c); err != nil {
+					c.Errorf("Error resetting domains: %s", err.Error())
+				}
+				timer = time.NewTimer(defaultRefreshPeriod)
 			}
 		}
 	}
@@ -104,7 +136,7 @@ func (l *LinkProcessor) startWorkerManager(maxWorkers int, addURLs chan []string
 		var link *links2.Link
 		var numWorkers int
 		spinOffWorkerOrWait := func() (_shouldBreak bool) {
-			link, duration, err := l.getLink()
+			link, duration, err := l.getLink(c)
 			switch {
 			case err != nil:
 				c.Errorf("Error getting links: %s, will retry", err.Error())
@@ -130,20 +162,20 @@ func (l *LinkProcessor) startWorkerManager(maxWorkers int, addURLs chan []string
 		// maxWorkers # of workers, in which case we wait for errors or thread completes
 		// or a timer, in which case, we wait for a timer
 		var duration *time.Duration
-		link, _, err := l.getLink()
+		link, _, err := l.getLink(c)
 		if err != nil {
 			c.Errorf("Error getting links: %s", err.Error())
 		}
 		for {
 			select {
 			case _ = <-threadComplete:
-				c.Debugf("Thread is complete")
+				c.Infof("Thread is complete")
 				numWorkers--
 				if link != nil {
 					async.WithContext(workerErrs, "ingest-worker", processSingleLink(threadComplete, addURLs, link)).Start()
 					link = nil
 				} else {
-					link, duration, err = l.getLink()
+					link, duration, err = l.getLink(c)
 					switch {
 					case err != nil:
 						c.Errorf("Error getting links: %s", err.Error())
@@ -153,16 +185,18 @@ func (l *LinkProcessor) startWorkerManager(maxWorkers int, addURLs chan []string
 					case link != nil:
 						async.WithContext(workerErrs, "ingest-worker", processSingleLink(threadComplete, addURLs, link)).Start()
 						link = nil
+					default:
+						panic("unreachable")
 					}
 				}
-			case _ = <-workerErrs:
-				c.Debugf("Thread is complete")
+			case err := <-workerErrs:
+				c.Infof("Thread encountered error %s", err.Error())
 				numWorkers--
 				if link != nil {
 					async.WithContext(workerErrs, "ingest-worker", processSingleLink(threadComplete, addURLs, link)).Start()
 					link = nil
 				} else {
-					link, duration, err = l.getLink()
+					link, duration, err = l.getLink(c)
 					switch {
 					case err != nil:
 						c.Errorf("Error getting links: %s", err.Error())
@@ -172,22 +206,24 @@ func (l *LinkProcessor) startWorkerManager(maxWorkers int, addURLs chan []string
 					case link != nil:
 						async.WithContext(workerErrs, "ingest-worker", processSingleLink(threadComplete, addURLs, link)).Start()
 						link = nil
+					default:
+						panic("unreachable")
 					}
 				}
 			case _ = <-timer.C:
-				c.Debugf("Timer done")
+				c.Infof("Worker manager timer has finished. Currently there are %d workers", numWorkers)
 				switch {
 				case numWorkers == maxWorkers && link != nil:
 					c.Infof("All workers are busy, and link is non-nil, continuing...")
 				case numWorkers == maxWorkers && link == nil:
 					c.Infof("All workers are busy, but link needs replenshing")
-					link, duration, err = l.getLink()
+					link, duration, err = l.getLink(c)
 					if err != nil {
 						c.Errorf("Error getting link: %s", err.Error())
 						timer = time.NewTimer(2 * time.Minute)
 					}
 				case numWorkers < maxWorkers && link == nil:
-					link, duration, err = l.getLink()
+					link, duration, err = l.getLink(c)
 					switch {
 					case err != nil:
 						c.Errorf("Error getting links: %s", err.Error())
@@ -196,6 +232,8 @@ func (l *LinkProcessor) startWorkerManager(maxWorkers int, addURLs chan []string
 						timer = time.NewTimer(*duration)
 					case link != nil:
 						async.WithContext(workerErrs, "ingest-worker", processSingleLink(threadComplete, addURLs, link)).Start()
+					default:
+						panic("unreachable")
 					}
 				case numWorkers < maxWorkers && link != nil:
 					async.WithContext(workerErrs, "ingest-worker", processSingleLink(threadComplete, addURLs, link)).Start()
@@ -226,8 +264,12 @@ func (l *LinkProcessor) startURLManager(addURLs chan []string) func(c async.Cont
 		if len(parsedURLs) == 0 {
 			return
 		}
+		c.Infof("Acquiring lock for URLs")
 		l.mu.Lock()
 		defer l.mu.Unlock()
+		defer func() {
+			c.Infof("Releasing lock for URLs")
+		}()
 		for domain := range domainSet {
 			if _, ok := l.DomainSet[domain]; !ok {
 				l.DomainSet[domain] = true
@@ -243,8 +285,27 @@ func (l *LinkProcessor) startURLManager(addURLs chan []string) func(c async.Cont
 			}
 			for idx, u := range parsedURLs {
 				if len(contentTopics[idx]) > 0 {
-					if err := contenttopics.ApplyContentTopicsToURL(tx, u.URL, contentTopics[idx]); err != nil {
-						return err
+					var mappings []urltopicmapping.TopicMappingUnion
+					for _, t := range contentTopics[idx] {
+						topicID, err := content.GetTopicIDByContentTopic(tx, t)
+						if err != nil {
+							return err
+						}
+						topicMappingID, err := content.LookupTopicMappingIDForURL(tx, u, *topicID)
+						switch {
+						case err != nil:
+							return err
+						case topicMappingID != nil:
+							mappings = append(mappings, urltopicmapping.TopicMappingUnion{
+								Topic:          t,
+								TopicMappingID: *topicMappingID,
+							})
+						}
+					}
+					if len(mappings) != 0 {
+						if err := urltopicmapping.ApplyContentTopicsToURL(tx, u, mappings); err != nil {
+							return err
+						}
 					}
 				}
 			}
@@ -265,6 +326,7 @@ func (l *LinkProcessor) startURLManager(addURLs chan []string) func(c async.Cont
 
 func processSingleLink(threadComplete chan *links2.Link, addURLs chan []string, link *links2.Link) func(c async.Context) {
 	return func(c async.Context) {
+		c.Infof("Starting new thread")
 		u := link.URL
 		domain := link.Domain
 		if p := urlparser.ParseURL(u); p != nil && domains.IsSeedURL(*p) {
@@ -286,7 +348,9 @@ func processSingleLink(threadComplete chan *links2.Link, addURLs chan []string, 
 			return
 		}
 		languageCode := domainMetadata.LanguageCode
+		c.Infof("Attempting to add URLs")
 		addURLs <- parsedHTMLPage.Links
+		c.Infof("Successfully added URLs")
 		c.Debugf("Processing text for url %s", u)
 		var description *string
 		if d, ok := parsedHTMLPage.Metadata[opengraph.DescriptionTag.Str()]; ok {
@@ -302,10 +366,16 @@ func processSingleLink(threadComplete chan *links2.Link, addURLs chan []string, 
 			threadComplete <- link
 			return
 		}
+		var sourceID *content.SourceID
 		var topicsForURL []contenttopics.ContentTopic
+		var topicMappingIDs []content.TopicMappingID
 		if err := database.WithTx(func(tx *sqlx.Tx) error {
 			var err error
-			topicsForURL, err = contenttopics.GetTopicsForURL(tx, u)
+			topicsForURL, topicMappingIDs, err = urltopicmapping.GetTopicsAndMappingIDsForURL(tx, u)
+			if err != nil {
+				return err
+			}
+			sourceID, err = link.GetSourceID(tx)
 			return err
 		}); err != nil {
 			c.Warnf("Error getting topics for url %s: %s. Continuing...", u, err.Error())
@@ -319,7 +389,9 @@ func processSingleLink(threadComplete chan *links2.Link, addURLs chan []string, 
 			LanguageCode:           languageCode,
 			DocumentVersion:        documents.CurrentDocumentVersion,
 			URL:                    urlparser.MustParseURL(u),
+			SourceID:               sourceID,
 			TopicsForURL:           topicsForURL,
+			TopicMappingIDs:        topicMappingIDs,
 			SeedJobIngestTimestamp: link.SeedJobIngestTimestamp,
 		})
 		if err != nil {
@@ -327,51 +399,63 @@ func processSingleLink(threadComplete chan *links2.Link, addURLs chan []string, 
 			threadComplete <- link
 			return
 		}
+		c.Infof("Thread is complete, sending terminate request")
 		threadComplete <- nil
-		c.Debugf("Finished")
+		c.Infof("Thread is exiting")
 	}
 }
 
-func (l *LinkProcessor) getLink() (*links2.Link, *time.Duration, error) {
+func (l *LinkProcessor) getLink(c ctx.LogContext) (*links2.Link, *time.Duration, error) {
+	c.Infof("Trying to get lock for links")
 	l.mu.Lock()
-	defer l.mu.Unlock()
-	firstDomain := l.OrderedDomains[0]
-	if firstDomain.FreeAt.After(time.Now()) {
-		waitTime := firstDomain.FreeAt.Sub(time.Now())
-		return nil, &waitTime, nil
-	}
-	var shouldKeepDomain bool
+	c.Infof("Acquired lock")
+	var firstNonEmptyDomainIdx *int
 	defer func() {
-		if !shouldKeepDomain {
-			delete(l.DomainSet, firstDomain.Domain)
+		if firstNonEmptyDomainIdx != nil {
+			c.Infof("Removing all domains up to %d that are empty", *firstNonEmptyDomainIdx)
+			l.OrderedDomains = append([]Domain{}, l.OrderedDomains[*firstNonEmptyDomainIdx:]...)
+			c.Infof("Available domains are now of length %d", len(l.OrderedDomains))
 		}
+		c.Infof("Releasing lock")
+		l.mu.Unlock()
 	}()
-	l.OrderedDomains = append([]Domain{}, l.OrderedDomains[1:]...)
-	var link *links2.Link
-	if err := bufferedfetch.WithNextBufferedValue(getBufferedFetchKeyForDomain(firstDomain.Domain), func(i interface{}) error {
-		l, ok := i.(links2.Link)
-		if !ok {
-			return fmt.Errorf("error getting next value for domain %s: incorrect type in buffered fetch", firstDomain.Domain)
+	for idx, domain := range l.OrderedDomains {
+		if domain.FreeAt.After(time.Now()) {
+			c.Infof("Domain %s is not free, sending wait", domain.Domain)
+			waitTime := domain.FreeAt.Sub(time.Now())
+			return nil, &waitTime, nil
 		}
-		link = &l
-		return nil
-	}); err != nil {
-		return nil, nil, err
+		var link *links2.Link
+		err := bufferedfetch.WithNextBufferedValue(getBufferedFetchKeyForDomain(domain.Domain), func(i interface{}) error {
+			l, ok := i.(links2.Link)
+			if !ok {
+				return fmt.Errorf("error getting next value for domain %s: incorrect type in buffered fetch", domain.Domain)
+			}
+			link = &l
+			return nil
+		})
+		switch {
+		case err != nil:
+			return nil, nil, err
+		case link == nil:
+			c.Infof("Domain %s has no links, skipping", domain.Domain)
+			firstNonEmptyDomainIdx = ptr.Int(idx + 1)
+		case link != nil:
+			firstNonEmptyDomainIdx = ptr.Int(idx + 1)
+			l.OrderedDomains = append(l.OrderedDomains, Domain{
+				Domain: domain.Domain,
+				FreeAt: time.Now().Add(defaultTimeUntilFree),
+			})
+			if err := database.WithTx(func(tx *sqlx.Tx) error {
+				return links2.SetURLAsFetched(tx, link.URLIdentifier)
+			}); err != nil {
+				return nil, nil, err
+			}
+			return link, nil, nil
+		}
 	}
-	if link == nil {
-		return nil, nil, nil
-	}
-	shouldKeepDomain = true
-	l.OrderedDomains = append(l.OrderedDomains, Domain{
-		Domain: firstDomain.Domain,
-		FreeAt: time.Now().Add(defaultTimeUntilFree),
-	})
-	if err := database.WithTx(func(tx *sqlx.Tx) error {
-		return links2.SetURLAsFetched(tx, link.URLIdentifier)
-	}); err != nil {
-		return nil, nil, err
-	}
-	return link, nil, nil
+	c.Infof("No links available, sending wait")
+	return nil, ptr.Duration(defaultRefreshPeriod), nil
 }
 
 func (l *LinkProcessor) AddURLs(urls []string, topics []contenttopics.ContentTopic) error {
@@ -407,8 +491,27 @@ func (l *LinkProcessor) AddURLs(urls []string, topics []contenttopics.ContentTop
 			return nil
 		}
 		for _, u := range parsedURLs {
-			if err := contenttopics.ApplyContentTopicsToURL(tx, u.URL, topics); err != nil {
-				return err
+			var mappings []urltopicmapping.TopicMappingUnion
+			for _, t := range topics {
+				topicID, err := content.GetTopicIDByContentTopic(tx, t)
+				if err != nil {
+					return err
+				}
+				topicMappingID, err := content.LookupTopicMappingIDForURL(tx, u, *topicID)
+				switch {
+				case err != nil:
+					return err
+				case topicMappingID != nil:
+					mappings = append(mappings, urltopicmapping.TopicMappingUnion{
+						Topic:          t,
+						TopicMappingID: *topicMappingID,
+					})
+				}
+			}
+			if len(mappings) != 0 {
+				if err := urltopicmapping.ApplyContentTopicsToURL(tx, u, mappings); err != nil {
+					return err
+				}
 			}
 		}
 		return nil

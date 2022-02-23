@@ -16,8 +16,7 @@ func StartScheduler(linkProcessor *linkprocessing.LinkProcessor, errs chan error
 		return err
 	}
 	c := cron.New(cron.WithLocation(usEastern))
-	environmentName := env.MustEnvironmentName()
-	switch environmentName {
+	switch env.MustEnvironmentName() {
 	case env.EnvironmentProd,
 		env.EnvironmentStage:
 		c.AddFunc("30 0 * * *", async.WithContext(errs, "archive-forgot-passwords", handleArchiveForgotPasswordAttempts).Func())
@@ -49,7 +48,7 @@ func StartScheduler(linkProcessor *linkprocessing.LinkProcessor, errs chan error
 	case env.EnvironmentTest:
 		// no-op
 	default:
-		panic(fmt.Sprintf("Unrecognized environment %s", environmentName))
+		panic(fmt.Sprintf("Unsupported environment name: %s", env.MustEnvironmentName()))
 	}
 	c.Start()
 	return nil

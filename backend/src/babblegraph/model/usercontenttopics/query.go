@@ -1,8 +1,10 @@
 package usercontenttopics
 
 import (
+	"babblegraph/model/content"
 	"babblegraph/model/contenttopics"
 	"babblegraph/model/users"
+	"babblegraph/util/ctx"
 	"babblegraph/util/database"
 
 	"github.com/jmoiron/sqlx"
@@ -25,19 +27,59 @@ func GetContentTopicsForUser(tx *sqlx.Tx, userID users.UserID) ([]contenttopics.
 	return out, nil
 }
 
-func UpdateContentTopicsForUser(tx *sqlx.Tx, userID users.UserID, contentTopics []contenttopics.ContentTopic) error {
+type ContentTopicWithTopicID struct {
+	Topic   contenttopics.ContentTopic
+	TopicID content.TopicID
+}
+
+func UpdateContentTopicsForUser(tx *sqlx.Tx, userID users.UserID, contentTopics []ContentTopicWithTopicID) error {
 	if _, err := tx.Exec(setAllContentTopicsToInactiveForUserQuery, userID); err != nil {
 		return err
 	}
-	queryBuilder, err := database.NewBulkInsertQueryBuilder("user_content_topic_mappings", "user_id", "content_topic", "is_active")
+	queryBuilder, err := database.NewBulkInsertQueryBuilder("user_content_topic_mappings", "user_id", "content_topic", "content_topic_id", "is_active")
 	if err != nil {
 		return err
 	}
 	queryBuilder.AddConflictResolution("(user_id, content_topic) DO UPDATE SET is_active = TRUE")
-	for _, contentTopic := range contentTopics {
-		if err := queryBuilder.AddValues(userID, contentTopic, true); err != nil {
+	for _, t := range contentTopics {
+		if err := queryBuilder.AddValues(userID, t.Topic, t.TopicID, true); err != nil {
 			return err
 		}
 	}
 	return queryBuilder.Execute(tx)
+}
+
+// TODO(content-migration): Remove this
+func BackfillUserContentTopicMappings(c ctx.LogContext, tx *sqlx.Tx) error {
+	rows, err := tx.Queryx("SELECT * FROM user_content_topic_mappings WHERE content_topic_id IS NULL")
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	var count int64
+	c.Infof("Starting user topic mappings update")
+	for rows.Next() {
+		var match dbUserContentTopicMapping
+		if err := rows.StructScan(&match); err != nil {
+			return err
+		}
+		if err := database.WithTx(func(tx *sqlx.Tx) error {
+			topicID, err := content.GetTopicIDByContentTopic(tx, match.ContentTopic)
+			if err != nil {
+				return err
+			}
+			if _, err := tx.Exec("UPDATE user_content_topic_mappings SET content_topic_id = $1 WHERE _id = $2", *topicID, match.ID); err != nil {
+				return err
+			}
+			count++
+			if count%1000 == 0 {
+				c.Infof("Successfully completed %d mapping updates", count)
+			}
+			return nil
+		}); err != nil {
+			c.Infof("Error on ID %s: %s", match.ID, err.Error())
+		}
+	}
+	c.Infof("Finished user topic mappings update")
+	return nil
 }
