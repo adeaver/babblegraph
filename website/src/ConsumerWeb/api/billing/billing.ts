@@ -35,6 +35,7 @@ export type PremiumNewsletterSubscription = {
     paymentState: PaymentState;
     stripePaymentIntentId: string | undefined;
     currentPeriodEnd: string;
+    isAutoRenewEnabled: boolean;
 }
 
 export type GetOrCreatePremiumNewsletterSubscriptionRequest = {

@@ -53,6 +53,7 @@ func convertStripeSubscriptionToPremiumNewsletterSubscription(tx *sqlx.Tx, strip
 	premiumNewsletterSubscription := PremiumNewsletterSubscription{
 		StripePaymentIntentID: paymentIntentID,
 		CurrentPeriodEnd:      time.Unix(stripeSubscription.CurrentPeriodEnd, 0),
+		IsAutoRenewEnabled:    !stripeSubscription.CancelAtPeriodEnd,
 	}
 	if dbNewsletterSubscription != nil {
 		billingInformation, err := getBillingInformation(tx, dbNewsletterSubscription.BillingInformationID)

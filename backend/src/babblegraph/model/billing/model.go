@@ -46,6 +46,7 @@ type PremiumNewsletterSubscription struct {
 	PaymentState          PaymentState                     `json:"payment_state"`
 	CurrentPeriodEnd      time.Time                        `json:"current_period_end"`
 	StripePaymentIntentID *string                          `json:"stripe_payment_intent_id,omitempty"`
+	IsAutoRenewEnabled    bool                             `json:"is_auto_renew_enabled"`
 }
 
 func (p *PremiumNewsletterSubscription) GetUserID() (*users.UserID, error) {
