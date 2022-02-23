@@ -13,6 +13,7 @@ import { Alignment, TypographyColor } from 'common/typography/common';
 import Link, { LinkTarget } from 'common/components/Link/Link';
 import Paragraph, { Size } from 'common/typography/Paragraph';
 import PaymentMethodDisplay from 'ConsumerWeb/components/common/Billing/PaymentMethodDisplay';
+import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
 import { PrimaryButton, WarningButton } from 'common/components/Button/Button';
 import Alert from 'common/components/Alert/Alert';
 
@@ -203,35 +204,40 @@ const PaymentMethodManagementComponent = asBaseComponent<GetPaymentMethodsForUse
         const [ selectedPaymentMethodID, setSelectedPaymentMethodID ] = useState<string>(null);
         const [ paymentMethods, setPaymentMethods ] = useState<Array<PaymentMethod>>(props.paymentMethods);
 
+        const [ isLoading, setIsLoading ] = useState<boolean>(false);
         const [ wasSuccessful, setWasSuccessful ] = useState<boolean>(false);
 
         const handleMarkPaymentMethodAsDefault = () => {
-            props.setIsLoading(true);
+            setIsLoading(true);
             markPaymentMethodAsDefault({
                 paymentMethodId: selectedPaymentMethodID,
             },
             (resp: MarkPaymentMethodAsDefaultResponse) => {
-                props.setIsLoading(false);
+                setIsLoading(false);
                 setWasSuccessful(true);
+                setPaymentMethods(paymentMethods.map((p: PaymentMethod) => ({
+                    ...p,
+                    isDefault: p.externalId === selectedPaymentMethodID
+                })));
             },
             (err: Error) => {
-                props.setIsLoading(false);
+                setIsLoading(false);
                 props.setError(err);
             });
         }
 
         const handleDeletePaymentMethod = () => {
-            props.setIsLoading(true);
+            setIsLoading(true);
             deletePaymentMethodForUser({
                 paymentMethodId: selectedPaymentMethodID,
             },
             (resp: DeletePaymentMethodForUserResponse) => {
-                props.setIsLoading(false);
+                setIsLoading(false);
                 setWasSuccessful(true);
                 setPaymentMethods(paymentMethods.filter((p: PaymentMethod) => p.externalId !== selectedPaymentMethodID));
             },
             (err: Error) => {
-                props.setIsLoading(false);
+                setIsLoading(false);
                 props.setError(err);
             });
         }
@@ -264,7 +270,7 @@ const PaymentMethodManagementComponent = asBaseComponent<GetPaymentMethodsForUse
                                 <PrimaryButton
                                     onClick={handleMarkPaymentMethodAsDefault}
                                     className={classes.paymentMethodButton}
-                                    disabled={!selectedPaymentMethodID}>
+                                    disabled={!selectedPaymentMethodID || isLoading}>
                                     Make Default Payment Method
                                 </PrimaryButton>
                             </CenteredComponent>
@@ -272,10 +278,13 @@ const PaymentMethodManagementComponent = asBaseComponent<GetPaymentMethodsForUse
                                 <WarningButton
                                     onClick={handleDeletePaymentMethod}
                                     className={classes.paymentMethodButton}
-                                    disabled={!selectedPaymentMethodID}>
+                                    disabled={!selectedPaymentMethodID || isLoading}>
                                     Delete Payment Method
                                 </WarningButton>
                             </CenteredComponent>
+                            {
+                                isLoading && <LoadingSpinner />
+                            }
                         </div>
                     )
                 }
