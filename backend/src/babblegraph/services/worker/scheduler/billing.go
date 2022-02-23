@@ -66,6 +66,29 @@ func handleSyncBilling(c async.Context) {
 				default:
 					return fmt.Errorf("Unrecognized payment state for subscription ID %s: %d", premiumSubscriptionID, premiumNewsletterSubscription.PaymentState)
 				}
+			case billing.PremiumNewsletterSubscriptionUpdateTypeCanceled:
+				switch premiumNewsletterSubscription.PaymentState {
+				case billing.PaymentStateCreatedUnpaid,
+					billing.PaymentStateTrialNoPaymentMethod,
+					billing.PaymentStateTrialPaymentMethodAdded,
+					billing.PaymentStateActive,
+					billing.PaymentStateErrored:
+					return fmt.Errorf("Subscription %s is in the wrong state", premiumSubscriptionID)
+				case billing.PaymentStateTerminated:
+					userID, err = premiumNewsletterSubscription.GetUserID()
+					if err != nil {
+						return err
+					}
+					if err := useraccounts.ExpireSubscriptionForUser(tx, *userID); err != nil {
+						return err
+					}
+					if _, err := useraccountsnotifications.EnqueueNotificationRequest(tx, *userID, useraccountsnotifications.NotificationTypePremiumSubscriptionCanceled, time.Now().Add(5*time.Minute)); err != nil {
+						return err
+					}
+					return billing.MarkPremiumNewsletterSyncRequestDone(tx, premiumSubscriptionID)
+				default:
+					return fmt.Errorf("Unrecognized payment state for subscription ID %s: %d", premiumSubscriptionID, premiumNewsletterSubscription.PaymentState)
+				}
 			default:
 				return fmt.Errorf("Unrecognized update type: %s", updateType)
 			}
