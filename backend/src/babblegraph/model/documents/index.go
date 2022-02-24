@@ -46,6 +46,7 @@ type IndexDocumentInput struct {
 	LanguageCode                       wordsmith.LanguageCode
 	ReadabilityScore                   int64
 	Topics                             []contenttopics.ContentTopic
+	TopicIDs                           []content.TopicID
 	TopicMappingIDs                    []content.TopicMappingID
 	SeedJobIngestTimestamp             *int64
 	HasPaywall                         bool
@@ -56,6 +57,9 @@ type IndexDocumentInput struct {
 func AssignIDAndIndexDocument(c ctx.LogContext, input IndexDocumentInput) (*DocumentID, error) {
 	documentID := makeDocumentIndexForURL(input.URL)
 	ogMetadata := opengraph.GetBasicMetadata(input.Metadata)
+	if len(input.TopicIDs) != len(input.Topics) {
+		c.Warnf("Document %s has %d topic IDs, but %d topics", documentID, len(input.TopicIDs), len(input.Topics))
+	}
 	if err := elastic.IndexDocument(c, documentIndex{}, Document{
 		ID:                                 documentID,
 		Version:                            input.Version,
@@ -65,6 +69,7 @@ func AssignIDAndIndexDocument(c ctx.LogContext, input IndexDocumentInput) (*Docu
 		DocumentType:                       input.Type,
 		Domain:                             input.URL.Domain,
 		Topics:                             input.Topics,
+		TopicIDs:                           input.TopicIDs,
 		TopicMappingIDs:                    input.TopicMappingIDs,
 		TopicsLength:                       ptr.Int64(int64(len(input.Topics))),
 		LemmatizedDescription:              input.LemmatizedDescription,
