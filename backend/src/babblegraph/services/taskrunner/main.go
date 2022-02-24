@@ -28,8 +28,6 @@ func main() {
         create-elastic-indexes: create new indices in ElasticSearch
         sync-stripe: sync failed stripe events
         product-updates: send product updates
-        admin-content-backfill: backfill all admin content
-        admin-content-values-backfill: backfill all admin content values
         admin-content-document-backfill: backfill all documents with new content
         create-admin: create admin`)
 	userEmail := flag.String("user-email", "none", "Email address of user to create")
@@ -89,14 +87,6 @@ func main() {
 			log.Fatal("no email specified")
 		}
 		if err := tasks.CreateAdminAndEmitToken(*userEmail); err != nil {
-			log.Fatal(err.Error())
-		}
-	case "admin-content-backfill":
-		if err := tasks.SyncHardcodedContent(); err != nil {
-			log.Fatal(err.Error())
-		}
-	case "admin-content-values-backfill":
-		if err := tasks.BackfillAdminContentValues(); err != nil {
 			log.Fatal(err.Error())
 		}
 	case "admin-content-document-backfill":
