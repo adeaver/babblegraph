@@ -164,6 +164,10 @@ func GetIngestStrategyFromString(i string) (*IngestStrategy, error) {
 
 type SourceTopicMappingID string
 
+func (s SourceTopicMappingID) Ptr() *SourceTopicMappingID {
+	return &s
+}
+
 type dbSourceTopicMapping struct {
 	ID             SourceTopicMappingID `db:"_id"`
 	CreatedAt      time.Time            `db:"created_at"`

@@ -391,7 +391,7 @@ func processSingleLink(threadComplete chan *links2.Link, addURLs chan []string, 
 					return fmt.Errorf("unreachable")
 				}
 			}
-			if len(sourceSeedTopicMappings) == 0 {
+			if len(sourceSeedTopicMappings) > 0 {
 				topicIDs, err = content.LookupTopicsForSourceSeedMappingIDs(tx, sourceSeedTopicMappings)
 				if err != nil {
 					return err
