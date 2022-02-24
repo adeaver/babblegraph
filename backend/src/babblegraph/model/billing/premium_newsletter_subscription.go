@@ -21,7 +21,7 @@ const (
 	lookupPremiumNewsletterSubscriptionByExternalIDQuery  = "SELECT * FROM billing_premium_newsletter_subscription WHERE external_id_mapping_id = $1"
 	lookupPremiumNewsletterNonTerminatedSubscriptionQuery = "SELECT * FROM billing_premium_newsletter_subscription WHERE billing_information_id = $1 AND is_terminated = FALSE"
 	insertPremiumNewsletterSubscriptionQuery              = "INSERT INTO billing_premium_newsletter_subscription (_id, billing_information_id, external_id_mapping_id) VALUES ($1, $2, $3)"
-	terminatePremiumNewsletterSubscriptionQuery           = "UPDATE billing_premium_newsletter_subscription SET is_terminated = TRUE WHERE _id = $1"
+	terminatePremiumNewsletterSubscriptionQuery           = "UPDATE billing_premium_newsletter_subscription SET is_terminated = TRUE, last_modified_at = timezone('utc', now()) WHERE _id = $1"
 
 	insertPremiumNewsletterSubscriptionDebounceRecordQuery = "INSERT INTO billing_premium_newsletter_subscription_debounce_record (billing_information_id) VALUES ($1)"
 	deletePremiumNewsletterSubscriptionDebounceRecordQuery = "DELETE FROM billing_premium_newsletter_subscription_debounce_record WHERE billing_information_id = $1"
