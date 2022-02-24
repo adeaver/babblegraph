@@ -343,6 +343,6 @@ func HandleStripeEvent(c ctx.LogContext, tx *sqlx.Tx, stripeSignature string, ev
 	default:
 		c.Warnf("Unrecognized event type: %s", event.Type)
 	}
-	_, err = tx.Exec(CaptureStripeEventQuery, event.Type, wasProcessed, event)
+	_, err = tx.Exec(CaptureStripeEventQuery, event.Type, wasProcessed, eventBytes)
 	return err
 }

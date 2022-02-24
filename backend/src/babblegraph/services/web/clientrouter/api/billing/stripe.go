@@ -36,8 +36,9 @@ func stripeHandleWebhookEvent(r *router.Request) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
+	stripeSignature := r.GetHeader("Stripe-Signature")
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
-		return billing.HandleStripeEvent(r, tx, r.GetHeader("Stripe-Signature"), bodyBytes)
+		return billing.HandleStripeEvent(r, tx, stripeSignature, bodyBytes)
 	}); err != nil {
 		return nil, err
 	}
