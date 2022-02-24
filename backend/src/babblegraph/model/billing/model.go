@@ -110,8 +110,14 @@ type dbPremiumNewsletterSubscriptionSyncRequest struct {
 type PremiumNewsletterSubscriptionUpdateType string
 
 const (
+	// These update types are for when we make an update on our end
+	// but are unsure if the remote payment processor has finished processing
 	PremiumNewsletterSubscriptionUpdateTypeTransitionToActive PremiumNewsletterSubscriptionUpdateType = "transition-to-active"
 	PremiumNewsletterSubscriptionUpdateTypeCanceled           PremiumNewsletterSubscriptionUpdateType = "canceled"
+
+	// This update type is for when we receive an update pushed from
+	// the remote payment processor
+	PremiumNewsletterSubscriptionUpdateTypeRemoteUpdated PremiumNewsletterSubscriptionUpdateType = "remote-updated"
 )
 
 func (u PremiumNewsletterSubscriptionUpdateType) Str() string {

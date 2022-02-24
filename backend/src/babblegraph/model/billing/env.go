@@ -7,8 +7,8 @@ import (
 )
 
 const (
-	PremiumNewsletterSubscriptionStripeProductIDProd = "price_1JIMqNJscBSiX47SxOGRUX1p"
-	PremiumNewsletterSubscriptionStripeProductIDTest = "price_1JP8vOJscBSiX47S7sUI1z49"
+	PremiumNewsletterSubscriptionStripeProductIDProd = "price_1KWWQoJscBSiX47S6Jz4vd8O"
+	PremiumNewsletterSubscriptionStripeProductIDTest = "price_1KWWReJscBSiX47SQiyCPb5X"
 )
 
 func getStripeProductIDForEnvironment() (*string, error) {

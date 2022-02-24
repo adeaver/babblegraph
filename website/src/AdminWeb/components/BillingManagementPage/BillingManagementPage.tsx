@@ -20,6 +20,7 @@ import {
     PremiumNewsletterSubscription,
     PaymentState,
 } from 'common/api/billing/billing';
+import { SubscriptionLevel } from 'common/api/useraccounts/useraccounts';
 import {
     UserBillingInformation,
 
@@ -42,6 +43,7 @@ const BillingManagementPage = () => {
     const [ error, setError ] = useState<Error>(null);
 
     const [ userBillingInformation, setUserBillingInformation ] = useState<UserBillingInformation>(null);
+    const [ userAccountStatus, setUserAccountStatus ] = useState<SubscriptionLevel>(null);
 
     const [ emailAddress, setEmailAddress ] = useState<string>(null);
     const handleEmailAddressChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -56,6 +58,7 @@ const BillingManagementPage = () => {
         (resp: GetBillingInformationForEmailAddressResponse) => {
             setIsLoading(false);
             setUserBillingInformation(resp.billingInformation);
+            setUserAccountStatus(resp.userAccountStatus);
         },
         (err: Error) => {
             setIsLoading(false);
@@ -75,6 +78,7 @@ const BillingManagementPage = () => {
     } else if (userBillingInformation !== null) {
         body = (
             <UserBillingInformationDisplay
+                userAccountStatus={userAccountStatus}
                 userBillingInformation={userBillingInformation} />
         );
     }
@@ -117,6 +121,7 @@ const BillingManagementPage = () => {
 
 type UserBillingInformationDisplayProps = {
     userBillingInformation: UserBillingInformation | undefined;
+    userAccountStatus: SubscriptionLevel | undefined;
 }
 
 const UserBillingInformationDisplay = (props: UserBillingInformationDisplayProps) => {
@@ -142,8 +147,8 @@ const UserBillingInformationDisplay = (props: UserBillingInformationDisplayProps
     return (
         <CenteredComponent>
             <DisplayCard>
-                <Heading3 color={!!props.userBillingInformation.userAccountStatus ? TypographyColor.Primary : TypographyColor.Gray}>
-                    Subscription Status: {props.userBillingInformation.userAccountStatus || "inactive"}
+                <Heading3 color={!!props.userAccountStatus ? TypographyColor.Primary : TypographyColor.Gray}>
+                    Subscription Status: {props.userAccountStatus || "inactive"}
                 </Heading3>
                 <Paragraph>
                     Account Type: {props.userBillingInformation.externalIdType}

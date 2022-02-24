@@ -9,7 +9,6 @@ import (
 	"babblegraph/services/web/router"
 	"babblegraph/util/database"
 	"babblegraph/util/email"
-	"fmt"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -39,6 +38,7 @@ type getBillingInformationForEmailAddressRequest struct {
 
 type getBillingInformationForEmailAddressResponse struct {
 	BillingInformation *billing.UserBillingInformation `json:"billing_information"`
+	UserAccountStatus  *useraccounts.SubscriptionLevel `json:"user_account_status"`
 }
 
 func getBillingInformationForEmailAddress(adminID admin.ID, r *router.Request) (interface{}, error) {
@@ -48,15 +48,25 @@ func getBillingInformationForEmailAddress(adminID admin.ID, r *router.Request) (
 	}
 	formattedEmailAddress := email.FormatEmailAddress(req.EmailAddress)
 	var userBillingInformation *billing.UserBillingInformation
+	var userAccountStatus *useraccounts.SubscriptionLevel
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		var err error
 		userBillingInformation, err = billing.GetBillingInformationForEmailAddress(r, tx, formattedEmailAddress)
-		return err
+		switch {
+		case err != nil:
+			return err
+		case userBillingInformation == nil:
+			return nil
+		default:
+			userAccountStatus, err = useraccounts.LookupSubscriptionLevelForUser(tx, userBillingInformation.UserID)
+			return err
+		}
 	}); err != nil {
 		return nil, err
 	}
 	return getBillingInformationForEmailAddressResponse{
 		BillingInformation: userBillingInformation,
+		UserAccountStatus:  userAccountStatus,
 	}, nil
 }
 
@@ -75,40 +85,10 @@ func forceSyncForUser(adminID admin.ID, r *router.Request) (interface{}, error) 
 	}
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		premiumNewsletterSubscription, err := billing.LookupPremiumNewsletterSubscriptionForUser(r, tx, req.UserID)
-		switch {
-		case err != nil:
+		if err != nil {
 			return err
-		case premiumNewsletterSubscription == nil:
-			return useraccounts.ExpireSubscriptionForUser(tx, req.UserID)
-		case premiumNewsletterSubscription != nil:
-			switch premiumNewsletterSubscription.PaymentState {
-			case billing.PaymentStateCreatedUnpaid:
-				return nil
-			case billing.PaymentStateTrialNoPaymentMethod,
-				billing.PaymentStateTrialPaymentMethodAdded,
-				billing.PaymentStateActive:
-				subscriptionLevel, err := useraccounts.LookupSubscriptionLevelForUser(tx, req.UserID)
-				switch {
-				case err != nil:
-					return err
-				case subscriptionLevel == nil:
-					return useraccounts.AddSubscriptionLevelForUser(tx, useraccounts.AddSubscriptionLevelForUserInput{
-						UserID:            req.UserID,
-						SubscriptionLevel: useraccounts.SubscriptionLevelPremium,
-						ShouldStartActive: true,
-						ExpirationTime:    premiumNewsletterSubscription.CurrentPeriodEnd,
-					})
-				case subscriptionLevel != nil:
-					return useraccounts.UpdateSubscriptionExpirationTime(tx, req.UserID, premiumNewsletterSubscription.CurrentPeriodEnd)
-				}
-			case billing.PaymentStateErrored,
-				billing.PaymentStateTerminated:
-				return nil
-			default:
-				return fmt.Errorf("Unsupported Payment State %d", premiumNewsletterSubscription.PaymentState)
-			}
 		}
-		return nil
+		return useraccounts.SyncUserAccountWithPremiumNewsletterSubscription(tx, req.UserID, premiumNewsletterSubscription)
 	}); err != nil {
 		return nil, err
 	}

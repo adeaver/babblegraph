@@ -60,6 +60,11 @@ var Routes = router.RouteGroup{
 			Handler: routermiddleware.WithNoBodyRequestLogger(
 				routermiddleware.WithAuthentication(stripeBeginPaymentMethodSetup),
 			),
+		}, {
+			Path: "stripe_handle_webhook_event_1",
+			Handler: routermiddleware.WithNoBodyRequestLogger(
+				stripeHandleWebhookEvent,
+			),
 		},
 	},
 }

@@ -26,8 +26,16 @@ func (r *Request) LogRequest(includeBody bool) {
 	r.Infof(string(requestDump))
 }
 
-func (r *Request) GetJSONBody(v interface{}) error {
+func (r *Request) GetBodyAsBytes() ([]byte, error) {
 	bytes, err := ioutil.ReadAll(r.r.Body)
+	if err != nil {
+		return nil, err
+	}
+	return bytes, nil
+}
+
+func (r *Request) GetJSONBody(v interface{}) error {
+	bytes, err := r.GetBodyAsBytes()
 	if err != nil {
 		return err
 	}
@@ -40,6 +48,10 @@ func (r *Request) GetFile(formFileFieldName *string) (multipart.File, *multipart
 
 func (r *Request) GetFormValue(fieldName string) string {
 	return r.r.FormValue(fieldName)
+}
+
+func (r *Request) GetHeader(headerName string) string {
+	return r.r.Header.Get(headerName)
 }
 
 func (r *Request) GetCookies() []*http.Cookie {

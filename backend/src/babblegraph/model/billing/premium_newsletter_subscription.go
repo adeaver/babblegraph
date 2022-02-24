@@ -18,6 +18,7 @@ import (
 const (
 	lookupPremiumNewsletterSubscriptionByIDQuery          = "SELECT * FROM billing_premium_newsletter_subscription WHERE _id = $1"
 	lookupPremiumNewsletterSubscriptionQuery              = "SELECT * FROM billing_premium_newsletter_subscription WHERE billing_information_id = $1 ORDER BY created_at DESC"
+	lookupPremiumNewsletterSubscriptionByExternalIDQuery  = "SELECT * FROM billing_premium_newsletter_subscription WHERE external_id_mapping_id = $1"
 	lookupPremiumNewsletterNonTerminatedSubscriptionQuery = "SELECT * FROM billing_premium_newsletter_subscription WHERE billing_information_id = $1 AND is_terminated = FALSE"
 	insertPremiumNewsletterSubscriptionQuery              = "INSERT INTO billing_premium_newsletter_subscription (_id, billing_information_id, external_id_mapping_id) VALUES ($1, $2, $3)"
 	terminatePremiumNewsletterSubscriptionQuery           = "UPDATE billing_premium_newsletter_subscription SET is_terminated = TRUE WHERE _id = $1"
@@ -306,6 +307,32 @@ func GetPremiumNewsletterSubscriptionTrialEligibilityForUser(tx *sqlx.Tx, userID
 				trialEligibilityDays = 0
 			}
 			return ptr.Int64(trialEligibilityDays), nil
+		}
+	}
+}
+
+// Webhook functions
+
+func lookupPremiumNewsletterSubscriptionForStripeID(c ctx.LogContext, tx *sqlx.Tx, stripeID string) (*PremiumNewsletterSubscription, error) {
+	externalIDMapping, err := lookupExternalIDMappingByExternalID(tx, externalIDTypeStripe, stripeID)
+	switch {
+	case err != nil:
+		return nil, err
+	case externalIDMapping == nil:
+		return nil, nil
+	default:
+		externalIDMappingID := externalIDMapping.ID
+		var matches []dbPremiumNewsletterSubscription
+		err := tx.Select(&matches, lookupPremiumNewsletterSubscriptionByExternalIDQuery, externalIDMappingID)
+		switch {
+		case err != nil:
+			return nil, err
+		case len(matches) == 0:
+			return nil, nil
+		case len(matches) > 1:
+			return nil, fmt.Errorf("Expected at most one subscription for external ID %s, but got %d", externalIDMappingID, len(matches))
+		default:
+			return getStripeSubscriptionAndConvertSubscriptionForDBPremiumNewsletterSubscription(c, tx, matches[0], true)
 		}
 	}
 }

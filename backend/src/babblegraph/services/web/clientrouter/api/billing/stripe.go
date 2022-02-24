@@ -28,3 +28,18 @@ func stripeBeginPaymentMethodSetup(userAuth routermiddleware.UserAuthentication,
 		SetupIntentClientSecret: *setupIntentClientSecret,
 	}, nil
 }
+
+type stripeHandleWebhookEventResponse struct{}
+
+func stripeHandleWebhookEvent(r *router.Request) (interface{}, error) {
+	bodyBytes, err := r.GetBodyAsBytes()
+	if err != nil {
+		return nil, err
+	}
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		return billing.HandleStripeEvent(r, tx, r.GetHeader("Stripe-Signature"), bodyBytes)
+	}); err != nil {
+		return nil, err
+	}
+	return stripeHandleWebhookEventResponse{}, nil
+}

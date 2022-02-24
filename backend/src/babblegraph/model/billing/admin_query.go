@@ -1,7 +1,6 @@
 package billing
 
 import (
-	"babblegraph/model/useraccounts"
 	"babblegraph/model/users"
 	"babblegraph/util/ctx"
 	"fmt"
@@ -10,10 +9,9 @@ import (
 )
 
 type UserBillingInformation struct {
-	UserID            users.UserID                    `json:"user_id"`
-	UserAccountStatus *useraccounts.SubscriptionLevel `json:"user_account_status"`
-	ExternalIDType    string                          `json:"external_id_type"`
-	Subscriptions     []PremiumNewsletterSubscription `json:"subscriptions"`
+	UserID         users.UserID                    `json:"user_id"`
+	ExternalIDType string                          `json:"external_id_type"`
+	Subscriptions  []PremiumNewsletterSubscription `json:"subscriptions"`
 }
 
 func GetBillingInformationForEmailAddress(c ctx.LogContext, tx *sqlx.Tx, emailAddress string) (*UserBillingInformation, error) {
@@ -47,14 +45,10 @@ func GetBillingInformationForEmailAddress(c ctx.LogContext, tx *sqlx.Tx, emailAd
 		if err != nil {
 			return nil, err
 		}
+		return &out, nil
 	default:
 		return nil, fmt.Errorf("Unsupported external ID type %s", externalID.IDType)
 	}
-	out.UserAccountStatus, err = useraccounts.LookupSubscriptionLevelForUser(tx, user.ID)
-	if err != nil {
-		return nil, err
-	}
-	return &out, nil
 }
 
 func getAllStripeSubscriptionsForUser(c ctx.LogContext, tx *sqlx.Tx, billingInformationID BillingInformationID) ([]PremiumNewsletterSubscription, error) {

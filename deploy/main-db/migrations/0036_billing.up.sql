@@ -52,3 +52,14 @@ CREATE TABLE IF NOT EXISTS billing_premium_newsletter_sync_request(
 
     PRIMARY KEY(premium_newsletter_subscription_id)
 );
+
+CREATE TABLE IF NOT EXISTS billing_stripe_event(
+    _id uuid DEFAULT uuid_generate_v4 (),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()),
+    last_modified_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()),
+    type TEXT NOT NULL,
+    processed BOOLEAN NOT NULL DEFAULT FALSE,
+    data JSONB NOT NULL,
+
+    PRIMARY KEY(_id)
+);

@@ -5,7 +5,6 @@ import { SubscriptionLevel } from 'common/api/useraccounts/useraccounts';
 
 export type UserBillingInformation = {
     userId: string;
-    userAccountStatus: SubscriptionLevel | undefined;
     externalIdType: string;
     subscriptions: Array<PremiumNewsletterSubscription>;
 }
@@ -16,6 +15,7 @@ export type GetBillingInformationForEmailAddressRequest = {
 
 export type GetBillingInformationForEmailAddressResponse = {
     billingInformation: UserBillingInformation | undefined;
+    userAccountStatus: SubscriptionLevel | undefined;
 }
 
 export function getBillingInformationForEmailAddress(
