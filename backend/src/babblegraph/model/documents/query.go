@@ -38,7 +38,7 @@ const maximumNumberOfTopicsPerDocument int64 = 4
 var validVersionsForLanguageCode = map[wordsmith.LanguageCode][]Version{
 	wordsmith.LanguageCodeSpanish: {
 		Version7,
-		Version7,
+		Version8,
 	},
 }
 
@@ -126,6 +126,7 @@ func ExecuteDocumentQuery(c ctx.LogContext, query executableQuery, input Execute
 type UpdateDocumentInput struct {
 	Version         Version                  `json:"version"`
 	TopicMappingIDs []content.TopicMappingID `json:"topic_mapping_ids"`
+	TopicIDs        []content.TopicID        `json:"topic_ids"`
 	SourceID        content.SourceID         `json:"source_id"`
 }
 

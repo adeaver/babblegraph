@@ -136,7 +136,7 @@ func LookupTopicMappingIDForSourceAndTopic(c ctx.LogContext, tx *sqlx.Tx, source
 }
 
 func LookupTopicsForSourceSeedMappingIDs(tx *sqlx.Tx, sourceSeedMappingID []SourceSeedTopicMappingID) ([]TopicID, error) {
-	query, args, err := sqlx.In(getTopicIDsForSourceSeedIDsQuery)
+	query, args, err := sqlx.In(getTopicIDsForSourceSeedIDsQuery, sourceSeedMappingID)
 	if err != nil {
 		return nil, err
 	}
