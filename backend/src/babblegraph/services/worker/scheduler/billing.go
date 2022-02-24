@@ -94,7 +94,10 @@ func handleSyncBilling(c async.Context) {
 				if err != nil {
 					return err
 				}
-				return useraccounts.SyncUserAccountWithPremiumNewsletterSubscription(tx, *userID, premiumNewsletterSubscription)
+				if err := useraccounts.SyncUserAccountWithPremiumNewsletterSubscription(tx, *userID, premiumNewsletterSubscription); err != nil {
+					return err
+				}
+				return billing.MarkPremiumNewsletterSyncRequestDone(tx, premiumSubscriptionID)
 			default:
 				return fmt.Errorf("Unrecognized update type: %s", updateType)
 			}

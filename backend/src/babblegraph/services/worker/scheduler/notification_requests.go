@@ -2,12 +2,13 @@ package scheduler
 
 import (
 	email_actions "babblegraph/actions/email"
-	"babblegraph/externalapis/bgstripe"
+	"babblegraph/model/billing"
 	"babblegraph/model/email"
 	"babblegraph/model/routes"
 	"babblegraph/model/useraccountsnotifications"
 	"babblegraph/model/users"
 	"babblegraph/util/async"
+	"babblegraph/util/ctx"
 	"babblegraph/util/database"
 	"babblegraph/util/env"
 	"babblegraph/util/ses"
@@ -44,7 +45,7 @@ func handlePendingUserAccountNotificationRequests(c async.Context) {
 			}
 			switch req.Type {
 			case useraccountsnotifications.NotificationTypeTrialEndingSoon:
-				return handleTrialEndingSoonNotification(tx, emailClient, *user, req)
+				return handleTrialEndingSoonNotification(c, tx, emailClient, *user, req)
 			case useraccountsnotifications.NotificationTypeAccountCreated:
 				return handleAccountCreationNotification(tx, emailClient, *user)
 			case useraccountsnotifications.NotificationTypePaymentError:
@@ -63,8 +64,8 @@ func handlePendingUserAccountNotificationRequests(c async.Context) {
 	}
 }
 
-func handleTrialEndingSoonNotification(tx *sqlx.Tx, cl *ses.Client, user users.User, req useraccountsnotifications.NotificationRequest) error {
-	subscriptionDetails, err := bgstripe.LookupActiveSubscriptionForUser(tx, req.UserID)
+func handleTrialEndingSoonNotification(c ctx.LogContext, tx *sqlx.Tx, cl *ses.Client, user users.User, req useraccountsnotifications.NotificationRequest) error {
+	subscriptionDetails, err := billing.LookupPremiumNewsletterSubscriptionForUser(c, tx, req.UserID)
 	switch {
 	case err != nil:
 		return err
@@ -76,7 +77,7 @@ func handleTrialEndingSoonNotification(tx *sqlx.Tx, cl *ses.Client, user users.U
 		paymentSettingsLink := routes.MakeLoginLinkWithPaymentSettingsRedirectKey()
 		var emailInput *email_actions.SendGenericEmailWithOptionalActionForRecipientInput
 		switch subscriptionDetails.PaymentState {
-		case bgstripe.PaymentStateTrialNoPaymentMethod:
+		case billing.PaymentStateTrialNoPaymentMethod:
 			emailInput = &email_actions.SendGenericEmailWithOptionalActionForRecipientInput{
 				EmailType: email.EmailTypeTrialEndingSoonActionRequired,
 				Recipient: email.Recipient{
@@ -101,7 +102,7 @@ func handleTrialEndingSoonNotification(tx *sqlx.Tx, cl *ses.Client, user users.U
 					"Thank you again for trying out Babblegraph Premium. If you have any questions or need any help, just reply to this email!",
 				},
 			}
-		case bgstripe.PaymentStateTrialPaymentMethodAdded:
+		case billing.PaymentStateTrialPaymentMethodAdded:
 			emailInput = &email_actions.SendGenericEmailWithOptionalActionForRecipientInput{
 				EmailType: email.EmailTypeTrialEndingSoon,
 				Recipient: email.Recipient{
@@ -126,16 +127,16 @@ func handleTrialEndingSoonNotification(tx *sqlx.Tx, cl *ses.Client, user users.U
 					"If you have any questions or need any help, just reply to this email.",
 				},
 			}
-		case bgstripe.PaymentStateActive:
+		case billing.PaymentStateActive:
 			return nil
-		case bgstripe.PaymentStateCreatedUnpaid,
-			bgstripe.PaymentStateErrored,
-			bgstripe.PaymentStateTerminated:
+		case billing.PaymentStateCreatedUnpaid,
+			billing.PaymentStateErrored,
+			billing.PaymentStateTerminated:
 			// Log because this error is not retryable
-			log.Println(fmt.Sprintf("User %s has a subscription in state %d, but expected either 1 or 2", req.UserID, subscriptionDetails.PaymentState))
+			c.Infof("User %s has a subscription in state %d, but expected either 1 or 2", req.UserID, subscriptionDetails.PaymentState)
 			return nil
 		default:
-			log.Println(fmt.Sprintf("User %s has a subscription in an unrecognized state %d, but expected either 1 or 2", req.UserID, subscriptionDetails.PaymentState))
+			c.Infof("User %s has a subscription in an unrecognized state %d, but expected either 1 or 2", req.UserID, subscriptionDetails.PaymentState)
 			return nil
 
 		}
