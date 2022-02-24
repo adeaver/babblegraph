@@ -318,3 +318,17 @@ func MustMakeTopicMappingID(input MakeTopicMappingIDInput) TopicMappingID {
 		panic("Neither source topic mapping or source seed topic mapping id are non-null")
 	}
 }
+
+func (t TopicMappingID) GetOriginID() (*SourceSeedTopicMappingID, *SourceTopicMappingID, error) {
+	idAsString := string(t)
+	switch {
+	case strings.HasPrefix(idAsString, "sourceseed-"):
+		id := SourceSeedTopicMappingID(strings.TrimPrefix(idAsString, "sourceseed-"))
+		return &id, nil, nil
+	case strings.HasPrefix(idAsString, "source-"):
+		id := SourceTopicMappingID(strings.TrimPrefix(idAsString, "source-"))
+		return nil, &id, nil
+	default:
+		return nil, nil, fmt.Errorf("ID %s has unsupported prefix", idAsString)
+	}
+}

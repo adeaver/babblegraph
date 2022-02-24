@@ -369,13 +369,34 @@ func processSingleLink(threadComplete chan *links2.Link, addURLs chan []string, 
 		var sourceID *content.SourceID
 		var topicsForURL []contenttopics.ContentTopic
 		var topicMappingIDs []content.TopicMappingID
+		var topicIDs []content.TopicID
 		if err := database.WithTx(func(tx *sqlx.Tx) error {
 			var err error
+			sourceID, err = link.GetSourceID(tx)
 			topicsForURL, topicMappingIDs, err = urltopicmapping.GetTopicsAndMappingIDsForURL(tx, u)
 			if err != nil {
 				return err
 			}
-			sourceID, err = link.GetSourceID(tx)
+			var sourceSeedTopicMappings []content.SourceSeedTopicMappingID
+			for _, topicMappingID := range topicMappingIDs {
+				sourceSeedTopicMapping, sourceTopicMapping, err := topicMappingID.GetOriginID()
+				switch {
+				case err != nil:
+					return err
+				case sourceTopicMapping != nil:
+					c.Warnf("Found source topic mapping from ID %s, which is unsupported", topicMappingID)
+				case sourceSeedTopicMapping != nil:
+					sourceSeedTopicMappings = append(sourceSeedTopicMappings, *sourceSeedTopicMapping)
+				default:
+					return fmt.Errorf("unreachable")
+				}
+			}
+			if len(sourceSeedTopicMappings) == 0 {
+				topicIDs, err = content.LookupTopicsForSourceSeedMappingIDs(tx, sourceSeedTopicMappings)
+				if err != nil {
+					return err
+				}
+			}
 			return err
 		}); err != nil {
 			c.Warnf("Error getting topics for url %s: %s. Continuing...", u, err.Error())
@@ -391,6 +412,7 @@ func processSingleLink(threadComplete chan *links2.Link, addURLs chan []string, 
 			URL:                    urlparser.MustParseURL(u),
 			SourceID:               sourceID,
 			TopicsForURL:           topicsForURL,
+			TopicIDs:               topicIDs,
 			TopicMappingIDs:        topicMappingIDs,
 			SeedJobIngestTimestamp: link.SeedJobIngestTimestamp,
 		})

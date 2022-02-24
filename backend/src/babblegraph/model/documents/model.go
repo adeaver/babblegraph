@@ -67,22 +67,24 @@ func (d DocumentID) Str() string {
 }
 
 type Document struct {
-	ID                                 DocumentID                   `json:"id"`
-	Version                            Version                      `json:"version"`
-	URL                                string                       `json:"url"`
-	SourceID                           *content.SourceID            `json:"source_id,omitempty"`
-	ReadabilityScore                   int64                        `json:"readability_score"`
-	LanguageCode                       wordsmith.LanguageCode       `json:"language_code"`
-	DocumentType                       Type                         `json:"document_type"`
-	Metadata                           Metadata                     `json:"metadata"`
-	Domain                             string                       `json:"domain"`
-	Topics                             []contenttopics.ContentTopic `json:"content_topics"`
-	TopicMappingIDs                    []content.TopicMappingID     `json:"topic_mapping_ids"`
-	TopicsLength                       *int64                       `json:"topics_length,omitempty"`
-	SeedJobIngestTimestamp             *int64                       `json:"seed_job_ingest_timestamp,omitempty"`
-	LemmatizedDescription              *string                      `json:"lemmatized_description,omitempty"`
-	HasPaywall                         *bool                        `json:"has_paywall"`
-	LemmatizedDescriptionIndexMappings []int                        `json:"lemmatized_description_index_mappings,omitempty"`
+	ID               DocumentID             `json:"id"`
+	Version          Version                `json:"version"`
+	URL              string                 `json:"url"`
+	SourceID         *content.SourceID      `json:"source_id,omitempty"`
+	ReadabilityScore int64                  `json:"readability_score"`
+	LanguageCode     wordsmith.LanguageCode `json:"language_code"`
+	DocumentType     Type                   `json:"document_type"`
+	Metadata         Metadata               `json:"metadata"`
+	// We need topic IDs for relevance queries, but topic mapping IDs to filter
+	TopicIDs                           []content.TopicID        `json:"topic_ids"`
+	TopicMappingIDs                    []content.TopicMappingID `json:"topic_mapping_ids"`
+	TopicsLength                       *int64                   `json:"topics_length,omitempty"`
+	SeedJobIngestTimestamp             *int64                   `json:"seed_job_ingest_timestamp,omitempty"`
+	LemmatizedDescription              *string                  `json:"lemmatized_description,omitempty"`
+	HasPaywall                         *bool                    `json:"has_paywall"`
+	LemmatizedDescriptionIndexMappings []int                    `json:"lemmatized_description_index_mappings,omitempty"`
 
-	LemmatizedBodyDEPRECATED *string `json:"lemmatized_body,omitempty"`
+	Domain                   string                       `json:"domain"`
+	Topics                   []contenttopics.ContentTopic `json:"content_topics"`
+	LemmatizedBodyDEPRECATED *string                      `json:"lemmatized_body,omitempty"`
 }
