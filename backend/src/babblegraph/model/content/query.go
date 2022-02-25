@@ -25,7 +25,7 @@ func GetSourceIDForParsedURL(tx *sqlx.Tx, u urlparser.ParsedURL) (*SourceID, err
 	case err != nil:
 		return nil, err
 	case sourceID == nil:
-		return nil, fmt.Errorf("Expected exactly one source ID, but got none")
+		return nil, fmt.Errorf("Expected exactly one source ID for url %s, but got none", u.URL)
 	}
 	return sourceID, nil
 }
