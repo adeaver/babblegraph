@@ -56,13 +56,17 @@ func BackfillContent() error {
 						return err
 					}
 					topicMappingID, err := content.LookupTopicMappingIDForSourceAndTopic(c, tx, *sourceID, *topicID)
-					if err != nil {
+					switch {
+					case err != nil:
 						return err
+					case topicMappingID == nil:
+						continue
+					default:
+						topicMappings = append(topicMappings, urltopicmapping.TopicMappingUnion{
+							Topic:          t,
+							TopicMappingID: *topicMappingID,
+						})
 					}
-					topicMappings = append(topicMappings, urltopicmapping.TopicMappingUnion{
-						Topic:          t,
-						TopicMappingID: *topicMappingID,
-					})
 				}
 				return urltopicmapping.ApplyContentTopicsToURL(tx, *u, topicMappings)
 			}); err != nil {
