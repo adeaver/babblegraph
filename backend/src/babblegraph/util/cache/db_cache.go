@@ -8,9 +8,9 @@ import (
 )
 
 const (
-	lookupFromCacheQuery = "SELECT * FROM cache WHERE key = $1"
-	deleteFromCacheQuery = "DELETE FROM cache WHERE key = $1"
-	insertIntoCacheQuery = "INSERT INTO cache (key, expires_at, item) VALUES ($1, $2, $3)"
+	lookupFromCacheQuery = "SELECT * FROM item_cache WHERE key = $1"
+	deleteFromCacheQuery = "DELETE FROM item_cache WHERE key = $1"
+	insertIntoCacheQuery = "INSERT INTO item_cache (key, expires_at, item) VALUES ($1, $2, $3)"
 )
 
 type dbCachedItem struct {

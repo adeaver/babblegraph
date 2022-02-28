@@ -20,6 +20,7 @@ import TopicListPage from 'AdminWeb/components/ContentManager/topics/TopicListPa
 import TopicManagementPage from 'AdminWeb/components/ContentManager/topics/TopicManagementPage';
 import SourcesListPage from 'AdminWeb/components/ContentManager/sources/SourcesListPage';
 import SourceManagementPage from 'AdminWeb/components/ContentManager/sources/SourceManagementPage';
+import PodcastSearchPage from 'AdminWeb/components/ContentManager/podcasts/PodcastSearchPage/PodcastSearchPage';
 
 class App extends React.Component{
     render() {
@@ -37,6 +38,7 @@ class App extends React.Component{
                     <Route path="/content-manager/topics" component={TopicListPage} />
                     <Route path="/content-manager/sources/:id" component={SourceManagementPage} />
                     <Route path="/content-manager/sources" component={SourcesListPage} />
+                    <Route path="/content-manager/podcasts" component={PodcastSearchPage} />
                     <Route path="/content-manager" component={ContentManagerDashboard} />
 
                     <Route path="/blog-manager/edit/:blogPath" component={BlogEditPage} />
