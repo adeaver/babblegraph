@@ -6,6 +6,7 @@ import (
 	"babblegraph/services/web/adminrouter/api/billing"
 	"babblegraph/services/web/adminrouter/api/blog"
 	"babblegraph/services/web/adminrouter/api/content"
+	"babblegraph/services/web/adminrouter/api/podcasts"
 	"babblegraph/services/web/adminrouter/api/usermetrics"
 	"babblegraph/services/web/router"
 	"babblegraph/util/database"
@@ -27,6 +28,7 @@ func RegisterAdminRouter(r *mux.Router) error {
 		blog.Routes,
 		content.Routes,
 		billing.Routes,
+		podcasts.Routes,
 	}); err != nil {
 		return err
 	}
