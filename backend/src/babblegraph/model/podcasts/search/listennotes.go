@@ -28,7 +28,7 @@ func getSupportedLanguages() ([]string, error) {
 	var supportedLanguages struct {
 		Languages []string `json:"languages"`
 	}
-	if err := cache.WithCache("podcast_search_supported_languages", supportedLanguages, supportedLanguagesTTL, func() (interface{}, error) {
+	if err := cache.WithCache("podcast_search_supported_languages", &supportedLanguages, supportedLanguagesTTL, func() (interface{}, error) {
 		resp, err := client.FetchPodcastLanguages(nil)
 		if err != nil {
 			return nil, err
@@ -45,7 +45,7 @@ func getSupportedRegions(c ctx.LogContext) ([]SupportedRegion, error) {
 		Regions []SupportedRegion `json:"regions"`
 	}
 	var supportedRegions supportedRegionsResponse
-	if err := cache.WithCache("podcast_search_supported_regions", supportedRegions, supportedRegionsTTL, func() (interface{}, error) {
+	if err := cache.WithCache("podcast_search_supported_regions", &supportedRegions, supportedRegionsTTL, func() (interface{}, error) {
 		resp, err := client.FetchPodcastRegions(nil)
 		if err != nil {
 			return nil, err
@@ -55,16 +55,21 @@ func getSupportedRegions(c ctx.LogContext) ([]SupportedRegion, error) {
 			c.Debugf("Regions response looked like: %+v", resp.Data)
 			return nil, fmt.Errorf("Expected regions in response, but was not there")
 		}
-		regions, ok := regionsMap.(map[string]string)
+		regions, ok := regionsMap.(map[string]interface{})
 		if !ok {
 			c.Debugf("Got regions map: %+v", regionsMap)
 			return nil, fmt.Errorf("Regions map did not cast into map")
 		}
 		var supportedRegions []SupportedRegion
 		for displayName, apiValue := range regions {
+			apiValueStr, ok := apiValue.(string)
+			if !ok {
+				c.Debugf("API Value %+v", apiValue)
+				return nil, fmt.Errorf("Expected all api values to be string")
+			}
 			supportedRegions = append(supportedRegions, SupportedRegion{
 				DisplayName: displayName,
-				APIValue:    apiValue,
+				APIValue:    apiValueStr,
 			})
 		}
 		return supportedRegionsResponse{
@@ -81,7 +86,7 @@ func getGenres(c ctx.LogContext) ([]SupportedGenre, error) {
 		Genres []SupportedGenre `json:"genres"`
 	}
 	var supportedGenres supportedGenresResponse
-	if err := cache.WithCache("podcast_search_supported_genres", supportedGenres, supportedGenresTTL, func() (interface{}, error) {
+	if err := cache.WithCache("podcast_search_supported_genres", &supportedGenres, supportedGenresTTL, func() (interface{}, error) {
 		resp, err := client.FetchPodcastGenres(map[string]string{
 			"top_level_only": "1",
 		})

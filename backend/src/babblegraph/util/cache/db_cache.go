@@ -45,7 +45,7 @@ func lookupItemForCacheKey(tx *sqlx.Tx, cacheKey string) ([]byte, error) {
 }
 
 func insertItemIntoCache(tx *sqlx.Tx, cacheKey string, expirationTime time.Time, item []byte) error {
-	if _, err := tx.Exec(cacheKey, insertIntoCacheQuery, expirationTime, item); err != nil {
+	if _, err := tx.Exec(insertIntoCacheQuery, cacheKey, expirationTime, item); err != nil {
 		return err
 	}
 	return nil
