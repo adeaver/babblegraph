@@ -88,7 +88,7 @@ func getGenres(c ctx.LogContext) ([]SupportedGenre, error) {
 	var supportedGenres supportedGenresResponse
 	if err := cache.WithCache("podcast_search_supported_genres", &supportedGenres, supportedGenresTTL, func() (interface{}, error) {
 		resp, err := client.FetchPodcastGenres(map[string]string{
-			"top_level_only": "1",
+			"top_level_only": "0",
 		})
 		if err != nil {
 			return nil, err
