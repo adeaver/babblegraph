@@ -15,6 +15,8 @@ const (
 
 	getSourceSeedForSourceQuery                  = "SELECT * FROM content_source_seed WHERE root_id = $1"
 	getSourceSeedTopicMappingForSourceSeedsQuery = "SELECT * FROM content_source_seed_topic_mapping WHERE topic_id = '%s' AND source_seed_id IN (?)"
+
+	getTopicIDsForSourceSeedIDsQuery = "SELECT DISTINCT(topic_id) FROM content_source_seed_topic_mapping WHERE _id IN (?)"
 )
 
 func GetSourceIDForParsedURL(tx *sqlx.Tx, u urlparser.ParsedURL) (*SourceID, error) {
@@ -23,7 +25,7 @@ func GetSourceIDForParsedURL(tx *sqlx.Tx, u urlparser.ParsedURL) (*SourceID, err
 	case err != nil:
 		return nil, err
 	case sourceID == nil:
-		return nil, fmt.Errorf("Expected exactly one source ID, but got none")
+		return nil, fmt.Errorf("Expected exactly one source ID for url %s, but got none", u.URL)
 	}
 	return sourceID, nil
 }
@@ -131,4 +133,23 @@ func LookupTopicMappingIDForSourceAndTopic(c ctx.LogContext, tx *sqlx.Tx, source
 			}).Ptr(), nil
 		}
 	}
+}
+
+func LookupTopicsForSourceSeedMappingIDs(tx *sqlx.Tx, sourceSeedMappingID []SourceSeedTopicMappingID) ([]TopicID, error) {
+	query, args, err := sqlx.In(getTopicIDsForSourceSeedIDsQuery, sourceSeedMappingID)
+	if err != nil {
+		return nil, err
+	}
+	sql := tx.Rebind(query)
+	var topicIDRows []struct {
+		TopicID TopicID `db:"topic_id"`
+	}
+	if err := tx.Select(&topicIDRows, sql, args...); err != nil {
+		return nil, err
+	}
+	var out []TopicID
+	for _, row := range topicIDRows {
+		out = append(out, row.TopicID)
+	}
+	return out, nil
 }
