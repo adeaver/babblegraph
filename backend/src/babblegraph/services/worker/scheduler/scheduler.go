@@ -1,7 +1,6 @@
 package scheduler
 
 import (
-	"babblegraph/externalapis/bgstripe"
 	"babblegraph/services/worker/linkprocessing"
 	"babblegraph/util/async"
 	"babblegraph/util/env"
@@ -25,12 +24,11 @@ func StartScheduler(linkProcessor *linkprocessing.LinkProcessor, errs chan error
 		c.AddFunc("30 3 * * *", async.WithContext(errs, "admin-2fa-cleanup", handleCleanUpAdminTwoFactorCodesAndAccessTokens).Func())
 		c.AddFunc("30 4 * * *", async.WithContext(errs, "cleanup-newsletters", handleCleanupOldNewsletter).Func())
 		c.AddFunc("30 12 * * *", async.WithContext(errs, "user-feedback", sendUserFeedbackEmails).Func())
-		c.AddFunc("11 */3 * * *", async.WithContext(errs, "expire-accounts", expireUserAccounts).Func())
 		c.AddFunc("*/1 * * * *", async.WithContext(errs, "pending-verifications", handlePendingVerifications).Func())
 		c.AddFunc("*/3 * * * *", async.WithContext(errs, "forgot-passwords", handlePendingForgotPasswordAttempts).Func())
 		c.AddFunc("*/5 * * * *", async.WithContext(errs, "account-notifications", handlePendingUserAccountNotificationRequests).Func())
-		c.AddFunc("14 */1 * * *", async.WithLogContext(errs, "sync-stripe", bgstripe.ForceSyncStripeEvents).Func())
 		c.AddFunc("*/1 * * * *", async.WithContext(errs, "send-2fa-codes", handleSendAdminTwoFactorAuthenticationCode).Func())
+		c.AddFunc("*/10 * * * *", async.WithContext(errs, "sync-billing", handleSyncBilling).Func())
 	case env.EnvironmentLocal,
 		env.EnvironmentLocalTestEmail:
 		c.AddFunc("*/1 * * * *", async.WithContext(errs, "cleanup-newsletters", handleCleanupOldNewsletter).Func())
@@ -38,13 +36,13 @@ func StartScheduler(linkProcessor *linkprocessing.LinkProcessor, errs chan error
 		c.AddFunc("*/1 * * * *", async.WithContext(errs, "account-notifications", handlePendingUserAccountNotificationRequests).Func())
 		c.AddFunc("*/1 * * * *", async.WithContext(errs, "pending-verifications", handlePendingVerifications).Func())
 		c.AddFunc("*/1 * * * *", async.WithContext(errs, "forgot-passwords", handlePendingForgotPasswordAttempts).Func())
-		c.AddFunc("*/3 * * * *", async.WithContext(errs, "expire-accounts", expireUserAccounts).Func())
 		c.AddFunc("*/5 * * * *", async.WithContext(errs, "archive-forgot-passwords", handleArchiveForgotPasswordAttempts).Func())
 		c.AddFunc("*/30 * * * *", async.WithContext(errs, "refetch", makeRefetchSeedDomainJob(linkProcessor)).Func())
-		c.AddFunc("*/1 * * * *", async.WithLogContext(errs, "sync-stripe", bgstripe.ForceSyncStripeEvents).Func())
 		c.AddFunc("*/1 * * * *", async.WithContext(errs, "send-2fa-codes", handleSendAdminTwoFactorAuthenticationCode).Func())
+		c.AddFunc("*/1 * * * *", async.WithContext(errs, "sync-billing", handleSyncBilling).Func())
 		async.WithContext(errs, "user-feedback", sendUserFeedbackEmails).Func()()
 	case env.EnvironmentLocalNoEmail:
+		async.WithContext(errs, "sync-billing", handleSyncBilling).Func()()
 		async.WithContext(errs, "refetch", makeRefetchSeedDomainJob(linkProcessor)).Func()()
 		async.WithContext(errs, "cleanup-newsletters", handleCleanupOldNewsletter).Func()()
 	case env.EnvironmentTest:

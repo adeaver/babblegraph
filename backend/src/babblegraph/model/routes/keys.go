@@ -4,6 +4,7 @@ import (
 	"babblegraph/model/admin"
 	"babblegraph/model/users"
 	"babblegraph/util/encrypt"
+	"fmt"
 )
 
 type RouteEncryptionKey string
@@ -39,6 +40,26 @@ const (
 
 func (r RouteEncryptionKey) Str() string {
 	return string(r)
+}
+
+func EncryptUserIDWithKey(userID users.UserID, key RouteEncryptionKey) (*string, error) {
+	switch key {
+	case SubscriptionManagementRouteEncryptionKey,
+		UnsubscribeRouteEncryptionKey,
+		UserVerificationKey,
+		WordReinforcementKey,
+		PremiumSubscriptionCheckoutKey,
+		CreateUserKey,
+		ForgotPasswordKey,
+		ArticleLinkKeyForUserDocumentID,
+		PaywallReportKeyForUserDocumentID:
+		return encrypt.GetToken(encrypt.TokenPair{
+			Key:   key.Str(),
+			Value: userID,
+		})
+	default:
+		return nil, fmt.Errorf("Invalid key type: %s", key.Str())
+	}
 }
 
 func MakeWordReinforcementToken(userID users.UserID) (*string, error) {

@@ -3,6 +3,7 @@ package adminrouter
 import (
 	"babblegraph/model/admin"
 	"babblegraph/services/web/adminrouter/api/auth"
+	"babblegraph/services/web/adminrouter/api/billing"
 	"babblegraph/services/web/adminrouter/api/blog"
 	"babblegraph/services/web/adminrouter/api/content"
 	"babblegraph/services/web/adminrouter/api/usermetrics"
@@ -25,6 +26,7 @@ func RegisterAdminRouter(r *mux.Router) error {
 		usermetrics.Routes,
 		blog.Routes,
 		content.Routes,
+		billing.Routes,
 	}); err != nil {
 		return err
 	}

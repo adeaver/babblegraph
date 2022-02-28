@@ -43,6 +43,10 @@ const Dashboard = () => {
                         location="/ops/blog-manager"
                         title="Blog Manager"
                         description="Write, edit, delete, or promote blog posts." />
+                    <NavigationCard
+                        location="/ops/billing-manager"
+                        title="Billing Manager"
+                        description="Manage premium newsletter subscriptions" />
                 </Grid>
             </Grid>
         </Page>

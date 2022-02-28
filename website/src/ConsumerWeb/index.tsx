@@ -15,20 +15,21 @@ import PaywallReportPage from 'ConsumerWeb/components/PaywallReportPage/PaywallR
 import BlogListPage from 'ConsumerWeb/components/BlogListPage/BlogListPage';
 import BlogPostPage from 'ConsumerWeb/components/BlogPostPage/BlogPostPage';
 
-import SubscriptionManagementDashboardPage from 'ConsumerWeb/components/SubscriptionManagement/SubscriptionManagementDashboardPage';
+import SubscriptionManagementHomePage from 'ConsumerWeb/components/SubscriptionManagement/SubscriptionManagementHomePage';
 import InterestSelectionPage from 'ConsumerWeb/components/SubscriptionManagement/InterestSelectionPage';
-import UnsubscribePage from 'ConsumerWeb/components/SubscriptionManagement/UnsubscribePage';
+import UnsubscribePage from 'ConsumerWeb/components/UnsubscribePage/UnsubscribePage';
 import WordReinforcementPage from 'ConsumerWeb/components/SubscriptionManagement/WordReinforcementPage';
 import SchedulePage from 'ConsumerWeb/components/SchedulePage/SchedulePage';
 import NewsletterPreferencesPage from 'ConsumerWeb/components/SubscriptionManagement/NewsletterPreferencesPage';
-import SubscriptionManagementPremiumInformationPage from 'ConsumerWeb/components/SubscriptionManagement/PremiumInformationPage';
-import PaymentAndSubscriptionSettingsPage from 'ConsumerWeb/components/SubscriptionManagement/PaymentAndSubscriptionPage';
 
 import LoginPage from 'ConsumerWeb/components/UserAccounts/LoginPage';
-import SignupPage from 'ConsumerWeb/components/UserAccounts/SignupPage';
+import CreateUserAccountPage from 'ConsumerWeb/components/CreateUserAccountPage/CreateUserAccountPage';
 import ForgotPasswordPage from 'ConsumerWeb/components/UserAccounts/ForgotPasswordPage';
 import ResetPasswordPage from 'ConsumerWeb/components/UserAccounts/ResetPasswordPage';
-import SubscriptionCheckoutPage from 'ConsumerWeb/components/UserAccounts/SubscriptionCheckoutPage';
+
+import PremiumNewsletterSubscriptionCheckoutPage from 'ConsumerWeb/components/PremiumNewsletterSubscriptionCheckoutPage/PremiumNewsletterSubscriptionCheckoutPage';
+import PremiumInformationPage from 'ConsumerWeb/components/PremiumInformationPage/PremiumInformationPage';
+import PremiumNewsletterSubscriptionManagementPage from 'ConsumerWeb/components/PremiumNewsletterSubscriptionManagementPage/PremiumNewsletterSubscriptionManagementPage';
 
 import NotFoundPage from 'ConsumerWeb/components/NotFoundPage/NotFoundPage';
 
@@ -43,15 +44,15 @@ class App extends React.Component{
                     <Route path="/manage/:token/vocabulary" component={WordReinforcementPage} />
                     <Route path="/manage/:token/schedule" component={SchedulePage} />
                     <Route path="/manage/:token/preferences" component={NewsletterPreferencesPage} />
-                    <Route exact path="/manage/:token/premium" component={SubscriptionManagementPremiumInformationPage} />
-                    <Route path="/manage/:token/payment-settings" component={PaymentAndSubscriptionSettingsPage} />
-                    <Route exact path="/manage/:token" component={SubscriptionManagementDashboardPage} />
+                    <Route exact path="/manage/:token/premium" component={PremiumInformationPage} />
+                    <Route path="/manage/:token/payment-settings" component={PremiumNewsletterSubscriptionManagementPage} />
+                    <Route exact path="/manage/:token" component={SubscriptionManagementHomePage} />
                     <Route path="/paywall-thank-you/:token" component={PaywallReportPage} />
 
                     { /* User Account Management */ }
                     <Route path="/login" component={LoginPage} />
-                    <Route path="/signup/:token" component={SignupPage} />
-                    <Route path="/checkout/:token" component={SubscriptionCheckoutPage} />
+                    <Route path="/signup/:token" component={CreateUserAccountPage} />
+                    <Route path="/checkout/:token" component={PremiumNewsletterSubscriptionCheckoutPage} />
                     <Route path="/forgot-password" component={ForgotPasswordPage} />
                     <Route path="/password-reset/:token" component={ResetPasswordPage} />
 

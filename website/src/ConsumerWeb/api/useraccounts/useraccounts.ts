@@ -28,39 +28,6 @@ export function loginUser(
     );
 }
 
-export type CreateUserRequest = {
-    createUserToken: string;
-    emailAddress: string;
-    password: string;
-    confirmPassword: string;
-}
-
-export type CreateUserResponse = {
-    checkoutToken: string | null;
-    createUserError: CreateUserError | null;
-}
-
-export enum CreateUserError {
-    AlreadyExists = 'already-exists',
-    InvalidToken = 'invalid-token',
-    PasswordRequirements = 'pass-requirements',
-    NoSubscription = 'no-subscription',
-    PasswordsNoMatch = 'passwords-no-match',
-}
-
-export function createUser(
-    req: CreateUserRequest,
-    onSuccess: (resp: CreateUserResponse) => void,
-    onError: (e: Error) => void,
-) {
-    makePostRequestWithStandardEncoding<CreateUserRequest, CreateUserResponse>(
-        '/api/useraccounts/create_user_1',
-        req,
-        onSuccess,
-        onError,
-    );
-}
-
 export type GetUserProfileRequest = {
     subscriptionManagementToken: string
 }

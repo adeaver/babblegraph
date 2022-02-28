@@ -1,8 +1,9 @@
 package router
 
 import (
-	"fmt"
-	"log"
+	"babblegraph/util/bglog"
+	"babblegraph/util/random"
+	"context"
 	"net/http"
 )
 
@@ -21,14 +22,20 @@ type RequestHandler func(r *Request) (interface{}, error)
 func (r Route) makeMuxRoute() func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Add("Content-Type", "application/json")
+		contextKey := random.MustMakeRandomString(12)
+		ctx := Context{
+			ctx:    context.Background(),
+			logger: bglog.NewLoggerForContext(r.Path, contextKey, 4),
+		}
 		wrappedRequest := &Request{
+			c: ctx,
 			r: req,
 		}
 		status := http.StatusOK
 		resp, err := r.Handler(wrappedRequest)
 		switch {
 		case err != nil:
-			log.Println(fmt.Sprintf("ERROR: %s", err.Error()))
+			ctx.Errorf("Got error processing request: %s", err.Error())
 			writeErrorJSONResponse(w, errorResponse{
 				Message: "Error processing request",
 			})

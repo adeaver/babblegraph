@@ -1,10 +1,8 @@
 package api
 
 import (
-	"babblegraph/externalapis/bgstripe"
 	"babblegraph/model/routes"
 	"babblegraph/model/useraccounts"
-	"babblegraph/model/useraccountsnotifications"
 	"babblegraph/model/users"
 	"babblegraph/services/web/clientrouter/middleware"
 	"babblegraph/services/web/clientrouter/util/routetoken"
@@ -19,7 +17,6 @@ import (
 	"log"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -29,9 +26,6 @@ func registerUserAccountsRoutes() {
 
 	a.r.HandleFunc("/api/useraccounts/login_user_1", middleware.WithoutBodyLogger(loginUser))
 	a.routeNames["/api/useraccounts/login_user_1"] = true
-
-	a.r.HandleFunc("/api/useraccounts/create_user_1", middleware.WithoutBodyLogger(createUser))
-	a.routeNames["/api/useraccounts/create_user_1"] = true
 
 	a.r.HandleFunc("/api/useraccounts/reset_password_1", middleware.WithoutBodyLogger(resetPassword))
 	a.routeNames["/api/useraccounts/reset_password_1"] = true
@@ -126,128 +120,6 @@ func loginUser(w http.ResponseWriter, r *http.Request) {
 	redirectPath := fmt.Sprintf("/%s", strings.TrimPrefix(*redirectURL, env.GetAbsoluteURLForEnvironment("")))
 	writeJSONResponse(w, loginUserResponse{
 		Location: ptr.String(redirectPath),
-	})
-}
-
-type createUserRequest struct {
-	CreateUserToken string `json:"create_user_token"`
-	EmailAddress    string `json:"email_address"`
-	Password        string `json:"password"`
-	ConfirmPassword string `json:"confirm_password"`
-}
-
-type createUserResponse struct {
-	CheckoutToken   *string          `json:"checkout_token"`
-	CreateUserError *createUserError `json:"create_user_error"`
-}
-
-type createUserError string
-
-const (
-	createUserErrorAlreadyExists        createUserError = "already-exists"
-	createUserErrorInvalidToken         createUserError = "invalid-token"
-	createUserErrorPasswordRequirements createUserError = "pass-requirements"
-	createUserErrorNoSubscription       createUserError = "no-subscription"
-	createUserErrorPasswordsNoMatch     createUserError = "passwords-no-match"
-	createUserErrorInvalidState         createUserError = "invalid-state"
-)
-
-func (c createUserError) Ptr() *createUserError {
-	return &c
-}
-
-func createUser(w http.ResponseWriter, r *http.Request) {
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		writeErrorJSONResponse(w, errorResponse{
-			Message: "Request is not valid",
-		})
-		return
-	}
-	var req createUserRequest
-	if err := json.Unmarshal(body, &req); err != nil {
-		writeErrorJSONResponse(w, errorResponse{
-			Message: "Request is not valid",
-		})
-		return
-	}
-	formattedEmailAddress := email.FormatEmailAddress(req.EmailAddress)
-	userID, err := routetoken.ValidateTokenAndEmailAndGetUserID(req.CreateUserToken, routes.CreateUserKey, formattedEmailAddress)
-	if err != nil {
-		writeJSONResponse(w, createUserResponse{
-			CreateUserError: createUserErrorInvalidToken.Ptr(),
-		})
-		return
-	}
-	if req.Password != req.ConfirmPassword {
-		writeJSONResponse(w, createUserResponse{
-			CreateUserError: createUserErrorPasswordsNoMatch.Ptr(),
-		})
-		return
-	}
-	if !useraccounts.ValidatePasswordMeetsRequirements(req.Password) {
-		writeJSONResponse(w, createUserResponse{
-			CreateUserError: createUserErrorPasswordRequirements.Ptr(),
-		})
-		return
-	}
-	var cErr *createUserError
-	if err := database.WithTx(func(tx *sqlx.Tx) error {
-		user, err := users.GetUser(tx, *userID)
-		if err != nil {
-			return err
-		}
-		if user.Status != users.UserStatusVerified {
-			cErr = createUserErrorInvalidState.Ptr()
-			return fmt.Errorf("invalid state")
-		}
-		alreadyHasAccount, err := useraccounts.DoesUserAlreadyHaveAccount(tx, *userID)
-		switch {
-		case err != nil:
-			return err
-		case alreadyHasAccount:
-			cErr = createUserErrorAlreadyExists.Ptr()
-			return fmt.Errorf("user already has account")
-		}
-		holdUntilTime := time.Now().Add(30 * time.Minute)
-		if _, err := useraccountsnotifications.EnqueueNotificationRequest(tx, *userID, useraccountsnotifications.NotificationTypeAccountCreated, holdUntilTime); err != nil {
-			return err
-		}
-		if err := useraccounts.CreateUserPasswordForUser(tx, *userID, req.Password); err != nil {
-			return err
-		}
-		_, err = bgstripe.CreateCustomerForUser(tx, *userID)
-		return err
-	}); err != nil {
-		log.Println(fmt.Sprintf("Error signing up user %s: %s", formattedEmailAddress, err.Error()))
-		if cErr != nil {
-			writeJSONResponse(w, createUserResponse{
-				CreateUserError: cErr,
-			})
-			return
-		}
-		writeErrorJSONResponse(w, errorResponse{
-			Message: "Request is not valid",
-		})
-		return
-	}
-	token, err := routes.MakePremiumSubscriptionCheckoutToken(*userID)
-	if err != nil {
-		log.Println("Error here")
-		writeErrorJSONResponse(w, errorResponse{
-			Message: "Request is not valid",
-		})
-		return
-	}
-	if err := middleware.AssignAuthToken(w, *userID); err != nil {
-		log.Println("Error here 2")
-		writeErrorJSONResponse(w, errorResponse{
-			Message: "Request is not valid",
-		})
-		return
-	}
-	writeJSONResponse(w, createUserResponse{
-		CheckoutToken: token,
 	})
 }
 

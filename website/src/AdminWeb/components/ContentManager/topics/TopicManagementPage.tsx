@@ -7,7 +7,7 @@ import Grid from '@material-ui/core/Grid';
 import DisplayCard from 'common/components/DisplayCard/DisplayCard';
 import { Heading1, Heading3 } from 'common/typography/Heading';
 import { Alignment, TypographyColor } from 'common/typography/common';
-import { asBaseComponent, BaseComponentProps } from 'AdminWeb/common/Base/BaseComponent';
+import { asBaseComponent, BaseComponentProps } from 'common/base/BaseComponent';
 import { PrimarySwitch } from 'common/components/Switch/Switch';
 import { PrimaryButton } from 'common/components/Button/Button';
 import { PrimaryTextField } from 'common/components/TextField/TextField';

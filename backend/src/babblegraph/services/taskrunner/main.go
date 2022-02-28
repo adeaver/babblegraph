@@ -2,7 +2,6 @@ package main
 
 import (
 	"babblegraph/services/taskrunner/tasks"
-	"babblegraph/util/ctx"
 	"babblegraph/util/database"
 	"babblegraph/util/elastic"
 	"babblegraph/util/env"
@@ -26,7 +25,6 @@ func main() {
         create-user: create beta-premium user
         expire-user: expire user
         create-elastic-indexes: create new indices in ElasticSearch
-        sync-stripe: sync failed stripe events
         product-updates: send product updates
         admin-content-document-backfill: backfill all documents with new content
         create-admin: create admin`)
@@ -78,8 +76,6 @@ func main() {
 		if err := tasks.CreateElasticIndexes(); err != nil {
 			log.Fatal(err.Error())
 		}
-	case "sync-stripe":
-		tasks.ForceSyncStripeEvents(ctx.GetDefaultLogContext())
 	case "product-updates":
 		tasks.SendProductUpdates()
 	case "create-admin":

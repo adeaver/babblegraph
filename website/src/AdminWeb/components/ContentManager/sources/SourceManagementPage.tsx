@@ -7,7 +7,7 @@ import Autocomplete from '@material-ui/lab/Autocomplete';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import ClearIcon from '@material-ui/icons/Clear';
 
-import { asBaseComponent, BaseComponentProps } from 'AdminWeb/common/Base/BaseComponent';
+import { asBaseComponent, BaseComponentProps } from 'common/base/BaseComponent';
 import DisplayCard from 'common/components/DisplayCard/DisplayCard';
 import Color from 'common/styles/colors';
 import { Heading1, Heading3, Heading5 } from 'common/typography/Heading';

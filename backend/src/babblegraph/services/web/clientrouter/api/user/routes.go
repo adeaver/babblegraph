@@ -19,9 +19,6 @@ func RegisterRouteGroups() error {
 		Prefix: "user",
 		Routes: []api.Route{
 			{
-				Path:    "unsubscribe_user_1",
-				Handler: handleUnsubscribeUser,
-			}, {
 				Path:    "get_user_preferences_for_token_1",
 				Handler: handleGetUserPreferencesForToken,
 			}, {
