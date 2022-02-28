@@ -3,6 +3,7 @@ module babblegraph.com/main
 go 1.14
 
 require (
+	github.com/ListenNotes/podcast-api-go v1.1.0
 	github.com/aws/aws-sdk-go v1.35.17
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/elastic/go-elasticsearch v0.0.0
