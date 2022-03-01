@@ -2,9 +2,16 @@ package podcasts
 
 import (
 	"babblegraph/model/admin"
+	"babblegraph/model/content"
+	"babblegraph/model/podcasts"
 	podcastsearch "babblegraph/model/podcasts/search"
 	"babblegraph/services/web/adminrouter/middleware"
 	"babblegraph/services/web/router"
+	"babblegraph/util/database"
+	"babblegraph/util/geo"
+	"babblegraph/wordsmith"
+
+	"github.com/jmoiron/sqlx"
 )
 
 var Routes = router.RouteGroup{
@@ -63,5 +70,48 @@ func searchPodcasts(adminID admin.ID, r *router.Request) (interface{}, error) {
 	return searchPodcastsResponse{
 		NextPageNumber: nextPageNumber,
 		Podcasts:       podcasts,
+	}, nil
+}
+
+type addPodcastRequest struct {
+	CountryCode  string            `json:"country_code"`
+	LanguageCode string            `json:"language_code"`
+	TopicIDs     []content.TopicID `json:"topic_ids"`
+	RSSFeedURL   string            `json:"rss_feed_url"`
+	WebsiteURL   string            `json:"wesbite_url"`
+	Title        string            `json:"title"`
+}
+
+type addPodcastResponse struct {
+	Success bool `json:"success"`
+}
+
+func addPodcast(adminID admin.ID, r *router.Request) (interface{}, error) {
+	var req addPodcastRequest
+	if err := r.GetJSONBody(&req); err != nil {
+		return nil, err
+	}
+	languageCode, err := wordsmith.GetLanguageCodeFromString(req.LanguageCode)
+	if err != nil {
+		return nil, err
+	}
+	countryCode, err := geo.GetCountryCodeFromString(req.CountryCode)
+	if err != nil {
+		return nil, err
+	}
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		return podcasts.AddPodcast(tx, podcasts.AddPodcastInput{
+			CountryCode:  *countryCode,
+			LanguageCode: *languageCode,
+			WebsiteURL:   req.WebsiteURL,
+			Title:        req.Title,
+			TopicIDs:     req.TopicIDs,
+			RSSFeedURL:   req.RSSFeedURL,
+		})
+	}); err != nil {
+		return nil, err
+	}
+	return addPodcastResponse{
+		Success: true,
 	}, nil
 }

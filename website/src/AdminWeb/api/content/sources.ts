@@ -4,10 +4,12 @@ import { CountryCode } from 'common/model/geo/geo';
 
 export enum SourceType {
     NewsWebsite = "news-website",
+    Podcast = "podcast",
 }
 
 export enum IngestStrategy {
     WebsiteHTML1 = "website-html-1",
+    PodcastRSS1 = "podcast-rss-1"
 }
 
 export type Source = {

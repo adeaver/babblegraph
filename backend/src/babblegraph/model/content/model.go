@@ -120,6 +120,7 @@ type SourceType string
 
 const (
 	SourceTypeNewsWebsite SourceType = "news-website"
+	SourceTypePodcast     SourceType = "podcast"
 )
 
 func (s SourceType) Str() string {
@@ -143,6 +144,7 @@ type IngestStrategy string
 
 const (
 	IngestStrategyWebsiteHTML1 IngestStrategy = "website-html-1"
+	IngestStrategyPodcastRSS1  IngestStrategy = "podcast-rss-1"
 )
 
 func (i IngestStrategy) Str() string {
