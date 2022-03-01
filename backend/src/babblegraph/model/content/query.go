@@ -75,7 +75,7 @@ func lookupSourceSeedMappingID(tx *sqlx.Tx, sourceSeedID SourceSeedID, topicID T
 	}
 }
 
-func LookupTopicMappingIDForURL(tx *sqlx.Tx, u urlparser.ParsedURL, topicID TopicID) (*TopicMappingID, error) {
+func LookupTopicMappingIDForURL(c ctx.LogContext, tx *sqlx.Tx, u urlparser.ParsedURL, topicID TopicID) (*TopicMappingID, error) {
 	sourceSeedID, err := lookupSourceSeedIDForParsedURL(tx, u)
 	switch {
 	case err != nil:
@@ -86,12 +86,14 @@ func LookupTopicMappingIDForURL(tx *sqlx.Tx, u urlparser.ParsedURL, topicID Topi
 		case err != nil:
 			return nil, err
 		case sourceSeedTopicMappingID == nil:
+			c.Warnf("No source seed mapping for source seed %s and topic %s", *sourceSeedID, topicID)
 			return nil, nil
 		}
 		return MustMakeTopicMappingID(MakeTopicMappingIDInput{
 			SourceSeedTopicMappingID: sourceSeedTopicMappingID,
 		}).Ptr(), nil
 	default:
+		c.Warnf("No source seed found for URL with identifier %s", u.URLIdentifier)
 		// TODO: implement same logic with source mapping
 		return nil, nil
 	}

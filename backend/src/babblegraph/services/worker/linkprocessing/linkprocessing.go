@@ -509,33 +509,6 @@ func (l *LinkProcessor) AddURLs(urls []string, topics []contenttopics.ContentTop
 		if err := links2.InsertLinks(tx, parsedURLs); err != nil {
 			return err
 		}
-		if len(topics) == 0 {
-			return nil
-		}
-		for _, u := range parsedURLs {
-			var mappings []urltopicmapping.TopicMappingUnion
-			for _, t := range topics {
-				topicID, err := content.GetTopicIDByContentTopic(tx, t)
-				if err != nil {
-					return err
-				}
-				topicMappingID, err := content.LookupTopicMappingIDForURL(tx, u, *topicID)
-				switch {
-				case err != nil:
-					return err
-				case topicMappingID != nil:
-					mappings = append(mappings, urltopicmapping.TopicMappingUnion{
-						Topic:          t,
-						TopicMappingID: *topicMappingID,
-					})
-				}
-			}
-			if len(mappings) != 0 {
-				if err := urltopicmapping.ApplyContentTopicsToURL(tx, u, mappings); err != nil {
-					return err
-				}
-			}
-		}
 		return nil
 	})
 }

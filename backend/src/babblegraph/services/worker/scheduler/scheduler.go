@@ -56,7 +56,7 @@ func StartScheduler(linkProcessor *linkprocessing.LinkProcessor, errs chan error
 
 func makeRefetchSeedDomainJob(linkProcessor *linkprocessing.LinkProcessor) func(c async.Context) {
 	return func(c async.Context) {
-		if err := refetchSeedDomainsForNewContent(); err != nil {
+		if err := refetchSeedDomainsForNewContent(c); err != nil {
 			c.Errorf("Error refetching seed domains: %s", err.Error())
 			return
 		}

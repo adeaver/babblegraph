@@ -6,16 +6,16 @@ import (
 	"babblegraph/model/links2"
 	"babblegraph/model/urltopicmapping"
 	"babblegraph/services/worker/ingesthtml"
+	"babblegraph/util/ctx"
 	"babblegraph/util/database"
 	"babblegraph/util/urlparser"
 	"fmt"
-	"log"
 
 	"github.com/jmoiron/sqlx"
 )
 
-func refetchSeedDomainsForNewContent() error {
-	log.Println(fmt.Sprintf("Starting refetch of seed domains..."))
+func refetchSeedDomainsForNewContent(c ctx.LogContext) error {
+	c.Infof("Starting refetch of seed domains...")
 	urlsByDomain := make(map[string][]domains.SeedURL)
 	for _, domain := range domains.GetDomains() {
 		urlsByDomain[domain] = []domains.SeedURL{}
@@ -25,7 +25,7 @@ func refetchSeedDomainsForNewContent() error {
 			domain := p.Domain
 			seedURLs, ok := urlsByDomain[domain]
 			if !ok {
-				log.Println(fmt.Sprintf("Error processing seed url %s: its domain of %s not found in allowable domains", u, domain))
+				c.Warnf("Error processing seed url %s: its domain of %s not found in allowable domains", u, domain)
 				continue
 			}
 			urlsByDomain[domain] = append(seedURLs, domains.SeedURL{
@@ -41,10 +41,10 @@ func refetchSeedDomainsForNewContent() error {
 		for domain := range urlsByDomain {
 			seedURLs := urlsByDomain[domain]
 			toProcess := seedURLs[0]
-			if err := processSeedURL(toProcess); err != nil {
-				log.Println(fmt.Sprintf("Error processing seed url %s: %s", toProcess.URL, err.Error()))
+			if err := processSeedURL(c, toProcess); err != nil {
+				c.Warnf("Error processing seed url %s: %s", toProcess.URL, err.Error())
 			}
-			log.Println(fmt.Sprintf("Refetch finished processing seed url %s", toProcess.URL))
+			c.Infof("Refetch finished processing seed url %s", toProcess.URL)
 			if len(seedURLs) == 1 {
 				delete(urlsByDomain, domain)
 			} else {
@@ -55,8 +55,8 @@ func refetchSeedDomainsForNewContent() error {
 	return nil
 }
 
-func processSeedURL(seedURL domains.SeedURL) error {
-	log.Println(fmt.Sprintf("Refetch is processing seed url %s", seedURL.URL))
+func processSeedURL(c ctx.LogContext, seedURL domains.SeedURL) error {
+	c.Infof("Refetch is processing seed url %s", seedURL.URL)
 	parsedSeedURL := urlparser.ParseURL(seedURL.URL)
 	if parsedSeedURL == nil {
 		return fmt.Errorf("something went wrong parsing url, got null parsed url for seed url %s", seedURL.URL)
@@ -71,7 +71,7 @@ func processSeedURL(seedURL domains.SeedURL) error {
 			parsedURLs[p.URLIdentifier] = *p
 		}
 	}
-	log.Println(fmt.Sprintf("Inserting refetched urls for %s", seedURL.URL))
+	c.Infof("Inserting refetched urls for %s", seedURL.URL)
 	return database.WithTx(func(tx *sqlx.Tx) error {
 		var toInsert []urlparser.ParsedURL
 		for _, p := range parsedURLs {
@@ -86,7 +86,7 @@ func processSeedURL(seedURL domains.SeedURL) error {
 			if err != nil {
 				return err
 			}
-			topicMappingID, err := content.LookupTopicMappingIDForURL(tx, *parsedSeedURL, *topicID)
+			topicMappingID, err := content.LookupTopicMappingIDForURL(c, tx, *parsedSeedURL, *topicID)
 			switch {
 			case err != nil:
 				return err
@@ -95,6 +95,8 @@ func processSeedURL(seedURL domains.SeedURL) error {
 					Topic:          t,
 					TopicMappingID: *topicMappingID,
 				})
+			case topicMappingID == nil:
+				c.Warnf("Topic %s with ID %s did not map to anything for seed URL %s", t, *topicID, *parsedSeedURL)
 			}
 		}
 		if len(mappings) > 0 {
