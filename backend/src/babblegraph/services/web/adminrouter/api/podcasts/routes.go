@@ -16,6 +16,12 @@ var Routes = router.RouteGroup{
 				admin.PermissionPodcastSearch,
 				getPodcastSearchOptions,
 			),
+		}, {
+			Path: "search_podcasts_1",
+			Handler: middleware.WithPermission(
+				admin.PermissionPodcastSearch,
+				searchPodcasts,
+			),
 		},
 	},
 }
@@ -33,5 +39,29 @@ func getPodcastSearchOptions(adminID admin.ID, r *router.Request) (interface{}, 
 	}
 	return getPodcastSearchOptionsResponse{
 		Options: *options,
+	}, nil
+}
+
+type searchPodcastsRequest struct {
+	Params podcastsearch.Params `json:"params"`
+}
+
+type searchPodcastsResponse struct {
+	NextPageNumber *int64                          `json:"next_page_number,omitempty"`
+	Podcasts       []podcastsearch.PodcastMetadata `json:"podcasts"`
+}
+
+func searchPodcasts(adminID admin.ID, r *router.Request) (interface{}, error) {
+	var req searchPodcastsRequest
+	if err := r.GetJSONBody(&req); err != nil {
+		return nil, err
+	}
+	podcasts, nextPageNumber, err := podcastsearch.SearchPodcasts(r, req.Params)
+	if err != nil {
+		return nil, err
+	}
+	return searchPodcastsResponse{
+		NextPageNumber: nextPageNumber,
+		Podcasts:       podcasts,
 	}, nil
 }

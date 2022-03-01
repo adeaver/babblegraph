@@ -3,9 +3,11 @@ package search
 import (
 	"babblegraph/util/cache"
 	"babblegraph/util/ctx"
+	"babblegraph/util/deref"
 	"babblegraph/util/env"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"time"
 
 	listennotes "github.com/ListenNotes/podcast-api-go"
@@ -61,15 +63,15 @@ func getSupportedRegions(c ctx.LogContext) ([]SupportedRegion, error) {
 			return nil, fmt.Errorf("Regions map did not cast into map")
 		}
 		var supportedRegions []SupportedRegion
-		for displayName, apiValue := range regions {
-			apiValueStr, ok := apiValue.(string)
+		for apiValue, displayName := range regions {
+			displayNameStr, ok := displayName.(string)
 			if !ok {
-				c.Debugf("API Value %+v", apiValue)
+				c.Debugf("Display name %+v", displayNameStr)
 				return nil, fmt.Errorf("Expected all api values to be string")
 			}
 			supportedRegions = append(supportedRegions, SupportedRegion{
-				DisplayName: displayName,
-				APIValue:    apiValueStr,
+				DisplayName: displayNameStr,
+				APIValue:    apiValue,
 			})
 		}
 		return supportedRegionsResponse{
@@ -118,4 +120,87 @@ func getGenres(c ctx.LogContext) ([]SupportedGenre, error) {
 		return nil, err
 	}
 	return supportedGenres.Genres, nil
+}
+
+type response struct {
+	HasNext            bool        `json:"has_next"`
+	HasPrevious        bool        `json:"has_previous"`
+	ID                 interface{} `json:"id,string"`
+	ListenNotesURL     string      `json:"listennotes_url"`
+	Name               string      `json:"name"`
+	NextPageNumber     int64       `json:"next_page_number"`
+	PageNumber         int64       `json:"page_number"`
+	ParentID           int64       `json:"parent_id"`
+	PreviousPageNumber int64       `json:"previous_page_number"`
+	Total              int64       `json:"total"`
+	Podcasts           []podcast   `json:"podcasts"`
+}
+
+type podcast struct {
+	ExternalID                  interface{}       `json:"id,string"`
+	Country                     string            `json:"country"`
+	Description                 string            `json:"description"`
+	EarliestPubDateMilliseconds int64             `json:"earliest_pub_date_ms"`
+	Email                       string            `json:"email"`
+	ExplicitContent             bool              `json:"explicit_content"`
+	Extra                       extraPodcastInfo  `json:"extra"`
+	GenreIDs                    []int64           `json:"genre_ids"`
+	ImageURL                    string            `json:"image"`
+	IsClaimed                   bool              `json:"is_claimed"`
+	ITunesID                    int64             `json:"itunes_id"`
+	Language                    string            `json:"language"`
+	LatestPubDateMilliseconds   int64             `json:"latest_pub_date_ms"`
+	ListenScore                 interface{}       `json:"listen_score,string"`
+	ListenScoreGlobalRank       interface{}       `json:"listen_score_global_rank,string"`
+	ListenNotesURL              string            `json:"listennotes_url"`
+	Publisher                   string            `json:"publisher"`
+	RSS                         string            `json:"rss"`
+	Thumbnail                   string            `json:"thumbnail"`
+	Title                       string            `json:"title"`
+	TotalNumberOfEpisodes       int64             `json:"total_episodes"`
+	Type                        string            `json:"type"`
+	Website                     string            `json:"website"`
+	LookingFor                  podcastLookingFor `json:"looking_for"`
+}
+
+type extraPodcastInfo struct {
+	FacebookHandle  string `json:"facebook_handle"`
+	GoogleURL       string `json:"google_url"`
+	InstagramHandle string `json:"instagram_handle"`
+	LinkedInURL     string `json:"linkedin_url"`
+	PatreonHandle   string `json:"patreon_handle"`
+	SpotifyURL      string `json:"spotify_url"`
+	TwitterHandle   string `json:"twitter_handle"`
+	URL1            string `json:"url1"`
+	URL2            string `json:"url2"`
+	URL3            string `json:"url3"`
+	WechatHandle    string `json:"wechat_handle"`
+	YouTubeURL      string `json:"youtube_url"`
+}
+
+type podcastLookingFor struct {
+	Cohosts        bool `json:"cohosts"`
+	CrossPromotion bool `json:"cross_promotion"`
+	Guests         bool `json:"guests"`
+	Sponsors       bool `json:"sponsors"`
+}
+
+func getBestPodcastsForParams(c ctx.LogContext, params Params) (*response, error) {
+	resp, err := client.FetchBestPodcasts(map[string]string{
+		"page":      strconv.FormatInt(deref.Int64(params.PageNumber, 1), 10),
+		"genre_id":  strconv.FormatInt(params.Genre, 10),
+		"region":    params.Region,
+		"language":  params.Language,
+		"safe_mode": "1",
+		"sort":      "listen_score",
+	})
+	if err != nil {
+		return nil, err
+	}
+	var respJSON response
+	if err := json.Unmarshal([]byte(resp.ToJSON()), &respJSON); err != nil {
+		c.Debugf("Response %+v", resp.Data)
+		return nil, err
+	}
+	return &respJSON, nil
 }
