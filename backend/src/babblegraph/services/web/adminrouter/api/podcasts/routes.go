@@ -29,6 +29,12 @@ var Routes = router.RouteGroup{
 				admin.PermissionPodcastSearch,
 				searchPodcasts,
 			),
+		}, {
+			Path: "add_podcast_1",
+			Handler: middleware.WithPermission(
+				admin.PermissionEditContentSources,
+				addPodcast,
+			),
 		},
 	},
 }
@@ -78,7 +84,7 @@ type addPodcastRequest struct {
 	LanguageCode string            `json:"language_code"`
 	TopicIDs     []content.TopicID `json:"topic_ids"`
 	RSSFeedURL   string            `json:"rss_feed_url"`
-	WebsiteURL   string            `json:"wesbite_url"`
+	WebsiteURL   string            `json:"website_url"`
 	Title        string            `json:"title"`
 }
 

@@ -1,4 +1,6 @@
 import { makePostRequestWithStandardEncoding } from 'util/bgfetch/bgfetch';
+import { WordsmithLanguageCode } from 'common/model/language/language';
+import { CountryCode } from 'common/model/geo/geo';
 
 export type SearchOptions = {
     supportedLanguages: Array<string>;
@@ -69,6 +71,32 @@ export function searchPodcasts(
 ) {
     makePostRequestWithStandardEncoding<SearchPodcastsRequest, SearchPodcastsResponse>(
         '/ops/api/podcasts/search_podcasts_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}
+
+export type AddPodcastRequest = {
+	countryCode: CountryCode;
+	languageCode: WordsmithLanguageCode;
+	topicIds: Array<string>;
+	rssFeedUrl: string;
+	websiteUrl: string;
+	title: string;
+}
+
+export type AddPodcastResponse = {
+    success: boolean;
+}
+
+export function addPodcast(
+    req: AddPodcastRequest,
+    onSuccess: (resp: AddPodcastResponse) => void,
+    onError: (e: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<AddPodcastRequest, AddPodcastResponse>(
+        '/ops/api/podcasts/add_podcast_1',
         req,
         onSuccess,
         onError,

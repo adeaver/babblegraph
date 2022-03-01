@@ -35,6 +35,9 @@ import {
 
     SearchPodcastsResponse,
     searchPodcasts,
+
+    AddPodcastResponse,
+    addPodcast,
 } from 'AdminWeb/api/podcasts/podcasts';
 import {
     Topic,
@@ -296,7 +299,22 @@ const PodcastCaptureForm = asBaseComponent<GetAllContentTopicsResponse, PodcastC
         }
 
         const handleSubmit = () => {
-
+            props.setIsLoading(true);
+            addPodcast({
+                countryCode: countryCode,
+                languageCode: languageCode,
+                rssFeedUrl: props.rssFeedURL,
+                websiteUrl: props.website,
+                title: props.title,
+                topicIds: activeTopicMappings.map((t: Topic) => t.id),
+            },
+            (resp: AddPodcastResponse) => {
+                props.setIsLoading(true);
+            },
+            (err: Error) => {
+                props.setIsLoading(false);
+                props.setError(err);
+            });
         }
 
         const classes = styleClasses();
