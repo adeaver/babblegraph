@@ -99,7 +99,7 @@ func processSeedURL(c ctx.LogContext, seedURL domains.SeedURL) error {
 				c.Warnf("Topic %s with ID %s did not map to anything for seed URL %s", t, *topicID, *parsedSeedURL)
 			}
 		}
-		if len(mappings) > 0 {
+		if len(mappings) == 0 {
 			return nil
 		}
 		for _, u := range parsedURLs {
