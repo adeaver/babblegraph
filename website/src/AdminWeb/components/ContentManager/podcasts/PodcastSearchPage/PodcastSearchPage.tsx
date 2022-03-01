@@ -3,12 +3,14 @@ import React, { useState } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 import Divider from '@material-ui/core/Divider';
+import ClearIcon from '@material-ui/icons/Clear';
 
 import CenteredComponent from 'common/components/CenteredComponent/CenteredComponent';
 import DisplayCard from 'common/components/DisplayCard/DisplayCard';
 import DisplayCardHeader from 'common/components/DisplayCard/DisplayCardHeader';
 import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
-import { TypographyColor } from 'common/typography/common';
+import Color from 'common/styles/colors';
+import { Alignment, TypographyColor } from 'common/typography/common';
 import { Heading3 } from 'common/typography/Heading';
 import Paragraph, { Size } from 'common/typography/Paragraph';
 import Link from 'common/components/Link/Link';
@@ -20,6 +22,8 @@ import { PrimaryTextField } from 'common/components/TextField/TextField';
 
 import { asBaseComponent, BaseComponentProps } from 'common/base/BaseComponent';
 
+import { WordsmithLanguageCode, getEnglishNameForLanguageCode } from 'common/model/language/language';
+import { CountryCode, getEnglishNameForCountryCode } from 'common/model/geo/geo';
 import {
     SupportedGenre,
     SupportedRegion,
@@ -32,10 +36,30 @@ import {
     SearchPodcastsResponse,
     searchPodcasts,
 } from 'AdminWeb/api/podcasts/podcasts';
+import {
+    Topic,
+
+    getAllContentTopics,
+    GetAllContentTopicsResponse,
+} from 'AdminWeb/api/content/topic';
 
 const styleClasses = makeStyles({
     formComponent: {
         padding: '10px',
+    },
+    addPodcastFormComponent: {
+        width: '100%',
+    },
+    addPodcastForm: {
+        display: 'flex',
+        justifyContent: 'center',
+    },
+    alignedContainer: {
+        display: 'flex',
+        alignItems: 'center',
+    },
+    removeContentTopicIcon: {
+        color: Color.Warning,
     },
 });
 
@@ -88,7 +112,7 @@ const PodcastSearchPage = asBaseComponent<GetPodcastSearchOptionsResponse, {}>(
                 <DisplayCard>
                     <DisplayCardHeader
                         title="Podcast Search"
-                        backArrowDestination="/ops/content" />
+                        backArrowDestination="/ops/content-manager" />
                     <Form handleSubmit={handleSubmit}>
                         <Grid container>
                             <Grid className={classes.formComponent} item xs={12} md={6}>
@@ -180,6 +204,21 @@ const PodcastResultsDisplay = (props: PodcastResultsDisplayProps) => {
 }
 
 const PodcastDisplay = (props: PodcastMetadata) => {
+    const [ rssFeedURL, setRSSFeedURL ] = useState<string>(null);
+    const handleRSSFeedURLChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setRSSFeedURL((event.target as HTMLInputElement).value);
+    }
+
+    const [ shouldShowCaptureForm, setShouldShowCaptureForm ] = useState<boolean>(false);
+
+
+    const handlePreparePodcast = () => {
+        if (!rssFeedURL) {
+            return;
+        }
+        setShouldShowCaptureForm(true);
+    }
+
     const classes = styleClasses();
     return (
         <Grid className={classes.podcastDisplayRoot} item xs={12}>
@@ -201,9 +240,133 @@ const PodcastDisplay = (props: PodcastMetadata) => {
             <Paragraph size={Size.Small}>
                 Country: {props.country}, in {props.language}
             </Paragraph>
+            <Form handleSubmit={handlePreparePodcast}>
+                <Grid className={classes.addPodcastForm} container>
+                    <Grid className={classes.formComponent} item xs={8}>
+                        <PrimaryTextField
+                            id="rss-feed-url"
+                            label="RSS Feed URL"
+                            variant="outlined"
+                            className={classes.addPodcastFormComponent}
+                            defaultValue={rssFeedURL}
+                            disabled={shouldShowCaptureForm}
+                            onChange={handleRSSFeedURLChange} />
+                    </Grid>
+                    <Grid className={classes.formComponent} item xs={4}>
+                        <PrimaryButton className={classes.addPodcastFormComponent} type="submit" disabled={shouldShowCaptureForm}>
+                            Add Podcast
+                        </PrimaryButton>
+                    </Grid>
+                </Grid>
+            </Form>
+            {
+                shouldShowCaptureForm && (
+                    <PodcastCaptureForm
+                        rssFeedURL={rssFeedURL}
+                        website={props.website}
+                        title={props.title} />
+                )
+            }
             <Divider />
         </Grid>
     );
 }
+
+type PodcastCaptureFormOwnProps = {
+    rssFeedURL: string;
+    website: string;
+    title: string;
+}
+
+const PodcastCaptureForm = asBaseComponent<GetAllContentTopicsResponse, PodcastCaptureFormOwnProps>(
+    (props: GetAllContentTopicsResponse & PodcastCaptureFormOwnProps & BaseComponentProps) => {
+        const [ languageCode, setLanguageCode ] = useState<WordsmithLanguageCode>(null);
+        const handleUpdateLanguageCode = (_: React.ChangeEvent<HTMLSelectElement>, selectedLanguageCode: WordsmithLanguageCode) => {
+            setLanguageCode(selectedLanguageCode);
+        }
+
+        const [ countryCode, setCountryCode ] = useState<CountryCode>(null);
+        const handleCountyCodeUpdate = (_: React.ChangeEvent<HTMLSelectElement>, selectedCountryCode: CountryCode) => {
+            setCountryCode(selectedCountryCode);
+        }
+
+        const [ activeTopicMappings, setActiveTopicMappings ] = useState<Array<Topic>>([]);
+        const handleTopicMappingsSelectorUpdate = (_: React.ChangeEvent<HTMLSelectElement>, selectedTopic: Topic) => {
+            setActiveTopicMappings(activeTopicMappings.concat(selectedTopic));
+        }
+
+        const handleSubmit = () => {
+
+        }
+
+        const classes = styleClasses();
+        return (
+            <Form handleSubmit={handleSubmit}>
+                <Grid container>
+                    <Grid className={classes.formComponent} item xs={12} md={6}>
+                        <Autocomplete
+                            id="language-code-selector"
+                            onChange={handleUpdateLanguageCode}
+                            options={Object.values(WordsmithLanguageCode)}
+                            value={languageCode}
+                            getOptionLabel={(option: WordsmithLanguageCode) => getEnglishNameForLanguageCode(option)}
+                            getOptionSelected={(option: WordsmithLanguageCode) => option === languageCode}
+                            renderInput={(params) => <PrimaryTextField label="Confirm language" {...params} />} />
+                    </Grid>
+                    <Grid className={classes.formComponent} item xs={12} md={6}>
+                        <Autocomplete
+                            id="country-code-selector"
+                            onChange={handleCountyCodeUpdate}
+                            options={Object.values(CountryCode)}
+                            value={countryCode}
+                            getOptionLabel={(option: CountryCode) => getEnglishNameForCountryCode(option)}
+                            getOptionSelected={(option: CountryCode) => option === countryCode}
+                            renderInput={(params) => <PrimaryTextField label="Confirm Country" {...params} />} />
+                    </Grid>
+                    <Grid className={classes.formComponent} item xs={12}>
+                        <Autocomplete
+                            id="topic-mapping-selector"
+                            onChange={handleTopicMappingsSelectorUpdate}
+                            options={props.topics.filter((topic: Topic) => activeTopicMappings.indexOf(topic) === -1)}
+                            getOptionLabel={(option: Topic) => option.label}
+                            renderInput={(params) => <PrimaryTextField label="Add Topic" {...params} />} />
+                    </Grid>
+                    <Grid item xs={12}>
+                        {
+                            activeTopicMappings.map((topic: Topic, idx: number) => (
+                                <Grid container
+                                    className={classes.alignedContainer}>
+                                    <Grid item xs={10} md={11}>
+                                        <Paragraph align={Alignment.Left}>
+                                            { topic.label }
+                                        </Paragraph>
+                                    </Grid>
+                                    <Grid item xs={2} md={1}>
+                                        <ClearIcon
+                                            className={classes.removeContentTopicIcon}
+                                            onClick={() => {
+                                                setActiveTopicMappings(activeTopicMappings.filter((t: Topic) => t !== topic))
+                                            }}  />
+                                    </Grid>
+                                </Grid>
+                            ))
+                        }
+                    </Grid>
+                    <CenteredComponent className={classes.formComponent}>
+                        <PrimaryButton className={classes.addPodcastFormComponent} type="submit" disabled={!countryCode || !languageCode}>
+                            Add Podcast
+                        </PrimaryButton>
+                    </CenteredComponent>
+                </Grid>
+            </Form>
+        )
+    },
+    (
+        ownProps: PodcastCaptureFormOwnProps,
+        onSuccess: (resp: GetAllContentTopicsResponse) => void,
+        onError: (err: Error) => void,
+    ) => getAllContentTopics({}, onSuccess, onError),
+    false,
+);
 
 export default PodcastSearchPage;
