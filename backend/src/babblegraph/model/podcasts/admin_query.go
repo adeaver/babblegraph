@@ -24,10 +24,18 @@ type AddPodcastInput struct {
 }
 
 func AddPodcast(tx *sqlx.Tx, input AddPodcastInput) error {
+	parsedWebsite := urlparser.ParseURL(input.WebsiteURL)
+	if parsedWebsite == nil {
+		return fmt.Errorf("Website was incorrect")
+	}
+	websiteURL := fmt.Sprintf("%s/%s", parsedWebsite.Domain, parsedWebsite.Path)
+	if parsedWebsite.Protocol != nil {
+		websiteURL = fmt.Sprintf("%s//%s", *parsedWebsite.Protocol, websiteURL)
+	}
 	sourceID, err := content.InsertSource(tx, content.InsertSourceInput{
 		Title:                 input.Title,
 		LanguageCode:          input.LanguageCode,
-		URL:                   input.WebsiteURL,
+		URL:                   websiteURL,
 		Country:               input.CountryCode,
 		ShouldUseURLAsSeedURL: false,
 		IsActive:              true,

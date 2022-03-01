@@ -232,7 +232,7 @@ const PodcastDisplay = (props: PodcastMetadata) => {
                 {props.description}
             </Paragraph>
             <Link href={props.website}>
-                View wesbite
+                View website
             </Link>
             <Link href={props.listenNotesUrl}>
                 View on third party
@@ -309,7 +309,7 @@ const PodcastCaptureForm = asBaseComponent<GetAllContentTopicsResponse, PodcastC
                 topicIds: activeTopicMappings.map((t: Topic) => t.id),
             },
             (resp: AddPodcastResponse) => {
-                props.setIsLoading(true);
+                props.setIsLoading(false);
             },
             (err: Error) => {
                 props.setIsLoading(false);

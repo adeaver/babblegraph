@@ -311,7 +311,7 @@ const SourceDisplay = (props: SourceDisplayProps) => {
                 <Grid className={classes.sourceDisplayHeader} container>
                     <Grid item xs={8}>
                         <Heading3 color={isActive ? TypographyColor.Primary : TypographyColor.Gray}>
-                            {props.source.url}
+                            {props.source.title}
                         </Heading3>
                     </Grid>
                     <Grid item xs={4}>
