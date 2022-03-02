@@ -50,6 +50,39 @@ type ingestor struct {
 	sourceSet      map[content.SourceID]bool
 }
 
+func StartIngestion() func(c async.Context) {
+	return func(c async.Context) {
+		html1IngestorErrs := make(chan error)
+		html1Ingestor := &ingestor{
+			ingestionType: content.IngestStrategyWebsiteHTML1,
+		}
+		if err := html1Ingestor.initialize(c); err != nil {
+			c.Errorf("Error initializing html ingestor")
+		} else {
+			async.WithContext(html1IngestorErrs, "html1-ingestor-main", html1Ingestor.processSources()).Start()
+		}
+		rss1IngestorErrs := make(chan error)
+		rss1Ingestor := &ingestor{
+			ingestionType: content.IngestStrategyWebsiteHTML1,
+		}
+		if err := rss1Ingestor.initialize(c); err != nil {
+			c.Errorf("Error initializing rss ingestor")
+		} else {
+			async.WithContext(rss1IngestorErrs, "rss1-ingestor-main", rss1Ingestor.processSources()).Start()
+		}
+		for {
+			select {
+			case err := <-html1IngestorErrs:
+				c.Warnf("Error on HTML1 Ingestor: %s", err.Error())
+				async.WithContext(html1IngestorErrs, "html1-ingestor-main", html1Ingestor.processSources()).Start()
+			case err := <-rss1IngestorErrs:
+				c.Warnf("Error on RSS1 Ingestor: %s", err.Error())
+				async.WithContext(rss1IngestorErrs, "rss1-ingestor-main", rss1Ingestor.processSources()).Start()
+			}
+		}
+	}
+}
+
 func (i *ingestor) initialize(c ctx.LogContext) error {
 	config, ok := validIngestStrategies[i.ingestionType]
 	if !ok {
@@ -63,6 +96,9 @@ func (i *ingestor) initialize(c ctx.LogContext) error {
 	}); err != nil {
 		return err
 	}
+	i.mu.Lock()
+	defer i.mu.Unlock()
+	c.Infof("Acquired lock for ingestor %s to initialize", i.ingestionType)
 	var orderedSources []ingestionSource
 	sourceSet := make(map[content.SourceID]bool)
 	for _, s := range sources {
@@ -243,7 +279,51 @@ func (i *ingestor) startWorkerManager(maxWorkers int) func(c async.Context) {
 }
 
 func (i *ingestor) getTask(c ctx.LogContext) (_task interface{}, _waitPeriod *time.Duration, _err error) {
-	return nil, nil, nil
+	c.Infof("Acquiring lock on ingestor %s to get tasks", i.ingestionType)
+	i.mu.Lock()
+	c.Infof("Acquired lock on ingestor %s", i.ingestionType)
+	var firstNonEmptySourceIdx *int
+	defer func() {
+		if firstNonEmptySourceIdx != nil {
+			c.Infof("Removing all sources up to %s that are empty", *firstNonEmptySourceIdx)
+			i.orderedSources = append([]ingestionSource{}, i.orderedSources[*firstNonEmptySourceIdx:]...)
+			c.Infof("Available sources are now of length %d", len(i.orderedSources))
+		}
+		c.Infof("Releasing lock")
+		i.mu.Unlock()
+	}()
+	config, ok := validIngestStrategies[i.ingestionType]
+	if !ok {
+		return nil, nil, fmt.Errorf("Invalid ingestion type %s", i.ingestionType)
+	}
+	for idx, source := range i.orderedSources {
+		if source.freeAt.After(time.Now()) {
+			c.Infof("Source %s is not free, sending wait", source.sourceID)
+			waitTime := source.freeAt.Sub(time.Now())
+			return nil, &waitTime, nil
+		}
+		bufferedFetchKey := i.getBufferedKeyFetchForSourceID(source.sourceID)
+		var task interface{}
+		err := bufferedfetch.WithNextBufferedValue(bufferedFetchKey, func(i interface{}) error {
+			task = i
+			return nil
+		})
+		switch {
+		case err != nil:
+			return nil, nil, err
+		case task == nil:
+			c.Infof("Source %s has no tasks, skipping", source.sourceID)
+			firstNonEmptySourceIdx = ptr.Int(idx + 1)
+		case task != nil:
+			firstNonEmptySourceIdx = ptr.Int(idx + 1)
+			i.orderedSources = append(i.orderedSources, ingestionSource{
+				sourceID: source.sourceID,
+				freeAt:   time.Now().Add(config.defaultTimeUntilFree),
+			})
+		}
+	}
+	c.Infof("No links available, sending wait")
+	return nil, ptr.Duration(config.defaultRefreshPeriod), nil
 }
 
 func (i *ingestor) processTask(workerErrs chan error, threadComplete chan interface{}, task interface{}) func(c async.Context) {

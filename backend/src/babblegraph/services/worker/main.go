@@ -2,8 +2,7 @@ package main
 
 import (
 	"babblegraph/model/documents"
-	"babblegraph/model/domains"
-	"babblegraph/services/worker/linkprocessing"
+	"babblegraph/services/worker/contentingestion"
 	"babblegraph/services/worker/newsletterprocessing"
 	"babblegraph/services/worker/process"
 	"babblegraph/services/worker/scheduler"
@@ -39,18 +38,9 @@ func main() {
 		bglog.Fatalf("Error initializing sentry: %s", err.Error())
 	}
 	defer sentry.Flush(2 * time.Second)
-	linkProcessor, err := linkprocessing.CreateLinkProcessor()
-	if err != nil {
-		bglog.Fatalf("Error initializing link processor: %s", err.Error())
-	}
-	for u, topics := range domains.GetSeedURLs() {
-		if err := linkProcessor.AddURLs([]string{u}, topics); err != nil {
-			bglog.Fatalf("Error initializing link processor seed domains: %s", err.Error())
-		}
-	}
 	ingestErrs := make(chan error, 1)
 	if currentEnvironmentName != env.EnvironmentLocalTestEmail {
-		async.WithContext(ingestErrs, "link-processor", linkProcessor.ProcessLinks(numIngestWorkerThreads)).Start()
+		async.WithContext(ingestErrs, "link-processor", contentingestion.StartIngestion()).Start()
 	}
 	schedulerErrs := make(chan error, 1)
 	if err := scheduler.StartScheduler(linkProcessor, schedulerErrs); err != nil {
@@ -75,9 +65,7 @@ func main() {
 	for {
 		select {
 		case _ = <-ingestErrs:
-			if currentEnvironmentName != env.EnvironmentLocalTestEmail {
-				async.WithContext(ingestErrs, "link-processor", linkProcessor.ProcessLinks(numIngestWorkerThreads)).Start()
-			}
+			panic("Error on ingest, forcing restart")
 		case err = <-schedulerErrs:
 			bglog.Infof("Saw panic: %s in scheduler.", err.Error())
 		case _ = <-preloadNewsletterErrs:
