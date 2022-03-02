@@ -63,7 +63,7 @@ func StartIngestion() func(c async.Context) {
 		}
 		rss1IngestorErrs := make(chan error)
 		rss1Ingestor := &ingestor{
-			ingestionType: content.IngestStrategyWebsiteHTML1,
+			ingestionType: content.IngestStrategyPodcastRSS1,
 		}
 		if err := rss1Ingestor.initialize(c); err != nil {
 			c.Errorf("Error initializing rss ingestor")
