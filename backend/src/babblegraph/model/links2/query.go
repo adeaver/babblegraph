@@ -28,6 +28,7 @@ func GetDomainsWithUnfetchedLinks(tx *sqlx.Tx) ([]string, error) {
 	return out, nil
 }
 
+// TODO: this is deprecated
 func InsertLinks(tx *sqlx.Tx, urls []urlparser.ParsedURL) error {
 	queryBuilder, err := database.NewBulkInsertQueryBuilder("links2", "url_identifier", "domain", "url", "source_id")
 	if err != nil {
@@ -43,6 +44,25 @@ func InsertLinks(tx *sqlx.Tx, urls []urlparser.ParsedURL) error {
 			return fmt.Errorf("No source ID found for url %s", u.URL)
 		}
 		if err := queryBuilder.AddValues(u.URLIdentifier, u.Domain, u.URL, *sourceID); err != nil {
+			log.Println(fmt.Sprintf("Error inserting url with identifier %s: %s", u.URLIdentifier, err.Error()))
+		}
+	}
+	return queryBuilder.Execute(tx)
+}
+
+type URLWithSourceMapping struct {
+	URL      urlparser.ParsedURL
+	SourceID content.SourceID
+}
+
+func InsertLinksWithSourceID(tx *sqlx.Tx, urls []URLWithSourceMapping) error {
+	queryBuilder, err := database.NewBulkInsertQueryBuilder("links2", "url_identifier", "domain", "url", "source_id")
+	if err != nil {
+		return err
+	}
+	queryBuilder.AddConflictResolution("DO NOTHING")
+	for _, u := range urls {
+		if err := queryBuilder.AddValues(input.URL.URLIdentifier, input.URL.Domain, input.URL.URL, input.SourceID); err != nil {
 			log.Println(fmt.Sprintf("Error inserting url with identifier %s: %s", u.URLIdentifier, err.Error()))
 		}
 	}

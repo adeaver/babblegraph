@@ -20,6 +20,7 @@ type sourceUnion struct {
 var (
 	allowableSourceMap map[SourceID]Source
 	seedURLHashSet     map[string]sourceUnion
+	domainSourceMap    map[string]Source
 
 	initializerMutex                sync.Mutex
 	timeSinceLastInitializationSync *time.Time
@@ -28,7 +29,7 @@ var (
 func initializeInMemoryCache(tx *sqlx.Tx) error {
 	initializerMutex.Lock()
 	defer initializerMutex.Unlock()
-	if len(seedURLHashSet) != 0 && len(allowableSourceMap) != 0 {
+	if len(seedURLHashSet) != 0 && len(allowableSourceMap) != 0 && len(domainSourceMap) != 0 {
 		return nil
 	}
 	sources, err := GetAllSources(tx)
@@ -36,6 +37,7 @@ func initializeInMemoryCache(tx *sqlx.Tx) error {
 		return err
 	}
 	for _, s := range sources {
+		domainSourceMap[s.URL] = s
 		if s.IsActive {
 			allowableSourceMap[s.ID] = s
 		}
@@ -57,7 +59,7 @@ func initializeInMemoryCache(tx *sqlx.Tx) error {
 }
 
 func needsResync() bool {
-	return len(seedURLHashSet) == 0 || len(allowableSourceMap) == 0 || timeSinceLastInitializationSync == nil || time.Now().After(timeSinceLastInitializationSync.Add(defaultSyncPeriod))
+	return len(seedURLHashSet) == 0 || len(allowableSourceMap) == 0 || len(domainSourceMap) == 0 || timeSinceLastInitializationSync == nil || time.Now().After(timeSinceLastInitializationSync.Add(defaultSyncPeriod))
 }
 
 func IsParsedURLASeedURL(tx *sqlx.Tx, u urlparser.ParsedURL) (bool, error) {
@@ -90,4 +92,17 @@ func LookupActiveSourceForSourceID(c ctx.LogContext, tx *sqlx.Tx, sourceID Sourc
 	default:
 		return lookupSource, nil
 	}
+}
+
+func LookupSourceIDForDomain(tx *sqlx.Tx, domain string) (_sourceID *SourceID, _isActive bool, _err error) {
+	if needsResync() {
+		if err := initializeInMemoryCache(tx); err != nil {
+			return nil, false, err
+		}
+	}
+	source, ok := domainSourceMap[domain]
+	if ok {
+		return source.ID.Ptr(), source.IsActive, nil
+	}
+	return nil, false, nil
 }

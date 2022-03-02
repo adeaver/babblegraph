@@ -20,3 +20,10 @@ func Int64(i *int64, d int64) int64 {
 	}
 	return *i
 }
+
+func Bool(b *bool, d bool) bool {
+	if b == nil {
+		return d
+	}
+	return *b
+}

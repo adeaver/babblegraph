@@ -309,7 +309,7 @@ func processSingleLink(threadComplete chan *links2.Link, addURLs chan []string, 
 			return
 		}
 		c.Infof("Processing URL %s with identifier %s", u, link.URLIdentifier)
-		parsedHTMLPage, err := ingesthtml.ProcessURL(u, domain)
+		parsedHTMLPage, err := ingesthtml.ProcessURLDEPRECATED(u, domain)
 		if err != nil {
 			c.Infof("Got error ingesting html for url %s: %s. Continuing...", u, err.Error())
 			threadComplete <- link
