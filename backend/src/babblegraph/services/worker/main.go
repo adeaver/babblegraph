@@ -43,7 +43,7 @@ func main() {
 		async.WithContext(ingestErrs, "link-processor", contentingestion.StartIngestion()).Start()
 	}
 	schedulerErrs := make(chan error, 1)
-	if err := scheduler.StartScheduler(linkProcessor, schedulerErrs); err != nil {
+	if err := scheduler.StartScheduler(nil, schedulerErrs); err != nil {
 		bglog.Fatalf("Error initializing scheduler: %s", err.Error())
 	}
 	newsletterProcessor, err := newsletterprocessing.CreateNewsletterProcessor(ctx.GetDefaultLogContext())

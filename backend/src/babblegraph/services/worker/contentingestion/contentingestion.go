@@ -320,6 +320,7 @@ func (i *ingestor) getTask(c ctx.LogContext) (_task interface{}, _waitPeriod *ti
 				sourceID: source.sourceID,
 				freeAt:   time.Now().Add(config.defaultTimeUntilFree),
 			})
+			return task, nil, nil
 		}
 	}
 	c.Infof("No links available, sending wait")
