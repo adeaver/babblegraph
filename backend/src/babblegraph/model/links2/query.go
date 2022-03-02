@@ -79,6 +79,18 @@ func LookupBulkUnfetchedLinksForDomain(tx *sqlx.Tx, domain string, chunkSize int
 	return out, nil
 }
 
+func LookupBulkUnfetchedLinksForSourceID(tx *sqlx.Tx, sourceID content.SourceID, chunkSize int) ([]Link, error) {
+	var matches []dbLink
+	if err := tx.Select(&matches, "SELECT * FROM links2 WHERE last_fetch_version IS DISTINCT FROM $1 AND source_id=$2 ORDER BY seed_job_ingest_timestamp DESC NULLS LAST, seq_num ASC LIMIT $3", CurrentFetchVersion, sourceID, chunkSize); err != nil {
+		return nil, err
+	}
+	var out []Link
+	for _, match := range matches {
+		out = append(out, match.ToNonDB())
+	}
+	return out, nil
+}
+
 func UpsertLinkWithEmptyFetchStatus(tx *sqlx.Tx, urls []urlparser.ParsedURL, includeTimestamp bool) error {
 	queryBuilder, err := database.NewBulkInsertQueryBuilder("links2", "url_identifier", "domain", "url", "source_id", "seed_job_ingest_timestamp")
 	if err != nil {

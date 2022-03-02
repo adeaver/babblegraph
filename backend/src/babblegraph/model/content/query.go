@@ -9,6 +9,8 @@ import (
 )
 
 const (
+	getSourcesByIngestStrategyQuery = "SELECT * FROM content_source WHERE ingest_strategy = $1 AND is_active = TRUE"
+
 	getSourceForURLQuery           = "SELECT * FROM content_source WHERE url_identifier = $1"
 	getSourceSeedForURLQuery       = "SELECT * FROM content_source_seed WHERE url_identifier = $1 AND url_params IS NOT DISTINCT FROM $2"
 	getSourceSeedTopicMappingQuery = "SELECT * FROM content_source_seed_topic_mapping WHERE topic_id = $1 AND source_seed_id = $2"
@@ -100,12 +102,12 @@ func LookupTopicMappingIDForURL(c ctx.LogContext, tx *sqlx.Tx, u urlparser.Parse
 }
 
 func LookupTopicMappingIDForSourceAndTopic(c ctx.LogContext, tx *sqlx.Tx, sourceID SourceID, topicID TopicID) (*TopicMappingID, error) {
-	var matches []dbSourceSeed
-	err := tx.Select(&matches, getSourceSeedForSourceQuery, sourceID)
+	matches, err := lookupSourceSeedsForSource(tx, sourceID)
 	switch {
 	case err != nil:
 		return nil, err
-	case len(matches) == 0:
+	case matches == nil:
+		c.Warnf("No source seeds found for source ID %s", sourceID)
 		return nil, nil
 	default:
 		var sourceSeedIDs []SourceSeedID
@@ -137,6 +139,14 @@ func LookupTopicMappingIDForSourceAndTopic(c ctx.LogContext, tx *sqlx.Tx, source
 	}
 }
 
+func lookupSourceSeedsForSource(tx *sqlx.Tx, sourceID SourceID) ([]dbSourceSeed, error) {
+	var matches []dbSourceSeed
+	if err := tx.Select(&matches, getSourceSeedForSourceQuery, sourceID); err != nil {
+		return nil, err
+	}
+	return matches, nil
+}
+
 func LookupTopicsForSourceSeedMappingIDs(tx *sqlx.Tx, sourceSeedMappingID []SourceSeedTopicMappingID) ([]TopicID, error) {
 	query, args, err := sqlx.In(getTopicIDsForSourceSeedIDsQuery, sourceSeedMappingID)
 	if err != nil {
@@ -152,6 +162,32 @@ func LookupTopicsForSourceSeedMappingIDs(tx *sqlx.Tx, sourceSeedMappingID []Sour
 	var out []TopicID
 	for _, row := range topicIDRows {
 		out = append(out, row.TopicID)
+	}
+	return out, nil
+}
+
+func LookupSourcesForIngestStrategy(tx *sqlx.Tx, ingestStrategy IngestStrategy) ([]Source, error) {
+	var matches []dbSource
+	if err := tx.Select(&matches, getSourcesByIngestStrategyQuery, ingestStrategy); err != nil {
+		return nil, err
+	}
+	var out []Source
+	for _, m := range matches {
+		out = append(out, m.ToNonDB())
+	}
+	return out, nil
+}
+
+func LookupActiveSourceSeedsForSource(tx *sqlx.Tx, sourceID SourceID) ([]SourceSeed, error) {
+	matches, err := lookupSourceSeedsForSource(tx, sourceID)
+	if err != nil {
+		return nil, err
+	}
+	var out []SourceSeed
+	for _, m := range matches {
+		if m.IsActive {
+			out = append(out, m.ToNonDB())
+		}
 	}
 	return out, nil
 }
