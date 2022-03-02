@@ -32,6 +32,9 @@ func initializeInMemoryCache(tx *sqlx.Tx) error {
 	if len(seedURLHashSet) != 0 && len(allowableSourceMap) != 0 && len(domainSourceMap) != 0 {
 		return nil
 	}
+	seedURLHashSet = make(map[string]sourceUnion)
+	allowableSourceMap = make(map[SourceID]Source)
+	domainSourceMap = make(map[string]Source)
 	sources, err := GetAllSources(tx)
 	if err != nil {
 		return err

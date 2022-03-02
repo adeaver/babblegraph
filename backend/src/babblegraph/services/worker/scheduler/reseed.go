@@ -61,7 +61,7 @@ func processSeedURL(c ctx.LogContext, seedURL domains.SeedURL) error {
 	if parsedSeedURL == nil {
 		return fmt.Errorf("something went wrong parsing url, got null parsed url for seed url %s", seedURL.URL)
 	}
-	parsedHTMLPage, err := ingesthtml.ProcessURL(seedURL.URL, parsedSeedURL.Domain)
+	parsedHTMLPage, err := ingesthtml.ProcessURLDEPRECATED(seedURL.URL, parsedSeedURL.Domain)
 	if err != nil {
 		return err
 	}

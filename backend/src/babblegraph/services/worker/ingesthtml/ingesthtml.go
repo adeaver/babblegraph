@@ -12,7 +12,7 @@ func ProcessURLDEPRECATED(u, domain string) (*ParsedHTMLPage, error) {
 	if !strings.HasPrefix(u, "http://") && !strings.HasPrefix(u, "https://") {
 		u = fmt.Sprintf("http://%s", u)
 	}
-	htmlStr, cset, err := fetchHTMLForURL(u)
+	_, _, err := fetchHTMLForURL(u)
 	if err != nil {
 		return nil, err
 	}

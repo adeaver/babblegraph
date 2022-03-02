@@ -62,8 +62,9 @@ func InsertLinksWithSourceID(tx *sqlx.Tx, urls []URLWithSourceMapping) error {
 	}
 	queryBuilder.AddConflictResolution("DO NOTHING")
 	for _, u := range urls {
-		if err := queryBuilder.AddValues(input.URL.URLIdentifier, input.URL.Domain, input.URL.URL, input.SourceID); err != nil {
-			log.Println(fmt.Sprintf("Error inserting url with identifier %s: %s", u.URLIdentifier, err.Error()))
+		url := u.URL
+		if err := queryBuilder.AddValues(url.URLIdentifier, url.Domain, url.URL, u.SourceID); err != nil {
+			log.Println(fmt.Sprintf("Error inserting url with identifier %s: %s", url.URLIdentifier, err.Error()))
 		}
 	}
 	return queryBuilder.Execute(tx)
