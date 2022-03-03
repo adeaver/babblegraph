@@ -2,108 +2,155 @@ package scheduler
 
 import (
 	"babblegraph/model/content"
-	"babblegraph/model/domains"
 	"babblegraph/model/links2"
 	"babblegraph/model/urltopicmapping"
 	"babblegraph/services/worker/ingesthtml"
+	"babblegraph/util/async"
 	"babblegraph/util/ctx"
 	"babblegraph/util/database"
 	"babblegraph/util/urlparser"
-	"fmt"
 
 	"github.com/jmoiron/sqlx"
 )
 
-func refetchSeedDomainsForNewContent(c ctx.LogContext) error {
-	c.Infof("Starting refetch of seed domains...")
-	urlsByDomain := make(map[string][]domains.SeedURL)
-	for _, domain := range domains.GetDomains() {
-		urlsByDomain[domain] = []domains.SeedURL{}
-	}
-	for u, topics := range domains.GetSeedURLs() {
-		if p := urlparser.ParseURL(u); p != nil && domains.IsURLAllowed(*p) {
-			domain := p.Domain
-			seedURLs, ok := urlsByDomain[domain]
-			if !ok {
-				c.Warnf("Error processing seed url %s: its domain of %s not found in allowable domains", u, domain)
-				continue
-			}
-			urlsByDomain[domain] = append(seedURLs, domains.SeedURL{
-				URL:    u,
-				Topics: topics,
-			})
-		}
-	}
-	for len(urlsByDomain) != 0 {
-		// In order to rate limit ourselves (more or less), we go through each domain one by one
-		// And remove the first seed url, process it, and delete from the list.
-		// Once the list for that domain is empty, we delete that list
-		for domain := range urlsByDomain {
-			seedURLs := urlsByDomain[domain]
-			toProcess := seedURLs[0]
-			if err := processSeedURL(c, toProcess); err != nil {
-				c.Warnf("Error processing seed url %s: %s", toProcess.URL, err.Error())
-			}
-			c.Infof("Refetch finished processing seed url %s", toProcess.URL)
-			if len(seedURLs) == 1 {
-				delete(urlsByDomain, domain)
-			} else {
-				urlsByDomain[domain] = append([]domains.SeedURL{}, seedURLs[1:]...)
-			}
-		}
-	}
-	return nil
+type fetchNewLinksTask struct {
+	SourceID     *content.SourceID
+	SourceSeedID *content.SourceSeedID
+	URL          string
 }
 
-func processSeedURL(c ctx.LogContext, seedURL domains.SeedURL) error {
-	c.Infof("Refetch is processing seed url %s", seedURL.URL)
-	parsedSeedURL := urlparser.ParseURL(seedURL.URL)
-	if parsedSeedURL == nil {
-		return fmt.Errorf("something went wrong parsing url, got null parsed url for seed url %s", seedURL.URL)
-	}
-	parsedHTMLPage, err := ingesthtml.ProcessURLDEPRECATED(seedURL.URL, parsedSeedURL.Domain)
-	if err != nil {
-		return err
-	}
-	parsedURLs := make(map[string]urlparser.ParsedURL)
-	for _, l := range parsedHTMLPage.Links {
-		if p := urlparser.ParseURL(l); p != nil && domains.IsURLAllowed(*p) && !domains.IsSeedURL(*p) {
-			parsedURLs[p.URLIdentifier] = *p
-		}
-	}
-	c.Infof("Inserting refetched urls for %s", seedURL.URL)
-	return database.WithTx(func(tx *sqlx.Tx) error {
-		var toInsert []urlparser.ParsedURL
-		for _, p := range parsedURLs {
-			toInsert = append(toInsert, p)
-		}
-		if err := links2.UpsertLinkWithEmptyFetchStatus(tx, toInsert, true); err != nil {
+func fetchNewLinksForSeedURLs(c async.Context) {
+	c.Infof("Starting refetch of seed domains...")
+	var htmlIngestSources []content.Source
+	var sourceSeeds []content.SourceSeed
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		var err error
+		htmlIngestSources, err = content.LookupSourcesForIngestStrategy(tx, content.IngestStrategyWebsiteHTML1)
+		if err != nil {
 			return err
 		}
-		var mappings []urltopicmapping.TopicMappingUnion
-		for _, t := range seedURL.Topics {
-			topicID, err := content.GetTopicIDByContentTopic(tx, t)
+		for _, s := range htmlIngestSources {
+			seedsForSource, err := content.LookupActiveSourceSeedsForSource(tx, s.ID)
 			if err != nil {
 				return err
 			}
-			topicMappingID, err := content.LookupTopicMappingIDForURL(c, tx, *parsedSeedURL, *topicID)
+			sourceSeeds = append(sourceSeeds, seedsForSource...)
+		}
+		return nil
+	}); err != nil {
+		c.Errorf("Error getting sources and seeds: %s", err.Error())
+		return
+	}
+	tasksBySourceID := make(map[content.SourceID][]fetchNewLinksTask)
+	for _, source := range htmlIngestSources {
+		var newTasks []fetchNewLinksTask
+		if source.ShouldUseURLAsSeedURL {
+			newTasks = append(newTasks, fetchNewLinksTask{
+				SourceID: source.ID.Ptr(),
+				URL:      source.URL,
+			})
+		}
+		tasksBySourceID[source.ID] = newTasks
+	}
+	for _, seed := range sourceSeeds {
+		tasksBySourceID[seed.RootID] = append(tasksBySourceID[seed.RootID], fetchNewLinksTask{
+			SourceSeedID: seed.ID.Ptr(),
+			URL:          seed.URL,
+		})
+	}
+	for len(tasksBySourceID) > 0 {
+		for sourceID, tasks := range tasksBySourceID {
+			c.Infof("Processing task for source ID %s", sourceID)
+			task := tasks[0]
+			if err := processRefetchTask(c, sourceID, task); err != nil {
+				c.Errorf("Error processing task %+v: %s", task, err.Error())
+			}
+			nextTasks := append([]fetchNewLinksTask{}, tasks[1:]...)
+			if len(nextTasks) == 0 {
+				delete(tasksBySourceID, sourceID)
+			} else {
+				tasksBySourceID[sourceID] = nextTasks
+			}
+		}
+	}
+}
+
+func processRefetchTask(c ctx.LogContext, sourceID content.SourceID, task fetchNewLinksTask) error {
+	var source *content.Source
+	var sourceFilter *content.SourceFilter
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		var err error
+		source, err = content.GetSource(tx, sourceID)
+		if err != nil {
+			return err
+		}
+		sourceFilter, err = content.LookupSourceFilterForSource(tx, sourceID)
+		return err
+	}); err != nil {
+		return err
+	}
+	parsedHTMLPage, err := ingesthtml.ProcessURL(ingesthtml.ProcessURLInput{
+		URL:          task.URL,
+		Source:       *source,
+		SourceFilter: sourceFilter,
+	})
+	if err != nil {
+		return err
+	}
+	var parsedURLs []urlparser.ParsedURL
+	for _, u := range parsedHTMLPage.Links {
+		parsedURL := urlparser.ParseURL(u)
+		if parsedURL == nil {
+			continue
+		}
+		parsedURLs = append(parsedURLs, *parsedURL)
+	}
+	return database.WithTx(func(tx *sqlx.Tx) error {
+		var filteredURLs []links2.URLWithSourceMapping
+		for _, u := range parsedURLs {
+			sourceID, _, err := content.LookupSourceIDForDomain(tx, u.Domain)
 			switch {
 			case err != nil:
 				return err
-			case topicMappingID != nil:
-				mappings = append(mappings, urltopicmapping.TopicMappingUnion{
-					Topic:          t,
-					TopicMappingID: *topicMappingID,
+			case sourceID == nil:
+				// no-op
+			default:
+				filteredURLs = append(filteredURLs, links2.URLWithSourceMapping{
+					URL:      u,
+					SourceID: *sourceID,
 				})
-			case topicMappingID == nil:
-				c.Warnf("Topic %s with ID %s did not map to anything for seed URL %s", t, *topicID, *parsedSeedURL)
 			}
 		}
-		if len(mappings) == 0 {
+		if len(filteredURLs) == 0 {
 			return nil
 		}
-		for _, u := range parsedURLs {
-			if err := urltopicmapping.ApplyContentTopicsToURL(tx, u, mappings); err != nil {
+		if err := links2.UpsertURLMappingsWithEmptyFetchStatus(tx, filteredURLs, true); err != nil {
+			return err
+		}
+		if task.SourceSeedID == nil {
+			return nil
+		}
+		topicMappingIDs, topicIDs, err := content.LookupTopicMappingIDForSourceSeedID(tx, *task.SourceSeedID)
+		switch {
+		case err != nil:
+			return err
+		case len(topicMappingIDs) == 0:
+			c.Warnf("No topic mapping IDs for source seed: %s", *task.SourceSeedID)
+			return nil
+		}
+		var topicMappingUnions []urltopicmapping.TopicMappingUnion
+		for idx, topicMappingID := range topicMappingIDs {
+			asContentTopic, err := content.GetContentTopicForTopicID(tx, topicIDs[idx])
+			if err != nil {
+				return err
+			}
+			topicMappingUnions = append(topicMappingUnions, urltopicmapping.TopicMappingUnion{
+				Topic:          *asContentTopic,
+				TopicMappingID: topicMappingID,
+			})
+		}
+		for _, u := range filteredURLs {
+			if err := urltopicmapping.ApplyContentTopicsToURL(tx, u.URL, topicMappingUnions); err != nil {
 				return err
 			}
 		}

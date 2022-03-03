@@ -11,9 +11,10 @@ import (
 const (
 	getSourcesByIngestStrategyQuery = "SELECT * FROM content_source WHERE ingest_strategy = $1 AND is_active = TRUE"
 
-	getSourceForURLQuery           = "SELECT * FROM content_source WHERE url_identifier = $1"
-	getSourceSeedForURLQuery       = "SELECT * FROM content_source_seed WHERE url_identifier = $1 AND url_params IS NOT DISTINCT FROM $2"
-	getSourceSeedTopicMappingQuery = "SELECT * FROM content_source_seed_topic_mapping WHERE topic_id = $1 AND source_seed_id = $2"
+	getSourceForURLQuery                          = "SELECT * FROM content_source WHERE url_identifier = $1"
+	getSourceSeedForURLQuery                      = "SELECT * FROM content_source_seed WHERE url_identifier = $1 AND url_params IS NOT DISTINCT FROM $2"
+	getSourceSeedTopicMappingQuery                = "SELECT * FROM content_source_seed_topic_mapping WHERE topic_id = $1 AND source_seed_id = $2"
+	getSourceSeedTopicMappingForSourceSeedIDQuery = "SELECT * FROM content_source_seed_topic_mapping WHERE source_seed_id = $1"
 
 	getSourceSeedForSourceQuery                  = "SELECT * FROM content_source_seed WHERE root_id = $1"
 	getSourceSeedTopicMappingForSourceSeedsQuery = "SELECT * FROM content_source_seed_topic_mapping WHERE topic_id = '%s' AND source_seed_id IN (?)"
@@ -99,6 +100,23 @@ func LookupTopicMappingIDForURL(c ctx.LogContext, tx *sqlx.Tx, u urlparser.Parse
 		// TODO: implement same logic with source mapping
 		return nil, nil
 	}
+}
+
+// TODO: this function does not need to return topic id once the migration is complete
+func LookupTopicMappingIDForSourceSeedID(tx *sqlx.Tx, sourceSeedID SourceSeedID) ([]TopicMappingID, []TopicID, error) {
+	var matches []dbSourceSeedTopicMapping
+	if err := tx.Select(&matches, getSourceSeedTopicMappingForSourceSeedIDQuery, sourceSeedID); err != nil {
+		return nil, nil, err
+	}
+	var topicMappingIDs []TopicMappingID
+	var topicIDs []TopicID
+	for _, m := range matches {
+		topicMappingIDs = append(topicMappingIDs, MustMakeTopicMappingID(MakeTopicMappingIDInput{
+			SourceSeedTopicMappingID: m.ID.Ptr(),
+		}))
+		topicIDs = append(topicIDs, m.TopicID)
+	}
+	return topicMappingIDs, topicIDs, nil
 }
 
 func LookupTopicMappingIDForSourceAndTopic(c ctx.LogContext, tx *sqlx.Tx, sourceID SourceID, topicID TopicID) (*TopicMappingID, error) {

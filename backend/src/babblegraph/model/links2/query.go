@@ -112,6 +112,7 @@ func LookupBulkUnfetchedLinksForSourceID(tx *sqlx.Tx, sourceID content.SourceID,
 	return out, nil
 }
 
+// Should be deprecated
 func UpsertLinkWithEmptyFetchStatus(tx *sqlx.Tx, urls []urlparser.ParsedURL, includeTimestamp bool) error {
 	queryBuilder, err := database.NewBulkInsertQueryBuilder("links2", "url_identifier", "domain", "url", "source_id", "seed_job_ingest_timestamp")
 	if err != nil {
@@ -132,6 +133,25 @@ func UpsertLinkWithEmptyFetchStatus(tx *sqlx.Tx, urls []urlparser.ParsedURL, inc
 		}
 		if err := queryBuilder.AddValues(u.URLIdentifier, u.Domain, u.URL, *sourceID, firstSeedFetchTimestamp); err != nil {
 			log.Println(fmt.Sprintf("Error inserting url with identifier %s: %s", u.URLIdentifier, err.Error()))
+		}
+	}
+	return queryBuilder.Execute(tx)
+}
+
+func UpsertURLMappingsWithEmptyFetchStatus(tx *sqlx.Tx, urls []URLWithSourceMapping, includeTimestamp bool) error {
+	queryBuilder, err := database.NewBulkInsertQueryBuilder("links2", "url_identifier", "domain", "url", "source_id", "seed_job_ingest_timestamp")
+	if err != nil {
+		return err
+	}
+	queryBuilder.AddConflictResolution("(url_identifier) DO UPDATE SET last_fetch_version = NULL")
+	var firstSeedFetchTimestamp *int64
+	if includeTimestamp {
+		firstSeedFetchTimestamp = ptr.Int64(time.Now().Unix())
+	}
+	for _, u := range urls {
+		url := u.URL
+		if err := queryBuilder.AddValues(url.URLIdentifier, url.Domain, url.URL, u.SourceID, firstSeedFetchTimestamp); err != nil {
+			log.Println(fmt.Sprintf("Error inserting url with identifier %s: %s", url.URLIdentifier, err.Error()))
 		}
 	}
 	return queryBuilder.Execute(tx)
