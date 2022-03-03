@@ -4,7 +4,7 @@ import (
 	"babblegraph/model/content"
 	"babblegraph/model/contenttopics"
 	"babblegraph/model/documents"
-	"babblegraph/services/worker/ingesthtml"
+	"babblegraph/services/worker/contentingestion/ingesthtml"
 	"babblegraph/services/worker/textprocessing"
 	"babblegraph/util/ctx"
 	"babblegraph/util/ptr"

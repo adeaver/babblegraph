@@ -3,21 +3,7 @@ package ingesthtml
 import (
 	"babblegraph/model/content"
 	"babblegraph/util/urlparser"
-	"fmt"
-	"strings"
 )
-
-// TODO: get rid of this
-func ProcessURLDEPRECATED(u, domain string) (*ParsedHTMLPage, error) {
-	if !strings.HasPrefix(u, "http://") && !strings.HasPrefix(u, "https://") {
-		u = fmt.Sprintf("http://%s", u)
-	}
-	_, _, err := fetchHTMLForURL(u)
-	if err != nil {
-		return nil, err
-	}
-	return nil, nil
-}
 
 type ProcessURLInput struct {
 	URL          string
