@@ -106,8 +106,12 @@ func processRefetchTask(c ctx.LogContext, sourceID content.SourceID, task fetchN
 		parsedURLs = append(parsedURLs, *parsedURL)
 	}
 	return database.WithTx(func(tx *sqlx.Tx) error {
+		urlIdentifierHashSet := make(map[string]bool)
 		var filteredURLs []links2.URLWithSourceMapping
 		for _, u := range parsedURLs {
+			if _, ok := urlIdentifierHashSet[u.URLIdentifier]; ok {
+				continue
+			}
 			sourceID, _, err := content.LookupSourceIDForDomain(tx, u.Domain)
 			switch {
 			case err != nil:
@@ -115,12 +119,14 @@ func processRefetchTask(c ctx.LogContext, sourceID content.SourceID, task fetchN
 			case sourceID == nil:
 				// no-op
 			default:
+				urlIdentifierHashSet[u.URLIdentifier] = true
 				filteredURLs = append(filteredURLs, links2.URLWithSourceMapping{
 					URL:      u,
 					SourceID: *sourceID,
 				})
 			}
 		}
+		c.Debugf("Got %d urls to insert", len(filteredURLs))
 		if len(filteredURLs) == 0 {
 			return nil
 		}
