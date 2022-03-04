@@ -7,7 +7,9 @@ import Divider from '@material-ui/core/Divider';
 import FormControl from '@material-ui/core/FormControl';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import RadioGroup from '@material-ui/core/RadioGroup';
+import Snackbar from '@material-ui/core/Snackbar';
 
+import Alert from 'common/components/Alert/Alert';
 import CenteredComponent from 'common/components/CenteredComponent/CenteredComponent';
 import DisplayCard from 'common/components/DisplayCard/DisplayCard';
 import DisplayCardHeader from 'common/components/DisplayCard/DisplayCardHeader';
@@ -19,6 +21,7 @@ import { PrimaryRadio } from 'common/components/Radio/Radio';
 import Form from 'common/components/Form/Form';
 import { PrimaryTextField } from 'common/components/TextField/TextField';
 import { PrimaryButton } from 'common/components/Button/Button';
+import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
 
 import { ClientError } from 'ConsumerWeb/api/clienterror';
 import { WordsmithLanguageCode } from 'common/model/language/language';
@@ -346,7 +349,16 @@ const UserNewsletterPreferencesDisplay = asBaseComponent<GetUserNewsletterPrefer
                             </Grid>
                         </Form>
                     </Grid>
+                    {
+                        isLoading && <LoadingSpinner />
+                    }
                 </DisplayCard>
+                <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError(null)}>
+                    <Alert severity="error">Something went wrong processing your request.</Alert>
+                </Snackbar>
+                <Snackbar open={success} autoHideDuration={6000} onClose={() => setSuccess(false)}>
+                    <Alert severity="success">Successfully updated your preferences. Changes may take up to 24 hours to take effect!</Alert>
+                </Snackbar>
             </CenteredComponent>
         )
     },
