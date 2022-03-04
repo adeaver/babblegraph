@@ -107,7 +107,7 @@ const UserNewsletterPreferencesDisplay = asBaseComponent<GetUserNewsletterPrefer
                         backArrowDestination={`/manage/${props.subscriptionManagementToken}`} />
                     <Grid container>
                         <Grid item xs={10} xl={11}>
-                            <Heading4 align={Alignment.Left} color={TypographyColor.Primary}>
+                            <Heading4 align={Alignment.Left}>
                                 Include word tracking spotlights in your newsletter?
                             </Heading4>
                             <Paragraph align={Alignment.Left}>
@@ -130,6 +130,38 @@ const UserNewsletterPreferencesDisplay = asBaseComponent<GetUserNewsletterPrefer
                                         color={TypographyColor.Primary}>
                                         Podcast Settings
                                     </Heading2>
+                                    <Grid container>
+                                        <Grid item xs={10} xl={11}>
+                                            <Heading4 align={Alignment.Left}>
+                                                Would you like to include podcasts in your newsletter?
+                                            </Heading4>
+                                            <Paragraph align={Alignment.Left}>
+                                                With your premium subscription, Babblegraph will send you podcasts. But if you don’t want podcasts in your newsletter, you can disable it here.
+                                            </Paragraph>
+                                        </Grid>
+                                        <Grid item
+                                            className={classes.toggleContainer}
+                                            xs={2}
+                                            xl={1}>
+                                            <PrimarySwitch
+                                                checked={arePodcastsEnabled} onClick={() => {setArePodcastsEnabled(!arePodcastsEnabled)}} />
+                                        </Grid>
+                                        <Grid item xs={10} xl={11}>
+                                            <Heading4 align={Alignment.Left}>
+                                                Include potentially explicit podcasts in your newsletter?
+                                            </Heading4>
+                                            <Paragraph align={Alignment.Left}>
+                                                You can disable sending podcasts that deal with explicit subjects or use explicit language in your newsletter.
+                                            </Paragraph>
+                                        </Grid>
+                                        <Grid item
+                                            className={classes.toggleContainer}
+                                            xs={2}
+                                            xl={1}>
+                                            <PrimarySwitch
+                                                checked={includeExplicitPodcasts} onClick={() => {setIncludeExplicitPodcasts(!includeExplicitPodcasts)}} disabled={!arePodcastsEnabled} />
+                                        </Grid>
+                                    </Grid>
                                 </Grid>
                             )
                         }
