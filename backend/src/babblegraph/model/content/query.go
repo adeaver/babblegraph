@@ -102,7 +102,6 @@ func LookupTopicMappingIDForURL(c ctx.LogContext, tx *sqlx.Tx, u urlparser.Parse
 	}
 }
 
-// TODO: this function does not need to return topic id once the migration is complete
 func LookupTopicMappingIDForSourceSeedID(tx *sqlx.Tx, sourceSeedID SourceSeedID) ([]TopicMappingID, []TopicID, error) {
 	var matches []dbSourceSeedTopicMapping
 	if err := tx.Select(&matches, getSourceSeedTopicMappingForSourceSeedIDQuery, sourceSeedID); err != nil {

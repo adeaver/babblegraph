@@ -2,6 +2,7 @@ package main
 
 import (
 	"babblegraph/model/documents"
+	"babblegraph/model/podcasts"
 	"babblegraph/services/worker/contentingestion"
 	"babblegraph/services/worker/newsletterprocessing"
 	"babblegraph/services/worker/process"
@@ -91,5 +92,6 @@ func setupDatabases() error {
 	if err := documents.CreateDocumentMappings(); err != nil {
 		return fmt.Errorf("Error setting up documents: %s", err.Error())
 	}
+	podcasts.CreatePodcastMappings(ctx.GetDefaultLogContext())
 	return nil
 }

@@ -1,13 +1,17 @@
 package ingestrss
 
-import "encoding/xml"
+import (
+	"babblegraph/util/ctx"
+	"encoding/xml"
+	"strings"
+)
 
 type podcastRSSFeed struct {
 	XMLName xml.Name          `xml:"rss"`
-	Channel podcastRSSChannel `xml:"channel"`
+	Channel PodcastRSSChannel `xml:"channel"`
 }
 
-type podcastRSSChannel struct {
+type PodcastRSSChannel struct {
 	XMLName        xml.Name              `xml:"channel"`
 	AtomLink       string                `xml:"atom:link"`
 	Title          string                `xml:"title"`
@@ -15,86 +19,108 @@ type podcastRSSChannel struct {
 	Language       string                `xml:"language"`
 	Copyright      string                `xml:"copyright"`
 	Description    string                `xml:"description"`
-	Image          podcastRSSImage       `xml:"image"`
-	IsExplicit     podcastExplicitity    `xml:"itunes:explicit"`
-	PodcastType    podcastType           `xml:"itunes:type"`
+	Image          PodcastRSSImage       `xml:"image"`
+	IsExplicit     PodcastExplicitity    `xml:"itunes:explicit"`
+	PodcastType    PodcastType           `xml:"itunes:type"`
 	Subtitle       string                `xml:"itunes:subtitle"`
 	Author         string                `xml:"itunes:author"`
 	Summary        string                `xml:"itunes:summary"`
-	ContentEncoded podcastEncodedContent `xml:"content:encoded"`
-	Owner          podcastOwner          `xml:"itunes:owner"`
-	ITunesImage    podcastITunesImage    `xml:"itunes:image"`
-	Categories     []podcastCategory     `xml:"itunes:category"`
+	ContentEncoded PodcastEncodedContent `xml:"content:encoded"`
+	Owner          PodcastOwner          `xml:"itunes:owner"`
+	ITunesImage    PodcastITunesImage    `xml:"itunes:image"`
+	Categories     []PodcastCategory     `xml:"itunes:category"`
 	RSSFeedURL     string                `xml:"itunes:new-feed-url"`
-	Episodes       []podcastEpisode      `xml:"item"`
+	Episodes       []PodcastEpisode      `xml:"item"`
 }
 
-type podcastRSSImage struct {
+type PodcastRSSImage struct {
 	XMLName xml.Name `xml:"image"`
 	URL     string   `xml:"url"`
 	Title   string   `xml:"title"`
 	Link    string   `xml:"link"`
 }
 
-type podcastExplicitity string
+type PodcastExplicitity string
 
 const (
-	podcastExplicitityYes   podcastExplicitity = "yes"
-	podcastExplicitityTrue  podcastExplicitity = "true"
-	podcastExplicitityNo    podcastExplicitity = "no"
-	podcastExplicitityFalse podcastExplicitity = "false"
+	PodcastExplicitityYes   PodcastExplicitity = "yes"
+	PodcastExplicitityTrue  PodcastExplicitity = "true"
+	PodcastExplicitityNo    PodcastExplicitity = "no"
+	PodcastExplicitityFalse PodcastExplicitity = "false"
 )
 
-type podcastType string
+func (p PodcastExplicitity) Str() string {
+	return string(p)
+}
+
+func (p PodcastExplicitity) ToBool(c ctx.LogContext) bool {
+	switch strings.ToLower(p.Str()) {
+	case PodcastExplicitityYes.Str(),
+		PodcastExplicitityTrue.Str():
+		return true
+	case PodcastExplicitityNo.Str(),
+		PodcastExplicitityFalse.Str():
+		return false
+	default:
+		c.Warnf("Found unrecognized podcast explicit label %s. Assuming explicit", p.Str())
+		return true
+	}
+}
+
+type PodcastType string
 
 const (
-	podcastTypeEpisodic podcastType = "episodic"
+	PodcastTypeEpisodic PodcastType = "episodic"
 )
 
-type podcastEncodedContent struct {
+type PodcastEncodedContent struct {
 	XMLName xml.Name `xml:"content:encoded"`
 	Value   string   `xml:",cdata"`
 }
 
-type podcastOwner struct {
+type PodcastOwner struct {
 	XMLName xml.Name `xml:"itunes:owner"`
 	Name    string   `xml:"itunes:name"`
 	Email   string   `xml:"itunes:email"`
 }
 
-type podcastITunesImage struct {
+type PodcastITunesImage struct {
 	XMLName xml.Name `xml:"itunes:image"`
 	URL     string   `xml:"href,attr"`
 }
 
-type podcastCategory struct {
+type PodcastCategory struct {
 	XMLName xml.Name `xml:"itunes:category"`
 	Name    string   `xml:"text,attr"`
 }
 
-type podcastEpisode struct {
+type PodcastEpisode struct {
 	XMLName         xml.Name              `xml:"item"`
 	Title           string                `xml:"title"`
 	Description     string                `xml:"description"`
 	PublicationDate string                `xml:"pubDate"`
-	EpisodeType     podcastEpisodeType    `xml:"itunes:episodeType"`
+	EpisodeType     PodcastEpisodeType    `xml:"itunes:episodeType"`
 	Author          string                `xml:"author"`
 	Subtitle        string                `xml:"subtitle"`
 	Summary         string                `xml:"itunes:summary"`
-	ContentEncoded  podcastEncodedContent `xml:"content:encoded"`
+	ContentEncoded  PodcastEncodedContent `xml:"content:encoded"`
 	Duration        string                `xml:"duration"`
-	IsExplicit      podcastExplicitity    `xml:"itunes:explicit"`
+	IsExplicit      PodcastExplicitity    `xml:"itunes:explicit"`
 	ID              string                `xml:"guid"`
-	AudioData       podcastEnclosure      `xml:"enclosure"`
+	AudioData       PodcastEnclosure      `xml:"enclosure"`
 }
 
-type podcastEpisodeType string
+type PodcastEpisodeType string
 
 const (
-	podcastEpisodeTypeFull podcastEpisodeType = "full"
+	PodcastEpisodeTypeFull PodcastEpisodeType = "full"
 )
 
-type podcastEnclosure struct {
+func (p PodcastEpisodeType) Str() string {
+	return string(p)
+}
+
+type PodcastEnclosure struct {
 	XMLName xml.Name `xml:"enclosure"`
 	URL     string   `xml:"url,attr"`
 	Length  string   `xml:"length,attr"`

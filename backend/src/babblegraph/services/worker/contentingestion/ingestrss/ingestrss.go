@@ -8,13 +8,12 @@ import (
 	"net/http"
 )
 
-func GetPodcastDataForRSSFeed(c ctx.LogContext, url string) error {
+func GetPodcastDataForRSSFeed(c ctx.LogContext, url string) (*PodcastRSSChannel, error) {
 	feed, err := fetchRSSForURL(url)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	c.Debugf("Got feed %+v", *feed)
-	return nil
+	return &feed.Channel, nil
 }
 
 func fetchRSSForURL(u string) (*podcastRSSFeed, error) {

@@ -24,3 +24,9 @@ func GetLanguageCodeFromString(s string) (*LanguageCode, error) {
 		return nil, fmt.Errorf("Unrecognized language code: %s", s)
 	}
 }
+
+func GetSupportedLanguageCodes() []LanguageCode {
+	return []LanguageCode{
+		LanguageCodeSpanish,
+	}
+}

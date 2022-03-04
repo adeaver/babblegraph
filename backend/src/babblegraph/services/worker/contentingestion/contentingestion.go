@@ -33,8 +33,10 @@ var validIngestStrategies = map[content.IngestStrategy]ingestConfig{
 	},
 	content.IngestStrategyPodcastRSS1: {
 		maxWorkers:           2,
-		defaultTimeUntilFree: 10 * time.Second,
-		defaultRefreshPeriod: 24 * time.Hour,
+		defaultRefreshPeriod: 12 * time.Hour,
+		// Because the refresh period is shorter than the default
+		// time until free, episodes will be polled every time the refresh occurs.
+		defaultTimeUntilFree: 18 * time.Hour,
 	},
 }
 
@@ -84,8 +86,7 @@ func StartIngestion() func(c async.Context) {
 }
 
 func (i *ingestor) initialize(c ctx.LogContext) error {
-	config, ok := validIngestStrategies[i.ingestionType]
-	if !ok {
+	if _, ok := validIngestStrategies[i.ingestionType]; !ok {
 		return fmt.Errorf("Invalid ingestion type %s", i.ingestionType)
 	}
 	var sources []content.Source
@@ -104,7 +105,7 @@ func (i *ingestor) initialize(c ctx.LogContext) error {
 	for _, s := range sources {
 		orderedSources = append(orderedSources, ingestionSource{
 			sourceID: s.ID,
-			freeAt:   time.Now().Add(config.defaultTimeUntilFree),
+			freeAt:   time.Now(),
 		})
 		sourceSet[s.ID] = true
 		if err := i.registerBufferedFetchForSource(c, s.ID); err != nil {
