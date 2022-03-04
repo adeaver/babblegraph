@@ -3,6 +3,7 @@ import { RouteComponentProps } from 'react-router-dom';
 
 import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
+import Divider from '@material-ui/core/Divider';
 import FormControl from '@material-ui/core/FormControl';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import RadioGroup from '@material-ui/core/RadioGroup';
@@ -15,7 +16,11 @@ import { Alignment, TypographyColor } from 'common/typography/common';
 import { PrimarySwitch } from 'common/components/Switch/Switch';
 import Paragraph from 'common/typography/Paragraph';
 import { PrimaryRadio } from 'common/components/Radio/Radio';
+import Form from 'common/components/Form/Form';
+import { PrimaryTextField } from 'common/components/TextField/TextField';
+import { PrimaryButton } from 'common/components/Button/Button';
 
+import { ClientError } from 'ConsumerWeb/api/clienterror';
 import { WordsmithLanguageCode } from 'common/model/language/language';
 import {
     RouteEncryptionKey,
@@ -49,6 +54,21 @@ const styleClasses = makeStyles({
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
+    },
+    confirmationForm: {
+        padding: '10px 0',
+        width: '100%',
+    },
+    submitButton: {
+        display: 'block',
+        margin: 'auto',
+    },
+    submitButtonContainer: {
+        alignSelf: 'center',
+        padding: '5px',
+    },
+    emailField: {
+        width: '100%',
     },
 });
 
@@ -115,6 +135,22 @@ const getPodcastDurationByMinimumAndMaximium = (minimumDurationSeconds: number |
     return null
 }
 
+const getPodcastDurationBoundsSeconds = (podcastDuration: PodcastDurationPreference | null) => {
+    switch (podcastDuration) {
+        case null:
+            return [undefined, undefined];
+        case PodcastDurationPreference.LessThanFifteen:
+            return [undefined, 15 * 60];
+        case PodcastDurationPreference.FifteenToThirty:
+            return [15 * 60, 30 * 60];
+        case PodcastDurationPreference.ThirtyToOneHour:
+            return [30 * 60, 60 * 60];
+        case PodcastDurationPreference.MoreThanOneHour:
+            return [60 * 60, undefined];
+    }
+    return [undefined, undefined];
+}
+
 const UserNewsletterPreferencesDisplay = asBaseComponent<GetUserNewsletterPreferencesResponse, UserNewsletterPreferencesDisplayOwnProps>(
     (props: GetUserNewsletterPreferencesResponse & UserNewsletterPreferencesDisplayOwnProps & BaseComponentProps) => {
         if (!!props.error) {
@@ -132,6 +168,15 @@ const UserNewsletterPreferencesDisplay = asBaseComponent<GetUserNewsletterPrefer
             );
         }
 
+        const [ isLoading, setIsLoading ] = useState<boolean>(false);
+        const [ error, setError ] = useState<ClientError>(null);
+        const [ success, setSuccess ] = useState<boolean>(false);
+
+        const [ emailAddress, setEmailAddress ] = useState<string>(undefined);
+        const handleEmailAddressChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+            setEmailAddress((event.target as HTMLInputElement).value);
+        }
+
         const [ podcastDuration, setPodcastDuration ] = useState<PodcastDurationPreference>(
             getPodcastDurationByMinimumAndMaximium(
                 props.preferences.minimumPodcastDurationSeconds, props.preferences.maximumPodcastDurationSeconds
@@ -144,8 +189,35 @@ const UserNewsletterPreferencesDisplay = asBaseComponent<GetUserNewsletterPrefer
         const [ isLemmaSpotlightActive, setIsLemmaSpotlightActive ] = useState<boolean>(props.preferences.isLemmaReinforcementSpotlightActive);
         const [ arePodcastsEnabled, setArePodcastsEnabled ] = useState<boolean>(props.preferences.arePodcastsEnabled);
         const [ includeExplicitPodcasts, setIncludeExplicitPodcasts ] = useState<boolean>(props.preferences.includeExplicitPodcasts);
-        const [ minimumPodcastDurationSeconds, setMinimumPodcastDurationSeconds ] = useState<number | undefined>();
-        const [ maximumPodcastDurationSeconds, setMaximumPodcastDurationSeconds ] = useState<number | undefined>();
+
+        const handleSubmit = () => {
+            const [ minimumPodcastDurationSeconds, maximumPodcastDurationSeconds ] = getPodcastDurationBoundsSeconds(podcastDuration);
+            setIsLoading(true);
+            updateUserNewsletterPreferences({
+                emailAddress: emailAddress,
+                subscriptionManagementToken: props.subscriptionManagementToken,
+                preferences: {
+                    languageCode: WordsmithLanguageCode.Spanish,
+                    isLemmaReinforcementSpotlightActive: isLemmaSpotlightActive,
+                    arePodcastsEnabled: arePodcastsEnabled,
+                    includeExplicitPodcasts: includeExplicitPodcasts,
+                    minimumPodcastDurationSeconds: minimumPodcastDurationSeconds,
+                    maximumPodcastDurationSeconds: maximumPodcastDurationSeconds,
+                },
+            },
+            (resp: UpdateUserNewsletterPreferencesResponse) => {
+                setIsLoading(false);
+                if (!!resp.error) {
+                    setError(resp.error);
+                    return;
+                }
+                setSuccess(true);
+            },
+            (err: Error) => {
+                setIsLoading(false);
+                props.setError(err);
+            });
+        }
 
         const classes = styleClasses();
         return (
@@ -156,7 +228,7 @@ const UserNewsletterPreferencesDisplay = asBaseComponent<GetUserNewsletterPrefer
                         backArrowDestination={`/manage/${props.subscriptionManagementToken}`} />
                     <Grid container>
                         <Grid item xs={10} xl={11}>
-                            <Heading4 align={Alignment.Left}>
+                            <Heading4 align={Alignment.Left} color={TypographyColor.Primary}>
                                 Include word tracking spotlights in your newsletter?
                             </Heading4>
                             <Paragraph align={Alignment.Left}>
@@ -168,20 +240,20 @@ const UserNewsletterPreferencesDisplay = asBaseComponent<GetUserNewsletterPrefer
                             xs={2}
                             xl={1}>
                             <PrimarySwitch
-                                checked={isLemmaSpotlightActive} onClick={() => {setIsLemmaSpotlightActive(!isLemmaSpotlightActive)}} />
+                                checked={isLemmaSpotlightActive}
+                                onClick={() => {setIsLemmaSpotlightActive(!isLemmaSpotlightActive)}}
+                                disabled={isLoading} />
                         </Grid>
                         {
-                            /* TODO flip this condition */
-                            !props.userProfile.subscriptionLevel && (
+                            !!props.userProfile.subscriptionLevel && (
                                 <Grid item xs={12}>
                                     <Heading2
-                                        align={Alignment.Left}
-                                        color={TypographyColor.Primary}>
+                                        align={Alignment.Left}>
                                         Podcast Settings
                                     </Heading2>
                                     <Grid container>
                                         <Grid item xs={10} xl={11}>
-                                            <Heading4 align={Alignment.Left}>
+                                            <Heading4 align={Alignment.Left} color={TypographyColor.Primary}>
                                                 Would you like to include podcasts in your newsletter?
                                             </Heading4>
                                             <Paragraph align={Alignment.Left}>
@@ -193,10 +265,12 @@ const UserNewsletterPreferencesDisplay = asBaseComponent<GetUserNewsletterPrefer
                                             xs={2}
                                             xl={1}>
                                             <PrimarySwitch
-                                                checked={arePodcastsEnabled} onClick={() => {setArePodcastsEnabled(!arePodcastsEnabled)}} />
+                                                checked={arePodcastsEnabled}
+                                                onClick={() => {setArePodcastsEnabled(!arePodcastsEnabled)}}
+                                                disabled={isLoading} />
                                         </Grid>
                                         <Grid item xs={10} xl={11}>
-                                            <Heading4 align={Alignment.Left}>
+                                            <Heading4 align={Alignment.Left} color={TypographyColor.Primary}>
                                                 Include potentially explicit podcasts in your newsletter?
                                             </Heading4>
                                             <Paragraph align={Alignment.Left}>
@@ -208,11 +282,14 @@ const UserNewsletterPreferencesDisplay = asBaseComponent<GetUserNewsletterPrefer
                                             xs={2}
                                             xl={1}>
                                             <PrimarySwitch
-                                                checked={includeExplicitPodcasts && arePodcastsEnabled} onClick={() => {setIncludeExplicitPodcasts(!includeExplicitPodcasts)}} disabled={!arePodcastsEnabled} />
+                                                checked={includeExplicitPodcasts && arePodcastsEnabled}
+                                                onClick={() => {setIncludeExplicitPodcasts(!includeExplicitPodcasts)}}
+                                                disabled={!arePodcastsEnabled || isLoading} />
+
                                         </Grid>
                                     </Grid>
                                     <Grid item xs={12}>
-                                        <Heading4 align={Alignment.Left}>
+                                        <Heading4 align={Alignment.Left} color={TypographyColor.Primary}>
                                             What length of podcasts would you like to receive?
                                         </Heading4>
                                         <Paragraph align={Alignment.Left}>
@@ -225,8 +302,8 @@ const UserNewsletterPreferencesDisplay = asBaseComponent<GetUserNewsletterPrefer
                                                 <Grid container>
                                                     {
                                                         Object.keys(PodcastDurationPreference).map((p: PodcastDurationPreference) => ((
-                                                            <Grid item xs={6}>
-                                                                <FormControlLabel value={p} control={<PrimaryRadio />} label={PodcastDurationPreference[p]} />
+                                                            <Grid key={`podcast-option-${p}`} item xs={6}>
+                                                                <FormControlLabel value={p} control={<PrimaryRadio disabled={isLoading} />} label={PodcastDurationPreference[p]} />
                                                             </Grid>
                                                         )))
                                                     }
@@ -237,6 +314,37 @@ const UserNewsletterPreferencesDisplay = asBaseComponent<GetUserNewsletterPrefer
                                 </Grid>
                             )
                         }
+                        <Divider />
+                        <Form className={classes.confirmationForm} handleSubmit={handleSubmit}>
+                            <Grid container>
+                                {
+                                    !!props.userProfile.subscriptionLevel ? (
+                                        <Grid item xs={4} md={5}>
+                                            &nbsp;
+                                        </Grid>
+                                    ) : (
+                                        <Grid item xs={8} md={10}>
+                                            <PrimaryTextField
+                                                id="email"
+                                                disabled={isLoading}
+                                                className={classes.emailField}
+                                                value={emailAddress}
+                                                label="Email Address"
+                                                variant="outlined"
+                                                onChange={handleEmailAddressChange} />
+                                        </Grid>
+                                    )
+                                }
+                                <Grid item xs={4} md={2} className={classes.submitButtonContainer}>
+                                    <PrimaryButton
+                                        className={classes.submitButton}
+                                        disabled={(!emailAddress && !props.userProfile.subscriptionLevel) || isLoading}
+                                        type="submit">
+                                        Submit
+                                    </PrimaryButton>
+                                </Grid>
+                            </Grid>
+                        </Form>
                     </Grid>
                 </DisplayCard>
             </CenteredComponent>

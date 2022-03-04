@@ -35,7 +35,6 @@ export function getUserNewsletterPreferences(
 }
 
 export type UpdateUserNewsletterPreferencesRequest = {
-    languageCode: WordsmithLanguageCode;
     emailAddress: string | undefined;
     subscriptionManagementToken: string;
     preferences: UserNewsletterPreferences;

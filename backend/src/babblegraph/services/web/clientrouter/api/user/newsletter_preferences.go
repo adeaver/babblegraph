@@ -104,7 +104,6 @@ func getUserNewsletterPreferences(userAuth *routermiddleware.UserAuthentication,
 }
 
 type updateUserNewsletterPreferencesRequest struct {
-	LanguageCode                string                    `json:"language_code"`
 	SubscriptionManagementToken string                    `json:"subscription_management_token"`
 	EmailAddress                *string                   `json:"email_address,omitempty"`
 	Preferences                 userNewsletterPreferences `json:"preferences"`
@@ -130,7 +129,7 @@ func updateUserNewsletterPreferences(userAuth *routermiddleware.UserAuthenticati
 			Error: clienterror.ErrorInvalidToken.Ptr(),
 		}, nil
 	}
-	languageCode, err := wordsmith.GetLanguageCodeFromString(req.LanguageCode)
+	languageCode, err := wordsmith.GetLanguageCodeFromString(req.Preferences.LanguageCode.Str())
 	if err != nil {
 		return getUserNewsletterPreferencesResponse{
 			Error: clienterror.ErrorInvalidLanguageCode.Ptr(),
