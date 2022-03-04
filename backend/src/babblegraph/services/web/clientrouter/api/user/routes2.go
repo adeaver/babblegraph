@@ -27,6 +27,16 @@ var Routes = router.RouteGroup{
 			Handler: routermiddleware.WithNoBodyRequestLogger(
 				routermiddleware.MaybeWithAuthentication(unsubscribeUser),
 			),
+		}, {
+			Path: "get_user_newsletter_preferences_1",
+			Handler: routermiddleware.WithNoBodyRequestLogger(
+				routermiddleware.MaybeWithAuthentication(getUserNewsletterPreferences),
+			),
+		}, {
+			Path: "update_user_newsletter_preferences_1",
+			Handler: routermiddleware.WithNoBodyRequestLogger(
+				routermiddleware.MaybeWithAuthentication(updateUserNewsletterPreferences),
+			),
 		},
 	},
 }

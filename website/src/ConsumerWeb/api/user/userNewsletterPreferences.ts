@@ -1,17 +1,24 @@
 import { makePostRequestWithStandardEncoding } from 'util/bgfetch/bgfetch';
+import { ClientError } from 'ConsumerWeb/api/clienterror';
+import { WordsmithLanguageCode } from 'common/model/language/language';
+
+export type UserNewsletterPreferences = {
+    languageCode: WordsmithLanguageCode;
+    isLemmaReinforcementSpotlightActive: boolean;
+    arePodcastsEnabled: boolean;
+    includeExplicitPodcasts: boolean;
+    minimumPodcastDurationSeconds: number | undefined;
+    maximumPodcastDurationSeconds: number | undefined;
+}
 
 export type GetUserNewsletterPreferencesRequest = {
-    languageCode: string;
+    languageCode: WordsmithLanguageCode;
     subscriptionManagementToken: string;
 }
 
 export type GetUserNewsletterPreferencesResponse = {
-    languageCode: string;
-    preferences: UserNewsletterPreferences;
-}
-
-export type UserNewsletterPreferences = {
-    isLemmaReinforcementSpotlightActive: boolean;
+    preferences: UserNewsletterPreferences | undefined;
+    error: ClientError | undefined;
 }
 
 export function getUserNewsletterPreferences(
@@ -28,15 +35,15 @@ export function getUserNewsletterPreferences(
 }
 
 export type UpdateUserNewsletterPreferencesRequest = {
-    languageCode: string;
-    emailAddress: string;
+    languageCode: WordsmithLanguageCode;
+    emailAddress: string | undefined;
     subscriptionManagementToken: string;
     preferences: UserNewsletterPreferences;
 }
 
 export type UpdateUserNewsletterPreferencesResponse = {
-    languageCode: string;
     success: boolean;
+    error: ClientError | undefined;
 }
 
 export function updateUserNewsletterPreferences(
