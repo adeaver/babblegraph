@@ -4,6 +4,7 @@ import (
 	"babblegraph/model/users"
 	"babblegraph/wordsmith"
 	"fmt"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -16,6 +17,22 @@ const (
     ON CONFLICT (user_id, language_code)
     DO UPDATE SET
         should_include_lemma_reinforcement_spotlight = $3`
+
+	upsertPodcastSourcePreferencesQuery = `INSERT INTO user_podcast_source_preferences
+        (user_id, language_code, source_id, is_active)
+    VALUES ($1, $2, $3, $4)
+    ON CONFLICT (user_id, language_code, source_id)
+    DO UPDATE SET
+        is_active = $4`
+
+	upsertUserPodcastPreferencesQuery = `INSERT INTO user_podcast_preferences
+        (user_id, language_code, include_explicit_podcasts, minimum_duration_nanoseconds, maximum_duration_nanoseconds)
+    VALUES ($1, $2, $3, $4, $5)
+    ON CONFLICT (user_id, language_code)
+    DO UPDATE SET
+        include_explicit_podcasts=$3,
+        minimum_duration_nanoseconds=$4,
+        maximum_duration_nanoseconds=$5`
 )
 
 func GetUserNewsletterPrefrencesForLanguage(tx *sqlx.Tx, userID users.UserID, languageCode wordsmith.LanguageCode) (*UserNewsletterPreferences, error) {
@@ -38,15 +55,56 @@ type UpdateUserNewsletterPreferencesInput struct {
 	UserID                              users.UserID
 	LanguageCode                        wordsmith.LanguageCode
 	IsLemmaReinforcementSpotlightActive bool
+	PodcastPreferences                  *PodcastPreferencesInput
+}
+
+// TODO: get PodcastPreferencesInput
+type PodcastPreferencesInput struct {
+	IncludeExplicitPodcasts    bool
+	MinimumDurationNanoseconds *time.Duration
+	MaximumDurationNanoseconds *time.Duration
+	SourceIDUpdates            []SourceIDUpdate
+}
+
+type SourceIDUpdate struct {
+	SourceID bool
+	IsActive bool
 }
 
 func UpdateUserNewsletterPreferences(tx *sqlx.Tx, input UpdateUserNewsletterPreferencesInput) error {
-	return updateLemmaReinforcementSpotlightPreferences(tx, input.UserID, input.LanguageCode, input.IsLemmaReinforcementSpotlightActive)
+	err := updateLemmaReinforcementSpotlightPreferences(tx, input.UserID, input.LanguageCode, input.IsLemmaReinforcementSpotlightActive)
+	if err != nil {
+		return err
+	}
+	if input.PodcastPreferences != nil {
+		err = updatePodcastPreferences(tx, input.UserID, input.LanguageCode, *input.PodcastPreferences)
+		if err != nil {
+			return err
+		}
+		return updatePodcastSourcePreferences(tx, input.UserID, input.LanguageCode, input.PodcastPreferences.SourceIDUpdates)
+	}
+	return nil
 }
 
 func updateLemmaReinforcementSpotlightPreferences(tx *sqlx.Tx, userID users.UserID, languageCode wordsmith.LanguageCode, isActive bool) error {
 	if _, err := tx.Exec(updateLemmaReinforcementSpotlightPreferencesQuery, userID, languageCode, isActive); err != nil {
 		return err
+	}
+	return nil
+}
+
+func updatePodcastPreferences(tx *sqlx.Tx, userID users.UserID, languageCode wordsmith.LanguageCode, input PodcastPreferencesInput) error {
+	if _, err := tx.Exec(upsertUserPodcastPreferencesQuery, userID, languageCode, input.IncludeExplicitPodcasts, input.MinimumDurationNanoseconds, input.MaximumDurationNanoseconds); err != nil {
+		return err
+	}
+	return nil
+}
+
+func updatePodcastSourcePreferences(tx *sqlx.Tx, userID users.UserID, languageCode wordsmith.LanguageCode, updates []SourceIDUpdate) error {
+	for _, u := range updates {
+		if _, err := tx.Exec(upsertPodcastSourcePreferencesQuery, userID, languageCode, u.SourceID, u.IsActive); err != nil {
+			return err
+		}
 	}
 	return nil
 }
