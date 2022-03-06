@@ -89,6 +89,7 @@ func getUserNewsletterPreferences(userAuth *routermiddleware.UserAuthentication,
 			if prefs.PodcastPreferences.MaximumDurationNanoseconds != nil {
 				userPreferences.MaximumPodcastDurationSeconds = ptr.Int64(int64(*prefs.PodcastPreferences.MaximumDurationNanoseconds / time.Second))
 			}
+			r.Infof("Inserting podcast preferences")
 		}
 	case doesUserHaveAccount:
 		r.RespondWithStatus(http.StatusForbidden)
@@ -143,7 +144,7 @@ func updateUserNewsletterPreferences(userAuth *routermiddleware.UserAuthenticati
 		}
 		var podcastPreferences *usernewsletterpreferences.PodcastPreferencesInput
 		if userAuth.SubscriptionLevel != nil {
-			podcastPreferences := &usernewsletterpreferences.PodcastPreferencesInput{
+			podcastPreferences = &usernewsletterpreferences.PodcastPreferencesInput{
 				ArePodcastsEnabled:      deref.Bool(req.Preferences.ArePodcastsEnabled, true),
 				IncludeExplicitPodcasts: deref.Bool(req.Preferences.IncludeExplicitPodcasts, true),
 			}

@@ -31,6 +31,8 @@ import PremiumNewsletterSubscriptionCheckoutPage from 'ConsumerWeb/components/Pr
 import PremiumInformationPage from 'ConsumerWeb/components/PremiumInformationPage/PremiumInformationPage';
 import PremiumNewsletterSubscriptionManagementPage from 'ConsumerWeb/components/PremiumNewsletterSubscriptionManagementPage/PremiumNewsletterSubscriptionManagementPage';
 
+import PodcastPlayerPage from 'ConsumerWeb/components/PodcastPlayerPage/PodcastPlayerPage';
+
 import NotFoundPage from 'ConsumerWeb/components/NotFoundPage/NotFoundPage';
 
 class App extends React.Component{
@@ -48,6 +50,9 @@ class App extends React.Component{
                     <Route path="/manage/:token/payment-settings" component={PremiumNewsletterSubscriptionManagementPage} />
                     <Route exact path="/manage/:token" component={SubscriptionManagementHomePage} />
                     <Route path="/paywall-thank-you/:token" component={PaywallReportPage} />
+
+                    { /* Podcast Player */ }
+                    <Route path="/podcast/:userPodcastID" component={PodcastPlayerPage} />
 
                     { /* User Account Management */ }
                     <Route path="/login" component={LoginPage} />

@@ -139,9 +139,10 @@ const getPodcastDurationByMinimumAndMaximium = (minimumDurationSeconds: number |
 }
 
 const getPodcastDurationBoundsSeconds = (podcastDuration: PodcastDurationPreference | null) => {
-    switch (podcastDuration) {
-        case null:
-            return [undefined, undefined];
+    if (!podcastDuration) {
+        return [undefined, undefined];
+    }
+    switch (PodcastDurationPreference[podcastDuration]) {
         case PodcastDurationPreference.LessThanFifteen:
             return [undefined, 15 * 60];
         case PodcastDurationPreference.FifteenToThirty:
@@ -321,7 +322,7 @@ const UserNewsletterPreferencesDisplay = asBaseComponent<GetUserNewsletterPrefer
                         <Form className={classes.confirmationForm} handleSubmit={handleSubmit}>
                             <Grid container>
                                 {
-                                    !!props.userProfile.subscriptionLevel ? (
+                                    props.userProfile.hasAccount ? (
                                         <Grid item xs={4} md={5}>
                                             &nbsp;
                                         </Grid>
@@ -341,7 +342,7 @@ const UserNewsletterPreferencesDisplay = asBaseComponent<GetUserNewsletterPrefer
                                 <Grid item xs={4} md={2} className={classes.submitButtonContainer}>
                                     <PrimaryButton
                                         className={classes.submitButton}
-                                        disabled={(!emailAddress && !props.userProfile.subscriptionLevel) || isLoading}
+                                        disabled={(!emailAddress && !props.userProfile.hasAccount) || isLoading}
                                         type="submit">
                                         Submit
                                     </PrimaryButton>

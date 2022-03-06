@@ -32,6 +32,7 @@ func RegisterIndexRoutes(r *mux.Router, indexPages []IndexPage) error {
 	r.HandleFunc("/article/{token}", HandleArticleLink)
 	r.HandleFunc("/paywall-report/{token}", HandlePaywallReport)
 	r.HandleFunc("/checkout/{token}", HandleCheckoutPage(staticFileDirName))
+	r.HandleFunc("/vfile/{fileName}", HandleVirtualFile)
 	r.HandleFunc("/verify/{token}", HandleVerificationForToken)
 	r.HandleFunc("/blog/{blog_path}", HandleServeBlogPost(staticFileDirName))
 	r.HandleFunc("/dist/{token}/logo.png", HandleServeLogo(staticFileDirName))
