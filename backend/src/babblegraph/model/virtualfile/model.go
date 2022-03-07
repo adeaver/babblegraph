@@ -26,6 +26,8 @@ func typeFromString(t string) (*Type, error) {
 	switch strings.ToLower(t) {
 	case strings.ToLower(TypePodcast.Str()):
 		return TypePodcast.Ptr(), nil
+	case strings.ToLower(TypePodcastImage.Str()):
+		return TypePodcastImage.Ptr(), nil
 	default:
 		return nil, fmt.Errorf("Unrecognized virutal file type %s", t)
 	}

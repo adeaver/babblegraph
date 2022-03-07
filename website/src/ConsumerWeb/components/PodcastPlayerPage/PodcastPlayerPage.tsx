@@ -46,6 +46,12 @@ const styleClasses = makeStyles({
         display: 'block',
         margin: 'auto',
     },
+    podcastImage: {
+        maxWidth: '540px',
+        borderRadius: '10px',
+        margin: '25px auto',
+        display: 'block',
+    },
 });
 
 type Params = {
@@ -111,6 +117,13 @@ const PodcastPlayerPage = asBaseComponent<GetPodcastMetadataResponse, PodcastPla
             <CenteredComponent>
                 <DisplayCard>
                     <Grid container>
+                        {
+                            !!props.metadata.imageUrl && (
+                                <Grid item xs={12}>
+                                    <img className={classes.podcastImage} src={`/vfile/${props.metadata.imageUrl}`} />
+                                </Grid>
+                            )
+                        }
                         <Grid item xs={12}>
                             <Heading1 color={TypographyColor.Primary}>
                                 {props.metadata.episodeTitle}
