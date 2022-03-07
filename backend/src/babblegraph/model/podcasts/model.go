@@ -16,6 +16,18 @@ type dbPodcastMetadata struct {
 	ImageURL       *string          `db:"image_url"`
 }
 
+type PodcastMetadata struct {
+	ImageURL  *string
+	ContentID content.SourceID
+}
+
+func (d dbPodcastMetadata) ToNonDB() PodcastMetadata {
+	return PodcastMetadata{
+		ImageURL:  d.ImageURL,
+		ContentID: d.ContentID,
+	}
+}
+
 type Version int
 
 const (
@@ -25,6 +37,10 @@ const (
 )
 
 type EpisodeID string
+
+func (e EpisodeID) Str() string {
+	return string(e)
+}
 
 type Episode struct {
 	ID              EpisodeID     `json:"id"`

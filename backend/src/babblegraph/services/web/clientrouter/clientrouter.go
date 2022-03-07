@@ -5,6 +5,7 @@ import (
 	"babblegraph/services/web/clientrouter/api/billing"
 	"babblegraph/services/web/clientrouter/api/blog"
 	"babblegraph/services/web/clientrouter/api/language"
+	"babblegraph/services/web/clientrouter/api/podcasts"
 	"babblegraph/services/web/clientrouter/api/ses"
 	"babblegraph/services/web/clientrouter/api/token"
 	"babblegraph/services/web/clientrouter/api/user"
@@ -24,6 +25,7 @@ func RegisterClientRouter(r *mux.Router) error {
 		useraccounts.Routes,
 		billing.Routes,
 		user.Routes,
+		podcasts.Routes,
 	}); err != nil {
 		return err
 	}

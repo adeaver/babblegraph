@@ -10,7 +10,8 @@ import (
 type Type string
 
 const (
-	TypePodcast Type = "podcast"
+	TypePodcast      Type = "podcast"
+	TypePodcastImage Type = "podcast-image"
 )
 
 func (t Type) Str() string {
@@ -30,15 +31,15 @@ func typeFromString(t string) (*Type, error) {
 	}
 }
 
-func EncodeAsVirtualFileWithType(url string, t Type) (*string, error) {
+func EncodeAsVirtualFileWithType(id string, t Type) (*string, error) {
 	return encrypt.GetToken(encrypt.TokenPair{
 		Key:   t.Str(),
-		Value: url,
+		Value: id,
 	})
 }
 
-func GetURLAndType(virtualFileKey string) (*string, *Type, error) {
-	var url *string
+func GetObjectIDAndType(virtualFileKey string) (*string, *Type, error) {
+	var objectID *string
 	var t *Type
 	if err := encrypt.WithDecodedToken(virtualFileKey, func(token encrypt.TokenPair) error {
 		var err error
@@ -46,14 +47,14 @@ func GetURLAndType(virtualFileKey string) (*string, *Type, error) {
 		if err != nil {
 			return err
 		}
-		u, ok := token.Value.(string)
+		id, ok := token.Value.(string)
 		if !ok {
 			return fmt.Errorf("URL did not decode correctly")
 		}
-		url = ptr.String(u)
+		objectID = ptr.String(id)
 		return nil
 	}); err != nil {
 		return nil, nil, err
 	}
-	return url, t, nil
+	return objectID, t, nil
 }

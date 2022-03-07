@@ -72,6 +72,10 @@ func (s SourceID) Ptr() *SourceID {
 	return &s
 }
 
+func (s SourceID) Str() string {
+	return string(s)
+}
+
 type dbSource struct {
 	ID                    SourceID               `db:"_id"`
 	CreatedAt             time.Time              `db:"created_at"`
