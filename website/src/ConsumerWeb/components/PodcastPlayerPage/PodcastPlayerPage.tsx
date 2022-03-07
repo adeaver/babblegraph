@@ -3,6 +3,8 @@ import { RouteComponentProps } from 'react-router-dom';
 
 import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
+import CircularProgress from '@material-ui/core/CircularProgress';
+import VolumeUpIcon from '@material-ui/icons/VolumeUp';
 
 import CenteredComponent from 'common/components/CenteredComponent/CenteredComponent';
 import DisplayCard from 'common/components/DisplayCard/DisplayCard';
@@ -11,6 +13,7 @@ import { PrimarySlider } from 'common/components/Slider/Slider';
 import { Heading1, Heading3, Heading4 } from 'common/typography/Heading';
 import { Alignment, TypographyColor } from 'common/typography/common';
 import Paragraph, { Size } from 'common/typography/Paragraph';
+import Color from 'common/styles/colors';
 
 import {
     PodcastMetadata,
@@ -25,9 +28,23 @@ import {
 } from 'common/base/BaseComponent';
 
 const seekStepGranularity = 1000;
+const volumeGranularity = 100;
 const styleClasses = makeStyles({
     toggleButton: {
         width: '100%',
+    },
+    loadingSpinner: {
+        color: Color.Primary,
+        display: 'block',
+        margin: 'auto',
+    },
+    volumeContainer: {
+        alignItems: 'center',
+    },
+    volumeIcon: {
+        color: Color.Primary,
+        display: 'block',
+        margin: 'auto',
     },
 });
 
@@ -56,12 +73,27 @@ const PodcastPlayerPage = asBaseComponent<GetPodcastMetadataResponse, PodcastPla
             setSeekValue(val);
         };
 
+        const [ volumeValue, setVolumeValue ] = useState<number>(audio.volume);
+        const handleVolumeValueChange = (event: Event, newValue: number | number[]) => {
+            const val = newValue as number;
+            audio.volume = val / volumeGranularity;
+            setVolumeValue(val);
+        };
+
+        const [ isLoading, setIsLoading ] = useState<boolean>(false);
         useEffect(() => {
             audio.addEventListener("timeupdate", function() {
                 setSeekValue(this.currentTime / audio.duration * seekStepGranularity);
             });
             audio.addEventListener("ended", function() {
                 setIsAudioPlaying(false);
+            });
+            audio.addEventListener("waiting", function() {
+                setIsLoading(true);
+            });
+            audio.addEventListener("playing", function() {
+                setIsAudioPlaying(true);
+                setIsLoading(false);
             });
         }, []);
 
@@ -95,9 +127,27 @@ const PodcastPlayerPage = asBaseComponent<GetPodcastMetadataResponse, PodcastPla
                         </Grid>
                         <Grid item xs={12} md={2}>
                             <CenteredComponent>
-                                <PrimaryButton className={classes.toggleButton} onClick={toggleAudio}>
-                                    { isAudioPlaying ? "Pause" : "Play" }
-                                </PrimaryButton>
+                                {
+                                    isLoading ? (
+                                        <CircularProgress className={classes.loadingSpinner} />
+                                    ) : (
+                                        <PrimaryButton className={classes.toggleButton} onClick={toggleAudio}>
+                                            { isAudioPlaying ? "Pause" : "Play" }
+                                        </PrimaryButton>
+                                    )
+                                }
+                            </CenteredComponent>
+                        </Grid>
+                        <Grid item xs={12}>
+                            <CenteredComponent>
+                                <Grid container className={classes.alignItems}>
+                                    <Grid item xs={4} md={2}>
+                                        <VolumeUpIcon className={classes.volumeIcon} />
+                                    </Grid>
+                                    <Grid item xs={8} md={10}>
+                                        <PrimarySlider aria-label="Volume" max={volumeGranularity} value={volumeValue} onChange={handleVolumeValueChange} />
+                                    </Grid>
+                                </Grid>
                             </CenteredComponent>
                         </Grid>
                     </Grid>
