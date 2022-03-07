@@ -28,7 +28,23 @@ func processPodcastRSS1SourceSeed(c ctx.LogContext, sourceSeed content.SourceSee
 			return err
 		}
 		source, err = content.GetSource(tx, sourceSeed.RootID)
-		return err
+		if err != nil {
+			return err
+		}
+		if err := content.UpdateSource(tx, sourceSeed.RootID, content.UpdateSourceInput{
+			LanguageCode:          source.LanguageCode,
+			Title:                 channel.Title,
+			URL:                   source.URL,
+			Type:                  source.Type,
+			IngestStrategy:        source.IngestStrategy,
+			IsActive:              source.IsActive,
+			MonthlyAccessLimit:    source.MonthlyAccessLimit,
+			Country:               source.Country,
+			ShouldUseURLAsSeedURL: source.ShouldUseURLAsSeedURL,
+		}); err != nil {
+			return err
+		}
+		return podcasts.UpsertPodcastMetadata(tx, sourceSeed.RootID, channel.Image.URL)
 	}); err != nil {
 		return err
 	}

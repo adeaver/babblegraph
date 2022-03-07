@@ -10,6 +10,8 @@ CREATE TABLE IF NOT EXISTS content_podcast_metadata(
     PRIMARY KEY(_id)
 );
 
+CREATE UNIQUE INDEX IF NOT EXISTS content_podcast_metadata_content_id_idx ON content_podcast_metadata(content_id);
+
 CREATE TABLE IF NOT EXISTS user_podcast_preferences(
     _id uuid DEFAULT uuid_generate_v4 (),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()),
