@@ -73,7 +73,7 @@ const PodcastPlayerPage = asBaseComponent<GetPodcastMetadataResponse, PodcastPla
             setSeekValue(val);
         };
 
-        const [ volumeValue, setVolumeValue ] = useState<number>(audio.volume);
+        const [ volumeValue, setVolumeValue ] = useState<number>(volumeGranularity * audio.volume);
         const handleVolumeValueChange = (event: Event, newValue: number | number[]) => {
             const val = newValue as number;
             audio.volume = val / volumeGranularity;
@@ -140,7 +140,7 @@ const PodcastPlayerPage = asBaseComponent<GetPodcastMetadataResponse, PodcastPla
                         </Grid>
                         <Grid item xs={12}>
                             <CenteredComponent>
-                                <Grid container className={classes.alignItems}>
+                                <Grid className={classes.volumeContainer} container>
                                     <Grid item xs={4} md={2}>
                                         <VolumeUpIcon className={classes.volumeIcon} />
                                     </Grid>
