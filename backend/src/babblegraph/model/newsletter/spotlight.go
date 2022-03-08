@@ -1,6 +1,7 @@
 package newsletter
 
 import (
+	"babblegraph/model/content"
 	"babblegraph/model/documents"
 	"babblegraph/model/email"
 	"babblegraph/model/routes"
@@ -32,10 +33,7 @@ func getSpotlightLemmaForNewsletter(c ctx.LogContext, input getSpotlightLemmaFor
 			documentIDsToExclude = append(documentIDsToExclude, l.DocumentID)
 		}
 	}
-	allowableDomains, err := getAllowableDomains(input.userAccessor)
-	if err != nil {
-		return nil, err
-	}
+	allowableSourceIDs := input.userAccessor.getAllowableSources()
 	orderedListOfSpotlightRecords := getOrderedListOfPotentialSpotlightLemmas(input.userAccessor)
 	c.Debugf("Ordered spotlight records %+v", orderedListOfSpotlightRecords)
 	var preferencesLink string
@@ -52,7 +50,7 @@ func getSpotlightLemmaForNewsletter(c ctx.LogContext, input getSpotlightLemmaFor
 		getSpotlightLemmaForNewsletterInput: input,
 		documentIDsToExclude:                documentIDsToExclude,
 		potentialSpotlights:                 orderedListOfSpotlightRecords,
-		allowableDomains:                    allowableDomains,
+		allowableSourceIDs:                  allowableSourceIDs,
 		preferencesLink:                     preferencesLink,
 	})
 	switch {
@@ -67,7 +65,7 @@ func getSpotlightLemmaForNewsletter(c ctx.LogContext, input getSpotlightLemmaFor
 		getSpotlightLemmaForNewsletterInput: input,
 		documentIDsToExclude:                documentIDsToExclude,
 		potentialSpotlights:                 orderedListOfSpotlightRecords,
-		allowableDomains:                    allowableDomains,
+		allowableSourceIDs:                  allowableSourceIDs,
 		preferencesLink:                     preferencesLink,
 		shouldSearchNonRecentDocuments:      true,
 	})
@@ -79,7 +77,7 @@ type lookupSpotlightForAllPotentialSpotlightsInput struct {
 	potentialSpotlights            []wordsmith.LemmaID
 	shouldSearchNonRecentDocuments bool
 	preferencesLink                string
-	allowableDomains               []string
+	allowableSourceIDs             []content.SourceID
 }
 
 func lookupSpotlightForAllPotentialSpotlights(c ctx.LogContext, input lookupSpotlightForAllPotentialSpotlightsInput) (*LemmaReinforcementSpotlight, error) {
@@ -88,7 +86,7 @@ func lookupSpotlightForAllPotentialSpotlights(c ctx.LogContext, input lookupSpot
 			getDocumentsBaseInput: getDocumentsBaseInput{
 				LanguageCode:        input.userAccessor.getLanguageCode(),
 				ExcludedDocumentIDs: input.documentIDsToExclude,
-				ValidDomains:        input.allowableDomains,
+				ValidSourceIDs:      input.allowableSourceIDs,
 				MinimumReadingLevel: ptr.Int64(input.userAccessor.getReadingLevel().LowerBound),
 				MaximumReadingLevel: ptr.Int64(input.userAccessor.getReadingLevel().UpperBound),
 			},

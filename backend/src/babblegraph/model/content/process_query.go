@@ -109,3 +109,16 @@ func LookupSourceIDForDomain(tx *sqlx.Tx, domain string) (_sourceID *SourceID, _
 	}
 	return nil, false, nil
 }
+
+func GetAllowableSources(tx *sqlx.Tx) ([]Source, error) {
+	if needsResync() {
+		if err := initializeInMemoryCache(tx); err != nil {
+			return nil, err
+		}
+	}
+	var out []Source
+	for _, source := range allowableSourceMap {
+		out = append(out, source)
+	}
+	return out, nil
+}

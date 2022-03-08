@@ -25,16 +25,12 @@ type getDocumentCategoriesInput struct {
 func getDocumentCategories(c ctx.LogContext, input getDocumentCategoriesInput) ([]Category, error) {
 	topics := getTopicsForNewsletter(input.userAccessor)
 	c.Debugf("Topics %+v", topics)
-	allowableDomains, err := getAllowableDomains(input.userAccessor)
-	if err != nil {
-		return nil, err
-	}
-	c.Debugf("Allowable domains %+v", allowableDomains)
+	allowableSourceIDs := input.userAccessor.getAllowableSources()
 	genericDocuments, err := input.docsAccessor.GetDocumentsForUser(c, getDocumentsForUserInput{
 		getDocumentsBaseInput: getDocumentsBaseInput{
 			LanguageCode:        input.languageCode,
 			ExcludedDocumentIDs: input.userAccessor.getSentDocumentIDs(),
-			ValidDomains:        allowableDomains,
+			ValidSourceIDs:      allowableSourceIDs,
 			MinimumReadingLevel: ptr.Int64(input.userAccessor.getReadingLevel().LowerBound),
 			MaximumReadingLevel: ptr.Int64(input.userAccessor.getReadingLevel().UpperBound),
 		},
@@ -49,7 +45,7 @@ func getDocumentCategories(c ctx.LogContext, input getDocumentCategoriesInput) (
 			getDocumentsBaseInput: getDocumentsBaseInput{
 				LanguageCode:        input.languageCode,
 				ExcludedDocumentIDs: input.userAccessor.getSentDocumentIDs(),
-				ValidDomains:        allowableDomains,
+				ValidSourceIDs:      allowableSourceIDs,
 				MinimumReadingLevel: ptr.Int64(input.userAccessor.getReadingLevel().LowerBound),
 				MaximumReadingLevel: ptr.Int64(input.userAccessor.getReadingLevel().UpperBound),
 			},

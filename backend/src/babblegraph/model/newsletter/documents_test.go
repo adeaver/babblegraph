@@ -17,7 +17,7 @@ func (t *testDocsAccessor) GetDocumentsForUser(c ctx.LogContext, input getDocume
 		switch {
 		case doc.LanguageCode != input.LanguageCode,
 			isIDExcluded(doc.ID, input.ExcludedDocumentIDs),
-			!isDomainValid(doc.Domain, input.ValidDomains),
+			!isSourceValid(doc.SourceID, input.ValidSourceIDs),
 			input.MinimumReadingLevel != nil && *input.MinimumReadingLevel > doc.ReadabilityScore,
 			input.MaximumReadingLevel != nil && *input.MaximumReadingLevel < doc.ReadabilityScore,
 			input.Topic != nil && !containsTopic(*input.Topic, doc.Topics):
@@ -48,7 +48,7 @@ func (t *testDocsAccessor) GetDocumentsForUserForLemma(c ctx.LogContext, input g
 			c.Debugf("Language code does not match, %s", doc.LanguageCode)
 		case isIDExcluded(doc.ID, input.ExcludedDocumentIDs):
 			c.Debugf("ID does not match: %s", doc.ID)
-		case !isDomainValid(doc.Domain, input.ValidDomains):
+		case !isSourceValid(doc.SourceID, input.ValidSourceIDs):
 			c.Debugf("Domain not valid: %s", doc.Domain)
 		case input.MinimumReadingLevel != nil && *input.MinimumReadingLevel > doc.ReadabilityScore:
 			c.Debugf("Reading score too high: %+v", doc.ReadabilityScore)

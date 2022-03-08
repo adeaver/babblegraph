@@ -1,5 +1,8 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+CREATE INDEX IF NOT EXISTS content_source_ingest_strategy ON content_source(ingest_strategy);
+CREATE INDEX IF NOT EXISTS content_source_source_type ON content_source(source_type);
+
 CREATE TABLE IF NOT EXISTS content_podcast_metadata(
     _id uuid DEFAULT uuid_generate_v4 (),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()),

@@ -1,13 +1,13 @@
 package newsletter
 
 import (
+	"babblegraph/model/content"
 	"babblegraph/model/contenttopics"
 	"babblegraph/model/documents"
 	"babblegraph/model/email"
 	"babblegraph/model/useraccounts"
 	"babblegraph/model/userdocuments"
 	"babblegraph/model/userlemma"
-	"babblegraph/model/userlinks"
 	"babblegraph/model/usernewsletterpreferences"
 	"babblegraph/model/usernewsletterschedule"
 	"babblegraph/model/users"
@@ -33,7 +33,7 @@ type GetSampleNewsletterUserAccessorInput struct {
 	SentDocumentIDs           []documents.DocumentID
 	UserTopics                []contenttopics.ContentTopic
 	TrackingLemmas            []wordsmith.LemmaID
-	UserDomainCounts          []userlinks.UserDomainCount
+	AllowableSourceIDs        []content.SourceID
 	SpotlightRecords          []userlemma.UserLemmaReinforcementSpotlightRecord
 }
 
@@ -64,8 +64,8 @@ func GetSampleNewsletterUserAccessor(c ctx.LogContext, tx *sqlx.Tx, input GetSam
 	if input.TrackingLemmas != nil {
 		defaultUserPreferencesAccessor.trackingLemmas = input.TrackingLemmas
 	}
-	if input.UserDomainCounts != nil {
-		defaultUserPreferencesAccessor.userDomainCounts = input.UserDomainCounts
+	if input.AllowableSourceIDs != nil {
+		defaultUserPreferencesAccessor.allowableSourceIDs = input.AllowableSourceIDs
 	}
 	if input.SpotlightRecords != nil {
 		defaultUserPreferencesAccessor.userSpotlightRecords = input.SpotlightRecords
@@ -119,8 +119,8 @@ func (s *SampleNewsletterUserAccessor) getTrackingLemmas() []wordsmith.LemmaID {
 	return s.defaultUserPreferencesAccessor.getTrackingLemmas()
 }
 
-func (s *SampleNewsletterUserAccessor) getUserDomainCounts() []userlinks.UserDomainCount {
-	return s.defaultUserPreferencesAccessor.getUserDomainCounts()
+func (s *SampleNewsletterUserAccessor) getAllowableSources() []content.SourceID {
+	return s.defaultUserPreferencesAccessor.getAllowableSources()
 }
 
 func (s *SampleNewsletterUserAccessor) getSpotlightRecordsOrderedBySentOn() []userlemma.UserLemmaReinforcementSpotlightRecord {

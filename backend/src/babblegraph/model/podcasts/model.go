@@ -28,6 +28,7 @@ func (d dbPodcastMetadata) ToNonDB() PodcastMetadata {
 	}
 }
 
+// TODO: at some point, I need a version per language
 type Version int
 
 const (
@@ -36,6 +37,10 @@ const (
 	CurrentVersion = Version1
 )
 
+func (v Version) Int64() int64 {
+	return int64(v)
+}
+
 type EpisodeID string
 
 func (e EpisodeID) Str() string {
@@ -43,14 +48,14 @@ func (e EpisodeID) Str() string {
 }
 
 type Episode struct {
-	ID              EpisodeID     `json:"id"`
-	Title           string        `json:"title"`
-	Description     string        `json:"description"`
-	PublicationDate time.Time     `json:"publication_date"`
-	EpisodeType     string        `json:"episode_type"`
-	Duration        time.Duration `json:"duration"`
-	IsExplicit      bool          `json:"is_explicit"`
-	AudioFile       AudioFile     `json:"audio_file"`
+	ID                  EpisodeID     `json:"id"`
+	Title               string        `json:"title"`
+	Description         string        `json:"description"`
+	PublicationDate     time.Time     `json:"publication_date"`
+	EpisodeType         string        `json:"episode_type"`
+	DurationNanoseconds time.Duration `json:"duration_nanoseconds"`
+	IsExplicit          bool          `json:"is_explicit"`
+	AudioFile           AudioFile     `json:"audio_file"`
 
 	// This is only guaranteed to be unique across
 	// episodes of the same podcasts, not universally across

@@ -84,13 +84,13 @@ func convertIngestEpisodeToModelEpisode(c ctx.LogContext, in ingestrss.PodcastEp
 		return nil, err
 	}
 	return &podcasts.IndexPodcastEpisodeInput{
-		Title:           in.Title,
-		Description:     in.Description,
-		PublicationDate: publicationDate,
-		EpisodeType:     in.EpisodeType.Str(),
-		Duration:        *episodeDuration,
-		IsExplicit:      in.IsExplicit.ToBool(c),
-		GUID:            in.ID,
+		Title:               in.Title,
+		Description:         in.Description,
+		PublicationDate:     publicationDate,
+		EpisodeType:         in.EpisodeType.Str(),
+		DurationNanoseconds: *episodeDuration,
+		IsExplicit:          in.IsExplicit.ToBool(c),
+		GUID:                in.ID,
 		AudioFile: podcasts.AudioFile{
 			URL:  in.AudioData.URL,
 			Type: in.AudioData.Type,

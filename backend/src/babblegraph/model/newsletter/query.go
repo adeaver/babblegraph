@@ -21,31 +21,39 @@ const (
 	minimumDaysSinceLastSpotlight = 3
 )
 
-func CreateNewsletter(c ctx.LogContext, wordsmithAccessor wordsmithAccessor, emailAccessor emailAccessor, userAccessor userPreferencesAccessor, docsAccessor documentAccessor) (*Newsletter, error) {
+type CreateNewsletterInput struct {
+	WordsmithAccessor wordsmithAccessor
+	EmailAccessor     emailAccessor
+	UserAccessor      userPreferencesAccessor
+	DocsAccessor      documentAccessor
+	PodcastAcccessor  podcastAccessor
+}
+
+func CreateNewsletter(c ctx.LogContext, input CreateNewsletterInput) (*Newsletter, error) {
 	emailRecordID := email.NewEmailRecordID()
-	if err := emailAccessor.InsertEmailRecord(emailRecordID, userAccessor.getUserID()); err != nil {
+	if err := input.EmailAccessor.InsertEmailRecord(emailRecordID, input.UserAccessor.getUserID()); err != nil {
 		return nil, err
 	}
 	var numberOfDocumentsInNewsletter *int
-	userSubscriptionLevel := userAccessor.getUserSubscriptionLevel()
+	userSubscriptionLevel := input.UserAccessor.getUserSubscriptionLevel()
 	switch {
 	case userSubscriptionLevel == nil:
 		// no-op
 	case *userSubscriptionLevel == useraccounts.SubscriptionLevelBetaPremium,
 		*userSubscriptionLevel == useraccounts.SubscriptionLevelPremium:
-		if !userAccessor.getUserNewsletterSchedule().IsSendRequested() {
+		if !input.UserAccessor.getUserNewsletterSchedule().IsSendRequested() {
 			return nil, nil
 		}
-		numberOfDocumentsInNewsletter = ptr.Int(userAccessor.getUserNewsletterSchedule().GetNumberOfDocuments())
+		numberOfDocumentsInNewsletter = ptr.Int(input.UserAccessor.getUserNewsletterSchedule().GetNumberOfDocuments())
 
 	default:
 		return nil, fmt.Errorf("Unrecognized subscription level: %s", *userSubscriptionLevel)
 	}
 	categories, err := getDocumentCategories(c, getDocumentCategoriesInput{
 		emailRecordID:                 emailRecordID,
-		languageCode:                  userAccessor.getLanguageCode(),
-		userAccessor:                  userAccessor,
-		docsAccessor:                  docsAccessor,
+		languageCode:                  input.UserAccessor.getLanguageCode(),
+		userAccessor:                  input.UserAccessor,
+		docsAccessor:                  input.DocsAccessor,
 		numberOfDocumentsInNewsletter: numberOfDocumentsInNewsletter,
 	})
 	if err != nil {
@@ -53,21 +61,21 @@ func CreateNewsletter(c ctx.LogContext, wordsmithAccessor wordsmithAccessor, ema
 	}
 	var setTopicsLink *string
 	switch {
-	case len(userAccessor.getUserTopics()) > 0:
+	case len(input.UserAccessor.getUserTopics()) > 0:
 		// no-op
-	case userAccessor.getDoesUserHaveAccount():
+	case input.UserAccessor.getDoesUserHaveAccount():
 		setTopicsLink = ptr.String(routes.MakeLoginLinkWithContentTopicsRedirect())
 	default:
-		setTopicsLink, err = routes.MakeSetTopicsLink(userAccessor.getUserID())
+		setTopicsLink, err = routes.MakeSetTopicsLink(input.UserAccessor.getUserID())
 		if err != nil {
 			return nil, err
 		}
 	}
 	var reinforcementLink *string
-	if userAccessor.getDoesUserHaveAccount() {
+	if input.UserAccessor.getDoesUserHaveAccount() {
 		reinforcementLink = ptr.String(routes.MakeLoginLinkWithReinforcementRedirect())
 	} else {
-		reinforcementLink, err = routes.MakeWordReinforcementLink(userAccessor.getUserID())
+		reinforcementLink, err = routes.MakeWordReinforcementLink(input.UserAccessor.getUserID())
 		if err != nil {
 			return nil, err
 		}
@@ -75,17 +83,17 @@ func CreateNewsletter(c ctx.LogContext, wordsmithAccessor wordsmithAccessor, ema
 	spotlightRecord, err := getSpotlightLemmaForNewsletter(c, getSpotlightLemmaForNewsletterInput{
 		emailRecordID:     emailRecordID,
 		categories:        categories,
-		userAccessor:      userAccessor,
-		docsAccessor:      docsAccessor,
-		wordsmithAccessor: wordsmithAccessor,
+		userAccessor:      input.UserAccessor,
+		docsAccessor:      input.DocsAccessor,
+		wordsmithAccessor: input.WordsmithAccessor,
 	})
 	if err != nil {
 		return nil, err
 	}
 	return &Newsletter{
-		UserID:        userAccessor.getUserID(),
+		UserID:        input.UserAccessor.getUserID(),
 		EmailRecordID: emailRecordID,
-		LanguageCode:  userAccessor.getLanguageCode(),
+		LanguageCode:  input.UserAccessor.getLanguageCode(),
 		Body: NewsletterBody{
 			LemmaReinforcementSpotlight: spotlightRecord,
 			Categories:                  categories,
@@ -93,29 +101,6 @@ func CreateNewsletter(c ctx.LogContext, wordsmithAccessor wordsmithAccessor, ema
 			ReinforcementLink:           *reinforcementLink,
 		},
 	}, nil
-}
-
-func getAllowableDomains(accessor userPreferencesAccessor) ([]string, error) {
-	currentUserDomainCounts := accessor.getUserDomainCounts()
-	domainCountByDomain := make(map[string]int64)
-	for _, domainCount := range currentUserDomainCounts {
-		domainCountByDomain[domainCount.Domain] = domainCount.Count
-	}
-	var out []string
-	for _, d := range domains.GetDomains() {
-		countForDomain, ok := domainCountByDomain[d]
-		if ok {
-			metadata, err := domains.GetDomainMetadata(d)
-			if err != nil {
-				return nil, err
-			}
-			if metadata.NumberOfMonthlyFreeArticles != nil && countForDomain >= *metadata.NumberOfMonthlyFreeArticles {
-				continue
-			}
-		}
-		out = append(out, d)
-	}
-	return out, nil
 }
 
 func pickUpToNRandomIndices(listLength, pickN int) []int {
@@ -146,6 +131,7 @@ func makeLinkFromDocument(c ctx.LogContext, emailRecordID email.ID, userAccessor
 	if isNotEmpty(doc.Metadata.Description) {
 		description = doc.Metadata.Description
 	}
+	// TODO: make content accessor
 	domain, err := domains.GetDomainMetadata(doc.Domain)
 	if err != nil {
 		c.Errorf("Error getting domain: %s", err.Error())

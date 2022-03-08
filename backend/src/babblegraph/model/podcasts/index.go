@@ -41,14 +41,14 @@ func (p *podcastIndex) GenerateIDForDocument(document interface{}) (*string, err
 }
 
 type IndexPodcastEpisodeInput struct {
-	Title           string
-	Description     string
-	PublicationDate time.Time
-	EpisodeType     string
-	Duration        time.Duration
-	IsExplicit      bool
-	AudioFile       AudioFile
-	GUID            string
+	Title               string
+	Description         string
+	PublicationDate     time.Time
+	EpisodeType         string
+	DurationNanoseconds time.Duration
+	IsExplicit          bool
+	AudioFile           AudioFile
+	GUID                string
 
 	Version Version
 
@@ -61,19 +61,19 @@ func AssignIDAndIndexPodcastEpisode(c ctx.LogContext, input IndexPodcastEpisodeI
 	podcastIndex := getPodcastIndexForLanguageCode(input.LanguageCode)
 	episodeID := makePodcastEpisodeID(input.SourceID, input.GUID)
 	if err := elastic.IndexDocument(c, podcastIndex, Episode{
-		ID:              episodeID,
-		Title:           input.Title,
-		Description:     input.Description,
-		PublicationDate: input.PublicationDate,
-		EpisodeType:     input.EpisodeType,
-		Duration:        input.Duration,
-		IsExplicit:      input.IsExplicit,
-		AudioFile:       input.AudioFile,
-		GUID:            input.GUID,
-		Version:         input.Version,
-		LanguageCode:    input.LanguageCode,
-		TopicIDs:        input.TopicIDs,
-		SourceID:        input.SourceID,
+		ID:                  episodeID,
+		Title:               input.Title,
+		Description:         input.Description,
+		PublicationDate:     input.PublicationDate,
+		EpisodeType:         input.EpisodeType,
+		DurationNanoseconds: input.DurationNanoseconds,
+		IsExplicit:          input.IsExplicit,
+		AudioFile:           input.AudioFile,
+		GUID:                input.GUID,
+		Version:             input.Version,
+		LanguageCode:        input.LanguageCode,
+		TopicIDs:            input.TopicIDs,
+		SourceID:            input.SourceID,
 	}); err != nil {
 		return nil, err
 	}

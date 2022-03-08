@@ -1,6 +1,7 @@
 package newsletter
 
 import (
+	"babblegraph/model/content"
 	"babblegraph/model/contenttopics"
 	"babblegraph/model/documents"
 	"babblegraph/util/ctx"
@@ -10,7 +11,7 @@ import (
 type getDocumentsBaseInput struct {
 	LanguageCode        wordsmith.LanguageCode
 	ExcludedDocumentIDs []documents.DocumentID
-	ValidDomains        []string
+	ValidSourceIDs      []content.SourceID
 	MinimumReadingLevel *int64
 	MaximumReadingLevel *int64
 }
@@ -51,7 +52,7 @@ func (d *DefaultDocumentsAccessor) GetDocumentsForUser(c ctx.LogContext, input g
 	dailyEmailDocQueryBuilder.WithRecencyBias(documents.RecencyBiasMostRecent)
 	recentDocuments, err := documents.ExecuteDocumentQuery(c, dailyEmailDocQueryBuilder, documents.ExecuteDocumentQueryInput{
 		LanguageCode:        input.getDocumentsBaseInput.LanguageCode,
-		ValidDomains:        input.getDocumentsBaseInput.ValidDomains,
+		ValidSourceIDs:      input.getDocumentsBaseInput.ValidSourceIDs,
 		ExcludedDocumentIDs: input.getDocumentsBaseInput.ExcludedDocumentIDs,
 		MinimumReadingLevel: input.getDocumentsBaseInput.MinimumReadingLevel,
 		MaximumReadingLevel: input.getDocumentsBaseInput.MaximumReadingLevel,
@@ -62,7 +63,7 @@ func (d *DefaultDocumentsAccessor) GetDocumentsForUser(c ctx.LogContext, input g
 	dailyEmailDocQueryBuilder.WithRecencyBias(documents.RecencyBiasNotRecent)
 	notRecentDocuments, err := documents.ExecuteDocumentQuery(c, dailyEmailDocQueryBuilder, documents.ExecuteDocumentQueryInput{
 		LanguageCode:        input.getDocumentsBaseInput.LanguageCode,
-		ValidDomains:        input.getDocumentsBaseInput.ValidDomains,
+		ValidSourceIDs:      input.getDocumentsBaseInput.ValidSourceIDs,
 		ExcludedDocumentIDs: input.getDocumentsBaseInput.ExcludedDocumentIDs,
 		MinimumReadingLevel: input.getDocumentsBaseInput.MinimumReadingLevel,
 		MaximumReadingLevel: input.getDocumentsBaseInput.MaximumReadingLevel,
@@ -86,7 +87,7 @@ func (d *DefaultDocumentsAccessor) GetDocumentsForUserForLemma(c ctx.LogContext,
 	spotlightQueryBuilder.WithRecencyBias(recencyBias)
 	return documents.ExecuteDocumentQuery(c, spotlightQueryBuilder, documents.ExecuteDocumentQueryInput{
 		LanguageCode:        input.getDocumentsBaseInput.LanguageCode,
-		ValidDomains:        input.getDocumentsBaseInput.ValidDomains,
+		ValidSourceIDs:      input.getDocumentsBaseInput.ValidSourceIDs,
 		ExcludedDocumentIDs: input.getDocumentsBaseInput.ExcludedDocumentIDs,
 		MinimumReadingLevel: input.getDocumentsBaseInput.MinimumReadingLevel,
 		MaximumReadingLevel: input.getDocumentsBaseInput.MaximumReadingLevel,

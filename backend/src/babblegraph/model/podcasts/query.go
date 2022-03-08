@@ -7,6 +7,7 @@ import (
 	"babblegraph/wordsmith"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -64,4 +65,58 @@ func GetEpisodeByID(languageCode wordsmith.LanguageCode, id EpisodeID) (*Episode
 		out := episodes[0]
 		return &out, nil
 	}
+}
+
+type QueryEpisodesInput struct {
+	SeenPodcastIDs          []EpisodeID
+	ValidSourceIDs          []content.SourceID
+	TopicID                 content.TopicID
+	IncludeExplicitPodcasts bool
+	MaxDurationNanoseconds  *time.Duration
+	MinDurationNanoseconds  *time.Duration
+}
+
+type ScoredEpisode struct {
+	Score   decimal.Number
+	Episode Episode
+}
+
+func QueryEpisodes(languageCode wordsmith.LanguageCode, input QueryEpisodesInput) ([]ScoredEpisode, error) {
+	podcastIndex := getPodcastIndexForLanguageCode(languageCode)
+	queryBuilder := esquery.NewBoolQueryBuilder()
+	queryBuilder.AddMust(esquery.MatchPhrase("source_id", input.ValidSourceIDs))
+	queryBuilder.AddMust(esquery.MatchPhrase("topic_ids", input.TopicID))
+	versionRangeQueryBuilder := esquery.NewRangeQueryBuilderForFieldName("version")
+	versionRangeQueryBuilder.GreaterThanOrEqualToInt64(Version1.Int64())
+	versionRangeQueryBuilder.LessThanOrEqualToInt64(Version1.Int64())
+	queryBuilder.AddMust(versionRangeQueryBuilder.BuildRangeQuery())
+	if !input.IncludeExplicitPodcasts {
+		queryBuilder.AddMust(esquery.Match("is_explicit", false))
+	}
+	if input.MaxDurationNanoseconds != nil || input.MinDurationNanoseconds != nil {
+		durationQueryBuilder := esquery.NewRangeQueryBuilderForFieldName("duration_nanoseconds")
+		if input.MaxDurationNanoseconds != nil {
+			durationQueryBuilder.LessThanOrEqualToInt64(int64(*input.MaxDurationNanoseconds))
+		}
+		if input.MinDurationNanoseconds != nil {
+			durationQueryBuilder.GreaterThanOrEqualToInt64(int64(*input.MinDurationNanoseconds))
+		}
+		queryBuilder.AddMust(durationQueryBuilder.BuildRangeQuery())
+	}
+	queryBuilder.AddMustNot(esquery.Match("id", input.SeenPodcastIDs))
+	var out []ScoredEpisode
+	if err := esquery.ExecuteSearch(podcastIndex, queryBuilder.BuildBoolQuery(), nil, func(source []byte, score decimal.Number) error {
+		var episode Episode
+		if err := json.Unmarshal(source, &episode); err != nil {
+			return err
+		}
+		out = append(out, ScoredEpisode{
+			Score:   score,
+			Episode: episode,
+		})
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	return out, nil
 }

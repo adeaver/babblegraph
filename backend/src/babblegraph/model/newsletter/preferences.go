@@ -1,6 +1,7 @@
 package newsletter
 
 import (
+	"babblegraph/model/content"
 	"babblegraph/model/contenttopics"
 	"babblegraph/model/documents"
 	"babblegraph/model/email"
@@ -8,7 +9,6 @@ import (
 	"babblegraph/model/usercontenttopics"
 	"babblegraph/model/userdocuments"
 	"babblegraph/model/userlemma"
-	"babblegraph/model/userlinks"
 	"babblegraph/model/usernewsletterpreferences"
 	"babblegraph/model/usernewsletterschedule"
 	"babblegraph/model/users"
@@ -37,9 +37,8 @@ type userPreferencesAccessor interface {
 	getSentDocumentIDs() []documents.DocumentID
 	getUserTopics() []contenttopics.ContentTopic
 	getTrackingLemmas() []wordsmith.LemmaID
-	getUserDomainCounts() []userlinks.UserDomainCount
+	getAllowableSources() []content.SourceID
 	getSpotlightRecordsOrderedBySentOn() []userlemma.UserLemmaReinforcementSpotlightRecord
-
 	insertDocumentForUserAndReturnID(emailRecordID email.ID, doc documents.Document) (*userdocuments.UserDocumentID, error)
 	insertSpotlightReinforcementRecord(lemmaID wordsmith.LemmaID) error
 }
@@ -58,7 +57,7 @@ type DefaultUserPreferencesAccessor struct {
 	sentDocumentIDs           []documents.DocumentID
 	userTopics                []contenttopics.ContentTopic
 	trackingLemmas            []wordsmith.LemmaID
-	userDomainCounts          []userlinks.UserDomainCount
+	allowableSourceIDs        []content.SourceID
 	userSpotlightRecords      []userlemma.UserLemmaReinforcementSpotlightRecord
 }
 
@@ -101,7 +100,7 @@ func GetDefaultUserPreferencesAccessor(c ctx.LogContext, tx *sqlx.Tx, userID use
 			trackingLemmas = append(trackingLemmas, m.LemmaID)
 		}
 	}
-	userDomainCounts, err := userlinks.GetDomainCountsByCurrentAccessMonthForUser(tx, userID)
+	allowableSourceIDs, err := getAllowableSourceIDsForUser(tx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -126,7 +125,7 @@ func GetDefaultUserPreferencesAccessor(c ctx.LogContext, tx *sqlx.Tx, userID use
 		sentDocumentIDs:      sentDocumentIDs,
 		userTopics:           userTopics,
 		trackingLemmas:       trackingLemmas,
-		userDomainCounts:     userDomainCounts,
+		allowableSourceIDs:   allowableSourceIDs,
 		userSpotlightRecords: userSpotlightRecords,
 	}, nil
 }
@@ -171,8 +170,8 @@ func (d *DefaultUserPreferencesAccessor) getTrackingLemmas() []wordsmith.LemmaID
 	return d.trackingLemmas
 }
 
-func (d *DefaultUserPreferencesAccessor) getUserDomainCounts() []userlinks.UserDomainCount {
-	return d.userDomainCounts
+func (d *DefaultUserPreferencesAccessor) getAllowableSources() []content.SourceID {
+	return d.allowableSourceIDs
 }
 
 func (d *DefaultUserPreferencesAccessor) getSpotlightRecordsOrderedBySentOn() []userlemma.UserLemmaReinforcementSpotlightRecord {
@@ -189,4 +188,8 @@ func (d *DefaultUserPreferencesAccessor) insertSpotlightReinforcementRecord(lemm
 		LanguageCode: d.languageCode,
 		LemmaID:      lemmaID,
 	})
+}
+
+func getAllowableSourceIDsForUser(tx *sqlx.Tx, userID users.UserID) ([]content.SourceID, error) {
+	return nil, nil
 }

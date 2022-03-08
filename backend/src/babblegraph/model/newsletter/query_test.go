@@ -26,7 +26,12 @@ func TestUserHasAccount(t *testing.T) {
 		},
 	}
 	docsAccessor := &testDocsAccessor{}
-	testNewsletter, err := CreateNewsletter(c, wordsmithAccessor, emailAccessor, userAccessor, docsAccessor)
+	testNewsletter, err := CreateNewsletter(c, CreateNewsletterInput{
+		WordsmithAccessor: wordsmithAccessor,
+		EmailAccessor:     emailAccessor,
+		UserAccessor:      userAccessor,
+		DocsAccessor:      docsAccessor,
+	})
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
@@ -51,7 +56,12 @@ func TestUserDoesNotHaveAccount(t *testing.T) {
 		},
 	}
 	docsAccessor := &testDocsAccessor{}
-	testNewsletter, err := CreateNewsletter(c, wordsmithAccessor, emailAccessor, userAccessor, docsAccessor)
+	testNewsletter, err := CreateNewsletter(c, CreateNewsletterInput{
+		WordsmithAccessor: wordsmithAccessor,
+		EmailAccessor:     emailAccessor,
+		UserAccessor:      userAccessor,
+		DocsAccessor:      docsAccessor,
+	})
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
@@ -80,7 +90,12 @@ func TestNoSetTopicsLink(t *testing.T) {
 		},
 	}
 	docsAccessor := &testDocsAccessor{}
-	testNewsletter, err := CreateNewsletter(c, wordsmithAccessor, emailAccessor, userAccessor, docsAccessor)
+	testNewsletter, err := CreateNewsletter(c, CreateNewsletterInput{
+		WordsmithAccessor: wordsmithAccessor,
+		EmailAccessor:     emailAccessor,
+		UserAccessor:      userAccessor,
+		DocsAccessor:      docsAccessor,
+	})
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
@@ -113,7 +128,12 @@ func TestUserScheduleDay(t *testing.T) {
 		},
 	}
 	docsAccessor := &testDocsAccessor{}
-	testNewsletter, err := CreateNewsletter(c, wordsmithAccessor, emailAccessor, userAccessor, docsAccessor)
+	testNewsletter, err := CreateNewsletter(c, CreateNewsletterInput{
+		WordsmithAccessor: wordsmithAccessor,
+		EmailAccessor:     emailAccessor,
+		UserAccessor:      userAccessor,
+		DocsAccessor:      docsAccessor,
+	})
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
@@ -141,7 +161,12 @@ func TestUserScheduleDayNoSubscription(t *testing.T) {
 		},
 	}
 	docsAccessor := &testDocsAccessor{}
-	testNewsletter, err := CreateNewsletter(c, wordsmithAccessor, emailAccessor, userAccessor, docsAccessor)
+	testNewsletter, err := CreateNewsletter(c, CreateNewsletterInput{
+		WordsmithAccessor: wordsmithAccessor,
+		EmailAccessor:     emailAccessor,
+		UserAccessor:      userAccessor,
+		DocsAccessor:      docsAccessor,
+	})
 	if err != nil {
 		t.Fatalf(err.Error())
 	}

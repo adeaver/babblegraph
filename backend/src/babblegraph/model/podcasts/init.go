@@ -44,7 +44,7 @@ func CreatePodcastMappings(c ctx.LogContext) {
 			esmapping.MakeTextMapping("description", esmapping.MappingOptions{}),
 			esmapping.MakeDateMapping("publication_date", esmapping.MappingOptions{}),
 			esmapping.MakeTextMapping("episode_type", esmapping.MappingOptions{}),
-			esmapping.MakeLongMapping("duration", esmapping.MappingOptions{}),
+			esmapping.MakeLongMapping("duration_nanoseconds", esmapping.MappingOptions{}),
 			esmapping.MakeBooleanMapping("is_explicit", esmapping.MappingOptions{}),
 			esmapping.MakeObjectMapping("audio_file", []esmapping.Mapping{
 				esmapping.MakeTextMapping("url", esmapping.MappingOptions{

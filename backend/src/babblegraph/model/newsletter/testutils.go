@@ -1,6 +1,7 @@
 package newsletter
 
 import (
+	"babblegraph/model/content"
 	"babblegraph/model/contenttopics"
 	"babblegraph/model/documents"
 	"babblegraph/model/email"
@@ -23,9 +24,12 @@ func isIDExcluded(id documents.DocumentID, excludedIDs []documents.DocumentID) b
 	return false
 }
 
-func isDomainValid(domain string, validDomains []string) bool {
-	for _, d := range validDomains {
-		if d == domain {
+func isSourceValid(sourceID *content.SourceID, validSourceIDs []content.SourceID) bool {
+	if sourceID == nil {
+		return false
+	}
+	for _, s := range validSourceIDs {
+		if s == *sourceID {
 			return true
 		}
 	}

@@ -81,7 +81,12 @@ func TestSpotlightRecordsForUserWithAccount(t *testing.T) {
 		lemmasByID: lemmasByID,
 	}
 	docsAccessor := &testDocsAccessor{documents: docs}
-	testNewsletter, err := CreateNewsletter(c, wordsmithAccessor, emailAccessor, userAccessor, docsAccessor)
+	testNewsletter, err := CreateNewsletter(c, CreateNewsletterInput{
+		WordsmithAccessor: wordsmithAccessor,
+		EmailAccessor:     emailAccessor,
+		UserAccessor:      userAccessor,
+		DocsAccessor:      docsAccessor,
+	})
 	switch {
 	case err != nil:
 		t.Fatalf(err.Error())
@@ -172,7 +177,12 @@ func TestSpotlightRecordsForUserWithoutAccount(t *testing.T) {
 		lemmasByID: lemmasByID,
 	}
 	docsAccessor := &testDocsAccessor{documents: docs}
-	testNewsletter, err := CreateNewsletter(c, wordsmithAccessor, emailAccessor, userAccessor, docsAccessor)
+	testNewsletter, err := CreateNewsletter(c, CreateNewsletterInput{
+		WordsmithAccessor: wordsmithAccessor,
+		EmailAccessor:     emailAccessor,
+		UserAccessor:      userAccessor,
+		DocsAccessor:      docsAccessor,
+	})
 	switch {
 	case err != nil:
 		t.Fatalf(err.Error())
@@ -266,7 +276,12 @@ func TestSpotlightRecordsForTrackedLemmaWithoutSpotlight(t *testing.T) {
 		lemmasByID: lemmasByID,
 	}
 	docsAccessor := &testDocsAccessor{documents: docs}
-	testNewsletter, err := CreateNewsletter(c, wordsmithAccessor, emailAccessor, userAccessor, docsAccessor)
+	testNewsletter, err := CreateNewsletter(c, CreateNewsletterInput{
+		WordsmithAccessor: wordsmithAccessor,
+		EmailAccessor:     emailAccessor,
+		UserAccessor:      userAccessor,
+		DocsAccessor:      docsAccessor,
+	})
 	switch {
 	case err != nil:
 		t.Fatalf(err.Error())

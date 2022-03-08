@@ -10,6 +10,7 @@ import (
 
 const (
 	getSourcesByIngestStrategyQuery = "SELECT * FROM content_source WHERE ingest_strategy = $1 AND is_active = TRUE"
+	getSourcesBySourceTypeQuery     = "SELECT * FROM content_source WHERE source_type = $1 AND is_active = TRUE"
 
 	getSourceForURLQuery                          = "SELECT * FROM content_source WHERE url_identifier = $1"
 	getSourceSeedForURLQuery                      = "SELECT * FROM content_source_seed WHERE url_identifier = $1 AND url_params IS NOT DISTINCT FROM $2"
@@ -205,6 +206,18 @@ func LookupActiveSourceSeedsForSource(tx *sqlx.Tx, sourceID SourceID) ([]SourceS
 		if m.IsActive {
 			out = append(out, m.ToNonDB())
 		}
+	}
+	return out, nil
+}
+
+func LookupActiveSourceIDsByType(tx *sqlx.Tx, contentType SourceType) ([]SourceID, error) {
+	var matches []dbSource
+	if err := tx.Select(&matches, getSourcesBySourceTypeQuery, contentType); err != nil {
+		return nil, err
+	}
+	var out []SourceID
+	for _, m := range matches {
+		out = append(out, m.ID)
 	}
 	return out, nil
 }
