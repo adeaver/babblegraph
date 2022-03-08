@@ -20,7 +20,7 @@ func (t *testDocsAccessor) GetDocumentsForUser(c ctx.LogContext, input getDocume
 			!isSourceValid(doc.SourceID, input.ValidSourceIDs),
 			input.MinimumReadingLevel != nil && *input.MinimumReadingLevel > doc.ReadabilityScore,
 			input.MaximumReadingLevel != nil && *input.MaximumReadingLevel < doc.ReadabilityScore,
-			input.Topic != nil && !containsTopic(*input.Topic, doc.Topics):
+			input.Topic != nil && !containsTopic(*input.Topic, doc.TopicIDs):
 			// no-op
 		default:
 			recencyBoundary := time.Now().Add(documents.RecencyBiasBoundary).Unix()

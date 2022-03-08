@@ -7,7 +7,7 @@ import (
 	"fmt"
 )
 
-const testSourceID = content.SourceID("test-source")
+const testSourceID content.SourceID = content.SourceID("test-source")
 
 var testSource = content.Source{
 	ID:                    testSourceID,

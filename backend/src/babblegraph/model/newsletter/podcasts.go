@@ -11,7 +11,7 @@ import (
 )
 
 type podcastAccessor interface {
-	LookupPodcastEpisodeForNewsletter(topics []content.TopicID) (*podcasts.Episode, *content.TopicID, error)
+	LookupPodcastEpisodesForTopics(topics []content.TopicID) (map[content.TopicID][]podcasts.Episode, error)
 }
 
 type DefaultPodcastAccessor struct {
@@ -36,14 +36,12 @@ func GetDefaultPodcastAccessor(tx *sqlx.Tx, languageCode wordsmith.LanguageCode,
 	}, nil
 }
 
-func (d *DefaultPodcastAccessor) LookupPodcastEpisodesForNewsletter(topicIDs []content.TopicID) (*podcasts.Episode, *content.TopicID, error) {
+func (d *DefaultPodcastAccessor) LookupPodcastEpisodesForTopics(topicIDs []content.TopicID) (map[content.TopicID][]podcasts.Episode, error) {
 	if !d.userNewsletterPreferences.PodcastPreferences.ArePodcastsEnabled {
-		return nil, nil, nil
+		return nil, nil
 	}
-	var topicID *content.TopicID
-	var currentEpisode *podcasts.ScoredEpisode
+	out := make(map[content.TopicID][]podcasts.Episode)
 	for _, t := range topicIDs {
-		t := t
 		scoredEpisodes, err := podcasts.QueryEpisodes(d.languageCode, podcasts.QueryEpisodesInput{
 			ValidSourceIDs:          d.validSourceIDs,
 			TopicID:                 t,
@@ -52,15 +50,11 @@ func (d *DefaultPodcastAccessor) LookupPodcastEpisodesForNewsletter(topicIDs []c
 			MaxDurationNanoseconds:  d.userNewsletterPreferences.PodcastPreferences.MaximumDurationNanoseconds,
 		})
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 		for _, ep := range scoredEpisodes {
-			ep := ep
-			if currentEpisode == nil || ep.Score.GreaterThan(currentEpisode.Score) {
-				currentEpisode = &ep
-				topicID = t.Ptr()
-			}
+			out[t] = append(out[t], ep.Episode)
 		}
 	}
-	return &currentEpisode.Episode, topicID, nil
+	return out, nil
 }

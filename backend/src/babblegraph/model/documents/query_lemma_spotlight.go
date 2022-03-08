@@ -1,7 +1,7 @@
 package documents
 
 import (
-	"babblegraph/model/contenttopics"
+	"babblegraph/model/content"
 	"babblegraph/util/elastic/esquery"
 	"babblegraph/wordsmith"
 	"time"
@@ -9,7 +9,7 @@ import (
 
 type lemmaSpotlightQueryBuilder struct {
 	lemmaID     wordsmith.LemmaID
-	topics      []contenttopics.ContentTopic
+	topics      []content.TopicID
 	recencyBias *RecencyBias
 }
 
@@ -19,7 +19,7 @@ func NewLemmaSpotlightQueryBuilder(lemmaID wordsmith.LemmaID) *lemmaSpotlightQue
 	}
 }
 
-func (l *lemmaSpotlightQueryBuilder) AddTopics(topics []contenttopics.ContentTopic) {
+func (l *lemmaSpotlightQueryBuilder) AddTopics(topics []content.TopicID) {
 	l.topics = append(l.topics, topics...)
 }
 
@@ -48,9 +48,9 @@ func (l *lemmaSpotlightQueryBuilder) ExtendBaseQuery(queryBuilder *esquery.BoolQ
 	if len(l.topics) > 0 {
 		var topicsQueryString []string
 		for _, t := range l.topics {
-			topicsQueryString = append(topicsQueryString, string(t))
+			topicsQueryString = append(topicsQueryString, t.Str())
 		}
-		queryBuilder.AddShould(esquery.Terms("content_topics", topicsQueryString))
+		queryBuilder.AddShould(esquery.Terms("topic_ids", topicsQueryString))
 	}
 	return nil
 }

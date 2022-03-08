@@ -1,6 +1,7 @@
 package newsletter
 
 import (
+	"babblegraph/model/content"
 	"babblegraph/model/contenttopics"
 	"babblegraph/model/documents"
 	"babblegraph/model/email"
@@ -19,30 +20,30 @@ import (
 func TestDefaultCategories(t *testing.T) {
 	c := ctx.GetDefaultLogContext()
 	emailRecordID := email.NewEmailRecordID()
-	documentTopics := []contenttopics.ContentTopic{
-		contenttopics.ContentTopicArt,
-		contenttopics.ContentTopicAstronomy,
-		contenttopics.ContentTopicArchitecture,
-		contenttopics.ContentTopicAutomotive,
-		contenttopics.ContentTopicCulture,
+	documentTopics := []content.TopicID{
+		content.TopicID("test-art"),
+		content.TopicID("test-astronomy"),
+		content.TopicID("test-architecture"),
+		content.TopicID("test-automotive"),
+		content.TopicID("test-culture"),
 	}
 	userAccessor := &testUserAccessor{
 		readingLevel: &userReadingLevel{
 			LowerBound: 30,
 			UpperBound: 80,
 		},
-		userTopics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicArt,
-			contenttopics.ContentTopicAstronomy,
-			contenttopics.ContentTopicArchitecture,
-			contenttopics.ContentTopicAutomotive,
+		userTopics: []content.TopicID{
+			content.TopicID("test-art"),
+			content.TopicID("test-astronomy"),
+			content.TopicID("test-architecture"),
+			content.TopicID("test-automotive"),
 		},
 	}
 	var expectedCategories []Category
 	var docs []documents.DocumentWithScore
 	for idx, topic := range documentTopics {
 		doc, link, err := getDefaultDocumentWithLink(c, idx, emailRecordID, &testContentAccessor{}, userAccessor, getDefaultDocumentInput{
-			Topics: []contenttopics.ContentTopic{topic},
+			Topics: []content.TopicID{topic},
 		})
 		if err != nil {
 			t.Fatalf("Error setting up test: %s", err.Error())
@@ -112,25 +113,25 @@ func TestDefaultCategories(t *testing.T) {
 func TestGenericCategory(t *testing.T) {
 	c := ctx.GetDefaultLogContext()
 	emailRecordID := email.NewEmailRecordID()
-	documentTopics := []contenttopics.ContentTopic{
-		contenttopics.ContentTopicArt,
-		contenttopics.ContentTopicAstronomy,
-		contenttopics.ContentTopicArchitecture,
-		contenttopics.ContentTopicAutomotive,
-		contenttopics.ContentTopicCulture,
+	documentTopics := []content.TopicID{
+		content.TopicID("test-art"),
+		content.TopicID("test-astronomy"),
+		content.TopicID("test-architecture"),
+		content.TopicID("test-automotive"),
+		content.TopicID("test-culture"),
 	}
 	userAccessor := &testUserAccessor{
 		readingLevel: &userReadingLevel{
 			LowerBound: 30,
 			UpperBound: 80,
 		},
-		userTopics: []contenttopics.ContentTopic{},
+		userTopics: []content.TopicID{},
 	}
 	var expectedLinks []Link
 	var docs []documents.DocumentWithScore
 	for idx, topic := range documentTopics {
 		doc, link, err := getDefaultDocumentWithLink(c, idx, emailRecordID, &testContentAccessor{}, userAccessor, getDefaultDocumentInput{
-			Topics: []contenttopics.ContentTopic{topic},
+			Topics: []content.TopicID{topic},
 		})
 		if err != nil {
 			t.Fatalf("Error setting up test: %s", err.Error())
@@ -163,27 +164,27 @@ func TestGenericCategory(t *testing.T) {
 func TestCategoryWithGeneric(t *testing.T) {
 	c := ctx.GetDefaultLogContext()
 	emailRecordID := email.NewEmailRecordID()
-	documentTopics := []contenttopics.ContentTopic{
-		contenttopics.ContentTopicArt,
-		contenttopics.ContentTopicAstronomy,
-		contenttopics.ContentTopicArchitecture,
-		contenttopics.ContentTopicAutomotive,
-		contenttopics.ContentTopicCulture,
+	documentTopics := []content.TopicID{
+		content.TopicID("test-art"),
+		content.TopicID("test-astronomy"),
+		content.TopicID("test-architecture"),
+		content.TopicID("test-automotive"),
+		content.TopicID("test-culture"),
 	}
 	userAccessor := &testUserAccessor{
 		readingLevel: &userReadingLevel{
 			LowerBound: 30,
 			UpperBound: 80,
 		},
-		userTopics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicArt,
+		userTopics: []content.TopicID{
+			content.TopicID("test-art"),
 		},
 	}
 	var expectedCategories []Category
 	var docs []documents.DocumentWithScore
 	for idx, topic := range documentTopics {
 		doc, link, err := getDefaultDocumentWithLink(c, idx, emailRecordID, &testContentAccessor{}, userAccessor, getDefaultDocumentInput{
-			Topics: []contenttopics.ContentTopic{topic},
+			Topics: []content.TopicID{topic},
 		})
 		if err != nil {
 			t.Fatalf("Error setting up test: %s", err.Error())
@@ -240,13 +241,13 @@ func TestFavorRecentDocuments(t *testing.T) {
 			LowerBound: 30,
 			UpperBound: 80,
 		},
-		userTopics: []contenttopics.ContentTopic{},
+		userTopics: []content.TopicID{},
 	}
 	var expectedLinks []Link
 	var docs []documents.DocumentWithScore
 	for idx := 0; idx <= 8; idx++ {
 		doc, link, err := getDefaultDocumentWithLink(c, idx, emailRecordID, &testContentAccessor{}, userAccessor, getDefaultDocumentInput{
-			Topics: []contenttopics.ContentTopic{contenttopics.ContentTopicArt},
+			Topics: []content.TopicID{content.TopicID("test-art")},
 		})
 		doc.Document.SeedJobIngestTimestamp = ptr.Int64(time.Now().Add(time.Duration(-2*(8-idx)*24) * time.Hour).Unix())
 		if err != nil {

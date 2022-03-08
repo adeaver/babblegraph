@@ -2,7 +2,6 @@ package newsletter
 
 import (
 	"babblegraph/model/content"
-	"babblegraph/model/contenttopics"
 	"babblegraph/model/documents"
 	"babblegraph/model/email"
 	"babblegraph/model/useraccounts"
@@ -35,7 +34,7 @@ type userPreferencesAccessor interface {
 	getUserNewsletterSchedule() usernewsletterschedule.UserNewsletterSchedule
 	getReadingLevel() *userReadingLevel
 	getSentDocumentIDs() []documents.DocumentID
-	getUserTopics() []contenttopics.ContentTopic
+	getUserTopics() []content.TopicID
 	getTrackingLemmas() []wordsmith.LemmaID
 	getAllowableSources() []content.SourceID
 	getSpotlightRecordsOrderedBySentOn() []userlemma.UserLemmaReinforcementSpotlightRecord
@@ -55,7 +54,7 @@ type DefaultUserPreferencesAccessor struct {
 	userNewsletterSchedule    usernewsletterschedule.UserNewsletterSchedule
 	userReadingLevel          *userReadingLevel
 	sentDocumentIDs           []documents.DocumentID
-	userTopics                []contenttopics.ContentTopic
+	userTopics                []content.TopicID
 	trackingLemmas            []wordsmith.LemmaID
 	allowableSourceIDs        []content.SourceID
 	userSpotlightRecords      []userlemma.UserLemmaReinforcementSpotlightRecord
@@ -86,7 +85,7 @@ func GetDefaultUserPreferencesAccessor(c ctx.LogContext, tx *sqlx.Tx, userID use
 	if err != nil {
 		return nil, err
 	}
-	userTopics, err := usercontenttopics.GetContentTopicsForUser(tx, userID)
+	userTopics, err := usercontenttopics.GetTopicIDsForUser(tx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -162,7 +161,7 @@ func (d *DefaultUserPreferencesAccessor) getSentDocumentIDs() []documents.Docume
 	return d.sentDocumentIDs
 }
 
-func (d *DefaultUserPreferencesAccessor) getUserTopics() []contenttopics.ContentTopic {
+func (d *DefaultUserPreferencesAccessor) getUserTopics() []content.TopicID {
 	return d.userTopics
 }
 

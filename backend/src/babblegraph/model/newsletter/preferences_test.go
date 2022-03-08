@@ -2,7 +2,6 @@ package newsletter
 
 import (
 	"babblegraph/model/content"
-	"babblegraph/model/contenttopics"
 	"babblegraph/model/documents"
 	"babblegraph/model/email"
 	"babblegraph/model/useraccounts"
@@ -23,7 +22,7 @@ type testUserAccessor struct {
 	userNewsletterSchedule    usernewsletterschedule.UserNewsletterSchedule
 	readingLevel              *userReadingLevel
 	sentDocumentIDs           []documents.DocumentID
-	userTopics                []contenttopics.ContentTopic
+	userTopics                []content.TopicID
 	trackingLemmas            []wordsmith.LemmaID
 	allowableSourceIDs        []content.SourceID
 	spotlightRecords          []userlemma.UserLemmaReinforcementSpotlightRecord
@@ -64,7 +63,7 @@ func (t *testUserAccessor) getSentDocumentIDs() []documents.DocumentID {
 	return t.sentDocumentIDs
 }
 
-func (t *testUserAccessor) getUserTopics() []contenttopics.ContentTopic {
+func (t *testUserAccessor) getUserTopics() []content.TopicID {
 	return t.userTopics
 }
 

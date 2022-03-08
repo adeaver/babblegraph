@@ -1,7 +1,7 @@
 package newsletter
 
 import (
-	"babblegraph/model/contenttopics"
+	"babblegraph/model/content"
 	"babblegraph/model/documents"
 	"babblegraph/model/email"
 	"babblegraph/model/userlemma"
@@ -23,8 +23,8 @@ func TestSpotlightRecordsForUserWithAccount(t *testing.T) {
 	userAccessor := &testUserAccessor{
 		languageCode:        wordsmith.LanguageCodeSpanish,
 		doesUserHaveAccount: true,
-		userTopics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicArt,
+		userTopics: []content.TopicID{
+			content.TopicID("topicid-art"),
 		},
 		readingLevel: &userReadingLevel{
 			LowerBound: 30,
@@ -65,7 +65,9 @@ func TestSpotlightRecordsForUserWithAccount(t *testing.T) {
 			LemmaText: lemma.Str(),
 		}
 		doc, link, err := getDefaultDocumentWithLink(c, i, emailRecordID, &testContentAccessor{}, userAccessor, getDefaultDocumentInput{
-			Topics:                 []contenttopics.ContentTopic{contenttopics.ContentTopicArt},
+			Topics: []content.TopicID{
+				content.TopicID("topicid-art"),
+			},
 			SeedJobIngestTimestamp: ptr.Int64(time.Now().Add(-1 * time.Duration(15-i) * 24 * time.Hour).Unix()),
 			Lemmas:                 []wordsmith.LemmaID{lemma},
 		})
@@ -119,8 +121,8 @@ func TestSpotlightRecordsForUserWithoutAccount(t *testing.T) {
 		userID:              users.UserID("abc123"),
 		languageCode:        wordsmith.LanguageCodeSpanish,
 		doesUserHaveAccount: false,
-		userTopics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicArt,
+		userTopics: []content.TopicID{
+			content.TopicID("topicid-art"),
 		},
 		readingLevel: &userReadingLevel{
 			LowerBound: 30,
@@ -161,7 +163,9 @@ func TestSpotlightRecordsForUserWithoutAccount(t *testing.T) {
 			LemmaText: lemma.Str(),
 		}
 		doc, link, err := getDefaultDocumentWithLink(c, i, emailRecordID, &testContentAccessor{}, userAccessor, getDefaultDocumentInput{
-			Topics:                 []contenttopics.ContentTopic{contenttopics.ContentTopicArt},
+			Topics: []content.TopicID{
+				content.TopicID("topicid-art"),
+			},
 			SeedJobIngestTimestamp: ptr.Int64(time.Now().Add(-1 * time.Duration(15-i) * 24 * time.Hour).Unix()),
 			Lemmas:                 []wordsmith.LemmaID{lemma},
 		})
@@ -218,8 +222,8 @@ func TestSpotlightRecordsForTrackedLemmaWithoutSpotlight(t *testing.T) {
 		userID:              users.UserID("abc123"),
 		languageCode:        wordsmith.LanguageCodeSpanish,
 		doesUserHaveAccount: false,
-		userTopics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicArt,
+		userTopics: []content.TopicID{
+			content.TopicID("topicid-art"),
 		},
 		readingLevel: &userReadingLevel{
 			LowerBound: 30,
@@ -260,7 +264,9 @@ func TestSpotlightRecordsForTrackedLemmaWithoutSpotlight(t *testing.T) {
 			LemmaText: lemma.Str(),
 		}
 		doc, link, err := getDefaultDocumentWithLink(c, i, emailRecordID, &testContentAccessor{}, userAccessor, getDefaultDocumentInput{
-			Topics:                 []contenttopics.ContentTopic{contenttopics.ContentTopicArt},
+			Topics: []content.TopicID{
+				content.TopicID("topicid-art"),
+			},
 			SeedJobIngestTimestamp: ptr.Int64(time.Now().Add(-1 * time.Duration(15-i) * 24 * time.Hour).Unix()),
 			Lemmas:                 []wordsmith.LemmaID{lemma},
 		})

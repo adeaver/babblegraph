@@ -14,6 +14,10 @@ func (t TopicID) Ptr() *TopicID {
 	return &t
 }
 
+func (t TopicID) Str() string {
+	return string(t)
+}
+
 type dbTopic struct {
 	ID             TopicID   `db:"_id"`
 	CreatedAt      time.Time `db:"created_at"`

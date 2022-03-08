@@ -2,7 +2,6 @@ package newsletter
 
 import (
 	"babblegraph/model/content"
-	"babblegraph/model/contenttopics"
 	"babblegraph/model/documents"
 	"babblegraph/model/email"
 	"babblegraph/util/ctx"
@@ -36,7 +35,7 @@ func isSourceValid(sourceID *content.SourceID, validSourceIDs []content.SourceID
 	return false
 }
 
-func containsTopic(topic contenttopics.ContentTopic, topics []contenttopics.ContentTopic) bool {
+func containsTopic(topic content.TopicID, topics []content.TopicID) bool {
 	for _, t := range topics {
 		if t == topic {
 			return true
@@ -56,7 +55,7 @@ func containsLemma(lemma wordsmith.LemmaID, description string) bool {
 }
 
 type getDefaultDocumentInput struct {
-	Topics                 []contenttopics.ContentTopic
+	Topics                 []content.TopicID
 	Lemmas                 []wordsmith.LemmaID
 	SeedJobIngestTimestamp *int64
 }
@@ -85,7 +84,7 @@ func getDefaultDocumentWithLink(c ctx.LogContext, idx int, emailRecordID email.I
 		},
 		Domain:                 "elmundo.es",
 		SourceID:               testSourceID.Ptr(),
-		Topics:                 input.Topics,
+		TopicIDs:               input.Topics,
 		HasPaywall:             ptr.Bool(false),
 		LemmatizedDescription:  lemmatizedDescription,
 		SeedJobIngestTimestamp: input.SeedJobIngestTimestamp,

@@ -1,9 +1,11 @@
 package newsletter
 
 import (
+	"babblegraph/model/content"
 	"babblegraph/model/contenttopics"
 	"babblegraph/model/documents"
 	"babblegraph/model/email"
+	"babblegraph/model/podcasts"
 	"babblegraph/model/useraccounts"
 	"babblegraph/util/ctx"
 	"babblegraph/util/deref"
@@ -20,6 +22,7 @@ type getDocumentCategoriesInput struct {
 	userAccessor                  userPreferencesAccessor
 	docsAccessor                  documentAccessor
 	contentAccessor               contentAccessor
+	podcastAccessor               podcastAccessor
 	numberOfDocumentsInNewsletter *int
 }
 
@@ -40,7 +43,7 @@ func getDocumentCategories(c ctx.LogContext, input getDocumentCategoriesInput) (
 	if err != nil {
 		return nil, err
 	}
-	documentsByTopic := make(map[contenttopics.ContentTopic][]documents.DocumentWithScore)
+	documentsByTopic := make(map[content.TopicID][]documents.DocumentWithScore)
 	for _, t := range topics {
 		documentsForTopic, err := input.docsAccessor.GetDocumentsForUser(c, getDocumentsForUserInput{
 			getDocumentsBaseInput: getDocumentsBaseInput{
@@ -63,6 +66,10 @@ func getDocumentCategories(c ctx.LogContext, input getDocumentCategoriesInput) (
 			c.Infof("Documents for topic %s: %+v", t.Str(), documentsForTopic)
 		}
 	}
+	var podcastEpisodesByTopic map[content.TopicID][]podcasts.Episode
+	if input.userAccessor.getUserSubscriptionLevel() != nil {
+		podcastEpisodesByTopic, err = podcastAccessor.LookupPodcastEpisodesForTopics(topics)
+	}
 	return joinDocumentsIntoCategories(c, joinDocumentsIntoCategoriesInput{
 		emailRecordID:                 input.emailRecordID,
 		userAccessor:                  input.userAccessor,
@@ -70,6 +77,7 @@ func getDocumentCategories(c ctx.LogContext, input getDocumentCategoriesInput) (
 		languageCode:                  input.languageCode,
 		numberOfDocumentsInNewsletter: deref.Int(input.numberOfDocumentsInNewsletter, DefaultNumberOfArticlesPerEmail),
 		documentsByTopic:              documentsByTopic,
+		podcastEpisodesByTopic:        podcastEpisodesByTopic,
 		genericDocuments:              append(genericDocuments.RecentDocuments, genericDocuments.NonRecentDocuments...),
 	})
 }
@@ -80,14 +88,15 @@ type joinDocumentsIntoCategoriesInput struct {
 	contentAccessor               contentAccessor
 	languageCode                  wordsmith.LanguageCode
 	numberOfDocumentsInNewsletter int
-	documentsByTopic              map[contenttopics.ContentTopic][]documents.DocumentWithScore
+	documentsByTopic              map[content.TopicID][]documents.DocumentWithScore
+	podcastEpisodesByTopic        map[content.TopicID][]podcasts.Episode
 	genericDocuments              []documents.DocumentWithScore
 }
 
 func joinDocumentsIntoCategories(c ctx.LogContext, input joinDocumentsIntoCategoriesInput) ([]Category, error) {
 	type scoredDocumentsWithTopic struct {
 		documentsWithScore []documents.DocumentWithScore
-		topic              contenttopics.ContentTopic
+		topic              content.TopicID
 	}
 	var docsWithTopic []scoredDocumentsWithTopic
 	for topic, scoredDocuments := range input.documentsByTopic {
@@ -131,6 +140,7 @@ func joinDocumentsIntoCategories(c ctx.LogContext, input joinDocumentsIntoCatego
 		}
 		if len(links) > 0 {
 			var categoryName *string
+			// TODO(Here): contentAccessor.GetDisplayNameForLanguage(input.languageCode)
 			displayName, err := contenttopics.ContentTopicNameToDisplayName(documentGroup.topic)
 			if err != nil {
 				c.Errorf("Error generating display name: %s", err.Error())
@@ -183,10 +193,10 @@ func joinDocumentsIntoCategories(c ctx.LogContext, input joinDocumentsIntoCatego
 	return categories, nil
 }
 
-func getTopicsForNewsletter(accessor userPreferencesAccessor) []contenttopics.ContentTopic {
+func getTopicsForNewsletter(accessor userPreferencesAccessor) []content.TopicID {
 	userSubscriptionLevel := accessor.getUserSubscriptionLevel()
 	allUserTopics := accessor.getUserTopics()
-	var topics []contenttopics.ContentTopic
+	var topics []content.TopicID
 	for _, idx := range pickUpToNRandomIndices(int(len(allUserTopics)), defaultNumberOfTopicsPerEmail) {
 		topics = append(topics, allUserTopics[idx])
 	}

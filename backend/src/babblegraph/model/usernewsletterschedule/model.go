@@ -97,7 +97,7 @@ type dbUserNewsletterSchedule struct {
 type UserNewsletterSchedule interface {
 	IsSendRequested() bool
 	GetUTCSendTime() time.Time
-	GetContentTopicsForDay() []contenttopics.ContentTopic
+	GetContentTopicsForDay() []content.TopicID
 	GetNumberOfDocuments() int
 	GetSendTimeInUserTimezone() time.Time
 }
@@ -157,11 +157,11 @@ func (u ScheduleWithMetadata) GetUTCSendTime() time.Time {
 	return u.sendTimeAtUserTimezone.UTC()
 }
 
-func (u ScheduleWithMetadata) GetContentTopicsForDay() []contenttopics.ContentTopic {
+func (u ScheduleWithMetadata) GetContentTopicsForDay() []content.TopicID {
 	if u.userScheduleDay == nil {
 		return nil
 	}
-	return u.userScheduleDay.ContentTopics
+	return u.userScheduleDay.TopicIDs
 }
 
 func (u ScheduleWithMetadata) GetNumberOfDocuments() int {

@@ -1,7 +1,7 @@
 package newsletter
 
 import (
-	"babblegraph/model/contenttopics"
+	"babblegraph/model/content"
 	"babblegraph/model/routes"
 	"babblegraph/model/useraccounts"
 	"babblegraph/model/usernewsletterschedule"
@@ -83,8 +83,8 @@ func TestNoSetTopicsLink(t *testing.T) {
 	userAccessor := &testUserAccessor{
 		languageCode:        wordsmith.LanguageCodeSpanish,
 		doesUserHaveAccount: true,
-		userTopics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicArt,
+		userTopics: []content.TopicID{
+			content.TopicID("topicid-art"),
 		},
 		readingLevel: &userReadingLevel{
 			LowerBound: 30,
@@ -118,8 +118,8 @@ func TestUserScheduleDay(t *testing.T) {
 	userAccessor := &testUserAccessor{
 		languageCode:        wordsmith.LanguageCodeSpanish,
 		doesUserHaveAccount: true,
-		userTopics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicArt,
+		userTopics: []content.TopicID{
+			content.TopicID("topicid-art"),
 		},
 		userSubscriptionLevel: useraccounts.SubscriptionLevelPremium.Ptr(),
 		userNewsletterSchedule: usernewsletterschedule.TestNewsletterSchedule{
@@ -153,8 +153,8 @@ func TestUserScheduleDayNoSubscription(t *testing.T) {
 	userAccessor := &testUserAccessor{
 		languageCode:        wordsmith.LanguageCodeSpanish,
 		doesUserHaveAccount: true,
-		userTopics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicArt,
+		userTopics: []content.TopicID{
+			content.TopicID("topicid-art"),
 		},
 		userNewsletterSchedule: usernewsletterschedule.TestNewsletterSchedule{
 			SendRequested: false,

@@ -2,7 +2,6 @@ package newsletter
 
 import (
 	"babblegraph/model/content"
-	"babblegraph/model/contenttopics"
 	"babblegraph/model/documents"
 	"babblegraph/util/ctx"
 	"babblegraph/wordsmith"
@@ -18,14 +17,14 @@ type getDocumentsBaseInput struct {
 
 type getDocumentsForUserInput struct {
 	getDocumentsBaseInput
-	Topic  *contenttopics.ContentTopic
+	Topic  *content.TopicID
 	Lemmas []wordsmith.LemmaID
 }
 
 type getDocumentsForUserForLemmaInput struct {
 	getDocumentsBaseInput
 	Lemma           wordsmith.LemmaID
-	Topics          []contenttopics.ContentTopic
+	Topics          []content.TopicID
 	SearchNonRecent bool
 }
 

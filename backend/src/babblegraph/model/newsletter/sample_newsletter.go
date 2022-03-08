@@ -2,7 +2,6 @@ package newsletter
 
 import (
 	"babblegraph/model/content"
-	"babblegraph/model/contenttopics"
 	"babblegraph/model/documents"
 	"babblegraph/model/email"
 	"babblegraph/model/useraccounts"
@@ -31,7 +30,7 @@ type GetSampleNewsletterUserAccessorInput struct {
 	UserNewsletterPreferences *usernewsletterpreferences.UserNewsletterPreferences
 	UserNewsletterSchedule    *usernewsletterschedule.UserNewsletterSchedule
 	SentDocumentIDs           []documents.DocumentID
-	UserTopics                []contenttopics.ContentTopic
+	UserTopics                []content.TopicID
 	TrackingLemmas            []wordsmith.LemmaID
 	AllowableSourceIDs        []content.SourceID
 	SpotlightRecords          []userlemma.UserLemmaReinforcementSpotlightRecord
@@ -111,7 +110,7 @@ func (s *SampleNewsletterUserAccessor) getSentDocumentIDs() []documents.Document
 	return s.defaultUserPreferencesAccessor.getSentDocumentIDs()
 }
 
-func (s *SampleNewsletterUserAccessor) getUserTopics() []contenttopics.ContentTopic {
+func (s *SampleNewsletterUserAccessor) getUserTopics() []content.TopicID {
 	return s.defaultUserPreferencesAccessor.getUserTopics()
 }
 
