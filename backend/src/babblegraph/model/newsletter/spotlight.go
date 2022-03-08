@@ -19,6 +19,7 @@ type getSpotlightLemmaForNewsletterInput struct {
 	categories        []Category
 	userAccessor      userPreferencesAccessor
 	docsAccessor      documentAccessor
+	contentAccessor   contentAccessor
 	wordsmithAccessor wordsmithAccessor
 }
 
@@ -101,7 +102,12 @@ func lookupSpotlightForAllPotentialSpotlights(c ctx.LogContext, input lookupSpot
 			description := deref.String(d.Document.LemmatizedDescription, "")
 			for _, lemmaID := range strings.Split(description, " ") {
 				if lemmaID == string(potentialSpotlight) {
-					link, err := makeLinkFromDocument(c, input.emailRecordID, input.userAccessor, d.Document)
+					link, err := makeLinkFromDocument(c, makeLinkFromDocumentInput{
+						emailRecordID:   input.emailRecordID,
+						userAccessor:    input.userAccessor,
+						contentAccessor: input.contentAccessor,
+						document:        d.Document,
+					})
 					switch {
 					case err != nil:
 						return nil, err

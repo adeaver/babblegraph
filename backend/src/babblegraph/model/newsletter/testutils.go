@@ -61,7 +61,7 @@ type getDefaultDocumentInput struct {
 	SeedJobIngestTimestamp *int64
 }
 
-func getDefaultDocumentWithLink(c ctx.LogContext, idx int, emailRecordID email.ID, userAccessor userPreferencesAccessor, input getDefaultDocumentInput) (*documents.DocumentWithScore, *Link, error) {
+func getDefaultDocumentWithLink(c ctx.LogContext, idx int, emailRecordID email.ID, contentAccessor contentAccessor, userAccessor userPreferencesAccessor, input getDefaultDocumentInput) (*documents.DocumentWithScore, *Link, error) {
 	var lemmatizedDescription *string
 	if len(input.Lemmas) > 0 {
 		var descriptionParts []string
@@ -84,12 +84,18 @@ func getDefaultDocumentWithLink(c ctx.LogContext, idx int, emailRecordID email.I
 			Description: ptr.String(fmt.Sprintf("This is document #%d", idx)),
 		},
 		Domain:                 "elmundo.es",
+		SourceID:               testSourceID.Ptr(),
 		Topics:                 input.Topics,
 		HasPaywall:             ptr.Bool(false),
 		LemmatizedDescription:  lemmatizedDescription,
 		SeedJobIngestTimestamp: input.SeedJobIngestTimestamp,
 	}
-	link, err := makeLinkFromDocument(c, emailRecordID, userAccessor, doc)
+	link, err := makeLinkFromDocument(c, makeLinkFromDocumentInput{
+		emailRecordID:   emailRecordID,
+		userAccessor:    userAccessor,
+		contentAccessor: contentAccessor,
+		document:        doc,
+	})
 	if err != nil {
 		return nil, nil, err
 	}

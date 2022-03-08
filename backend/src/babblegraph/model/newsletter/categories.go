@@ -19,6 +19,7 @@ type getDocumentCategoriesInput struct {
 	languageCode                  wordsmith.LanguageCode
 	userAccessor                  userPreferencesAccessor
 	docsAccessor                  documentAccessor
+	contentAccessor               contentAccessor
 	numberOfDocumentsInNewsletter *int
 }
 
@@ -65,6 +66,7 @@ func getDocumentCategories(c ctx.LogContext, input getDocumentCategoriesInput) (
 	return joinDocumentsIntoCategories(c, joinDocumentsIntoCategoriesInput{
 		emailRecordID:                 input.emailRecordID,
 		userAccessor:                  input.userAccessor,
+		contentAccessor:               input.contentAccessor,
 		languageCode:                  input.languageCode,
 		numberOfDocumentsInNewsletter: deref.Int(input.numberOfDocumentsInNewsletter, DefaultNumberOfArticlesPerEmail),
 		documentsByTopic:              documentsByTopic,
@@ -75,6 +77,7 @@ func getDocumentCategories(c ctx.LogContext, input getDocumentCategoriesInput) (
 type joinDocumentsIntoCategoriesInput struct {
 	emailRecordID                 email.ID
 	userAccessor                  userPreferencesAccessor
+	contentAccessor               contentAccessor
 	languageCode                  wordsmith.LanguageCode
 	numberOfDocumentsInNewsletter int
 	documentsByTopic              map[contenttopics.ContentTopic][]documents.DocumentWithScore
@@ -109,7 +112,12 @@ func joinDocumentsIntoCategories(c ctx.LogContext, input joinDocumentsIntoCatego
 			doc := documentGroup.documentsWithScore[i].Document
 			u := urlparser.MustParseURL(doc.URL)
 			if _, ok := documentsInEmailByURLIdentifier[u.URLIdentifier]; !ok {
-				link, err := makeLinkFromDocument(c, input.emailRecordID, input.userAccessor, doc)
+				link, err := makeLinkFromDocument(c, makeLinkFromDocumentInput{
+					emailRecordID:   input.emailRecordID,
+					userAccessor:    input.userAccessor,
+					contentAccessor: input.contentAccessor,
+					document:        doc,
+				})
 				switch {
 				case err != nil:
 					return nil, err
@@ -143,7 +151,12 @@ func joinDocumentsIntoCategories(c ctx.LogContext, input joinDocumentsIntoCatego
 			doc := input.genericDocuments[i].Document
 			u := urlparser.MustParseURL(doc.URL)
 			if _, ok := documentsInEmailByURLIdentifier[u.URLIdentifier]; !ok {
-				link, err := makeLinkFromDocument(c, input.emailRecordID, input.userAccessor, doc)
+				link, err := makeLinkFromDocument(c, makeLinkFromDocumentInput{
+					emailRecordID:   input.emailRecordID,
+					userAccessor:    input.userAccessor,
+					contentAccessor: input.contentAccessor,
+					document:        doc,
+				})
 				switch {
 				case err != nil:
 					return nil, err

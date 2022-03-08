@@ -31,6 +31,7 @@ func TestUserHasAccount(t *testing.T) {
 		EmailAccessor:     emailAccessor,
 		UserAccessor:      userAccessor,
 		DocsAccessor:      docsAccessor,
+		ContentAccessor:   &testContentAccessor{},
 	})
 	if err != nil {
 		t.Fatalf(err.Error())
@@ -61,6 +62,7 @@ func TestUserDoesNotHaveAccount(t *testing.T) {
 		EmailAccessor:     emailAccessor,
 		UserAccessor:      userAccessor,
 		DocsAccessor:      docsAccessor,
+		ContentAccessor:   &testContentAccessor{},
 	})
 	if err != nil {
 		t.Fatalf(err.Error())
@@ -95,6 +97,7 @@ func TestNoSetTopicsLink(t *testing.T) {
 		EmailAccessor:     emailAccessor,
 		UserAccessor:      userAccessor,
 		DocsAccessor:      docsAccessor,
+		ContentAccessor:   &testContentAccessor{},
 	})
 	if err != nil {
 		t.Fatalf(err.Error())
@@ -133,6 +136,7 @@ func TestUserScheduleDay(t *testing.T) {
 		EmailAccessor:     emailAccessor,
 		UserAccessor:      userAccessor,
 		DocsAccessor:      docsAccessor,
+		ContentAccessor:   &testContentAccessor{},
 	})
 	if err != nil {
 		t.Fatalf(err.Error())
@@ -166,6 +170,7 @@ func TestUserScheduleDayNoSubscription(t *testing.T) {
 		EmailAccessor:     emailAccessor,
 		UserAccessor:      userAccessor,
 		DocsAccessor:      docsAccessor,
+		ContentAccessor:   &testContentAccessor{},
 	})
 	if err != nil {
 		t.Fatalf(err.Error())

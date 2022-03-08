@@ -54,6 +54,7 @@ func CreateNewsletter(c ctx.LogContext, input CreateNewsletterInput) (*Newslette
 		languageCode:                  input.UserAccessor.getLanguageCode(),
 		userAccessor:                  input.UserAccessor,
 		docsAccessor:                  input.DocsAccessor,
+		contentAccessor:               input.ContentAccessor,
 		numberOfDocumentsInNewsletter: numberOfDocumentsInNewsletter,
 	})
 	if err != nil {
@@ -85,6 +86,7 @@ func CreateNewsletter(c ctx.LogContext, input CreateNewsletterInput) (*Newslette
 		categories:        categories,
 		userAccessor:      input.UserAccessor,
 		docsAccessor:      input.DocsAccessor,
+		contentAccessor:   input.ContentAccessor,
 		wordsmithAccessor: input.WordsmithAccessor,
 	})
 	if err != nil {
