@@ -2,7 +2,6 @@ package newsletter
 
 import (
 	"babblegraph/model/documents"
-	"babblegraph/model/domains"
 	"babblegraph/model/email"
 	"babblegraph/model/routes"
 	"babblegraph/model/useraccounts"
@@ -27,6 +26,7 @@ type CreateNewsletterInput struct {
 	UserAccessor      userPreferencesAccessor
 	DocsAccessor      documentAccessor
 	PodcastAcccessor  podcastAccessor
+	ContentAccessor   contentAccessor
 }
 
 func CreateNewsletter(c ctx.LogContext, input CreateNewsletterInput) (*Newsletter, error) {
@@ -120,24 +120,30 @@ func pickUpToNRandomIndices(listLength, pickN int) []int {
 	return out
 }
 
-func makeLinkFromDocument(c ctx.LogContext, emailRecordID email.ID, userAccessor userPreferencesAccessor, doc documents.Document) (*Link, error) {
+type makeLinkFromDocumentInput struct {
+	emailRecordID   email.ID
+	userAccessor    userPreferencesAccessor
+	contentAccessor contentAccessor
+	document        documents.Document
+}
+
+func makeLinkFromDocument(c ctx.LogContext, input makeLinkFromDocumentInput) (*Link, error) {
 	var title, imageURL, description *string
-	if isNotEmpty(doc.Metadata.Title) {
-		title = doc.Metadata.Title
+	if isNotEmpty(input.document.Metadata.Title) {
+		title = input.document.Metadata.Title
 	}
-	if isNotEmpty(doc.Metadata.Image) {
-		imageURL = doc.Metadata.Image
+	if isNotEmpty(input.document.Metadata.Image) {
+		imageURL = input.document.Metadata.Image
 	}
-	if isNotEmpty(doc.Metadata.Description) {
-		description = doc.Metadata.Description
+	if isNotEmpty(input.document.Metadata.Description) {
+		description = input.document.Metadata.Description
 	}
-	// TODO: make content accessor
-	domain, err := domains.GetDomainMetadata(doc.Domain)
+	source, err := input.contentAccessor.GetSourceByID(*input.document.SourceID)
 	if err != nil {
-		c.Errorf("Error getting domain: %s", err.Error())
+		c.Errorf("Error getting source: %s", err.Error())
 		return nil, nil
 	}
-	userDocumentID, err := userAccessor.insertDocumentForUserAndReturnID(emailRecordID, doc)
+	userDocumentID, err := input.userAccessor.insertDocumentForUserAndReturnID(input.emailRecordID, input.document)
 	if err != nil {
 		return nil, err
 	}
@@ -152,15 +158,15 @@ func makeLinkFromDocument(c ctx.LogContext, emailRecordID email.ID, userAccessor
 		return nil, nil
 	}
 	return &Link{
-		DocumentID:       doc.ID,
+		DocumentID:       input.document.ID,
 		URL:              *articleLink,
 		PaywallReportURL: *paywallReportLink,
 		ImageURL:         imageURL,
 		Title:            title,
 		Description:      description,
 		Domain: &Domain{
-			Name:      string(domain.Domain),
-			FlagAsset: routes.GetFlagAssetForCountryCode(domain.Country),
+			Name:      string(source.URL),
+			FlagAsset: routes.GetFlagAssetForCountryCode(source.Country),
 		},
 	}, nil
 }
