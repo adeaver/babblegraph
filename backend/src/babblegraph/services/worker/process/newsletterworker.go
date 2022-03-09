@@ -74,7 +74,7 @@ func StartNewsletterPreloadWorkerThread(newsletterProcessor *newsletterprocessin
 				if err != nil {
 					return err
 				}
-				contentAccessor, err := newsletter.GetDefaultContentAccessor(tx)
+				contentAccessor, err := newsletter.GetDefaultContentAccessor(tx, sendRequest.LanguageCode)
 				if err != nil {
 					return err
 				}

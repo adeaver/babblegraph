@@ -155,6 +155,7 @@ func TestGenericCategory(t *testing.T) {
 		docsAccessor: &testDocsAccessor{
 			documents: docs,
 		},
+		contentAccessor:               contentAccessor,
 		numberOfDocumentsInNewsletter: ptr.Int(4),
 	})
 	if err != nil {
