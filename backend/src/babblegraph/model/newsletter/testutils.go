@@ -83,7 +83,7 @@ func getDefaultDocumentWithLink(c ctx.LogContext, idx int, emailRecordID email.I
 			Description: ptr.String(fmt.Sprintf("This is document #%d", idx)),
 		},
 		Domain:                 "elmundo.es",
-		SourceID:               testSourceID.Ptr(),
+		SourceID:               content.SourceID("test-source").Ptr(),
 		TopicIDs:               input.Topics,
 		HasPaywall:             ptr.Bool(false),
 		LemmatizedDescription:  lemmatizedDescription,

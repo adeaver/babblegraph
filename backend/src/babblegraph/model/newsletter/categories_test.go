@@ -38,6 +38,9 @@ func TestDefaultCategories(t *testing.T) {
 			content.TopicID("test-architecture"),
 			content.TopicID("test-automotive"),
 		},
+		allowableSourceIDs: []content.SourceID{
+			content.SourceID("test-source"),
+		},
 	}
 	contentAccessor := &testContentAccessor{}
 	var expectedCategories []Category
@@ -128,6 +131,9 @@ func TestGenericCategory(t *testing.T) {
 			UpperBound: 80,
 		},
 		userTopics: []content.TopicID{},
+		allowableSourceIDs: []content.SourceID{
+			content.SourceID("test-source"),
+		},
 	}
 	var expectedLinks []Link
 	var docs []documents.DocumentWithScore
@@ -180,6 +186,9 @@ func TestCategoryWithGeneric(t *testing.T) {
 		},
 		userTopics: []content.TopicID{
 			content.TopicID("test-art"),
+		},
+		allowableSourceIDs: []content.SourceID{
+			content.SourceID("test-source"),
 		},
 	}
 	contentAccessor := &testContentAccessor{}
@@ -246,6 +255,9 @@ func TestFavorRecentDocuments(t *testing.T) {
 			UpperBound: 80,
 		},
 		userTopics: []content.TopicID{},
+		allowableSourceIDs: []content.SourceID{
+			content.SourceID("test-source"),
+		},
 	}
 	var expectedLinks []Link
 	var docs []documents.DocumentWithScore
