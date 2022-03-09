@@ -140,6 +140,9 @@ func makeLinkFromDocument(c ctx.LogContext, input makeLinkFromDocumentInput) (*L
 	if isNotEmpty(input.document.Metadata.Description) {
 		description = input.document.Metadata.Description
 	}
+	if input.document.SourceID == nil {
+		c.Debugf("%+v", input.document)
+	}
 	source, err := input.contentAccessor.GetSourceByID(*input.document.SourceID)
 	if err != nil {
 		c.Errorf("Error getting source: %s", err.Error())

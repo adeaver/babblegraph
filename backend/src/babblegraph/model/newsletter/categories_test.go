@@ -135,10 +135,11 @@ func TestGenericCategory(t *testing.T) {
 			content.SourceID("test-source"),
 		},
 	}
+	contentAccessor := &testContentAccessor{}
 	var expectedLinks []Link
 	var docs []documents.DocumentWithScore
 	for idx, topic := range documentTopics {
-		doc, link, err := getDefaultDocumentWithLink(c, idx, emailRecordID, &testContentAccessor{}, userAccessor, getDefaultDocumentInput{
+		doc, link, err := getDefaultDocumentWithLink(c, idx, emailRecordID, contentAccessor, userAccessor, getDefaultDocumentInput{
 			Topics: []content.TopicID{topic},
 		})
 		if err != nil {
