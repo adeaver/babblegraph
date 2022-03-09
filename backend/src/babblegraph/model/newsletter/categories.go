@@ -68,7 +68,7 @@ func getDocumentCategories(c ctx.LogContext, input getDocumentCategoriesInput) (
 	}
 	var podcastEpisodesByTopic map[content.TopicID][]podcasts.Episode
 	if input.userAccessor.getUserSubscriptionLevel() != nil {
-		podcastEpisodesByTopic, err = podcastAccessor.LookupPodcastEpisodesForTopics(topics)
+		podcastEpisodesByTopic, err = input.podcastAccessor.LookupPodcastEpisodesForTopics(topics)
 	}
 	return joinDocumentsIntoCategories(c, joinDocumentsIntoCategoriesInput{
 		emailRecordID:                 input.emailRecordID,
@@ -140,12 +140,11 @@ func joinDocumentsIntoCategories(c ctx.LogContext, input joinDocumentsIntoCatego
 		}
 		if len(links) > 0 {
 			var categoryName *string
-			// TODO(Here): contentAccessor.GetDisplayNameForLanguage(input.languageCode)
-			displayName, err := contenttopics.ContentTopicNameToDisplayName(documentGroup.topic)
+			displayName, err := input.contentAccessor.GetDisplayNameByTopicID(documentGroup.topic)
 			if err != nil {
 				c.Errorf("Error generating display name: %s", err.Error())
 			} else {
-				categoryName = ptr.String(text.ToTitleCaseForLanguage(displayName.Str(), input.languageCode))
+				categoryName = ptr.String(text.ToTitleCaseForLanguage(*displayName, input.languageCode))
 			}
 			categories = append(categories, Category{
 				Name:  categoryName,

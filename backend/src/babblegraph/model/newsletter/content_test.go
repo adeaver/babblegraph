@@ -3,8 +3,10 @@ package newsletter
 import (
 	"babblegraph/model/content"
 	"babblegraph/util/geo"
+	"babblegraph/util/ptr"
 	"babblegraph/wordsmith"
 	"fmt"
+	"strings"
 )
 
 const testSourceID content.SourceID = content.SourceID("test-source")
@@ -29,4 +31,9 @@ func (t *testContentAccessor) GetSourceByID(sourceID content.SourceID) (*content
 		return &testSource, nil
 	}
 	return nil, fmt.Errorf("Unsupported source ID %s", sourceID)
+}
+
+func (t *testContentAccessor) GetDisplayNameByTopicID(topicID content.TopicID) (*string, error) {
+	parts := strings.Split(topicID.Str(), "-")
+	return ptr.String(parts[len(parts)-1]), nil
 }

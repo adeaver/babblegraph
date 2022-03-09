@@ -39,22 +39,23 @@ func TestDefaultCategories(t *testing.T) {
 			content.TopicID("test-automotive"),
 		},
 	}
+	contentAccessor := &testContentAccessor{}
 	var expectedCategories []Category
 	var docs []documents.DocumentWithScore
 	for idx, topic := range documentTopics {
-		doc, link, err := getDefaultDocumentWithLink(c, idx, emailRecordID, &testContentAccessor{}, userAccessor, getDefaultDocumentInput{
+		doc, link, err := getDefaultDocumentWithLink(c, idx, emailRecordID, contentAccessor, userAccessor, getDefaultDocumentInput{
 			Topics: []content.TopicID{topic},
 		})
 		if err != nil {
 			t.Fatalf("Error setting up test: %s", err.Error())
 		}
 		if containsTopic(topic, userAccessor.getUserTopics()) {
-			displayName, err := contenttopics.ContentTopicNameToDisplayName(topic)
+			displayName, err := contentAccessor.GetDisplayNameByTopicID(topic)
 			if err != nil {
 				t.Fatalf("Error setting up test: %s", err.Error())
 			}
 			expectedCategories = append(expectedCategories, Category{
-				Name: ptr.String(text.ToTitleCaseForLanguage(displayName.Str(), wordsmith.LanguageCodeSpanish)),
+				Name: ptr.String(text.ToTitleCaseForLanguage(*displayName, wordsmith.LanguageCodeSpanish)),
 				Links: []Link{
 					*link,
 				},
@@ -63,9 +64,10 @@ func TestDefaultCategories(t *testing.T) {
 		docs = append(docs, *doc)
 	}
 	categories, err := getDocumentCategories(c, getDocumentCategoriesInput{
-		emailRecordID: emailRecordID,
-		languageCode:  wordsmith.LanguageCodeSpanish,
-		userAccessor:  userAccessor,
+		emailRecordID:   emailRecordID,
+		languageCode:    wordsmith.LanguageCodeSpanish,
+		userAccessor:    userAccessor,
+		contentAccessor: contentAccessor,
 		docsAccessor: &testDocsAccessor{
 			documents: docs,
 		},
@@ -180,22 +182,23 @@ func TestCategoryWithGeneric(t *testing.T) {
 			content.TopicID("test-art"),
 		},
 	}
+	contentAccessor := &testContentAccessor{}
 	var expectedCategories []Category
 	var docs []documents.DocumentWithScore
 	for idx, topic := range documentTopics {
-		doc, link, err := getDefaultDocumentWithLink(c, idx, emailRecordID, &testContentAccessor{}, userAccessor, getDefaultDocumentInput{
+		doc, link, err := getDefaultDocumentWithLink(c, idx, emailRecordID, contentAccessor, userAccessor, getDefaultDocumentInput{
 			Topics: []content.TopicID{topic},
 		})
 		if err != nil {
 			t.Fatalf("Error setting up test: %s", err.Error())
 		}
 		if containsTopic(topic, userAccessor.getUserTopics()) {
-			displayName, err := contenttopics.ContentTopicNameToDisplayName(topic)
+			displayName, err := contentAccessor.GetDisplayNameByTopicID(topic)
 			if err != nil {
 				t.Fatalf("Error setting up test: %s", err.Error())
 			}
 			expectedCategories = append(expectedCategories, Category{
-				Name: ptr.String(text.ToTitleCaseForLanguage(displayName.Str(), wordsmith.LanguageCodeSpanish)),
+				Name: ptr.String(text.ToTitleCaseForLanguage(*displayName, wordsmith.LanguageCodeSpanish)),
 				Links: []Link{
 					*link,
 				},
@@ -210,6 +213,7 @@ func TestCategoryWithGeneric(t *testing.T) {
 		docsAccessor: &testDocsAccessor{
 			documents: docs,
 		},
+		contentAccessor:               contentAccessor,
 		numberOfDocumentsInNewsletter: ptr.Int(4),
 	})
 	if err != nil {

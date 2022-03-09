@@ -3,6 +3,7 @@ package content
 import (
 	"babblegraph/util/ctx"
 	"babblegraph/util/urlparser"
+	"babblegraph/wordsmith"
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
@@ -21,6 +22,8 @@ const (
 	getSourceSeedTopicMappingForSourceSeedsQuery = "SELECT * FROM content_source_seed_topic_mapping WHERE topic_id = '%s' AND source_seed_id IN (?)"
 
 	getTopicIDsForSourceSeedIDsQuery = "SELECT DISTINCT(topic_id) FROM content_source_seed_topic_mapping WHERE _id IN (?)"
+
+	getTopicDisplayNameForLanguageQuery = "SELECT * FROM content_topic_display_name WHERE language_code = $1 AND is_active = TRUE"
 )
 
 func GetSourceIDForParsedURL(tx *sqlx.Tx, u urlparser.ParsedURL) (*SourceID, error) {
@@ -218,6 +221,18 @@ func LookupActiveSourceIDsByType(tx *sqlx.Tx, contentType SourceType) ([]SourceI
 	var out []SourceID
 	for _, m := range matches {
 		out = append(out, m.ID)
+	}
+	return out, nil
+}
+
+func GetTopicDisplayNamesForLanguage(tx *sqlx.Tx, languageCode wordsmith.LanguageCode) ([]TopicDisplayName, error) {
+	var matches []dbTopicDisplayName
+	if err := tx.Select(&matches, getTopicDisplayNameForLanguageQuery, languageCode); err != nil {
+		return nil, err
+	}
+	var out []TopicDisplayName
+	for _, m := range matches {
+		out = append(out, m.ToNonDB())
 	}
 	return out, nil
 }
