@@ -34,6 +34,9 @@ func TestSpotlightRecordsForUserWithAccount(t *testing.T) {
 			ShouldIncludeLemmaReinforcementSpotlight: true,
 			LanguageCode:                             wordsmith.LanguageCodeSpanish,
 		},
+		allowableSourceIDs: []content.SourceID{
+			content.SourceID("test-source"),
+		},
 		spotlightRecords: []userlemma.UserLemmaReinforcementSpotlightRecord{
 			{
 				LanguageCode: wordsmith.LanguageCodeSpanish,
@@ -131,6 +134,9 @@ func TestSpotlightRecordsForUserWithoutAccount(t *testing.T) {
 		userNewsletterPreferences: &usernewsletterpreferences.UserNewsletterPreferences{
 			ShouldIncludeLemmaReinforcementSpotlight: true,
 			LanguageCode:                             wordsmith.LanguageCodeSpanish,
+		},
+		allowableSourceIDs: []content.SourceID{
+			content.SourceID("test-source"),
 		},
 		spotlightRecords: []userlemma.UserLemmaReinforcementSpotlightRecord{
 			{
@@ -232,6 +238,9 @@ func TestSpotlightRecordsForTrackedLemmaWithoutSpotlight(t *testing.T) {
 		userNewsletterPreferences: &usernewsletterpreferences.UserNewsletterPreferences{
 			ShouldIncludeLemmaReinforcementSpotlight: true,
 			LanguageCode:                             wordsmith.LanguageCodeSpanish,
+		},
+		allowableSourceIDs: []content.SourceID{
+			content.SourceID("test-source"),
 		},
 		spotlightRecords: []userlemma.UserLemmaReinforcementSpotlightRecord{
 			{
