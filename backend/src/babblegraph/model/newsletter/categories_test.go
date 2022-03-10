@@ -263,8 +263,9 @@ func TestFavorRecentDocuments(t *testing.T) {
 	}
 	var expectedLinks []Link
 	var docs []documents.DocumentWithScore
+	contentAccessor := &testContentAccessor{}
 	for idx := 0; idx <= 8; idx++ {
-		doc, link, err := getDefaultDocumentWithLink(c, idx, emailRecordID, &testContentAccessor{}, userAccessor, getDefaultDocumentInput{
+		doc, link, err := getDefaultDocumentWithLink(c, idx, emailRecordID, contentAccessor, userAccessor, getDefaultDocumentInput{
 			Topics: []content.TopicID{content.TopicID("test-art")},
 		})
 		doc.Document.SeedJobIngestTimestamp = ptr.Int64(time.Now().Add(time.Duration(-2*(8-idx)*24) * time.Hour).Unix())
@@ -281,6 +282,7 @@ func TestFavorRecentDocuments(t *testing.T) {
 		docsAccessor: &testDocsAccessor{
 			documents: docs,
 		},
+		contentAccessor:               contentAccessor,
 		numberOfDocumentsInNewsletter: ptr.Int(4),
 	})
 	if err != nil {
