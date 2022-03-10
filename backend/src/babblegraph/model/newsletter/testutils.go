@@ -28,7 +28,7 @@ func isSourceValid(sourceID *content.SourceID, validSourceIDs []content.SourceID
 		return false
 	}
 	for _, s := range validSourceIDs {
-		if s == *sourceID {
+		if s.Str() == sourceID.Str() {
 			return true
 		}
 	}
