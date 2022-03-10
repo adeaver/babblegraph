@@ -59,6 +59,7 @@ func TestSpotlightRecordsForUserWithAccount(t *testing.T) {
 	var correctLink *Link
 	emailRecordID := email.NewEmailRecordID()
 	lemmasByID := make(map[wordsmith.LemmaID]wordsmith.Lemma)
+	contentAccessor := &testContentAccessor{}
 	var docs []documents.DocumentWithScore
 	for i := 15; i >= 0; i-- {
 		lemma := wordsmith.LemmaID(fmt.Sprintf("word%d", i))
@@ -67,7 +68,7 @@ func TestSpotlightRecordsForUserWithAccount(t *testing.T) {
 			Language:  wordsmith.LanguageCodeSpanish,
 			LemmaText: lemma.Str(),
 		}
-		doc, link, err := getDefaultDocumentWithLink(c, i, emailRecordID, &testContentAccessor{}, userAccessor, getDefaultDocumentInput{
+		doc, link, err := getDefaultDocumentWithLink(c, i, emailRecordID, contentAccessor, userAccessor, getDefaultDocumentInput{
 			Topics: []content.TopicID{
 				content.TopicID("topicid-art"),
 			},
@@ -91,6 +92,7 @@ func TestSpotlightRecordsForUserWithAccount(t *testing.T) {
 		EmailAccessor:     emailAccessor,
 		UserAccessor:      userAccessor,
 		DocsAccessor:      docsAccessor,
+		ContentAccessor:   contentAccessor,
 	})
 	switch {
 	case err != nil:
@@ -160,6 +162,7 @@ func TestSpotlightRecordsForUserWithoutAccount(t *testing.T) {
 	var correctLink *Link
 	emailRecordID := email.NewEmailRecordID()
 	lemmasByID := make(map[wordsmith.LemmaID]wordsmith.Lemma)
+	contentAccessor := &testContentAccessor{}
 	var docs []documents.DocumentWithScore
 	for i := 15; i >= 0; i-- {
 		lemma := wordsmith.LemmaID(fmt.Sprintf("word%d", i))
@@ -168,7 +171,7 @@ func TestSpotlightRecordsForUserWithoutAccount(t *testing.T) {
 			Language:  wordsmith.LanguageCodeSpanish,
 			LemmaText: lemma.Str(),
 		}
-		doc, link, err := getDefaultDocumentWithLink(c, i, emailRecordID, &testContentAccessor{}, userAccessor, getDefaultDocumentInput{
+		doc, link, err := getDefaultDocumentWithLink(c, i, emailRecordID, contentAccessor, userAccessor, getDefaultDocumentInput{
 			Topics: []content.TopicID{
 				content.TopicID("topicid-art"),
 			},
@@ -192,6 +195,7 @@ func TestSpotlightRecordsForUserWithoutAccount(t *testing.T) {
 		EmailAccessor:     emailAccessor,
 		UserAccessor:      userAccessor,
 		DocsAccessor:      docsAccessor,
+		ContentAccessor:   contentAccessor,
 	})
 	switch {
 	case err != nil:
@@ -264,6 +268,7 @@ func TestSpotlightRecordsForTrackedLemmaWithoutSpotlight(t *testing.T) {
 	var correctLink *Link
 	emailRecordID := email.NewEmailRecordID()
 	lemmasByID := make(map[wordsmith.LemmaID]wordsmith.Lemma)
+	contentAccessor := &testContentAccessor{}
 	var docs []documents.DocumentWithScore
 	for i := 16; i >= 0; i-- {
 		lemma := wordsmith.LemmaID(fmt.Sprintf("word%d", i))
@@ -272,7 +277,7 @@ func TestSpotlightRecordsForTrackedLemmaWithoutSpotlight(t *testing.T) {
 			Language:  wordsmith.LanguageCodeSpanish,
 			LemmaText: lemma.Str(),
 		}
-		doc, link, err := getDefaultDocumentWithLink(c, i, emailRecordID, &testContentAccessor{}, userAccessor, getDefaultDocumentInput{
+		doc, link, err := getDefaultDocumentWithLink(c, i, emailRecordID, contentAccessor, userAccessor, getDefaultDocumentInput{
 			Topics: []content.TopicID{
 				content.TopicID("topicid-art"),
 			},
@@ -296,6 +301,7 @@ func TestSpotlightRecordsForTrackedLemmaWithoutSpotlight(t *testing.T) {
 		EmailAccessor:     emailAccessor,
 		UserAccessor:      userAccessor,
 		DocsAccessor:      docsAccessor,
+		ContentAccessor:   contentAccessor,
 	})
 	switch {
 	case err != nil:
