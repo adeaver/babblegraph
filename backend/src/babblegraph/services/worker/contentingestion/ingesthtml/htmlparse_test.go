@@ -1,6 +1,7 @@
 package ingesthtml
 
 import (
+	"babblegraph/model/content"
 	"babblegraph/util/ptr"
 	"babblegraph/util/testutils"
 	"testing"
@@ -41,7 +42,13 @@ var (
 )
 
 func TestParseHTML(t *testing.T) {
-	parsed, err := parseHTML("laprensa.com.ar", normalHTMLPage, "utf-8")
+	parsed, err := parseHTML(parseHTMLInput{
+		source: content.Source{
+			URL: "laprensa.com.ar",
+		},
+		htmlStr: normalHTMLPage,
+		cset:    "utf-8",
+	})
 	if err != nil {
 		t.Errorf("Not expecting error, but got one: %s", err.Error())
 		return
@@ -118,7 +125,16 @@ func TestParseLDJSONPaywalledHTML(t *testing.T) {
 		</script>
 		<a href="/relative-link">relative link</a>
 </body>`
-	parsed, err := parseHTML("elmundo.es", ldjsonPaywalledHTML, "utf-8")
+	parsed, err := parseHTML(parseHTMLInput{
+		source: content.Source{
+			URL: "elmundo.es",
+		},
+		sourceFilter: &content.SourceFilter{
+			UseLDJSONValidation: ptr.Bool(true),
+		},
+		htmlStr: ldjsonPaywalledHTML,
+		cset:    "utf-8",
+	})
 	if err != nil {
 		t.Errorf("Not expecting error, but got one: %s", err.Error())
 		return
@@ -185,7 +201,16 @@ func TestParseLDJSONNotPaywalledHTML(t *testing.T) {
 		</script>
 		<a href="/relative-link">relative link</a>
 </body>`
-	parsed, err := parseHTML("elmundo.es", ldjsonPaywalledHTML, "utf-8")
+	parsed, err := parseHTML(parseHTMLInput{
+		source: content.Source{
+			URL: "elmundo.es",
+		},
+		sourceFilter: &content.SourceFilter{
+			UseLDJSONValidation: ptr.Bool(true),
+		},
+		htmlStr: ldjsonPaywalledHTML,
+		cset:    "utf-8",
+	})
 	if err != nil {
 		t.Errorf("Not expecting error, but got one: %s", err.Error())
 		return
@@ -214,7 +239,16 @@ func TestParseClassesNotPaywalledHTML(t *testing.T) {
 		</script>
 		<a href="/relative-link">relative link</a>
 </body>`
-	parsed, err := parseHTML("elespectador.com", classesNotPaywalledHTML, "utf-8")
+	parsed, err := parseHTML(parseHTMLInput{
+		source: content.Source{
+			URL: "elespectador.com",
+		},
+		sourceFilter: &content.SourceFilter{
+			PaywallClasses: []string{"premium_validation"},
+		},
+		htmlStr: classesNotPaywalledHTML,
+		cset:    "utf-8",
+	})
 	if err != nil {
 		t.Errorf("Not expecting error, but got one: %s", err.Error())
 		return
@@ -243,7 +277,16 @@ func TestParseClassesPaywalledHTML(t *testing.T) {
 		</script>
 		<a href="/relative-link">relative link</a>
 </body>`
-	parsed, err := parseHTML("elespectador.com", classesPaywalledHTML, "utf-8")
+	parsed, err := parseHTML(parseHTMLInput{
+		source: content.Source{
+			URL: "elespectador.com",
+		},
+		sourceFilter: &content.SourceFilter{
+			PaywallClasses: []string{"premium_validation"},
+		},
+		htmlStr: classesPaywalledHTML,
+		cset:    "utf-8",
+	})
 	if err != nil {
 		t.Errorf("Not expecting error, but got one: %s", err.Error())
 		return
@@ -311,7 +354,16 @@ func TestParseLDJSONPaywalledHTMLWithString(t *testing.T) {
 		</script>
 		<a href="/relative-link">relative link</a>
 </body>`
-	parsed, err := parseHTML("elmundo.es", ldjsonPaywalledHTML, "utf-8")
+	parsed, err := parseHTML(parseHTMLInput{
+		source: content.Source{
+			URL: "elmundo.es",
+		},
+		sourceFilter: &content.SourceFilter{
+			UseLDJSONValidation: ptr.Bool(true),
+		},
+		htmlStr: ldjsonPaywalledHTML,
+		cset:    "utf-8",
+	})
 	if err != nil {
 		t.Errorf("Not expecting error, but got one: %s", err.Error())
 		return
@@ -340,7 +392,16 @@ func TestParseIDsPaywalledHTML(t *testing.T) {
 		</script>
 		<a href="/relative-link">relative link</a>
 </body>`
-	parsed, err := parseHTML("yucatan.com.mx", idsPaywalledHTML, "utf-8")
+	parsed, err := parseHTML(parseHTMLInput{
+		source: content.Source{
+			URL: "yucatan.com.mx",
+		},
+		sourceFilter: &content.SourceFilter{
+			PaywallIDs: []string{"is_c9_article"},
+		},
+		htmlStr: idsPaywalledHTML,
+		cset:    "utf-8",
+	})
 	if err != nil {
 		t.Errorf("Not expecting error, but got one: %s", err.Error())
 		return
@@ -369,7 +430,16 @@ func TestParseNotIDsPaywalledHTML(t *testing.T) {
 		</script>
 		<a href="/relative-link">relative link</a>
 </body>`
-	parsed, err := parseHTML("yucatan.com.mx", idsNotPaywalledHTML, "utf-8")
+	parsed, err := parseHTML(parseHTMLInput{
+		source: content.Source{
+			URL: "yucatan.com.mx",
+		},
+		sourceFilter: &content.SourceFilter{
+			PaywallIDs: []string{"is_c9_article"},
+		},
+		htmlStr: idsNotPaywalledHTML,
+		cset:    "utf-8",
+	})
 	if err != nil {
 		t.Errorf("Not expecting error, but got one: %s", err.Error())
 		return

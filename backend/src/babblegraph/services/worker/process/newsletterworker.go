@@ -81,7 +81,7 @@ func StartNewsletterPreloadWorkerThread(newsletterProcessor *newsletterprocessin
 				c.Infof("Creating newsletter for send request with ID %s", sendRequest.ID)
 				newsletter, err := newsletter.CreateNewsletter(c, newsletter.CreateNewsletterInput{
 					WordsmithAccessor: wordsmithAccessor,
-					EmailAccess:       emailAccessor,
+					EmailAccessor:     emailAccessor,
 					UserAccessor:      userAccessor,
 					DocsAccessor:      docsAccessor,
 					ContentAccessor:   contentAccessor,
