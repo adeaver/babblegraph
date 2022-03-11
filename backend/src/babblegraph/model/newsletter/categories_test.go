@@ -406,6 +406,12 @@ func TestNewsletterNoPodcasts(t *testing.T) {
 			LowerBound: 30,
 			UpperBound: 80,
 		},
+		userNewsletterPreferences: &usernewsletterpreferences.UserNewsletterPreferences{
+			PodcastPreferences: usernewsletterpreferences.PodcastPreferences{
+				IncludeExplicitPodcasts: true,
+				ArePodcastsEnabled:      true,
+			},
+		},
 		userTopics: []content.TopicID{
 			content.TopicID("test-art"),
 			content.TopicID("test-astronomy"),
@@ -415,7 +421,9 @@ func TestNewsletterNoPodcasts(t *testing.T) {
 		allowableSourceIDs: []content.SourceID{
 			content.SourceID("test-source"),
 		},
-		doesUserHaveAccount: true,
+
+		userNewsletterSchedule: &usernewsletterschedule.TestNewsletterSchedule{},
+		doesUserHaveAccount:    true,
 	}
 	documentTopics := []content.TopicID{
 		content.TopicID("test-art"),
@@ -441,6 +449,12 @@ func TestNewsletterNoPodcasts(t *testing.T) {
 		languageCode: wordsmith.LanguageCodeSpanish,
 		validSourceIDs: []content.SourceID{
 			content.SourceID("test-source"),
+		},
+		userNewsletterPreferences: usernewsletterpreferences.UserNewsletterPreferences{
+			PodcastPreferences: usernewsletterpreferences.PodcastPreferences{
+				IncludeExplicitPodcasts: true,
+				ArePodcastsEnabled:      true,
+			},
 		},
 		podcastEpisodes: podcasts,
 	}
