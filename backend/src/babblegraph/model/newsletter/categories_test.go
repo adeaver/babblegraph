@@ -366,7 +366,7 @@ func TestNewsletterHasPodcasts(t *testing.T) {
 		validSourceIDs: []content.SourceID{
 			content.SourceID("test-source"),
 		},
-		userNewsletterPreferences: &usernewsletterpreferences.UserNewsletterPreferences{
+		userNewsletterPreferences: usernewsletterpreferences.UserNewsletterPreferences{
 			PodcastPreferences: usernewsletterpreferences.PodcastPreferences{
 				IncludeExplicitPodcasts: true,
 				ArePodcastsEnabled:      true,
