@@ -8,6 +8,7 @@ import (
 	"babblegraph/model/usercontenttopics"
 	"babblegraph/model/userdocuments"
 	"babblegraph/model/userlemma"
+	"babblegraph/model/userlinks"
 	"babblegraph/model/usernewsletterpreferences"
 	"babblegraph/model/usernewsletterschedule"
 	"babblegraph/model/users"
@@ -190,5 +191,27 @@ func (d *DefaultUserPreferencesAccessor) insertSpotlightReinforcementRecord(lemm
 }
 
 func getAllowableSourceIDsForUser(tx *sqlx.Tx, userID users.UserID) ([]content.SourceID, error) {
-	return nil, nil
+	allowableSources, err := content.GetAllowableSources(tx)
+	if err != nil {
+		return nil, err
+	}
+	currentDomainCounts, err := userlinks.GetDomainCountsByCurrentAccessMonthForUser(tx, userID)
+	if err != nil {
+		return nil, err
+	}
+	countsBySourceID := make(map[content.SourceID]int64)
+	for _, c := range currentDomainCounts {
+		countsBySourceID[c.SourceID] = c.Count
+	}
+	var out []content.SourceID
+	for _, s := range allowableSources {
+		count, ok := countsBySourceID[s.ID]
+		switch {
+		case !ok,
+			s.MonthlyAccessLimit == nil,
+			count < *s.MonthlyAccessLimit:
+			out = append(out, s.ID)
+		}
+	}
+	return out, nil
 }

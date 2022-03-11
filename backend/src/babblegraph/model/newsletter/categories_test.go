@@ -5,6 +5,8 @@ import (
 	"babblegraph/model/contenttopics"
 	"babblegraph/model/documents"
 	"babblegraph/model/email"
+	"babblegraph/model/podcasts"
+	"babblegraph/model/useraccounts"
 	"babblegraph/util/ctx"
 	"babblegraph/util/ptr"
 	"babblegraph/util/testutils"
@@ -71,6 +73,7 @@ func TestDefaultCategories(t *testing.T) {
 		languageCode:    wordsmith.LanguageCodeSpanish,
 		userAccessor:    userAccessor,
 		contentAccessor: contentAccessor,
+		podcastAccessor: &testPodcastAccessor{},
 		docsAccessor: &testDocsAccessor{
 			documents: docs,
 		},
@@ -155,6 +158,7 @@ func TestGenericCategory(t *testing.T) {
 		docsAccessor: &testDocsAccessor{
 			documents: docs,
 		},
+		podcastAccessor:               &testPodcastAccessor{},
 		contentAccessor:               contentAccessor,
 		numberOfDocumentsInNewsletter: ptr.Int(4),
 	})
@@ -224,6 +228,7 @@ func TestCategoryWithGeneric(t *testing.T) {
 		docsAccessor: &testDocsAccessor{
 			documents: docs,
 		},
+		podcastAccessor:               &testPodcastAccessor{},
 		contentAccessor:               contentAccessor,
 		numberOfDocumentsInNewsletter: ptr.Int(4),
 	})
@@ -282,6 +287,7 @@ func TestFavorRecentDocuments(t *testing.T) {
 		docsAccessor: &testDocsAccessor{
 			documents: docs,
 		},
+		podcastAccessor:               &testPodcastAccessor{},
 		contentAccessor:               contentAccessor,
 		numberOfDocumentsInNewsletter: ptr.Int(4),
 	})
@@ -301,6 +307,147 @@ func TestFavorRecentDocuments(t *testing.T) {
 			t.Errorf("Got error converting string to index: %s", err.Error())
 		case originalIdx <= 4:
 			t.Errorf("Expected only recent documents (idx 5-8), but got document with idx %d", originalIdx)
+		}
+	}
+}
+
+func TestNewsletterHasPodcasts(t *testing.T) {
+	c := ctx.GetDefaultLogContext()
+	emailRecordID := email.NewEmailRecordID()
+	userAccessor := &testUserAccessor{
+		readingLevel: &userReadingLevel{
+			LowerBound: 30,
+			UpperBound: 80,
+		},
+		userTopics: []content.TopicID{
+			content.TopicID("test-art"),
+			content.TopicID("test-astronomy"),
+			content.TopicID("test-architecture"),
+			content.TopicID("test-automotive"),
+		},
+		allowableSourceIDs: []content.SourceID{
+			content.SourceID("test-source"),
+		},
+		doesUserHaveAccount:   true,
+		userSubscriptionLevel: useraccounts.SubscriptionLevelPremium.Ptr(),
+	}
+	documentTopics := []content.TopicID{
+		content.TopicID("test-art"),
+		content.TopicID("test-astronomy"),
+		content.TopicID("test-architecture"),
+		content.TopicID("test-automotive"),
+		content.TopicID("test-culture"),
+	}
+	contentAccessor := &testContentAccessor{}
+	var docs []documents.DocumentWithScore
+	var podcasts []podcasts.Episode
+	for idx, topic := range documentTopics {
+		doc, _, err := getDefaultDocumentWithLink(c, idx, emailRecordID, contentAccessor, userAccessor, getDefaultDocumentInput{
+			Topics: []content.TopicID{topic},
+		})
+		if err != nil {
+			t.Fatalf("Error setting up test: %s", err.Error())
+		}
+		docs = append(docs, *doc)
+		podcasts = append(podcasts, getDefaultPodcast(topic))
+	}
+	podcastAccessor := &testPodcastAccessor{
+		languageCode: wordsmith.LanguageCodeSpanish,
+		validSourceIDs: []content.SourceID{
+			content.SourceID("test-source"),
+		},
+		podcastEpisodes: podcasts,
+	}
+	categories, err := getDocumentCategories(c, getDocumentCategoriesInput{
+		emailRecordID:   emailRecordID,
+		languageCode:    wordsmith.LanguageCodeSpanish,
+		userAccessor:    userAccessor,
+		contentAccessor: contentAccessor,
+		podcastAccessor: podcastAccessor,
+		docsAccessor: &testDocsAccessor{
+			documents: docs,
+		},
+		numberOfDocumentsInNewsletter: ptr.Int(4),
+	})
+	if err != nil {
+		t.Fatalf("Got error %s", err.Error())
+	}
+	if len(categories) != 4 {
+		t.Errorf("Expected 4 categories, but got %d", len(categories))
+	}
+	for _, c := range categories {
+		if len(c.PodcastLinks) != 1 {
+			t.Errorf("Error on category with name %s: expected 1 podcast, but got %d", *c.Name, len(c.PodcastLinks))
+		}
+	}
+}
+
+func TestNewsletterNoPodcasts(t *testing.T) {
+	c := ctx.GetDefaultLogContext()
+	emailRecordID := email.NewEmailRecordID()
+	userAccessor := &testUserAccessor{
+		readingLevel: &userReadingLevel{
+			LowerBound: 30,
+			UpperBound: 80,
+		},
+		userTopics: []content.TopicID{
+			content.TopicID("test-art"),
+			content.TopicID("test-astronomy"),
+			content.TopicID("test-architecture"),
+			content.TopicID("test-automotive"),
+		},
+		allowableSourceIDs: []content.SourceID{
+			content.SourceID("test-source"),
+		},
+		doesUserHaveAccount: true,
+	}
+	documentTopics := []content.TopicID{
+		content.TopicID("test-art"),
+		content.TopicID("test-astronomy"),
+		content.TopicID("test-architecture"),
+		content.TopicID("test-automotive"),
+		content.TopicID("test-culture"),
+	}
+	contentAccessor := &testContentAccessor{}
+	var docs []documents.DocumentWithScore
+	var podcasts []podcasts.Episode
+	for idx, topic := range documentTopics {
+		doc, _, err := getDefaultDocumentWithLink(c, idx, emailRecordID, contentAccessor, userAccessor, getDefaultDocumentInput{
+			Topics: []content.TopicID{topic},
+		})
+		if err != nil {
+			t.Fatalf("Error setting up test: %s", err.Error())
+		}
+		docs = append(docs, *doc)
+		podcasts = append(podcasts, getDefaultPodcast(topic))
+	}
+	podcastAccessor := &testPodcastAccessor{
+		languageCode: wordsmith.LanguageCodeSpanish,
+		validSourceIDs: []content.SourceID{
+			content.SourceID("test-source"),
+		},
+		podcastEpisodes: podcasts,
+	}
+	categories, err := getDocumentCategories(c, getDocumentCategoriesInput{
+		emailRecordID:   emailRecordID,
+		languageCode:    wordsmith.LanguageCodeSpanish,
+		userAccessor:    userAccessor,
+		contentAccessor: contentAccessor,
+		podcastAccessor: podcastAccessor,
+		docsAccessor: &testDocsAccessor{
+			documents: docs,
+		},
+		numberOfDocumentsInNewsletter: ptr.Int(4),
+	})
+	if err != nil {
+		t.Fatalf("Got error %s", err.Error())
+	}
+	if len(categories) != 4 {
+		t.Errorf("Expected 4 categories, but got %d", len(categories))
+	}
+	for _, c := range categories {
+		if len(c.PodcastLinks) != 0 {
+			t.Errorf("Error on category with name %s: expected 0 podcast, but got %d", *c.Name, len(c.PodcastLinks))
 		}
 	}
 }

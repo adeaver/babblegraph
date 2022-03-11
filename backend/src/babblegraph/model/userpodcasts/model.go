@@ -16,8 +16,12 @@ func (i ID) Str() string {
 	return string(i)
 }
 
+func (i ID) Ptr() *ID {
+	return &i
+}
+
 func (i ID) GetListenURL() string {
-	return env.GetAbsoluteURLForEnvironment(fmt.Sprintf("podcast/%s", id))
+	return env.GetAbsoluteURLForEnvironment(fmt.Sprintf("podcast/%s", i))
 }
 
 type dbUserPodcast struct {

@@ -2,9 +2,13 @@ package newsletter
 
 import (
 	"babblegraph/model/content"
+	"babblegraph/model/email"
 	"babblegraph/model/podcasts"
 	"babblegraph/model/usernewsletterpreferences"
+	"babblegraph/model/userpodcasts"
+	"babblegraph/util/ptr"
 	"babblegraph/wordsmith"
+	"time"
 )
 
 type testPodcastAccessor struct {
@@ -34,4 +38,27 @@ func (t *testPodcastAccessor) LookupPodcastEpisodesForTopics(topics []content.To
 		}
 	}
 	return episodesByTopic, nil
+}
+
+func (t *testPodcastAccessor) GetPodcastMetadataForSourceID(sourceID content.SourceID) (*podcasts.PodcastMetadata, error) {
+	return &podcasts.PodcastMetadata{
+		ImageURL:  ptr.String("https://static.babblegraph.com"),
+		ContentID: sourceID,
+	}, nil
+}
+
+func (t *testPodcastAccessor) InsertUserPodcastAndGetID(emailRecordID email.ID, episode podcasts.Episode) (*userpodcasts.ID, error) {
+	return userpodcasts.ID("test-podcast").Ptr(), nil
+}
+
+func getDefaultPodcast(topic content.TopicID) podcasts.Episode {
+	return podcasts.Episode{
+		ID:                  podcasts.EpisodeID("test-podcast"),
+		Title:               "Test Podcast",
+		DurationNanoseconds: time.Hour,
+		IsExplicit:          true,
+		LanguageCode:        wordsmith.LanguageCodeSpanish,
+		TopicIDs:            []content.TopicID{topic},
+		SourceID:            content.SourceID("test-source"),
+	}
 }

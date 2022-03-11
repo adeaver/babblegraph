@@ -83,6 +83,16 @@ func CreateNewsletter(c ctx.LogContext, input CreateNewsletterInput) (*Newslette
 			return nil, err
 		}
 	}
+	var preferencesLink *string
+	if input.UserAccessor.getDoesUserHaveAccount() {
+		preferencesLink = ptr.String(routes.MakeLoginLinkWithNewsletterPreferencesRedirect())
+	} else {
+		prefLink, err := routes.MakeNewsletterPreferencesLink(input.UserAccessor.getUserID())
+		if err != nil {
+			return nil, err
+		}
+		preferencesLink = prefLink
+	}
 	spotlightRecord, err := getSpotlightLemmaForNewsletter(c, getSpotlightLemmaForNewsletterInput{
 		emailRecordID:     emailRecordID,
 		categories:        categories,
@@ -103,6 +113,7 @@ func CreateNewsletter(c ctx.LogContext, input CreateNewsletterInput) (*Newslette
 			Categories:                  categories,
 			SetTopicsLink:               setTopicsLink,
 			ReinforcementLink:           *reinforcementLink,
+			PreferencesLink:             preferencesLink,
 		},
 	}, nil
 }
