@@ -24,10 +24,14 @@ func (t *testPodcastAccessor) LookupPodcastEpisodesForTopics(topics []content.To
 	episodesByTopic := make(map[content.TopicID][]podcasts.Episode)
 	for _, ep := range t.podcastEpisodes {
 		switch {
-		case !podcastPreferences.IncludeExplicitPodcasts && ep.IsExplicit,
-			podcastPreferences.MinimumDurationNanoseconds != nil && ep.DurationNanoseconds < *podcastPreferences.MinimumDurationNanoseconds,
-			podcastPreferences.MaximumDurationNanoseconds != nil && ep.DurationNanoseconds > *podcastPreferences.MaximumDurationNanoseconds,
-			!isSourceValid(ep.SourceID.Ptr(), t.validSourceIDs):
+		case !podcastPreferences.IncludeExplicitPodcasts && ep.IsExplicit:
+			c.Debugf("Filtering out podcast because of explicit tag")
+		case podcastPreferences.MinimumDurationNanoseconds != nil && ep.DurationNanoseconds < *podcastPreferences.MinimumDurationNanoseconds:
+			c.Debugf("Filtering out podcast because of it's too short")
+		case podcastPreferences.MaximumDurationNanoseconds != nil && ep.DurationNanoseconds > *podcastPreferences.MaximumDurationNanoseconds:
+			c.Debugf("Filtering out podcast because of it's too long")
+		case !isSourceValid(ep.SourceID.Ptr(), t.validSourceIDs):
+			c.Debugf("Filtering out podcast because the source is not valid")
 		// no-op
 		default:
 			for _, t := range topics {
