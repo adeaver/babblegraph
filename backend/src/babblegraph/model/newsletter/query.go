@@ -27,7 +27,7 @@ type CreateNewsletterInput struct {
 	EmailAccessor     emailAccessor
 	UserAccessor      userPreferencesAccessor
 	DocsAccessor      documentAccessor
-	PodcastAcccessor  podcastAccessor
+	PodcastAccessor   podcastAccessor
 	ContentAccessor   contentAccessor
 }
 
@@ -57,6 +57,7 @@ func CreateNewsletter(c ctx.LogContext, input CreateNewsletterInput) (*Newslette
 		userAccessor:                  input.UserAccessor,
 		docsAccessor:                  input.DocsAccessor,
 		contentAccessor:               input.ContentAccessor,
+		podcastAccessor:               input.PodcastAccessor,
 		numberOfDocumentsInNewsletter: numberOfDocumentsInNewsletter,
 	})
 	if err != nil {

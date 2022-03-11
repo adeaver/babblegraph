@@ -31,7 +31,7 @@ func TestUserHasAccount(t *testing.T) {
 		EmailAccessor:     emailAccessor,
 		UserAccessor:      userAccessor,
 		DocsAccessor:      docsAccessor,
-		PodcastAccessor:   testPodcastAccessor{},
+		PodcastAccessor:   &testPodcastAccessor{},
 		ContentAccessor:   &testContentAccessor{},
 	})
 	if err != nil {
@@ -98,7 +98,7 @@ func TestNoSetTopicsLink(t *testing.T) {
 		EmailAccessor:     emailAccessor,
 		UserAccessor:      userAccessor,
 		DocsAccessor:      docsAccessor,
-		PodcastAccessor:   testPodcastAccessor{},
+		PodcastAccessor:   &testPodcastAccessor{},
 		ContentAccessor:   &testContentAccessor{},
 	})
 	if err != nil {
@@ -138,7 +138,7 @@ func TestUserScheduleDay(t *testing.T) {
 		EmailAccessor:     emailAccessor,
 		UserAccessor:      userAccessor,
 		DocsAccessor:      docsAccessor,
-		PodcastAccessor:   testPodcastAccessor{},
+		PodcastAccessor:   &testPodcastAccessor{},
 		ContentAccessor:   &testContentAccessor{},
 	})
 	if err != nil {
@@ -173,7 +173,7 @@ func TestUserScheduleDayNoSubscription(t *testing.T) {
 		EmailAccessor:     emailAccessor,
 		UserAccessor:      userAccessor,
 		DocsAccessor:      docsAccessor,
-		PodcastAccessor:   testPodcastAccessor{},
+		PodcastAccessor:   &testPodcastAccessor{},
 		ContentAccessor:   &testContentAccessor{},
 	})
 	if err != nil {
