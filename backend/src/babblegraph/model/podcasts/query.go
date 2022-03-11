@@ -84,7 +84,11 @@ type ScoredEpisode struct {
 func QueryEpisodes(languageCode wordsmith.LanguageCode, input QueryEpisodesInput) ([]ScoredEpisode, error) {
 	podcastIndex := getPodcastIndexForLanguageCode(languageCode)
 	queryBuilder := esquery.NewBoolQueryBuilder()
-	queryBuilder.AddMust(esquery.MatchPhrase("source_id", input.ValidSourceIDs))
+	var validSourceIDs []string
+	for _, s := range input.ValidSourceIDs {
+		validSourceIDs = append(validSourceIDs, s.Str())
+	}
+	queryBuilder.AddMust(esquery.Terms("source_id.keyword", validSourceIDs))
 	queryBuilder.AddMust(esquery.MatchPhrase("topic_ids", input.TopicID))
 	versionRangeQueryBuilder := esquery.NewRangeQueryBuilderForFieldName("version")
 	versionRangeQueryBuilder.GreaterThanOrEqualToInt64(Version1.Int64())

@@ -62,7 +62,7 @@ type Episode struct {
 	// podcasts
 	GUID string `json:"guid"`
 
-	Version Version `json:"verison"`
+	Version Version `json:"version"`
 
 	LanguageCode wordsmith.LanguageCode `json:"language_code"`
 	TopicIDs     []content.TopicID      `json:"topic_ids"`
