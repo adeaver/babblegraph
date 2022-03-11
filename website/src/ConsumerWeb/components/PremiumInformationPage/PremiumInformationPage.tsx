@@ -11,6 +11,7 @@ import ListItemText from '@material-ui/core/ListItemText';
 import DateRangeIcon from '@material-ui/icons/DateRange';
 import FindInPageIcon from '@material-ui/icons/FindInPage';
 import BallotIcon from '@material-ui/icons/Ballot';
+import GraphicEqIcon from '@material-ui/icons/GraphicEq';
 
 import Color from 'common/styles/colors';
 import DisplayCard from 'common/components/DisplayCard/DisplayCard';
@@ -109,6 +110,10 @@ const PremiumInformationPage = withUserProfileInformation<PremiumInformationPage
                         </Heading3>
                         <Divider />
                         <List>
+                            <PremiumFeatureListItem
+                                title={translations[TextBlock.PodcastsTitle]}
+                                description={translations[TextBlock.PodcastsDescription]}
+                                icon={<GraphicEqIcon className={classes.featureIcon} />} />
                             <PremiumFeatureListItem
                                 title={translations[TextBlock.SchedulingTitle]}
                                 description={translations[TextBlock.SchedulingDescription]}

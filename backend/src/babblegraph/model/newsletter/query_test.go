@@ -193,6 +193,7 @@ func TestWholeNewsletterHasPodcasts(t *testing.T) {
 	emailAccessor := getTestEmailAccessor()
 	emailRecordID := email.NewEmailRecordID()
 	userAccessor := &testUserAccessor{
+		languageCode: wordsmith.LanguageCodeSpanish,
 		readingLevel: &userReadingLevel{
 			LowerBound: 30,
 			UpperBound: 80,
@@ -206,9 +207,11 @@ func TestWholeNewsletterHasPodcasts(t *testing.T) {
 		allowableSourceIDs: []content.SourceID{
 			content.SourceID("test-source"),
 		},
-		doesUserHaveAccount:    true,
-		userSubscriptionLevel:  useraccounts.SubscriptionLevelPremium.Ptr(),
-		userNewsletterSchedule: &usernewsletterschedule.TestNewsletterSchedule{},
+		doesUserHaveAccount:   true,
+		userSubscriptionLevel: useraccounts.SubscriptionLevelPremium.Ptr(),
+		userNewsletterSchedule: &usernewsletterschedule.TestNewsletterSchedule{
+			SendRequested: true,
+		},
 	}
 	documentTopics := []content.TopicID{
 		content.TopicID("test-art"),

@@ -3,6 +3,9 @@ import { DisplayLanguage } from 'common/model/language/language';
 export enum TextBlock {
     Subheading = 'subheading',
 
+    PodcastsTitle = 'podcasts',
+    PodcastsDescription = 'podcasts-description',
+
     SchedulingTitle = 'scheduling',
     SchedulingDescription = 'scheduling-description',
 
@@ -19,6 +22,8 @@ export enum TextBlock {
 const translations = {
     [DisplayLanguage.English]: {
         [TextBlock.Subheading]: "Get access to new features that improve your learning and give you more control over how Babblegraph fits into your journey!",
+        [TextBlock.PodcastsTitle]: "Podcasts",
+        [TextBlock.PodcastsDescription]: "Receive podcasts in your newsletter in addition to news articles",
         [TextBlock.SchedulingTitle]: "Newsletter Scheduling",
         [TextBlock.SchedulingDescription]: "Choose which days you receive newsletters from Babblegraph and which days you don’t.",
         [TextBlock.CustomizationTitle]: "Newsletter Customization",
@@ -30,6 +35,8 @@ const translations = {
     },
     [DisplayLanguage.Spanish]: {
         [TextBlock.Subheading]: "¡Obtenga acceso a nuevas herramientas para mejorar tu aprendizaje y tener más control de la manera en que Babblegraph es parte de tu aprendizaje!",
+        [TextBlock.PodcastsTitle]: "Podcasts",
+        [TextBlock.PodcastsDescription]: "Recibe podcasts en los boletines además de artículos de noticias.",
         [TextBlock.SchedulingTitle]: "Más control sobre el horario de boletines",
         [TextBlock.SchedulingDescription]: "Escoge cuales días en que recibes boletines de Babblegraph y cuales días en que no los recibes.",
         [TextBlock.CustomizationTitle]: "Más control sobre la personalización de boletines",
