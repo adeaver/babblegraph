@@ -69,11 +69,11 @@ func processPodcastRSS1SourceSeed(c ctx.LogContext, sourceSeed content.SourceSee
 }
 
 func convertIngestEpisodeToModelEpisode(c ctx.LogContext, in ingestrss.PodcastEpisode) (*podcasts.IndexPodcastEpisodeInput, error) {
-	publicationDate, err := time.Parse("Mon, 2 January 2006 15:04:05 MST", in.PublicationDate)
+	publicationDate, err := time.Parse("Mon, 2 Jan 2006 15:04:05 MST", in.PublicationDate)
 	if err != nil {
 		c.Infof("Got error parsing time, trying different format")
 		var fErr error
-		publicationDate, fErr = time.Parse("Mon, 2 January 2006 15:04:05 -0700", in.PublicationDate)
+		publicationDate, fErr = time.Parse("Mon, 2 Jan 2006 15:04:05 -0700", in.PublicationDate)
 		if fErr != nil {
 			c.Errorf("Could not parse time. Original error %s", err.Error())
 			return nil, fErr
