@@ -60,6 +60,9 @@ func AssignIDAndIndexDocument(c ctx.LogContext, input IndexDocumentInput) (*Docu
 	if len(input.TopicIDs) != len(input.Topics) {
 		c.Warnf("Document %s has %d topic IDs, but %d topics", documentID, len(input.TopicIDs), len(input.Topics))
 	}
+	if input.SourceID == nil {
+		c.Warnf("Got document %s with null source ID", documentID)
+	}
 	if err := elastic.IndexDocument(c, documentIndex{}, Document{
 		ID:                                 documentID,
 		Version:                            input.Version,
