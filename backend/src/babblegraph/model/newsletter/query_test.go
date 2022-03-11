@@ -206,7 +206,8 @@ func TestWholeNewsletterHasPodcasts(t *testing.T) {
 		allowableSourceIDs: []content.SourceID{
 			content.SourceID("test-source"),
 		},
-		doesUserHaveAccount: true,
+		doesUserHaveAccount:   true,
+		userSubscriptionLevel: useraccounts.SubscriptionLevelPremium.Ptr(),
 	}
 	documentTopics := []content.TopicID{
 		content.TopicID("test-art"),
