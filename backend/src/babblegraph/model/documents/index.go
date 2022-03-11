@@ -68,6 +68,7 @@ func AssignIDAndIndexDocument(c ctx.LogContext, input IndexDocumentInput) (*Docu
 		LanguageCode:                       input.LanguageCode,
 		DocumentType:                       input.Type,
 		Domain:                             input.URL.Domain,
+		SourceID:                           input.SourceID,
 		Topics:                             input.Topics,
 		TopicIDs:                           input.TopicIDs,
 		TopicMappingIDs:                    input.TopicMappingIDs,
