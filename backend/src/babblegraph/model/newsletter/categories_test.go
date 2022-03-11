@@ -7,6 +7,7 @@ import (
 	"babblegraph/model/email"
 	"babblegraph/model/podcasts"
 	"babblegraph/model/useraccounts"
+	"babblegraph/model/usernewsletterpreferences"
 	"babblegraph/model/usernewsletterschedule"
 	"babblegraph/util/ctx"
 	"babblegraph/util/ptr"
@@ -320,6 +321,12 @@ func TestNewsletterHasPodcasts(t *testing.T) {
 			LowerBound: 30,
 			UpperBound: 80,
 		},
+		userNewsletterPreferences: &usernewsletterpreferences.UserNewsletterPreferences{
+			PodcastPreferences: usernewsletterpreferences.PodcastPreferences{
+				IncludeExplicit:    true,
+				ArePodcastsEnabled: true,
+			},
+		},
 		userTopics: []content.TopicID{
 			content.TopicID("test-art"),
 			content.TopicID("test-astronomy"),
@@ -329,6 +336,7 @@ func TestNewsletterHasPodcasts(t *testing.T) {
 		allowableSourceIDs: []content.SourceID{
 			content.SourceID("test-source"),
 		},
+
 		userNewsletterSchedule: &usernewsletterschedule.TestNewsletterSchedule{},
 		doesUserHaveAccount:    true,
 		userSubscriptionLevel:  useraccounts.SubscriptionLevelPremium.Ptr(),
