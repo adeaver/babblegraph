@@ -47,7 +47,6 @@ func CreateNewsletter(c ctx.LogContext, input CreateNewsletterInput) (*Newslette
 			return nil, nil
 		}
 		numberOfDocumentsInNewsletter = ptr.Int(input.UserAccessor.getUserNewsletterSchedule().GetNumberOfDocuments())
-
 	default:
 		return nil, fmt.Errorf("Unrecognized subscription level: %s", *userSubscriptionLevel)
 	}

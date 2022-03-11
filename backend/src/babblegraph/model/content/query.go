@@ -11,7 +11,7 @@ import (
 
 const (
 	getSourcesByIngestStrategyQuery = "SELECT * FROM content_source WHERE ingest_strategy = $1 AND is_active = TRUE"
-	getSourcesBySourceTypeQuery     = "SELECT * FROM content_source WHERE source_type = $1 AND is_active = TRUE"
+	getSourcesBySourceTypeQuery     = "SELECT * FROM content_source WHERE type = $1 AND is_active = TRUE"
 
 	getSourceForURLQuery                          = "SELECT * FROM content_source WHERE url_identifier = $1"
 	getSourceSeedForURLQuery                      = "SELECT * FROM content_source_seed WHERE url_identifier = $1 AND url_params IS NOT DISTINCT FROM $2"

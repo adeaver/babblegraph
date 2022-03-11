@@ -25,5 +25,5 @@ services:
       - SENTRY_DSN=$BABBLEGRAPH_WORKER_SENTRY_DSN
       - STRIPE_KEY=$BABBLEGRAPH_STRIPE_KEY
       - AES_KEY=ryDMLNhwEqPBHMgu6YOsCZ0ihx4WgvqE
-      - ENV=local-no-emails
-    command: go run /usr/local/go/src/babblegraph/services/taskrunner/main.go --task=create-elastic-indexes
+      - ENV=local
+    command: go run /usr/local/go/src/babblegraph/services/taskrunner/main.go --task=sample-email --user-email=deaver.andrew+test-stripe@gmail.com
