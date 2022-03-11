@@ -74,6 +74,7 @@ func getDocumentCategories(c ctx.LogContext, input getDocumentCategoriesInput) (
 		emailRecordID:                 input.emailRecordID,
 		userAccessor:                  input.userAccessor,
 		contentAccessor:               input.contentAccessor,
+		podcastAccessor:               input.podcastAccessor,
 		languageCode:                  input.languageCode,
 		numberOfDocumentsInNewsletter: deref.Int(input.numberOfDocumentsInNewsletter, DefaultNumberOfArticlesPerEmail),
 		documentsByTopic:              documentsByTopic,
@@ -86,6 +87,7 @@ type joinDocumentsIntoCategoriesInput struct {
 	emailRecordID                 email.ID
 	userAccessor                  userPreferencesAccessor
 	contentAccessor               contentAccessor
+	podcastAccessor               podcastAccessor
 	languageCode                  wordsmith.LanguageCode
 	numberOfDocumentsInNewsletter int
 	documentsByTopic              map[content.TopicID][]documents.DocumentWithScore
@@ -112,6 +114,7 @@ func joinDocumentsIntoCategories(c ctx.LogContext, input joinDocumentsIntoCatego
 	// because of an issue with urlparser means that any document < Version5
 	// may appear multiple times in the same email
 	documentsInEmailByURLIdentifier := make(map[string]bool)
+	podcastsInEmailByID := make(map[podcasts.EpisodeID]bool)
 	var categories []Category
 	for idx, documentGroup := range docsWithTopic {
 		documentsPerTopic := (input.numberOfDocumentsInNewsletter - len(documentsInEmailByURLIdentifier)) / (len(docsWithTopic) - idx)
@@ -138,7 +141,29 @@ func joinDocumentsIntoCategories(c ctx.LogContext, input joinDocumentsIntoCatego
 				links = append(links, *link)
 			}
 		}
+		var podcastLinks []PodcastLink
 		if len(links) > 0 {
+			switch {
+			case input.podcastEpisodesByTopic == nil,
+				len(input.podcastEpisodesByTopic[documentGroup.topic]) == 0:
+				// no-op
+			default:
+				for _, episode := range input.podcastEpisodesByTopic[documentGroup.topic] {
+					if _, ok := podcastsInEmailByID[episode.ID]; ok {
+						continue
+					}
+					podcastLink, err := makeLinkFromPodcast(c, input.podcastAccessor, input.contentAccessor, episode, input.emailRecordID)
+					switch {
+					case err != nil:
+						return nil, err
+					case podcastLink == nil:
+						// no-op
+					default:
+						podcastLinks = append(podcastLinks, *podcastLink)
+						break
+					}
+				}
+			}
 			var categoryName *string
 			displayName, err := input.contentAccessor.GetDisplayNameByTopicID(documentGroup.topic)
 			if err != nil {
@@ -147,8 +172,9 @@ func joinDocumentsIntoCategories(c ctx.LogContext, input joinDocumentsIntoCatego
 				categoryName = ptr.String(text.ToTitleCaseForLanguage(*displayName, input.languageCode))
 			}
 			categories = append(categories, Category{
-				Name:  categoryName,
-				Links: links,
+				Name:         categoryName,
+				Links:        links,
+				PodcastLinks: podcastLinks,
 			})
 		}
 	}

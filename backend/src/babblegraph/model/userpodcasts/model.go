@@ -5,6 +5,8 @@ import (
 	"babblegraph/model/email"
 	"babblegraph/model/podcasts"
 	"babblegraph/model/users"
+	"babblegraph/util/env"
+	"fmt"
 	"time"
 )
 
@@ -12,6 +14,10 @@ type ID string
 
 func (i ID) Str() string {
 	return string(i)
+}
+
+func (i ID) GetListenURL() string {
+	return env.GetAbsoluteURLForEnvironment(fmt.Sprintf("podcast/%s", id))
 }
 
 type dbUserPodcast struct {

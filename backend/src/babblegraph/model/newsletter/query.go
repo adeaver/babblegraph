@@ -3,8 +3,10 @@ package newsletter
 import (
 	"babblegraph/model/documents"
 	"babblegraph/model/email"
+	"babblegraph/model/podcasts"
 	"babblegraph/model/routes"
 	"babblegraph/model/useraccounts"
+	"babblegraph/model/virtualfile"
 	"babblegraph/util/ctx"
 	"babblegraph/util/deref"
 	"babblegraph/util/ptr"
@@ -173,6 +175,39 @@ func makeLinkFromDocument(c ctx.LogContext, input makeLinkFromDocumentInput) (*L
 			Name:      string(source.URL),
 			FlagAsset: routes.GetFlagAssetForCountryCode(source.Country),
 		},
+	}, nil
+}
+
+func makeLinkFromPodcast(c ctx.LogContext, podcastAccessor podcastAccessor, contentAccessor contentAccessor, episode podcasts.Episode, emailRecordID email.ID) (*PodcastLink, error) {
+	userPodcastID, err := podcastAccessor.InsertUserPodcastAndGetID(emailRecordID, episode)
+	if err != nil {
+		c.Errorf("Error inserting user podcast: %s", err.Error())
+		return nil, err
+	}
+	source, err := contentAccessor.GetSourceByID(episode.SourceID)
+	if err != nil {
+		c.Errorf("Error getting source: %s", err.Error())
+		return nil, nil
+	}
+	podcastMetadata, err := podcastAccessor.GetPodcastMetadataForSourceID(episode.SourceID)
+	if err != nil {
+		c.Errorf("Error getting podcast metadata for podcast %s: %s", episode.SourceID, err.Error())
+		return nil, nil
+	}
+	var imageURL *string
+	if podcastMetadata.ImageURL != nil {
+		imageURL, err = virtualfile.EncodeAsVirtualFileWithType(source.ID.Str(), virtualfile.TypePodcastImage)
+		if err != nil {
+			return nil, nil
+		}
+	}
+	return &PodcastLink{
+		PodcastName:        source.Title,
+		WebsiteURL:         source.URL,
+		PodcastImageURL:    imageURL,
+		EpisodeTitle:       episode.Title,
+		EpisodeDescription: episode.Description,
+		ListenURL:          userPodcastID.GetListenURL(),
 	}, nil
 }
 
