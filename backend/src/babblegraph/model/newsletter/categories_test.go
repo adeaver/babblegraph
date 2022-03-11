@@ -323,8 +323,8 @@ func TestNewsletterHasPodcasts(t *testing.T) {
 		},
 		userNewsletterPreferences: &usernewsletterpreferences.UserNewsletterPreferences{
 			PodcastPreferences: usernewsletterpreferences.PodcastPreferences{
-				IncludeExplicit:    true,
-				ArePodcastsEnabled: true,
+				IncludeExplicitPodcasts: true,
+				ArePodcastsEnabled:      true,
 			},
 		},
 		userTopics: []content.TopicID{
