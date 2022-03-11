@@ -6,6 +6,7 @@ import (
 	"babblegraph/model/podcasts"
 	"babblegraph/model/usernewsletterpreferences"
 	"babblegraph/model/userpodcasts"
+	"babblegraph/util/ctx"
 	"babblegraph/util/ptr"
 	"babblegraph/wordsmith"
 	"time"
@@ -20,6 +21,8 @@ type testPodcastAccessor struct {
 }
 
 func (t *testPodcastAccessor) LookupPodcastEpisodesForTopics(topics []content.TopicID) (map[content.TopicID][]podcasts.Episode, error) {
+	// This is a hack
+	c := ctx.GetDefaultLogContext()
 	podcastPreferences := t.userNewsletterPreferences.PodcastPreferences
 	episodesByTopic := make(map[content.TopicID][]podcasts.Episode)
 	for _, ep := range t.podcastEpisodes {
