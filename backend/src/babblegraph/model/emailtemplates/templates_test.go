@@ -1,6 +1,7 @@
 package emailtemplates
 
 import (
+	"babblegraph/model/documents"
 	"babblegraph/model/email"
 	"babblegraph/model/newsletter"
 	"babblegraph/model/users"
@@ -17,6 +18,64 @@ func TestCreateNewsletterTemplate(t *testing.T) {
 	testNewsletter := newsletter.NewsletterBody{
 		SetTopicsLink:     ptr.String("babblegraph.com/topics"),
 		ReinforcementLink: "babblegraph.com/reinforce",
+	}
+	html, err := MakeNewsletterHTML(MakeNewsletterHTMLInput{
+		EmailRecordID: email.NewEmailRecordID(),
+		UserAccessor:  userAccessor,
+		Body:          testNewsletter,
+	})
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+	if len(*html) == 0 {
+		t.Fatalf("Got empty body")
+	}
+	if !strings.Contains(*html, "babblegraph.com/topics") {
+		t.Errorf("Expected topics link")
+	}
+	if !strings.Contains(*html, "babblegraph.com/reinforce") {
+		t.Errorf("Expected reinforcement link")
+	}
+}
+
+func TestCreateNewsletterWithLinksTemplate(t *testing.T) {
+	userAccessor := &testUserAccessor{
+		userHasAccount: false,
+		userID:         users.UserID("12345"),
+	}
+	testNewsletter := newsletter.NewsletterBody{
+		SetTopicsLink:     ptr.String("babblegraph.com/topics"),
+		ReinforcementLink: "babblegraph.com/reinforce",
+		PreferencesLink:   ptr.String("babblegraph.com/preferences"),
+		Categories: []newsletter.Category{
+			{
+				Name: ptr.String("Test Category"),
+				Links: []newsletter.Link{
+					{
+						DocumentID:       documents.DocumentID("test"),
+						ImageURL:         ptr.String("babblegraph.com"),
+						Title:            ptr.String("Test Link"),
+						Description:      ptr.String("Test Description"),
+						URL:              "babblegraph.com",
+						PaywallReportURL: "babblegraph.com",
+						Domain: &newsletter.Domain{
+							FlagAsset: "babblegraph.com",
+							Name:      "Babblegraph",
+						},
+					},
+				},
+				PodcastLinks: []newsletter.PodcastLink{
+					{
+						PodcastName:        "Test",
+						WebsiteURL:         "babblegraph.com",
+						PodcastImageURL:    ptr.String("babblegraph.com"),
+						EpisodeTitle:       "Test Episode",
+						EpisodeDescription: "This episode is a test",
+						ListenURL:          "babblegraph.com",
+					},
+				},
+			},
+		},
 	}
 	html, err := MakeNewsletterHTML(MakeNewsletterHTMLInput{
 		EmailRecordID: email.NewEmailRecordID(),
