@@ -8,7 +8,9 @@ import (
 	"babblegraph/model/userpodcasts"
 	"babblegraph/util/ctx"
 	"babblegraph/util/ptr"
+	"babblegraph/util/random"
 	"babblegraph/wordsmith"
+	"fmt"
 	"time"
 )
 
@@ -60,7 +62,7 @@ func (t *testPodcastAccessor) InsertUserPodcastAndGetID(emailRecordID email.ID, 
 
 func getDefaultPodcast(topic content.TopicID) podcasts.Episode {
 	return podcasts.Episode{
-		ID:                  podcasts.EpisodeID("test-podcast"),
+		ID:                  podcasts.EpisodeID(fmt.Sprintf("test-podcast-%s", random.MustMakeRandomString(5))),
 		Title:               "Test Podcast",
 		DurationNanoseconds: time.Hour,
 		IsExplicit:          true,
