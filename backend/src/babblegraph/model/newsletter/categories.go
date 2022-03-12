@@ -158,11 +158,16 @@ func joinDocumentsIntoCategories(c ctx.LogContext, input joinDocumentsIntoCatego
 						return nil, err
 					case podcastLink == nil:
 						// no-op
-					default:
-						podcastLinks = append(podcastLinks, *podcastLink)
+					}
+					podcastsInEmailByID[episode.ID] = true
+					podcastLinks = append(podcastLinks, *podcastLink)
+					if len(podcastLinks) >= maxPodcastsPerTopic {
 						break
 					}
 				}
+			}
+			if len(links) > podcastArticleRemovalBreakpoint {
+				links = append([]Link{}, links[:len(links)-len(podcastLinks)]...)
 			}
 			var categoryName *string
 			displayName, err := input.contentAccessor.GetDisplayNameByTopicID(documentGroup.topic)
@@ -202,6 +207,35 @@ func joinDocumentsIntoCategories(c ctx.LogContext, input joinDocumentsIntoCatego
 				documentsInEmailByURLIdentifier[u.URLIdentifier] = true
 				links = append(links, *link)
 			}
+		}
+		var podcastLinks []PodcastLink
+		for _, podcasts := range input.podcastEpisodesByTopic {
+			switch {
+			case input.podcastEpisodesByTopic == nil,
+				len(podcasts) == 0:
+				// no-op
+			default:
+				for _, episode := range podcasts {
+					if _, ok := podcastsInEmailByID[episode.ID]; ok {
+						continue
+					}
+					podcastLink, err := makeLinkFromPodcast(c, input.podcastAccessor, input.contentAccessor, episode, input.emailRecordID)
+					switch {
+					case err != nil:
+						return nil, err
+					case podcastLink == nil:
+						// no-op
+					}
+					podcastsInEmailByID[episode.ID] = true
+					podcastLinks = append(podcastLinks, *podcastLink)
+					if len(podcastLinks) >= maxPodcastsPerTopic {
+						break
+					}
+				}
+			}
+		}
+		if len(links) > podcastArticleRemovalBreakpoint {
+			links = append([]Link{}, links[:len(links)-len(podcastLinks)]...)
 		}
 		if len(links) > 0 {
 			var categoryName *string

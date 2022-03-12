@@ -243,8 +243,16 @@
                                                     {{end}}
                                                 <a href="{{$podcast.ListenURL}}" target="_blank" style="display: inline-block; color: #A663CC; cursor: pointer; text-decoration: none; font-size: 14px; font-weight: bold; margin: 0; padding: 12px 25px; text-transform: capitalize;">{{$podcast.EpisodeTitle}}</a>
                                                 {{if $podcast.EpisodeDescription}}<p style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; Margin-bottom: 15px;">{{$podcast.EpisodeDescription}}</p>{{end}}
-                                                <a href="{{$podcast.WebsiteURL}}" target="_blank" style="display: inline-block; color: #A663CC; cursor: pointer; text-decoration: none; font-size: 12px; font-weight: bold; margin: 0; padding: 12px 25px; text-transform: capitalize;">{{$podcast.PodcastName}}</a>
-                                                <a href="{{.PreferencesLink}}" target="_blank" style="display: inline-block; color: #20A4F3; cursor: pointer; text-decoration: none; font-size: 14px; font-weight: normal; margin: 0; padding: 12px 25px; text-transform: capitalize;">Manage your podcast preferences</a>
+                                                <a href="{{$podcast.WebsiteURL}}" target="_blank" style="display: inline-block; color: #A663CC; cursor: pointer; text-decoration: none; font-size: 12px; font-weight: bold; margin: 0; padding: 12px 25px; text-transform: capitalize;">
+                                                    <p>
+                                                        By {{$podcast.PodcastName}}
+                                                    </p>
+                                                </a>
+                                                <a href="{{$.Body.PreferencesLink}}" target="_blank" style="display: inline-block; color: #20A4F3; cursor: pointer; text-decoration: none; font-size: 14px; font-weight: normal; margin: 0; padding: 12px 25px; text-transform: capitalize;">
+                                                    <p>
+                                                        Manage your podcast preferences
+                                                    </p>
+                                                </a>
                                             </tr>
                                           </tbody>
                                         </table>

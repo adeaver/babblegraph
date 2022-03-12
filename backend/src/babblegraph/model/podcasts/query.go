@@ -107,7 +107,11 @@ func QueryEpisodes(languageCode wordsmith.LanguageCode, input QueryEpisodesInput
 		}
 		queryBuilder.AddMust(durationQueryBuilder.BuildRangeQuery())
 	}
-	queryBuilder.AddMustNot(esquery.Match("id", input.SeenPodcastIDs))
+	var seenPodcastIDs []string
+	for _, s := range input.SeenPodcastIDs {
+		seenPodcastIDs = append(seenPodcastIDs, s.Str())
+	}
+	queryBuilder.AddMustNot(esquery.Terms("id.keyword", seenPodcastIDs))
 	var out []ScoredEpisode
 	if err := esquery.ExecuteSearch(podcastIndex, queryBuilder.BuildBoolQuery(), nil, func(source []byte, score decimal.Number) error {
 		var episode Episode

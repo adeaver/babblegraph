@@ -12,6 +12,16 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+const (
+	maxPodcastsPerTopic = 1
+	// I didn't really know what to name this, but this is an arbitrary
+	// value representing the number of articles that must exist in a category
+	// before we replace article links with podcast links.
+	// <= this number, podcast links will be appended
+	// > this number, len(podcastLinks) links will be removed from a category
+	podcastArticleRemovalBreakpoint = 2
+)
+
 type podcastAccessor interface {
 	LookupPodcastEpisodesForTopics(topics []content.TopicID) (map[content.TopicID][]podcasts.Episode, error)
 	GetPodcastMetadataForSourceID(sourceID content.SourceID) (*podcasts.PodcastMetadata, error)
