@@ -1,7 +1,8 @@
 package ingesthtml
 
 import (
-	"babblegraph/model/domains"
+	"babblegraph/model/content"
+	"babblegraph/util/deref"
 	"babblegraph/util/ptr"
 	"fmt"
 	"io"
@@ -21,9 +22,16 @@ type ParsedHTMLPage struct {
 	IsPaywalled bool
 }
 
-func parseHTML(domain, htmlStr, cset string) (*ParsedHTMLPage, error) {
-	var body io.Reader = strings.NewReader(htmlStr)
-	e, err := htmlindex.Get(cset)
+type parseHTMLInput struct {
+	htmlStr      string
+	cset         string
+	source       content.Source
+	sourceFilter *content.SourceFilter
+}
+
+func parseHTML(input parseHTMLInput) (*ParsedHTMLPage, error) {
+	var body io.Reader = strings.NewReader(input.htmlStr)
+	e, err := htmlindex.Get(input.cset)
 	if err != nil {
 		return nil, err
 	}
@@ -36,10 +44,6 @@ func parseHTML(domain, htmlStr, cset string) (*ParsedHTMLPage, error) {
 	if err != nil {
 		return nil, err
 	}
-	domainMetadata, err := domains.GetDomainMetadata(domain)
-	if err != nil {
-		return nil, err
-	}
 	var isParseInTextNodeType, isParseLDJSON, isPaywalled bool
 	var bodyText, links []string
 	var language *string
@@ -48,9 +52,9 @@ func parseHTML(domain, htmlStr, cset string) (*ParsedHTMLPage, error) {
 	f = func(node *html.Node) {
 		switch node.Type {
 		case html.ElementNode:
-			if paywallValidation := domainMetadata.PaywallValidation; paywallValidation != nil {
+			if input.sourceFilter != nil {
 				switch {
-				case paywallValidation.UseLDJSONValidation != nil:
+				case deref.Bool(input.sourceFilter.UseLDJSONValidation, false):
 					if node.Data == "script" {
 						for _, attr := range node.Attr {
 							if attr.Key == "type" && attr.Val == "application/ld+json" {
@@ -58,10 +62,10 @@ func parseHTML(domain, htmlStr, cset string) (*ParsedHTMLPage, error) {
 							}
 						}
 					}
-				case len(paywallValidation.PaywallClasses) != 0:
-					isPaywalled = isPaywalled || processPaywallFromClasses(node, paywallValidation.PaywallClasses)
-				case len(paywallValidation.PaywallIDs) != 0:
-					isPaywalled = isPaywalled || processPaywallFromIDs(node, paywallValidation.PaywallIDs)
+				case len(input.sourceFilter.PaywallClasses) != 0:
+					isPaywalled = isPaywalled || processPaywallFromClasses(node, input.sourceFilter.PaywallClasses)
+				case len(input.sourceFilter.PaywallIDs) != 0:
+					isPaywalled = isPaywalled || processPaywallFromIDs(node, input.sourceFilter.PaywallIDs)
 				default:
 					log.Println("Paywall validation is not null, but no paywall validation type is specified")
 				}
@@ -74,7 +78,7 @@ func parseHTML(domain, htmlStr, cset string) (*ParsedHTMLPage, error) {
 			isParseInTextNodeType = isCurrentNodeTextNode(node.Data)
 			switch node.Data {
 			case "a":
-				links = append(links, getLinksFromAnchor(node, domain)...)
+				links = append(links, getLinksFromAnchor(node, input.source.URL)...)
 			case "meta":
 				if name, value := getKeyValuePairFromMetaTag(node); name != nil && value != nil {
 					metadata[*name] = *value

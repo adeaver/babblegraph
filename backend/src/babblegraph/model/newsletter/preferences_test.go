@@ -1,13 +1,12 @@
 package newsletter
 
 import (
-	"babblegraph/model/contenttopics"
+	"babblegraph/model/content"
 	"babblegraph/model/documents"
 	"babblegraph/model/email"
 	"babblegraph/model/useraccounts"
 	"babblegraph/model/userdocuments"
 	"babblegraph/model/userlemma"
-	"babblegraph/model/userlinks"
 	"babblegraph/model/usernewsletterpreferences"
 	"babblegraph/model/usernewsletterschedule"
 	"babblegraph/model/users"
@@ -23,9 +22,9 @@ type testUserAccessor struct {
 	userNewsletterSchedule    usernewsletterschedule.UserNewsletterSchedule
 	readingLevel              *userReadingLevel
 	sentDocumentIDs           []documents.DocumentID
-	userTopics                []contenttopics.ContentTopic
+	userTopics                []content.TopicID
 	trackingLemmas            []wordsmith.LemmaID
-	userDomainCount           []userlinks.UserDomainCount
+	allowableSourceIDs        []content.SourceID
 	spotlightRecords          []userlemma.UserLemmaReinforcementSpotlightRecord
 
 	insertedDocuments        []documents.Document
@@ -64,7 +63,7 @@ func (t *testUserAccessor) getSentDocumentIDs() []documents.DocumentID {
 	return t.sentDocumentIDs
 }
 
-func (t *testUserAccessor) getUserTopics() []contenttopics.ContentTopic {
+func (t *testUserAccessor) getUserTopics() []content.TopicID {
 	return t.userTopics
 }
 
@@ -72,8 +71,8 @@ func (t *testUserAccessor) getTrackingLemmas() []wordsmith.LemmaID {
 	return t.trackingLemmas
 }
 
-func (t *testUserAccessor) getUserDomainCounts() []userlinks.UserDomainCount {
-	return t.userDomainCount
+func (t *testUserAccessor) getAllowableSources() []content.SourceID {
+	return t.allowableSourceIDs
 }
 
 func (t *testUserAccessor) getSpotlightRecordsOrderedBySentOn() []userlemma.UserLemmaReinforcementSpotlightRecord {

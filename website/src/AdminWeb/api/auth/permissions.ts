@@ -8,6 +8,7 @@ export enum Permission {
 	EditContentTopics = "edit-content-topics",
 	EditContentSources = "edit-content-sources",
 	ManageBilling = 'manage-billing',
+	PodcastSearch = 'podcast-search',
 }
 
 export type ManageUserPermissionsRequest = {

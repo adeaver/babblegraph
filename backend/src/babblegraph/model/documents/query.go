@@ -49,7 +49,7 @@ type executableQuery interface {
 type ExecuteDocumentQueryInput struct {
 	LanguageCode        wordsmith.LanguageCode
 	ExcludedDocumentIDs []DocumentID
-	ValidDomains        []string
+	ValidSourceIDs      []content.SourceID
 	MinimumReadingLevel *int64
 	MaximumReadingLevel *int64
 }
@@ -62,7 +62,11 @@ type DocumentWithScore struct {
 func ExecuteDocumentQuery(c ctx.LogContext, query executableQuery, input ExecuteDocumentQueryInput) ([]DocumentWithScore, error) {
 	queryBuilder := esquery.NewBoolQueryBuilder()
 	queryBuilder.AddMust(esquery.Match("language_code", input.LanguageCode.Str()))
-	queryBuilder.AddMust(esquery.Terms("domain.keyword", input.ValidDomains))
+	var validSourceIDs []string
+	for _, s := range input.ValidSourceIDs {
+		validSourceIDs = append(validSourceIDs, s.Str())
+	}
+	queryBuilder.AddMust(esquery.Terms("source_id.keyword", validSourceIDs))
 	queryBuilder.AddMustNot(esquery.Match("has_paywall", true))
 	if len(input.ExcludedDocumentIDs) != 0 {
 		var excludedDocumentIDsQueryString []string

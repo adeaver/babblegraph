@@ -50,12 +50,6 @@ func RegisterRouteGroups() error {
 				Path:    "handle_request_password_reset_link_1",
 				Handler: requestPasswordResetLink,
 			}, {
-				Path:    "get_user_newsletter_preferences_1",
-				Handler: getUserNewsletterPreferences,
-			}, {
-				Path:    "update_user_newsletter_preferences_1",
-				Handler: updateUserNewsletterPreferences,
-			}, {
 				Path:    "get_user_newsletter_schedule_1",
 				Handler: handleGetUserSchedule,
 			}, {

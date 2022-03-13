@@ -14,6 +14,10 @@ func (t TopicID) Ptr() *TopicID {
 	return &t
 }
 
+func (t TopicID) Str() string {
+	return string(t)
+}
+
 type dbTopic struct {
 	ID             TopicID   `db:"_id"`
 	CreatedAt      time.Time `db:"created_at"`
@@ -72,6 +76,10 @@ func (s SourceID) Ptr() *SourceID {
 	return &s
 }
 
+func (s SourceID) Str() string {
+	return string(s)
+}
+
 type dbSource struct {
 	ID                    SourceID               `db:"_id"`
 	CreatedAt             time.Time              `db:"created_at"`
@@ -120,6 +128,7 @@ type SourceType string
 
 const (
 	SourceTypeNewsWebsite SourceType = "news-website"
+	SourceTypePodcast     SourceType = "podcast"
 )
 
 func (s SourceType) Str() string {
@@ -143,6 +152,7 @@ type IngestStrategy string
 
 const (
 	IngestStrategyWebsiteHTML1 IngestStrategy = "website-html-1"
+	IngestStrategyPodcastRSS1  IngestStrategy = "podcast-rss-1"
 )
 
 func (i IngestStrategy) Str() string {

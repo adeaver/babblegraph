@@ -229,6 +229,36 @@
                                       </td>
                                     </tr>
                                     {{end}}
+                                    {{range $podcast := $category.PodcastLinks}}
+                                    <tr>
+                                      <td align="center" style="font-family: sans-serif; font-size: 14px; vertical-align: top; padding-bottom: 15px;">
+                                        <table border="0" cellpadding="0" cellspacing="0" style="border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt; width: auto;">
+                                          <tbody>
+                                            <tr>
+                                              <td style="font-family: sans-serif; font-size: 14px; vertical-align: top; text-align: center;">
+                                                <p style="font-family: sans-serif; font-size: 14px; font-weight: bold; margin: 0; margin-bottom: 15px; color: #A663CC; text-transform: capitalize;">
+                                                    Podcast
+                                                </p>
+                                                {{if $podcast.PodcastImageURL}}
+                                                    <a href="{{$podcast.WebsiteURL}}" target="_blank" style="display: inline-block; cursor: pointer; text-decoration: none; margin: 0;">
+                                                        <img src="{{$podcast.PodcastImageURL}}" style="width: 100%; height: auto; border: 0;" alt="" border="0" width="100%" height="auto" />
+                                                    </a>
+                                                    {{end}}
+                                                <a href="{{$podcast.ListenURL}}" target="_blank" style="display: inline-block; color: #A663CC; cursor: pointer; text-decoration: none; font-size: 14px; font-weight: bold; margin: 0; padding: 12px 25px; text-transform: capitalize;">{{$podcast.EpisodeTitle}}</a>
+                                                {{if $podcast.EpisodeDescription}}<p style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; Margin-bottom: 15px;">{{$podcast.EpisodeDescription}}</p>{{end}}
+                                                <a href="{{$podcast.WebsiteURL}}" target="_blank" style="display: block; color: #A663CC; cursor: pointer; text-decoration: none; font-size: 12px; font-weight: bold; margin: 0; padding: 12px 25px; text-transform: capitalize;">
+                                                        By {{$podcast.PodcastName}}
+                                                </a>
+                                                <a href="{{$.Body.PreferencesLink}}" target="_blank" style="display: block; color: #20A4F3; cursor: pointer; text-decoration: none; font-size: 14px; font-weight: normal; margin: 0; padding: 12px 25px; text-transform: capitalize;">
+                                                        Manage your podcast preferences
+                                                </a>
+                                            </tr>
+                                          </tbody>
+                                        </table>
+                                        <hr style="border: 1px solid #D3D3D3;" />
+                                      </td>
+                                    </tr>
+                                    {{end}}
                                 {{end}}
                           </tbody>
                         </table>

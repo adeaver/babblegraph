@@ -4,7 +4,6 @@ import (
 	"babblegraph/model/content"
 	"babblegraph/model/contenttopics"
 	"babblegraph/model/users"
-	"babblegraph/util/ctx"
 	"babblegraph/util/database"
 
 	"github.com/jmoiron/sqlx"
@@ -15,6 +14,22 @@ const (
 	setAllContentTopicsToInactiveForUserQuery = "UPDATE user_content_topic_mappings SET is_active = FALSE WHERE user_id = $1"
 )
 
+func GetTopicIDsForUser(tx *sqlx.Tx, userID users.UserID) ([]content.TopicID, error) {
+	var matches []dbUserContentTopicMapping
+	if err := tx.Select(&matches, getContentTopicsForUserQuery, userID); err != nil {
+		return nil, err
+	}
+	var out []content.TopicID
+	for _, m := range matches {
+		if m.ContentTopicID == nil {
+			continue
+		}
+		out = append(out, *m.ContentTopicID)
+	}
+	return out, nil
+}
+
+// TODO: Deprecate
 func GetContentTopicsForUser(tx *sqlx.Tx, userID users.UserID) ([]contenttopics.ContentTopic, error) {
 	var matches []dbUserContentTopicMapping
 	if err := tx.Select(&matches, getContentTopicsForUserQuery, userID); err != nil {
@@ -47,39 +62,4 @@ func UpdateContentTopicsForUser(tx *sqlx.Tx, userID users.UserID, contentTopics 
 		}
 	}
 	return queryBuilder.Execute(tx)
-}
-
-// TODO(content-migration): Remove this
-func BackfillUserContentTopicMappings(c ctx.LogContext, tx *sqlx.Tx) error {
-	rows, err := tx.Queryx("SELECT * FROM user_content_topic_mappings WHERE content_topic_id IS NULL")
-	if err != nil {
-		return err
-	}
-	defer rows.Close()
-	var count int64
-	c.Infof("Starting user topic mappings update")
-	for rows.Next() {
-		var match dbUserContentTopicMapping
-		if err := rows.StructScan(&match); err != nil {
-			return err
-		}
-		if err := database.WithTx(func(tx *sqlx.Tx) error {
-			topicID, err := content.GetTopicIDByContentTopic(tx, match.ContentTopic)
-			if err != nil {
-				return err
-			}
-			if _, err := tx.Exec("UPDATE user_content_topic_mappings SET content_topic_id = $1 WHERE _id = $2", *topicID, match.ID); err != nil {
-				return err
-			}
-			count++
-			if count%1000 == 0 {
-				c.Infof("Successfully completed %d mapping updates", count)
-			}
-			return nil
-		}); err != nil {
-			c.Infof("Error on ID %s: %s", match.ID, err.Error())
-		}
-	}
-	c.Infof("Finished user topic mappings update")
-	return nil
 }

@@ -1,7 +1,7 @@
 package newsletter
 
 import (
-	"babblegraph/model/contenttopics"
+	"babblegraph/model/content"
 	"babblegraph/model/documents"
 	"babblegraph/model/email"
 	"babblegraph/util/ctx"
@@ -23,16 +23,19 @@ func isIDExcluded(id documents.DocumentID, excludedIDs []documents.DocumentID) b
 	return false
 }
 
-func isDomainValid(domain string, validDomains []string) bool {
-	for _, d := range validDomains {
-		if d == domain {
+func isSourceValid(sourceID *content.SourceID, validSourceIDs []content.SourceID) bool {
+	if sourceID == nil {
+		return false
+	}
+	for _, s := range validSourceIDs {
+		if s == *sourceID {
 			return true
 		}
 	}
 	return false
 }
 
-func containsTopic(topic contenttopics.ContentTopic, topics []contenttopics.ContentTopic) bool {
+func containsTopic(topic content.TopicID, topics []content.TopicID) bool {
 	for _, t := range topics {
 		if t == topic {
 			return true
@@ -52,12 +55,12 @@ func containsLemma(lemma wordsmith.LemmaID, description string) bool {
 }
 
 type getDefaultDocumentInput struct {
-	Topics                 []contenttopics.ContentTopic
+	Topics                 []content.TopicID
 	Lemmas                 []wordsmith.LemmaID
 	SeedJobIngestTimestamp *int64
 }
 
-func getDefaultDocumentWithLink(c ctx.LogContext, idx int, emailRecordID email.ID, userAccessor userPreferencesAccessor, input getDefaultDocumentInput) (*documents.DocumentWithScore, *Link, error) {
+func getDefaultDocumentWithLink(c ctx.LogContext, idx int, emailRecordID email.ID, contentAccessor contentAccessor, userAccessor userPreferencesAccessor, input getDefaultDocumentInput) (*documents.DocumentWithScore, *Link, error) {
 	var lemmatizedDescription *string
 	if len(input.Lemmas) > 0 {
 		var descriptionParts []string
@@ -80,12 +83,18 @@ func getDefaultDocumentWithLink(c ctx.LogContext, idx int, emailRecordID email.I
 			Description: ptr.String(fmt.Sprintf("This is document #%d", idx)),
 		},
 		Domain:                 "elmundo.es",
-		Topics:                 input.Topics,
+		SourceID:               content.SourceID("test-source").Ptr(),
+		TopicIDs:               input.Topics,
 		HasPaywall:             ptr.Bool(false),
 		LemmatizedDescription:  lemmatizedDescription,
 		SeedJobIngestTimestamp: input.SeedJobIngestTimestamp,
 	}
-	link, err := makeLinkFromDocument(c, emailRecordID, userAccessor, doc)
+	link, err := makeLinkFromDocument(c, makeLinkFromDocumentInput{
+		emailRecordID:   emailRecordID,
+		userAccessor:    userAccessor,
+		contentAccessor: contentAccessor,
+		document:        doc,
+	})
 	if err != nil {
 		return nil, nil, err
 	}

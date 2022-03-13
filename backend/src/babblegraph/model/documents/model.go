@@ -84,6 +84,7 @@ type Document struct {
 	HasPaywall                         *bool                    `json:"has_paywall"`
 	LemmatizedDescriptionIndexMappings []int                    `json:"lemmatized_description_index_mappings,omitempty"`
 
+	// These will all be deprecated
 	Domain                   string                       `json:"domain"`
 	Topics                   []contenttopics.ContentTopic `json:"content_topics"`
 	LemmatizedBodyDEPRECATED *string                      `json:"lemmatized_body,omitempty"`

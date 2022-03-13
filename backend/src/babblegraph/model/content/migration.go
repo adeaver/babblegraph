@@ -3,6 +3,7 @@ package content
 import (
 	"babblegraph/model/contenttopics"
 	"fmt"
+	"strings"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -23,4 +24,12 @@ func GetTopicIDByContentTopic(tx *sqlx.Tx, t contenttopics.ContentTopic) (*Topic
 	default:
 		return matches[0].ID.Ptr(), nil
 	}
+}
+
+func GetContentTopicForTopicID(tx *sqlx.Tx, topicID TopicID) (*contenttopics.ContentTopic, error) {
+	t, err := GetTopic(tx, topicID)
+	if err != nil {
+		return nil, err
+	}
+	return contenttopics.GetContentTopicForString(strings.ToLower(t.Label))
 }

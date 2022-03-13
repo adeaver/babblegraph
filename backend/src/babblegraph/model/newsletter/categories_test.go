@@ -1,9 +1,14 @@
 package newsletter
 
 import (
+	"babblegraph/model/content"
 	"babblegraph/model/contenttopics"
 	"babblegraph/model/documents"
 	"babblegraph/model/email"
+	"babblegraph/model/podcasts"
+	"babblegraph/model/useraccounts"
+	"babblegraph/model/usernewsletterpreferences"
+	"babblegraph/model/usernewsletterschedule"
 	"babblegraph/util/ctx"
 	"babblegraph/util/ptr"
 	"babblegraph/util/testutils"
@@ -19,41 +24,45 @@ import (
 func TestDefaultCategories(t *testing.T) {
 	c := ctx.GetDefaultLogContext()
 	emailRecordID := email.NewEmailRecordID()
-	documentTopics := []contenttopics.ContentTopic{
-		contenttopics.ContentTopicArt,
-		contenttopics.ContentTopicAstronomy,
-		contenttopics.ContentTopicArchitecture,
-		contenttopics.ContentTopicAutomotive,
-		contenttopics.ContentTopicCulture,
+	documentTopics := []content.TopicID{
+		content.TopicID("test-art"),
+		content.TopicID("test-astronomy"),
+		content.TopicID("test-architecture"),
+		content.TopicID("test-automotive"),
+		content.TopicID("test-culture"),
 	}
 	userAccessor := &testUserAccessor{
 		readingLevel: &userReadingLevel{
 			LowerBound: 30,
 			UpperBound: 80,
 		},
-		userTopics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicArt,
-			contenttopics.ContentTopicAstronomy,
-			contenttopics.ContentTopicArchitecture,
-			contenttopics.ContentTopicAutomotive,
+		userTopics: []content.TopicID{
+			content.TopicID("test-art"),
+			content.TopicID("test-astronomy"),
+			content.TopicID("test-architecture"),
+			content.TopicID("test-automotive"),
+		},
+		allowableSourceIDs: []content.SourceID{
+			content.SourceID("test-source"),
 		},
 	}
+	contentAccessor := &testContentAccessor{}
 	var expectedCategories []Category
 	var docs []documents.DocumentWithScore
 	for idx, topic := range documentTopics {
-		doc, link, err := getDefaultDocumentWithLink(c, idx, emailRecordID, userAccessor, getDefaultDocumentInput{
-			Topics: []contenttopics.ContentTopic{topic},
+		doc, link, err := getDefaultDocumentWithLink(c, idx, emailRecordID, contentAccessor, userAccessor, getDefaultDocumentInput{
+			Topics: []content.TopicID{topic},
 		})
 		if err != nil {
 			t.Fatalf("Error setting up test: %s", err.Error())
 		}
 		if containsTopic(topic, userAccessor.getUserTopics()) {
-			displayName, err := contenttopics.ContentTopicNameToDisplayName(topic)
+			displayName, err := contentAccessor.GetDisplayNameByTopicID(topic)
 			if err != nil {
 				t.Fatalf("Error setting up test: %s", err.Error())
 			}
 			expectedCategories = append(expectedCategories, Category{
-				Name: ptr.String(text.ToTitleCaseForLanguage(displayName.Str(), wordsmith.LanguageCodeSpanish)),
+				Name: ptr.String(text.ToTitleCaseForLanguage(*displayName, wordsmith.LanguageCodeSpanish)),
 				Links: []Link{
 					*link,
 				},
@@ -62,9 +71,11 @@ func TestDefaultCategories(t *testing.T) {
 		docs = append(docs, *doc)
 	}
 	categories, err := getDocumentCategories(c, getDocumentCategoriesInput{
-		emailRecordID: emailRecordID,
-		languageCode:  wordsmith.LanguageCodeSpanish,
-		userAccessor:  userAccessor,
+		emailRecordID:   emailRecordID,
+		languageCode:    wordsmith.LanguageCodeSpanish,
+		userAccessor:    userAccessor,
+		contentAccessor: contentAccessor,
+		podcastAccessor: &testPodcastAccessor{},
 		docsAccessor: &testDocsAccessor{
 			documents: docs,
 		},
@@ -112,25 +123,29 @@ func TestDefaultCategories(t *testing.T) {
 func TestGenericCategory(t *testing.T) {
 	c := ctx.GetDefaultLogContext()
 	emailRecordID := email.NewEmailRecordID()
-	documentTopics := []contenttopics.ContentTopic{
-		contenttopics.ContentTopicArt,
-		contenttopics.ContentTopicAstronomy,
-		contenttopics.ContentTopicArchitecture,
-		contenttopics.ContentTopicAutomotive,
-		contenttopics.ContentTopicCulture,
+	documentTopics := []content.TopicID{
+		content.TopicID("test-art"),
+		content.TopicID("test-astronomy"),
+		content.TopicID("test-architecture"),
+		content.TopicID("test-automotive"),
+		content.TopicID("test-culture"),
 	}
 	userAccessor := &testUserAccessor{
 		readingLevel: &userReadingLevel{
 			LowerBound: 30,
 			UpperBound: 80,
 		},
-		userTopics: []contenttopics.ContentTopic{},
+		userTopics: []content.TopicID{},
+		allowableSourceIDs: []content.SourceID{
+			content.SourceID("test-source"),
+		},
 	}
+	contentAccessor := &testContentAccessor{}
 	var expectedLinks []Link
 	var docs []documents.DocumentWithScore
 	for idx, topic := range documentTopics {
-		doc, link, err := getDefaultDocumentWithLink(c, idx, emailRecordID, userAccessor, getDefaultDocumentInput{
-			Topics: []contenttopics.ContentTopic{topic},
+		doc, link, err := getDefaultDocumentWithLink(c, idx, emailRecordID, contentAccessor, userAccessor, getDefaultDocumentInput{
+			Topics: []content.TopicID{topic},
 		})
 		if err != nil {
 			t.Fatalf("Error setting up test: %s", err.Error())
@@ -145,6 +160,8 @@ func TestGenericCategory(t *testing.T) {
 		docsAccessor: &testDocsAccessor{
 			documents: docs,
 		},
+		podcastAccessor:               &testPodcastAccessor{},
+		contentAccessor:               contentAccessor,
 		numberOfDocumentsInNewsletter: ptr.Int(4),
 	})
 	if err != nil {
@@ -163,38 +180,42 @@ func TestGenericCategory(t *testing.T) {
 func TestCategoryWithGeneric(t *testing.T) {
 	c := ctx.GetDefaultLogContext()
 	emailRecordID := email.NewEmailRecordID()
-	documentTopics := []contenttopics.ContentTopic{
-		contenttopics.ContentTopicArt,
-		contenttopics.ContentTopicAstronomy,
-		contenttopics.ContentTopicArchitecture,
-		contenttopics.ContentTopicAutomotive,
-		contenttopics.ContentTopicCulture,
+	documentTopics := []content.TopicID{
+		content.TopicID("test-art"),
+		content.TopicID("test-astronomy"),
+		content.TopicID("test-architecture"),
+		content.TopicID("test-automotive"),
+		content.TopicID("test-culture"),
 	}
 	userAccessor := &testUserAccessor{
 		readingLevel: &userReadingLevel{
 			LowerBound: 30,
 			UpperBound: 80,
 		},
-		userTopics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicArt,
+		userTopics: []content.TopicID{
+			content.TopicID("test-art"),
+		},
+		allowableSourceIDs: []content.SourceID{
+			content.SourceID("test-source"),
 		},
 	}
+	contentAccessor := &testContentAccessor{}
 	var expectedCategories []Category
 	var docs []documents.DocumentWithScore
 	for idx, topic := range documentTopics {
-		doc, link, err := getDefaultDocumentWithLink(c, idx, emailRecordID, userAccessor, getDefaultDocumentInput{
-			Topics: []contenttopics.ContentTopic{topic},
+		doc, link, err := getDefaultDocumentWithLink(c, idx, emailRecordID, contentAccessor, userAccessor, getDefaultDocumentInput{
+			Topics: []content.TopicID{topic},
 		})
 		if err != nil {
 			t.Fatalf("Error setting up test: %s", err.Error())
 		}
 		if containsTopic(topic, userAccessor.getUserTopics()) {
-			displayName, err := contenttopics.ContentTopicNameToDisplayName(topic)
+			displayName, err := contentAccessor.GetDisplayNameByTopicID(topic)
 			if err != nil {
 				t.Fatalf("Error setting up test: %s", err.Error())
 			}
 			expectedCategories = append(expectedCategories, Category{
-				Name: ptr.String(text.ToTitleCaseForLanguage(displayName.Str(), wordsmith.LanguageCodeSpanish)),
+				Name: ptr.String(text.ToTitleCaseForLanguage(*displayName, wordsmith.LanguageCodeSpanish)),
 				Links: []Link{
 					*link,
 				},
@@ -209,6 +230,8 @@ func TestCategoryWithGeneric(t *testing.T) {
 		docsAccessor: &testDocsAccessor{
 			documents: docs,
 		},
+		podcastAccessor:               &testPodcastAccessor{},
+		contentAccessor:               contentAccessor,
 		numberOfDocumentsInNewsletter: ptr.Int(4),
 	})
 	if err != nil {
@@ -240,13 +263,17 @@ func TestFavorRecentDocuments(t *testing.T) {
 			LowerBound: 30,
 			UpperBound: 80,
 		},
-		userTopics: []contenttopics.ContentTopic{},
+		userTopics: []content.TopicID{},
+		allowableSourceIDs: []content.SourceID{
+			content.SourceID("test-source"),
+		},
 	}
 	var expectedLinks []Link
 	var docs []documents.DocumentWithScore
+	contentAccessor := &testContentAccessor{}
 	for idx := 0; idx <= 8; idx++ {
-		doc, link, err := getDefaultDocumentWithLink(c, idx, emailRecordID, userAccessor, getDefaultDocumentInput{
-			Topics: []contenttopics.ContentTopic{contenttopics.ContentTopicArt},
+		doc, link, err := getDefaultDocumentWithLink(c, idx, emailRecordID, contentAccessor, userAccessor, getDefaultDocumentInput{
+			Topics: []content.TopicID{content.TopicID("test-art")},
 		})
 		doc.Document.SeedJobIngestTimestamp = ptr.Int64(time.Now().Add(time.Duration(-2*(8-idx)*24) * time.Hour).Unix())
 		if err != nil {
@@ -262,6 +289,8 @@ func TestFavorRecentDocuments(t *testing.T) {
 		docsAccessor: &testDocsAccessor{
 			documents: docs,
 		},
+		podcastAccessor:               &testPodcastAccessor{},
+		contentAccessor:               contentAccessor,
 		numberOfDocumentsInNewsletter: ptr.Int(4),
 	})
 	if err != nil {
@@ -280,6 +309,175 @@ func TestFavorRecentDocuments(t *testing.T) {
 			t.Errorf("Got error converting string to index: %s", err.Error())
 		case originalIdx <= 4:
 			t.Errorf("Expected only recent documents (idx 5-8), but got document with idx %d", originalIdx)
+		}
+	}
+}
+
+func TestNewsletterHasPodcasts(t *testing.T) {
+	c := ctx.GetDefaultLogContext()
+	emailRecordID := email.NewEmailRecordID()
+	userAccessor := &testUserAccessor{
+		readingLevel: &userReadingLevel{
+			LowerBound: 30,
+			UpperBound: 80,
+		},
+		userNewsletterPreferences: &usernewsletterpreferences.UserNewsletterPreferences{
+			PodcastPreferences: usernewsletterpreferences.PodcastPreferences{
+				IncludeExplicitPodcasts: true,
+				ArePodcastsEnabled:      true,
+			},
+		},
+		userTopics: []content.TopicID{
+			content.TopicID("test-art"),
+			content.TopicID("test-astronomy"),
+			content.TopicID("test-architecture"),
+			content.TopicID("test-automotive"),
+		},
+		allowableSourceIDs: []content.SourceID{
+			content.SourceID("test-source"),
+		},
+
+		userNewsletterSchedule: &usernewsletterschedule.TestNewsletterSchedule{},
+		doesUserHaveAccount:    true,
+		userSubscriptionLevel:  useraccounts.SubscriptionLevelPremium.Ptr(),
+	}
+	documentTopics := []content.TopicID{
+		content.TopicID("test-art"),
+		content.TopicID("test-astronomy"),
+		content.TopicID("test-architecture"),
+		content.TopicID("test-automotive"),
+		content.TopicID("test-culture"),
+	}
+	contentAccessor := &testContentAccessor{}
+	var docs []documents.DocumentWithScore
+	var podcasts []podcasts.Episode
+	for idx, topic := range documentTopics {
+		doc, _, err := getDefaultDocumentWithLink(c, idx, emailRecordID, contentAccessor, userAccessor, getDefaultDocumentInput{
+			Topics: []content.TopicID{topic},
+		})
+		if err != nil {
+			t.Fatalf("Error setting up test: %s", err.Error())
+		}
+		docs = append(docs, *doc)
+		podcasts = append(podcasts, getDefaultPodcast(topic))
+	}
+	podcastAccessor := &testPodcastAccessor{
+		languageCode: wordsmith.LanguageCodeSpanish,
+		validSourceIDs: []content.SourceID{
+			content.SourceID("test-source"),
+		},
+		userNewsletterPreferences: usernewsletterpreferences.UserNewsletterPreferences{
+			PodcastPreferences: usernewsletterpreferences.PodcastPreferences{
+				IncludeExplicitPodcasts: true,
+				ArePodcastsEnabled:      true,
+			},
+		},
+		podcastEpisodes: podcasts,
+	}
+	categories, err := getDocumentCategories(c, getDocumentCategoriesInput{
+		emailRecordID:   emailRecordID,
+		languageCode:    wordsmith.LanguageCodeSpanish,
+		userAccessor:    userAccessor,
+		contentAccessor: contentAccessor,
+		podcastAccessor: podcastAccessor,
+		docsAccessor: &testDocsAccessor{
+			documents: docs,
+		},
+		numberOfDocumentsInNewsletter: ptr.Int(4),
+	})
+	if err != nil {
+		t.Fatalf("Got error %s", err.Error())
+	}
+	if len(categories) != 4 {
+		t.Errorf("Expected 4 categories, but got %d", len(categories))
+	}
+	for _, c := range categories {
+		if len(c.PodcastLinks) != 1 {
+			t.Errorf("Error on category with name %s: expected 1 podcast, but got %d", *c.Name, len(c.PodcastLinks))
+		}
+	}
+}
+
+func TestNewsletterNoPodcasts(t *testing.T) {
+	c := ctx.GetDefaultLogContext()
+	emailRecordID := email.NewEmailRecordID()
+	userAccessor := &testUserAccessor{
+		readingLevel: &userReadingLevel{
+			LowerBound: 30,
+			UpperBound: 80,
+		},
+		userNewsletterPreferences: &usernewsletterpreferences.UserNewsletterPreferences{
+			PodcastPreferences: usernewsletterpreferences.PodcastPreferences{
+				IncludeExplicitPodcasts: true,
+				ArePodcastsEnabled:      true,
+			},
+		},
+		userTopics: []content.TopicID{
+			content.TopicID("test-art"),
+			content.TopicID("test-astronomy"),
+			content.TopicID("test-architecture"),
+			content.TopicID("test-automotive"),
+		},
+		allowableSourceIDs: []content.SourceID{
+			content.SourceID("test-source"),
+		},
+
+		userNewsletterSchedule: &usernewsletterschedule.TestNewsletterSchedule{},
+		doesUserHaveAccount:    true,
+	}
+	documentTopics := []content.TopicID{
+		content.TopicID("test-art"),
+		content.TopicID("test-astronomy"),
+		content.TopicID("test-architecture"),
+		content.TopicID("test-automotive"),
+		content.TopicID("test-culture"),
+	}
+	contentAccessor := &testContentAccessor{}
+	var docs []documents.DocumentWithScore
+	var podcasts []podcasts.Episode
+	for idx, topic := range documentTopics {
+		doc, _, err := getDefaultDocumentWithLink(c, idx, emailRecordID, contentAccessor, userAccessor, getDefaultDocumentInput{
+			Topics: []content.TopicID{topic},
+		})
+		if err != nil {
+			t.Fatalf("Error setting up test: %s", err.Error())
+		}
+		docs = append(docs, *doc)
+		podcasts = append(podcasts, getDefaultPodcast(topic))
+	}
+	podcastAccessor := &testPodcastAccessor{
+		languageCode: wordsmith.LanguageCodeSpanish,
+		validSourceIDs: []content.SourceID{
+			content.SourceID("test-source"),
+		},
+		userNewsletterPreferences: usernewsletterpreferences.UserNewsletterPreferences{
+			PodcastPreferences: usernewsletterpreferences.PodcastPreferences{
+				IncludeExplicitPodcasts: true,
+				ArePodcastsEnabled:      true,
+			},
+		},
+		podcastEpisodes: podcasts,
+	}
+	categories, err := getDocumentCategories(c, getDocumentCategoriesInput{
+		emailRecordID:   emailRecordID,
+		languageCode:    wordsmith.LanguageCodeSpanish,
+		userAccessor:    userAccessor,
+		contentAccessor: contentAccessor,
+		podcastAccessor: podcastAccessor,
+		docsAccessor: &testDocsAccessor{
+			documents: docs,
+		},
+		numberOfDocumentsInNewsletter: ptr.Int(4),
+	})
+	if err != nil {
+		t.Fatalf("Got error %s", err.Error())
+	}
+	if len(categories) != 4 {
+		t.Errorf("Expected 4 categories, but got %d", len(categories))
+	}
+	for _, c := range categories {
+		if len(c.PodcastLinks) != 0 {
+			t.Errorf("Error on category with name %s: expected 0 podcast, but got %d", *c.Name, len(c.PodcastLinks))
 		}
 	}
 }

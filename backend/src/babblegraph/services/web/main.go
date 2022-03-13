@@ -5,6 +5,7 @@ import (
 	"babblegraph/services/web/clientrouter"
 	"babblegraph/util/bglog"
 	"babblegraph/util/database"
+	"babblegraph/util/elastic"
 	"babblegraph/util/env"
 	"babblegraph/wordsmith"
 	"fmt"
@@ -45,6 +46,9 @@ func setupDatabases() error {
 	}
 	if err := wordsmith.MustSetupWordsmithForEnvironment(); err != nil {
 		return fmt.Errorf("Error setting up wordsmith: %s", err.Error())
+	}
+	if err := elastic.InitializeElasticsearchClientForEnvironment(); err != nil {
+		return fmt.Errorf("Error setting up elasticsearch: %s", err.Error())
 	}
 	return nil
 }

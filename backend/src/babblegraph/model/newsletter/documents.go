@@ -1,7 +1,7 @@
 package newsletter
 
 import (
-	"babblegraph/model/contenttopics"
+	"babblegraph/model/content"
 	"babblegraph/model/documents"
 	"babblegraph/util/ctx"
 	"babblegraph/wordsmith"
@@ -10,21 +10,21 @@ import (
 type getDocumentsBaseInput struct {
 	LanguageCode        wordsmith.LanguageCode
 	ExcludedDocumentIDs []documents.DocumentID
-	ValidDomains        []string
+	ValidSourceIDs      []content.SourceID
 	MinimumReadingLevel *int64
 	MaximumReadingLevel *int64
 }
 
 type getDocumentsForUserInput struct {
 	getDocumentsBaseInput
-	Topic  *contenttopics.ContentTopic
+	Topic  *content.TopicID
 	Lemmas []wordsmith.LemmaID
 }
 
 type getDocumentsForUserForLemmaInput struct {
 	getDocumentsBaseInput
 	Lemma           wordsmith.LemmaID
-	Topics          []contenttopics.ContentTopic
+	Topics          []content.TopicID
 	SearchNonRecent bool
 }
 
@@ -51,7 +51,7 @@ func (d *DefaultDocumentsAccessor) GetDocumentsForUser(c ctx.LogContext, input g
 	dailyEmailDocQueryBuilder.WithRecencyBias(documents.RecencyBiasMostRecent)
 	recentDocuments, err := documents.ExecuteDocumentQuery(c, dailyEmailDocQueryBuilder, documents.ExecuteDocumentQueryInput{
 		LanguageCode:        input.getDocumentsBaseInput.LanguageCode,
-		ValidDomains:        input.getDocumentsBaseInput.ValidDomains,
+		ValidSourceIDs:      input.getDocumentsBaseInput.ValidSourceIDs,
 		ExcludedDocumentIDs: input.getDocumentsBaseInput.ExcludedDocumentIDs,
 		MinimumReadingLevel: input.getDocumentsBaseInput.MinimumReadingLevel,
 		MaximumReadingLevel: input.getDocumentsBaseInput.MaximumReadingLevel,
@@ -62,7 +62,7 @@ func (d *DefaultDocumentsAccessor) GetDocumentsForUser(c ctx.LogContext, input g
 	dailyEmailDocQueryBuilder.WithRecencyBias(documents.RecencyBiasNotRecent)
 	notRecentDocuments, err := documents.ExecuteDocumentQuery(c, dailyEmailDocQueryBuilder, documents.ExecuteDocumentQueryInput{
 		LanguageCode:        input.getDocumentsBaseInput.LanguageCode,
-		ValidDomains:        input.getDocumentsBaseInput.ValidDomains,
+		ValidSourceIDs:      input.getDocumentsBaseInput.ValidSourceIDs,
 		ExcludedDocumentIDs: input.getDocumentsBaseInput.ExcludedDocumentIDs,
 		MinimumReadingLevel: input.getDocumentsBaseInput.MinimumReadingLevel,
 		MaximumReadingLevel: input.getDocumentsBaseInput.MaximumReadingLevel,
@@ -86,7 +86,7 @@ func (d *DefaultDocumentsAccessor) GetDocumentsForUserForLemma(c ctx.LogContext,
 	spotlightQueryBuilder.WithRecencyBias(recencyBias)
 	return documents.ExecuteDocumentQuery(c, spotlightQueryBuilder, documents.ExecuteDocumentQueryInput{
 		LanguageCode:        input.getDocumentsBaseInput.LanguageCode,
-		ValidDomains:        input.getDocumentsBaseInput.ValidDomains,
+		ValidSourceIDs:      input.getDocumentsBaseInput.ValidSourceIDs,
 		ExcludedDocumentIDs: input.getDocumentsBaseInput.ExcludedDocumentIDs,
 		MinimumReadingLevel: input.getDocumentsBaseInput.MinimumReadingLevel,
 		MaximumReadingLevel: input.getDocumentsBaseInput.MaximumReadingLevel,

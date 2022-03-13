@@ -38,6 +38,7 @@ services:
       - STRIPE_WEBHOOK_SECRET=$BABBLEGRAPH_STRIPE_WEBHOOK_SECRET
       - S3_KEY=$BABBLEGRAPH_SPACES_KEY
       - S3_SECRET=$BABBLEGRAPH_SPACES_SECRET
+      # - LISTEN_NOTES_API_KEY=$BABBLEGRAPH_LISTEN_NOTES_API_KEY
     command: go run /usr/local/go/src/babblegraph/services/web/main.go
   frontend:
     build:

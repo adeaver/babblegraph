@@ -1,7 +1,7 @@
 package documents
 
 import (
-	"babblegraph/model/contenttopics"
+	"babblegraph/model/content"
 	"babblegraph/util/elastic/esquery"
 	"babblegraph/wordsmith"
 	"strings"
@@ -13,7 +13,7 @@ import (
 // relevant for that topic - not the union of the two
 type dailyEmailDocumentsQueryBuilder struct {
 	recencyBias *RecencyBias
-	topic       *contenttopics.ContentTopic
+	topic       *content.TopicID
 	lemmas      []string
 }
 
@@ -25,7 +25,7 @@ func (d *dailyEmailDocumentsQueryBuilder) WithRecencyBias(r RecencyBias) {
 	d.recencyBias = r.Ptr()
 }
 
-func (d *dailyEmailDocumentsQueryBuilder) ForTopic(topic *contenttopics.ContentTopic) {
+func (d *dailyEmailDocumentsQueryBuilder) ForTopic(topic *content.TopicID) {
 	d.topic = topic
 }
 
@@ -37,7 +37,7 @@ func (d *dailyEmailDocumentsQueryBuilder) ContainingLemmas(lemmaIDs []wordsmith.
 
 func (d *dailyEmailDocumentsQueryBuilder) ExtendBaseQuery(queryBuilder *esquery.BoolQueryBuilder) error {
 	if d.topic != nil {
-		queryBuilder.AddMust(esquery.Match("content_topics", d.topic.Str()))
+		queryBuilder.AddMust(esquery.MatchPhrase("topic_ids", d.topic.Str()))
 		// HACK HACK HACK
 		// So there's an issue with lemma mappings
 		// that can cause similar hyphenated strings
@@ -45,7 +45,7 @@ func (d *dailyEmailDocumentsQueryBuilder) ExtendBaseQuery(queryBuilder *esquery.
 		// with recreating the index, so I'm doing this instead.
 		// The idea here is that we filter out documents that contain
 		// similar keywords
-		queryBuilder.AddFilter(esquery.Term("content_topics.keyword", d.topic.Str()))
+		queryBuilder.AddFilter(esquery.Term("topic_ids.keyword", d.topic.Str()))
 	}
 	if d.recencyBias != nil {
 		seedJobIngestTimestampRangeQuery := esquery.NewRangeQueryBuilderForFieldName("seed_job_ingest_timestamp")

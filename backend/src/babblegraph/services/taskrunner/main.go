@@ -89,10 +89,6 @@ func main() {
 		if err := tasks.ReindexDocuments(); err != nil {
 			log.Fatal(err.Error())
 		}
-	case "admin-content-backfill":
-		if err := tasks.BackfillContent(); err != nil {
-			log.Fatal(err.Error())
-		}
 	default:
 		log.Fatal(fmt.Sprintf("Invalid task specified %s", *taskName))
 	}

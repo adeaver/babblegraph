@@ -3,20 +3,27 @@ package content
 import (
 	"babblegraph/util/ctx"
 	"babblegraph/util/urlparser"
+	"babblegraph/wordsmith"
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
 )
 
 const (
-	getSourceForURLQuery           = "SELECT * FROM content_source WHERE url_identifier = $1"
-	getSourceSeedForURLQuery       = "SELECT * FROM content_source_seed WHERE url_identifier = $1 AND url_params IS NOT DISTINCT FROM $2"
-	getSourceSeedTopicMappingQuery = "SELECT * FROM content_source_seed_topic_mapping WHERE topic_id = $1 AND source_seed_id = $2"
+	getSourcesByIngestStrategyQuery = "SELECT * FROM content_source WHERE ingest_strategy = $1 AND is_active = TRUE"
+	getSourcesBySourceTypeQuery     = "SELECT * FROM content_source WHERE type = $1 AND is_active = TRUE"
+
+	getSourceForURLQuery                          = "SELECT * FROM content_source WHERE url_identifier = $1"
+	getSourceSeedForURLQuery                      = "SELECT * FROM content_source_seed WHERE url_identifier = $1 AND url_params IS NOT DISTINCT FROM $2"
+	getSourceSeedTopicMappingQuery                = "SELECT * FROM content_source_seed_topic_mapping WHERE topic_id = $1 AND source_seed_id = $2"
+	getSourceSeedTopicMappingForSourceSeedIDQuery = "SELECT * FROM content_source_seed_topic_mapping WHERE source_seed_id = $1"
 
 	getSourceSeedForSourceQuery                  = "SELECT * FROM content_source_seed WHERE root_id = $1"
 	getSourceSeedTopicMappingForSourceSeedsQuery = "SELECT * FROM content_source_seed_topic_mapping WHERE topic_id = '%s' AND source_seed_id IN (?)"
 
 	getTopicIDsForSourceSeedIDsQuery = "SELECT DISTINCT(topic_id) FROM content_source_seed_topic_mapping WHERE _id IN (?)"
+
+	getTopicDisplayNameForLanguageQuery = "SELECT * FROM content_topic_display_name WHERE language_code = $1 AND is_active = TRUE"
 )
 
 func GetSourceIDForParsedURL(tx *sqlx.Tx, u urlparser.ParsedURL) (*SourceID, error) {
@@ -99,13 +106,29 @@ func LookupTopicMappingIDForURL(c ctx.LogContext, tx *sqlx.Tx, u urlparser.Parse
 	}
 }
 
+func LookupTopicMappingIDForSourceSeedID(tx *sqlx.Tx, sourceSeedID SourceSeedID) ([]TopicMappingID, []TopicID, error) {
+	var matches []dbSourceSeedTopicMapping
+	if err := tx.Select(&matches, getSourceSeedTopicMappingForSourceSeedIDQuery, sourceSeedID); err != nil {
+		return nil, nil, err
+	}
+	var topicMappingIDs []TopicMappingID
+	var topicIDs []TopicID
+	for _, m := range matches {
+		topicMappingIDs = append(topicMappingIDs, MustMakeTopicMappingID(MakeTopicMappingIDInput{
+			SourceSeedTopicMappingID: m.ID.Ptr(),
+		}))
+		topicIDs = append(topicIDs, m.TopicID)
+	}
+	return topicMappingIDs, topicIDs, nil
+}
+
 func LookupTopicMappingIDForSourceAndTopic(c ctx.LogContext, tx *sqlx.Tx, sourceID SourceID, topicID TopicID) (*TopicMappingID, error) {
-	var matches []dbSourceSeed
-	err := tx.Select(&matches, getSourceSeedForSourceQuery, sourceID)
+	matches, err := lookupSourceSeedsForSource(tx, sourceID)
 	switch {
 	case err != nil:
 		return nil, err
-	case len(matches) == 0:
+	case matches == nil:
+		c.Warnf("No source seeds found for source ID %s", sourceID)
 		return nil, nil
 	default:
 		var sourceSeedIDs []SourceSeedID
@@ -137,6 +160,14 @@ func LookupTopicMappingIDForSourceAndTopic(c ctx.LogContext, tx *sqlx.Tx, source
 	}
 }
 
+func lookupSourceSeedsForSource(tx *sqlx.Tx, sourceID SourceID) ([]dbSourceSeed, error) {
+	var matches []dbSourceSeed
+	if err := tx.Select(&matches, getSourceSeedForSourceQuery, sourceID); err != nil {
+		return nil, err
+	}
+	return matches, nil
+}
+
 func LookupTopicsForSourceSeedMappingIDs(tx *sqlx.Tx, sourceSeedMappingID []SourceSeedTopicMappingID) ([]TopicID, error) {
 	query, args, err := sqlx.In(getTopicIDsForSourceSeedIDsQuery, sourceSeedMappingID)
 	if err != nil {
@@ -152,6 +183,56 @@ func LookupTopicsForSourceSeedMappingIDs(tx *sqlx.Tx, sourceSeedMappingID []Sour
 	var out []TopicID
 	for _, row := range topicIDRows {
 		out = append(out, row.TopicID)
+	}
+	return out, nil
+}
+
+func LookupSourcesForIngestStrategy(tx *sqlx.Tx, ingestStrategy IngestStrategy) ([]Source, error) {
+	var matches []dbSource
+	if err := tx.Select(&matches, getSourcesByIngestStrategyQuery, ingestStrategy); err != nil {
+		return nil, err
+	}
+	var out []Source
+	for _, m := range matches {
+		out = append(out, m.ToNonDB())
+	}
+	return out, nil
+}
+
+func LookupActiveSourceSeedsForSource(tx *sqlx.Tx, sourceID SourceID) ([]SourceSeed, error) {
+	matches, err := lookupSourceSeedsForSource(tx, sourceID)
+	if err != nil {
+		return nil, err
+	}
+	var out []SourceSeed
+	for _, m := range matches {
+		if m.IsActive {
+			out = append(out, m.ToNonDB())
+		}
+	}
+	return out, nil
+}
+
+func LookupActiveSourceIDsByType(tx *sqlx.Tx, contentType SourceType) ([]SourceID, error) {
+	var matches []dbSource
+	if err := tx.Select(&matches, getSourcesBySourceTypeQuery, contentType); err != nil {
+		return nil, err
+	}
+	var out []SourceID
+	for _, m := range matches {
+		out = append(out, m.ID)
+	}
+	return out, nil
+}
+
+func GetTopicDisplayNamesForLanguage(tx *sqlx.Tx, languageCode wordsmith.LanguageCode) ([]TopicDisplayName, error) {
+	var matches []dbTopicDisplayName
+	if err := tx.Select(&matches, getTopicDisplayNameForLanguageQuery, languageCode); err != nil {
+		return nil, err
+	}
+	var out []TopicDisplayName
+	for _, m := range matches {
+		out = append(out, m.ToNonDB())
 	}
 	return out, nil
 }

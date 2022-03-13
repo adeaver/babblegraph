@@ -62,6 +62,7 @@ const (
 	PermissionEditContentTopics  Permission = "edit-content-topics"
 	PermissionEditContentSources Permission = "edit-content-sources"
 	PermissionManageBilling      Permission = "manage-billing"
+	PermissionPodcastSearch      Permission = "podcast-search"
 )
 
 var validAdminEmailDomains = map[string]bool{

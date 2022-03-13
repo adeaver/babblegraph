@@ -19,6 +19,7 @@ type NewsletterBody struct {
 	Categories                  []Category                   `json:"categories"`
 	SetTopicsLink               *string                      `json:"set_topics_link,omitempty"`
 	ReinforcementLink           string                       `json:"reinforcement_link"`
+	PreferencesLink             *string                      `json:"preferences_link,omitempty"`
 }
 
 type LemmaReinforcementSpotlight struct {
@@ -28,8 +29,18 @@ type LemmaReinforcementSpotlight struct {
 }
 
 type Category struct {
-	Name  *string `json:"name,omitempty"`
-	Links []Link  `json:"links"`
+	Name         *string       `json:"name,omitempty"`
+	Links        []Link        `json:"links"`
+	PodcastLinks []PodcastLink `json:"podcast_links,omitempty"`
+}
+
+type PodcastLink struct {
+	PodcastName        string  `json:"podcast_name"`
+	WebsiteURL         string  `json:"website_url"`
+	PodcastImageURL    *string `json:"podcast_image_url"`
+	EpisodeTitle       string  `json:"episode_title"`
+	EpisodeDescription string  `json:"episode_description"`
+	ListenURL          string  `json:"listen_url"`
 }
 
 type Link struct {

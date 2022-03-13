@@ -1,7 +1,7 @@
 package newsletter
 
 import (
-	"babblegraph/model/contenttopics"
+	"babblegraph/model/content"
 	"babblegraph/model/documents"
 	"babblegraph/model/email"
 	"babblegraph/model/userlemma"
@@ -23,8 +23,8 @@ func TestSpotlightRecordsForUserWithAccount(t *testing.T) {
 	userAccessor := &testUserAccessor{
 		languageCode:        wordsmith.LanguageCodeSpanish,
 		doesUserHaveAccount: true,
-		userTopics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicArt,
+		userTopics: []content.TopicID{
+			content.TopicID("topicid-art"),
 		},
 		readingLevel: &userReadingLevel{
 			LowerBound: 30,
@@ -33,6 +33,9 @@ func TestSpotlightRecordsForUserWithAccount(t *testing.T) {
 		userNewsletterPreferences: &usernewsletterpreferences.UserNewsletterPreferences{
 			ShouldIncludeLemmaReinforcementSpotlight: true,
 			LanguageCode:                             wordsmith.LanguageCodeSpanish,
+		},
+		allowableSourceIDs: []content.SourceID{
+			content.SourceID("test-source"),
 		},
 		spotlightRecords: []userlemma.UserLemmaReinforcementSpotlightRecord{
 			{
@@ -56,6 +59,7 @@ func TestSpotlightRecordsForUserWithAccount(t *testing.T) {
 	var correctLink *Link
 	emailRecordID := email.NewEmailRecordID()
 	lemmasByID := make(map[wordsmith.LemmaID]wordsmith.Lemma)
+	contentAccessor := &testContentAccessor{}
 	var docs []documents.DocumentWithScore
 	for i := 15; i >= 0; i-- {
 		lemma := wordsmith.LemmaID(fmt.Sprintf("word%d", i))
@@ -64,8 +68,10 @@ func TestSpotlightRecordsForUserWithAccount(t *testing.T) {
 			Language:  wordsmith.LanguageCodeSpanish,
 			LemmaText: lemma.Str(),
 		}
-		doc, link, err := getDefaultDocumentWithLink(c, i, emailRecordID, userAccessor, getDefaultDocumentInput{
-			Topics:                 []contenttopics.ContentTopic{contenttopics.ContentTopicArt},
+		doc, link, err := getDefaultDocumentWithLink(c, i, emailRecordID, contentAccessor, userAccessor, getDefaultDocumentInput{
+			Topics: []content.TopicID{
+				content.TopicID("topicid-art"),
+			},
 			SeedJobIngestTimestamp: ptr.Int64(time.Now().Add(-1 * time.Duration(15-i) * 24 * time.Hour).Unix()),
 			Lemmas:                 []wordsmith.LemmaID{lemma},
 		})
@@ -81,7 +87,13 @@ func TestSpotlightRecordsForUserWithAccount(t *testing.T) {
 		lemmasByID: lemmasByID,
 	}
 	docsAccessor := &testDocsAccessor{documents: docs}
-	testNewsletter, err := CreateNewsletter(c, wordsmithAccessor, emailAccessor, userAccessor, docsAccessor)
+	testNewsletter, err := CreateNewsletter(c, CreateNewsletterInput{
+		WordsmithAccessor: wordsmithAccessor,
+		EmailAccessor:     emailAccessor,
+		UserAccessor:      userAccessor,
+		DocsAccessor:      docsAccessor,
+		ContentAccessor:   contentAccessor,
+	})
 	switch {
 	case err != nil:
 		t.Fatalf(err.Error())
@@ -114,8 +126,8 @@ func TestSpotlightRecordsForUserWithoutAccount(t *testing.T) {
 		userID:              users.UserID("abc123"),
 		languageCode:        wordsmith.LanguageCodeSpanish,
 		doesUserHaveAccount: false,
-		userTopics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicArt,
+		userTopics: []content.TopicID{
+			content.TopicID("topicid-art"),
 		},
 		readingLevel: &userReadingLevel{
 			LowerBound: 30,
@@ -124,6 +136,9 @@ func TestSpotlightRecordsForUserWithoutAccount(t *testing.T) {
 		userNewsletterPreferences: &usernewsletterpreferences.UserNewsletterPreferences{
 			ShouldIncludeLemmaReinforcementSpotlight: true,
 			LanguageCode:                             wordsmith.LanguageCodeSpanish,
+		},
+		allowableSourceIDs: []content.SourceID{
+			content.SourceID("test-source"),
 		},
 		spotlightRecords: []userlemma.UserLemmaReinforcementSpotlightRecord{
 			{
@@ -147,6 +162,7 @@ func TestSpotlightRecordsForUserWithoutAccount(t *testing.T) {
 	var correctLink *Link
 	emailRecordID := email.NewEmailRecordID()
 	lemmasByID := make(map[wordsmith.LemmaID]wordsmith.Lemma)
+	contentAccessor := &testContentAccessor{}
 	var docs []documents.DocumentWithScore
 	for i := 15; i >= 0; i-- {
 		lemma := wordsmith.LemmaID(fmt.Sprintf("word%d", i))
@@ -155,8 +171,10 @@ func TestSpotlightRecordsForUserWithoutAccount(t *testing.T) {
 			Language:  wordsmith.LanguageCodeSpanish,
 			LemmaText: lemma.Str(),
 		}
-		doc, link, err := getDefaultDocumentWithLink(c, i, emailRecordID, userAccessor, getDefaultDocumentInput{
-			Topics:                 []contenttopics.ContentTopic{contenttopics.ContentTopicArt},
+		doc, link, err := getDefaultDocumentWithLink(c, i, emailRecordID, contentAccessor, userAccessor, getDefaultDocumentInput{
+			Topics: []content.TopicID{
+				content.TopicID("topicid-art"),
+			},
 			SeedJobIngestTimestamp: ptr.Int64(time.Now().Add(-1 * time.Duration(15-i) * 24 * time.Hour).Unix()),
 			Lemmas:                 []wordsmith.LemmaID{lemma},
 		})
@@ -172,7 +190,13 @@ func TestSpotlightRecordsForUserWithoutAccount(t *testing.T) {
 		lemmasByID: lemmasByID,
 	}
 	docsAccessor := &testDocsAccessor{documents: docs}
-	testNewsletter, err := CreateNewsletter(c, wordsmithAccessor, emailAccessor, userAccessor, docsAccessor)
+	testNewsletter, err := CreateNewsletter(c, CreateNewsletterInput{
+		WordsmithAccessor: wordsmithAccessor,
+		EmailAccessor:     emailAccessor,
+		UserAccessor:      userAccessor,
+		DocsAccessor:      docsAccessor,
+		ContentAccessor:   contentAccessor,
+	})
 	switch {
 	case err != nil:
 		t.Fatalf(err.Error())
@@ -208,8 +232,8 @@ func TestSpotlightRecordsForTrackedLemmaWithoutSpotlight(t *testing.T) {
 		userID:              users.UserID("abc123"),
 		languageCode:        wordsmith.LanguageCodeSpanish,
 		doesUserHaveAccount: false,
-		userTopics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicArt,
+		userTopics: []content.TopicID{
+			content.TopicID("topicid-art"),
 		},
 		readingLevel: &userReadingLevel{
 			LowerBound: 30,
@@ -218,6 +242,9 @@ func TestSpotlightRecordsForTrackedLemmaWithoutSpotlight(t *testing.T) {
 		userNewsletterPreferences: &usernewsletterpreferences.UserNewsletterPreferences{
 			ShouldIncludeLemmaReinforcementSpotlight: true,
 			LanguageCode:                             wordsmith.LanguageCodeSpanish,
+		},
+		allowableSourceIDs: []content.SourceID{
+			content.SourceID("test-source"),
 		},
 		spotlightRecords: []userlemma.UserLemmaReinforcementSpotlightRecord{
 			{
@@ -241,6 +268,7 @@ func TestSpotlightRecordsForTrackedLemmaWithoutSpotlight(t *testing.T) {
 	var correctLink *Link
 	emailRecordID := email.NewEmailRecordID()
 	lemmasByID := make(map[wordsmith.LemmaID]wordsmith.Lemma)
+	contentAccessor := &testContentAccessor{}
 	var docs []documents.DocumentWithScore
 	for i := 16; i >= 0; i-- {
 		lemma := wordsmith.LemmaID(fmt.Sprintf("word%d", i))
@@ -249,8 +277,10 @@ func TestSpotlightRecordsForTrackedLemmaWithoutSpotlight(t *testing.T) {
 			Language:  wordsmith.LanguageCodeSpanish,
 			LemmaText: lemma.Str(),
 		}
-		doc, link, err := getDefaultDocumentWithLink(c, i, emailRecordID, userAccessor, getDefaultDocumentInput{
-			Topics:                 []contenttopics.ContentTopic{contenttopics.ContentTopicArt},
+		doc, link, err := getDefaultDocumentWithLink(c, i, emailRecordID, contentAccessor, userAccessor, getDefaultDocumentInput{
+			Topics: []content.TopicID{
+				content.TopicID("topicid-art"),
+			},
 			SeedJobIngestTimestamp: ptr.Int64(time.Now().Add(-1 * time.Duration(15-i) * 24 * time.Hour).Unix()),
 			Lemmas:                 []wordsmith.LemmaID{lemma},
 		})
@@ -266,7 +296,13 @@ func TestSpotlightRecordsForTrackedLemmaWithoutSpotlight(t *testing.T) {
 		lemmasByID: lemmasByID,
 	}
 	docsAccessor := &testDocsAccessor{documents: docs}
-	testNewsletter, err := CreateNewsletter(c, wordsmithAccessor, emailAccessor, userAccessor, docsAccessor)
+	testNewsletter, err := CreateNewsletter(c, CreateNewsletterInput{
+		WordsmithAccessor: wordsmithAccessor,
+		EmailAccessor:     emailAccessor,
+		UserAccessor:      userAccessor,
+		DocsAccessor:      docsAccessor,
+		ContentAccessor:   contentAccessor,
+	})
 	switch {
 	case err != nil:
 		t.Fatalf(err.Error())

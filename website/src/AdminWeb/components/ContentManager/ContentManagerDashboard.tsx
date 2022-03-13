@@ -44,6 +44,14 @@ const ContentManagerDashboard = () => {
                             Add or deactivate content sources
                         </Paragraph>
                     </ActionCard>
+                    <ActionCard className={classes.navigationCard} onClick={() => setLocation("/ops/content-manager/podcasts")}>
+                        <Heading2 color={TypographyColor.Primary}>
+                            Search Podcasts
+                        </Heading2>
+                        <Paragraph>
+                            Search and add podcasts
+                        </Paragraph>
+                    </ActionCard>
                 </Grid>
             </Grid>
         </Page>

@@ -53,5 +53,9 @@ func CreateDocumentMappings() error {
 		esmapping.MakeLongMapping("readability_score", esmapping.MappingOptions{}),
 		esmapping.MakeLongMapping("seed_job_ingest_timestamp", esmapping.MappingOptions{}),
 		esmapping.MakeLongMapping("version", esmapping.MappingOptions{}),
+		esmapping.MakeLongMapping("topics_length", esmapping.MappingOptions{}),
+		makeDefaultTextWithKeywordField("source_id"),
+		makeDefaultTextWithKeywordField("topic_ids"),
+		makeDefaultTextWithKeywordField("topic_mapping_ids"),
 	})
 }

@@ -20,7 +20,7 @@ import InterestSelectionPage from 'ConsumerWeb/components/SubscriptionManagement
 import UnsubscribePage from 'ConsumerWeb/components/UnsubscribePage/UnsubscribePage';
 import WordReinforcementPage from 'ConsumerWeb/components/SubscriptionManagement/WordReinforcementPage';
 import SchedulePage from 'ConsumerWeb/components/SchedulePage/SchedulePage';
-import NewsletterPreferencesPage from 'ConsumerWeb/components/SubscriptionManagement/NewsletterPreferencesPage';
+import UserNewsletterPreferencesPage from 'ConsumerWeb/components/UserNewsletterPreferencesPage/UserNewsletterPreferencesPage';
 
 import LoginPage from 'ConsumerWeb/components/UserAccounts/LoginPage';
 import CreateUserAccountPage from 'ConsumerWeb/components/CreateUserAccountPage/CreateUserAccountPage';
@@ -30,6 +30,8 @@ import ResetPasswordPage from 'ConsumerWeb/components/UserAccounts/ResetPassword
 import PremiumNewsletterSubscriptionCheckoutPage from 'ConsumerWeb/components/PremiumNewsletterSubscriptionCheckoutPage/PremiumNewsletterSubscriptionCheckoutPage';
 import PremiumInformationPage from 'ConsumerWeb/components/PremiumInformationPage/PremiumInformationPage';
 import PremiumNewsletterSubscriptionManagementPage from 'ConsumerWeb/components/PremiumNewsletterSubscriptionManagementPage/PremiumNewsletterSubscriptionManagementPage';
+
+import PodcastPlayerPage from 'ConsumerWeb/components/PodcastPlayerPage/PodcastPlayerPage';
 
 import NotFoundPage from 'ConsumerWeb/components/NotFoundPage/NotFoundPage';
 
@@ -43,11 +45,14 @@ class App extends React.Component{
                     <Route path="/manage/:token/interests" component={InterestSelectionPage} />
                     <Route path="/manage/:token/vocabulary" component={WordReinforcementPage} />
                     <Route path="/manage/:token/schedule" component={SchedulePage} />
-                    <Route path="/manage/:token/preferences" component={NewsletterPreferencesPage} />
+                    <Route path="/manage/:token/preferences" component={UserNewsletterPreferencesPage} />
                     <Route exact path="/manage/:token/premium" component={PremiumInformationPage} />
                     <Route path="/manage/:token/payment-settings" component={PremiumNewsletterSubscriptionManagementPage} />
                     <Route exact path="/manage/:token" component={SubscriptionManagementHomePage} />
                     <Route path="/paywall-thank-you/:token" component={PaywallReportPage} />
+
+                    { /* Podcast Player */ }
+                    <Route path="/podcast/:userPodcastID" component={PodcastPlayerPage} />
 
                     { /* User Account Management */ }
                     <Route path="/login" component={LoginPage} />

@@ -43,6 +43,8 @@ func IsValidURL(u string) bool {
 
 type ParsedURL struct {
 	Domain        string
+	Path          string
+	Protocol      *string
 	URLIdentifier string
 	URL           string
 	Params        *string
@@ -78,6 +80,8 @@ func ParseURL(rawURL string) *ParsedURL {
 	}
 	return &ParsedURL{
 		Domain:        *verifiedDomain,
+		Path:          urlParts.Page,
+		Protocol:      urlParts.Protocol,
 		URLIdentifier: urlIdentifier,
 		URL:           rawURL,
 		Params:        params,
@@ -85,14 +89,15 @@ func ParseURL(rawURL string) *ParsedURL {
 }
 
 type urlParts struct {
-	Website string
-	Page    string
-	Params  string
+	Website  string
+	Page     string
+	Params   string
+	Protocol *string
 }
 
 func findURLParts(rawURL string) *urlParts {
 	parts := multipleSlashesRegex.Split(rawURL, -1)
-	var website, page *string
+	var website, page, protocol *string
 	var pageParts, paramParts []string
 	for _, part := range parts {
 		switch {
@@ -122,13 +127,21 @@ func findURLParts(rawURL string) *urlParts {
 			// no-op
 		}
 	}
+	if len(parts) > 0 && strings.HasPrefix(parts[0], "http") {
+		protocolStr := parts[0]
+		if !strings.HasSuffix(protocolStr, ":") {
+			protocolStr = fmt.Sprintf("%s:", protocolStr)
+		}
+		protocol = ptr.String(protocolStr)
+	}
 	if website == nil {
 		return nil
 	}
 	return &urlParts{
-		Website: *website,
-		Page:    strings.TrimSuffix(deref.String(page, strings.Join(pageParts, "/")), "/"),
-		Params:  strings.Join(paramParts, "&"),
+		Website:  *website,
+		Page:     strings.TrimSuffix(deref.String(page, strings.Join(pageParts, "/")), "/"),
+		Params:   strings.Join(paramParts, "&"),
+		Protocol: protocol,
 	}
 }
 

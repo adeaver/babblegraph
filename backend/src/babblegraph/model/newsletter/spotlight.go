@@ -1,6 +1,7 @@
 package newsletter
 
 import (
+	"babblegraph/model/content"
 	"babblegraph/model/documents"
 	"babblegraph/model/email"
 	"babblegraph/model/routes"
@@ -18,6 +19,7 @@ type getSpotlightLemmaForNewsletterInput struct {
 	categories        []Category
 	userAccessor      userPreferencesAccessor
 	docsAccessor      documentAccessor
+	contentAccessor   contentAccessor
 	wordsmithAccessor wordsmithAccessor
 }
 
@@ -32,10 +34,7 @@ func getSpotlightLemmaForNewsletter(c ctx.LogContext, input getSpotlightLemmaFor
 			documentIDsToExclude = append(documentIDsToExclude, l.DocumentID)
 		}
 	}
-	allowableDomains, err := getAllowableDomains(input.userAccessor)
-	if err != nil {
-		return nil, err
-	}
+	allowableSourceIDs := input.userAccessor.getAllowableSources()
 	orderedListOfSpotlightRecords := getOrderedListOfPotentialSpotlightLemmas(input.userAccessor)
 	c.Debugf("Ordered spotlight records %+v", orderedListOfSpotlightRecords)
 	var preferencesLink string
@@ -52,7 +51,7 @@ func getSpotlightLemmaForNewsletter(c ctx.LogContext, input getSpotlightLemmaFor
 		getSpotlightLemmaForNewsletterInput: input,
 		documentIDsToExclude:                documentIDsToExclude,
 		potentialSpotlights:                 orderedListOfSpotlightRecords,
-		allowableDomains:                    allowableDomains,
+		allowableSourceIDs:                  allowableSourceIDs,
 		preferencesLink:                     preferencesLink,
 	})
 	switch {
@@ -67,7 +66,7 @@ func getSpotlightLemmaForNewsletter(c ctx.LogContext, input getSpotlightLemmaFor
 		getSpotlightLemmaForNewsletterInput: input,
 		documentIDsToExclude:                documentIDsToExclude,
 		potentialSpotlights:                 orderedListOfSpotlightRecords,
-		allowableDomains:                    allowableDomains,
+		allowableSourceIDs:                  allowableSourceIDs,
 		preferencesLink:                     preferencesLink,
 		shouldSearchNonRecentDocuments:      true,
 	})
@@ -79,7 +78,7 @@ type lookupSpotlightForAllPotentialSpotlightsInput struct {
 	potentialSpotlights            []wordsmith.LemmaID
 	shouldSearchNonRecentDocuments bool
 	preferencesLink                string
-	allowableDomains               []string
+	allowableSourceIDs             []content.SourceID
 }
 
 func lookupSpotlightForAllPotentialSpotlights(c ctx.LogContext, input lookupSpotlightForAllPotentialSpotlightsInput) (*LemmaReinforcementSpotlight, error) {
@@ -88,7 +87,7 @@ func lookupSpotlightForAllPotentialSpotlights(c ctx.LogContext, input lookupSpot
 			getDocumentsBaseInput: getDocumentsBaseInput{
 				LanguageCode:        input.userAccessor.getLanguageCode(),
 				ExcludedDocumentIDs: input.documentIDsToExclude,
-				ValidDomains:        input.allowableDomains,
+				ValidSourceIDs:      input.allowableSourceIDs,
 				MinimumReadingLevel: ptr.Int64(input.userAccessor.getReadingLevel().LowerBound),
 				MaximumReadingLevel: ptr.Int64(input.userAccessor.getReadingLevel().UpperBound),
 			},
@@ -103,7 +102,12 @@ func lookupSpotlightForAllPotentialSpotlights(c ctx.LogContext, input lookupSpot
 			description := deref.String(d.Document.LemmatizedDescription, "")
 			for _, lemmaID := range strings.Split(description, " ") {
 				if lemmaID == string(potentialSpotlight) {
-					link, err := makeLinkFromDocument(c, input.emailRecordID, input.userAccessor, d.Document)
+					link, err := makeLinkFromDocument(c, makeLinkFromDocumentInput{
+						emailRecordID:   input.emailRecordID,
+						userAccessor:    input.userAccessor,
+						contentAccessor: input.contentAccessor,
+						document:        d.Document,
+					})
 					switch {
 					case err != nil:
 						return nil, err

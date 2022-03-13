@@ -1,13 +1,12 @@
 package newsletter
 
 import (
-	"babblegraph/model/contenttopics"
+	"babblegraph/model/content"
 	"babblegraph/model/documents"
 	"babblegraph/model/email"
 	"babblegraph/model/useraccounts"
 	"babblegraph/model/userdocuments"
 	"babblegraph/model/userlemma"
-	"babblegraph/model/userlinks"
 	"babblegraph/model/usernewsletterpreferences"
 	"babblegraph/model/usernewsletterschedule"
 	"babblegraph/model/users"
@@ -31,9 +30,9 @@ type GetSampleNewsletterUserAccessorInput struct {
 	UserNewsletterPreferences *usernewsletterpreferences.UserNewsletterPreferences
 	UserNewsletterSchedule    *usernewsletterschedule.UserNewsletterSchedule
 	SentDocumentIDs           []documents.DocumentID
-	UserTopics                []contenttopics.ContentTopic
+	UserTopics                []content.TopicID
 	TrackingLemmas            []wordsmith.LemmaID
-	UserDomainCounts          []userlinks.UserDomainCount
+	AllowableSourceIDs        []content.SourceID
 	SpotlightRecords          []userlemma.UserLemmaReinforcementSpotlightRecord
 }
 
@@ -64,8 +63,8 @@ func GetSampleNewsletterUserAccessor(c ctx.LogContext, tx *sqlx.Tx, input GetSam
 	if input.TrackingLemmas != nil {
 		defaultUserPreferencesAccessor.trackingLemmas = input.TrackingLemmas
 	}
-	if input.UserDomainCounts != nil {
-		defaultUserPreferencesAccessor.userDomainCounts = input.UserDomainCounts
+	if input.AllowableSourceIDs != nil {
+		defaultUserPreferencesAccessor.allowableSourceIDs = input.AllowableSourceIDs
 	}
 	if input.SpotlightRecords != nil {
 		defaultUserPreferencesAccessor.userSpotlightRecords = input.SpotlightRecords
@@ -111,7 +110,7 @@ func (s *SampleNewsletterUserAccessor) getSentDocumentIDs() []documents.Document
 	return s.defaultUserPreferencesAccessor.getSentDocumentIDs()
 }
 
-func (s *SampleNewsletterUserAccessor) getUserTopics() []contenttopics.ContentTopic {
+func (s *SampleNewsletterUserAccessor) getUserTopics() []content.TopicID {
 	return s.defaultUserPreferencesAccessor.getUserTopics()
 }
 
@@ -119,8 +118,8 @@ func (s *SampleNewsletterUserAccessor) getTrackingLemmas() []wordsmith.LemmaID {
 	return s.defaultUserPreferencesAccessor.getTrackingLemmas()
 }
 
-func (s *SampleNewsletterUserAccessor) getUserDomainCounts() []userlinks.UserDomainCount {
-	return s.defaultUserPreferencesAccessor.getUserDomainCounts()
+func (s *SampleNewsletterUserAccessor) getAllowableSources() []content.SourceID {
+	return s.defaultUserPreferencesAccessor.getAllowableSources()
 }
 
 func (s *SampleNewsletterUserAccessor) getSpotlightRecordsOrderedBySentOn() []userlemma.UserLemmaReinforcementSpotlightRecord {

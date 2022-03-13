@@ -1,7 +1,7 @@
 package newsletter
 
 import (
-	"babblegraph/model/contenttopics"
+	"babblegraph/model/content"
 	"babblegraph/model/documents"
 	"babblegraph/model/email"
 	"babblegraph/model/useraccounts"
@@ -35,11 +35,10 @@ type userPreferencesAccessor interface {
 	getUserNewsletterSchedule() usernewsletterschedule.UserNewsletterSchedule
 	getReadingLevel() *userReadingLevel
 	getSentDocumentIDs() []documents.DocumentID
-	getUserTopics() []contenttopics.ContentTopic
+	getUserTopics() []content.TopicID
 	getTrackingLemmas() []wordsmith.LemmaID
-	getUserDomainCounts() []userlinks.UserDomainCount
+	getAllowableSources() []content.SourceID
 	getSpotlightRecordsOrderedBySentOn() []userlemma.UserLemmaReinforcementSpotlightRecord
-
 	insertDocumentForUserAndReturnID(emailRecordID email.ID, doc documents.Document) (*userdocuments.UserDocumentID, error)
 	insertSpotlightReinforcementRecord(lemmaID wordsmith.LemmaID) error
 }
@@ -56,9 +55,9 @@ type DefaultUserPreferencesAccessor struct {
 	userNewsletterSchedule    usernewsletterschedule.UserNewsletterSchedule
 	userReadingLevel          *userReadingLevel
 	sentDocumentIDs           []documents.DocumentID
-	userTopics                []contenttopics.ContentTopic
+	userTopics                []content.TopicID
 	trackingLemmas            []wordsmith.LemmaID
-	userDomainCounts          []userlinks.UserDomainCount
+	allowableSourceIDs        []content.SourceID
 	userSpotlightRecords      []userlemma.UserLemmaReinforcementSpotlightRecord
 }
 
@@ -87,7 +86,7 @@ func GetDefaultUserPreferencesAccessor(c ctx.LogContext, tx *sqlx.Tx, userID use
 	if err != nil {
 		return nil, err
 	}
-	userTopics, err := usercontenttopics.GetContentTopicsForUser(tx, userID)
+	userTopics, err := usercontenttopics.GetTopicIDsForUser(tx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +100,7 @@ func GetDefaultUserPreferencesAccessor(c ctx.LogContext, tx *sqlx.Tx, userID use
 			trackingLemmas = append(trackingLemmas, m.LemmaID)
 		}
 	}
-	userDomainCounts, err := userlinks.GetDomainCountsByCurrentAccessMonthForUser(tx, userID)
+	allowableSourceIDs, err := getAllowableSourceIDsForUser(tx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -126,7 +125,7 @@ func GetDefaultUserPreferencesAccessor(c ctx.LogContext, tx *sqlx.Tx, userID use
 		sentDocumentIDs:      sentDocumentIDs,
 		userTopics:           userTopics,
 		trackingLemmas:       trackingLemmas,
-		userDomainCounts:     userDomainCounts,
+		allowableSourceIDs:   allowableSourceIDs,
 		userSpotlightRecords: userSpotlightRecords,
 	}, nil
 }
@@ -163,7 +162,7 @@ func (d *DefaultUserPreferencesAccessor) getSentDocumentIDs() []documents.Docume
 	return d.sentDocumentIDs
 }
 
-func (d *DefaultUserPreferencesAccessor) getUserTopics() []contenttopics.ContentTopic {
+func (d *DefaultUserPreferencesAccessor) getUserTopics() []content.TopicID {
 	return d.userTopics
 }
 
@@ -171,8 +170,8 @@ func (d *DefaultUserPreferencesAccessor) getTrackingLemmas() []wordsmith.LemmaID
 	return d.trackingLemmas
 }
 
-func (d *DefaultUserPreferencesAccessor) getUserDomainCounts() []userlinks.UserDomainCount {
-	return d.userDomainCounts
+func (d *DefaultUserPreferencesAccessor) getAllowableSources() []content.SourceID {
+	return d.allowableSourceIDs
 }
 
 func (d *DefaultUserPreferencesAccessor) getSpotlightRecordsOrderedBySentOn() []userlemma.UserLemmaReinforcementSpotlightRecord {
@@ -189,4 +188,30 @@ func (d *DefaultUserPreferencesAccessor) insertSpotlightReinforcementRecord(lemm
 		LanguageCode: d.languageCode,
 		LemmaID:      lemmaID,
 	})
+}
+
+func getAllowableSourceIDsForUser(tx *sqlx.Tx, userID users.UserID) ([]content.SourceID, error) {
+	allowableSources, err := content.GetAllowableSources(tx)
+	if err != nil {
+		return nil, err
+	}
+	currentDomainCounts, err := userlinks.GetDomainCountsByCurrentAccessMonthForUser(tx, userID)
+	if err != nil {
+		return nil, err
+	}
+	countsBySourceID := make(map[content.SourceID]int64)
+	for _, c := range currentDomainCounts {
+		countsBySourceID[c.SourceID] = c.Count
+	}
+	var out []content.SourceID
+	for _, s := range allowableSources {
+		count, ok := countsBySourceID[s.ID]
+		switch {
+		case !ok,
+			s.MonthlyAccessLimit == nil,
+			count < *s.MonthlyAccessLimit:
+			out = append(out, s.ID)
+		}
+	}
+	return out, nil
 }

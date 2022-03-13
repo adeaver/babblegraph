@@ -1,7 +1,10 @@
 package newsletter
 
 import (
-	"babblegraph/model/contenttopics"
+	"babblegraph/model/content"
+	"babblegraph/model/documents"
+	"babblegraph/model/email"
+	"babblegraph/model/podcasts"
 	"babblegraph/model/routes"
 	"babblegraph/model/useraccounts"
 	"babblegraph/model/usernewsletterschedule"
@@ -26,7 +29,14 @@ func TestUserHasAccount(t *testing.T) {
 		},
 	}
 	docsAccessor := &testDocsAccessor{}
-	testNewsletter, err := CreateNewsletter(c, wordsmithAccessor, emailAccessor, userAccessor, docsAccessor)
+	testNewsletter, err := CreateNewsletter(c, CreateNewsletterInput{
+		WordsmithAccessor: wordsmithAccessor,
+		EmailAccessor:     emailAccessor,
+		UserAccessor:      userAccessor,
+		DocsAccessor:      docsAccessor,
+		PodcastAccessor:   &testPodcastAccessor{},
+		ContentAccessor:   &testContentAccessor{},
+	})
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
@@ -51,7 +61,13 @@ func TestUserDoesNotHaveAccount(t *testing.T) {
 		},
 	}
 	docsAccessor := &testDocsAccessor{}
-	testNewsletter, err := CreateNewsletter(c, wordsmithAccessor, emailAccessor, userAccessor, docsAccessor)
+	testNewsletter, err := CreateNewsletter(c, CreateNewsletterInput{
+		WordsmithAccessor: wordsmithAccessor,
+		EmailAccessor:     emailAccessor,
+		UserAccessor:      userAccessor,
+		DocsAccessor:      docsAccessor,
+		ContentAccessor:   &testContentAccessor{},
+	})
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
@@ -71,8 +87,8 @@ func TestNoSetTopicsLink(t *testing.T) {
 	userAccessor := &testUserAccessor{
 		languageCode:        wordsmith.LanguageCodeSpanish,
 		doesUserHaveAccount: true,
-		userTopics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicArt,
+		userTopics: []content.TopicID{
+			content.TopicID("topicid-art"),
 		},
 		readingLevel: &userReadingLevel{
 			LowerBound: 30,
@@ -80,7 +96,14 @@ func TestNoSetTopicsLink(t *testing.T) {
 		},
 	}
 	docsAccessor := &testDocsAccessor{}
-	testNewsletter, err := CreateNewsletter(c, wordsmithAccessor, emailAccessor, userAccessor, docsAccessor)
+	testNewsletter, err := CreateNewsletter(c, CreateNewsletterInput{
+		WordsmithAccessor: wordsmithAccessor,
+		EmailAccessor:     emailAccessor,
+		UserAccessor:      userAccessor,
+		DocsAccessor:      docsAccessor,
+		PodcastAccessor:   &testPodcastAccessor{},
+		ContentAccessor:   &testContentAccessor{},
+	})
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
@@ -100,8 +123,8 @@ func TestUserScheduleDay(t *testing.T) {
 	userAccessor := &testUserAccessor{
 		languageCode:        wordsmith.LanguageCodeSpanish,
 		doesUserHaveAccount: true,
-		userTopics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicArt,
+		userTopics: []content.TopicID{
+			content.TopicID("topicid-art"),
 		},
 		userSubscriptionLevel: useraccounts.SubscriptionLevelPremium.Ptr(),
 		userNewsletterSchedule: usernewsletterschedule.TestNewsletterSchedule{
@@ -113,7 +136,14 @@ func TestUserScheduleDay(t *testing.T) {
 		},
 	}
 	docsAccessor := &testDocsAccessor{}
-	testNewsletter, err := CreateNewsletter(c, wordsmithAccessor, emailAccessor, userAccessor, docsAccessor)
+	testNewsletter, err := CreateNewsletter(c, CreateNewsletterInput{
+		WordsmithAccessor: wordsmithAccessor,
+		EmailAccessor:     emailAccessor,
+		UserAccessor:      userAccessor,
+		DocsAccessor:      docsAccessor,
+		PodcastAccessor:   &testPodcastAccessor{},
+		ContentAccessor:   &testContentAccessor{},
+	})
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
@@ -129,8 +159,8 @@ func TestUserScheduleDayNoSubscription(t *testing.T) {
 	userAccessor := &testUserAccessor{
 		languageCode:        wordsmith.LanguageCodeSpanish,
 		doesUserHaveAccount: true,
-		userTopics: []contenttopics.ContentTopic{
-			contenttopics.ContentTopicArt,
+		userTopics: []content.TopicID{
+			content.TopicID("topicid-art"),
 		},
 		userNewsletterSchedule: usernewsletterschedule.TestNewsletterSchedule{
 			SendRequested: false,
@@ -141,11 +171,104 @@ func TestUserScheduleDayNoSubscription(t *testing.T) {
 		},
 	}
 	docsAccessor := &testDocsAccessor{}
-	testNewsletter, err := CreateNewsletter(c, wordsmithAccessor, emailAccessor, userAccessor, docsAccessor)
+	testNewsletter, err := CreateNewsletter(c, CreateNewsletterInput{
+		WordsmithAccessor: wordsmithAccessor,
+		EmailAccessor:     emailAccessor,
+		UserAccessor:      userAccessor,
+		DocsAccessor:      docsAccessor,
+		PodcastAccessor:   &testPodcastAccessor{},
+		ContentAccessor:   &testContentAccessor{},
+	})
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
 	if testNewsletter == nil {
 		t.Errorf("Expected non-null newsletter, but it was not")
+	}
+}
+
+func TestWholeNewsletterHasPodcasts(t *testing.T) {
+	c := ctx.GetDefaultLogContext()
+	wordsmithAccessor := &testWordsmithAccessor{}
+	emailAccessor := getTestEmailAccessor()
+	emailRecordID := email.NewEmailRecordID()
+	userAccessor := &testUserAccessor{
+		languageCode: wordsmith.LanguageCodeSpanish,
+		readingLevel: &userReadingLevel{
+			LowerBound: 30,
+			UpperBound: 80,
+		},
+		userTopics: []content.TopicID{
+			content.TopicID("test-art"),
+			content.TopicID("test-astronomy"),
+			content.TopicID("test-architecture"),
+			content.TopicID("test-automotive"),
+		},
+		allowableSourceIDs: []content.SourceID{
+			content.SourceID("test-source"),
+		},
+		doesUserHaveAccount:   true,
+		userSubscriptionLevel: useraccounts.SubscriptionLevelPremium.Ptr(),
+		userNewsletterSchedule: &usernewsletterschedule.TestNewsletterSchedule{
+			SendRequested: true,
+			TopicIDs: []content.TopicID{
+				content.TopicID("test-art"),
+				content.TopicID("test-astronomy"),
+				content.TopicID("test-architecture"),
+				content.TopicID("test-automotive"),
+			},
+			NumberOfDocuments: 4,
+		},
+	}
+	documentTopics := []content.TopicID{
+		content.TopicID("test-art"),
+		content.TopicID("test-astronomy"),
+		content.TopicID("test-architecture"),
+		content.TopicID("test-automotive"),
+		content.TopicID("test-culture"),
+	}
+	contentAccessor := &testContentAccessor{}
+	var docs []documents.DocumentWithScore
+	var podcasts []podcasts.Episode
+	for idx, topic := range documentTopics {
+		doc, _, err := getDefaultDocumentWithLink(c, idx, emailRecordID, contentAccessor, userAccessor, getDefaultDocumentInput{
+			Topics: []content.TopicID{topic},
+		})
+		if err != nil {
+			t.Fatalf("Error setting up test: %s", err.Error())
+		}
+		docs = append(docs, *doc)
+		podcasts = append(podcasts, getDefaultPodcast(topic))
+	}
+	podcastAccessor := &testPodcastAccessor{
+		languageCode: wordsmith.LanguageCodeSpanish,
+		validSourceIDs: []content.SourceID{
+			content.SourceID("test-source"),
+		},
+		podcastEpisodes: podcasts,
+	}
+	testNewsletter, err := CreateNewsletter(c, CreateNewsletterInput{
+		WordsmithAccessor: wordsmithAccessor,
+		EmailAccessor:     emailAccessor,
+		UserAccessor:      userAccessor,
+		DocsAccessor: &testDocsAccessor{
+			documents: docs,
+		},
+		PodcastAccessor: podcastAccessor,
+		ContentAccessor: &testContentAccessor{},
+	})
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+	if testNewsletter == nil {
+		t.Errorf("Expected non-null newsletter, but it was not")
+	}
+	if len(testNewsletter.Body.Categories) == 0 {
+		t.Errorf("Expected newsletter body with categories, but it was not")
+	}
+	for _, c := range testNewsletter.Body.Categories {
+		if len(c.PodcastLinks) != 0 {
+			t.Errorf("Error on category with name %s: expected 0 podcast, but got %d", *c.Name, len(c.PodcastLinks))
+		}
 	}
 }
