@@ -11,6 +11,8 @@ export enum Permission {
 	PodcastSearch = 'podcast-search',
 	EditAdvertisingVendors = 'edit-advertising-vendors',
 	EditAdvertisingSources = 'edit-advertising-sources',
+	ViewAdvertisingCampaigns = 'view-advertising-campaigns',
+	EditAdvertisingCampaigns = 'edit-advertising-campaigns',
 }
 
 export type ManageUserPermissionsRequest = {

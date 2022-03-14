@@ -92,15 +92,40 @@ func GetSourceTypeFromString(s string) (*AdvertisementSourceType, error) {
 type CampaignID string
 
 type dbCampaign struct {
-	CreatedAt      time.Time             `db:"created_at"`
-	LastModifiedAt time.Time             `db:"last_modified_at"`
-	ID             CampaignID            `db:"_id"`
-	VendorID       VendorID              `db:"vendor_id"`
-	Source         AdvertisementSourceID `db:"source_id"`
-	URL            string                `db:"url"`
-	IsActive       bool                  `db:"is_active"`
-	Name           string                `db:"name"`
-	ExpiresAt      *time.Time            `db:"expires_at"`
+	CreatedAt             time.Time             `db:"created_at"`
+	LastModifiedAt        time.Time             `db:"last_modified_at"`
+	ID                    CampaignID            `db:"_id"`
+	VendorID              VendorID              `db:"vendor_id"`
+	SourceID              AdvertisementSourceID `db:"source_id"`
+	URL                   string                `db:"url"`
+	IsActive              bool                  `db:"is_active"`
+	Name                  string                `db:"name"`
+	ShouldApplyToAllUsers bool                  `db:"should_apply_to_all_users"`
+	ExpiresAt             *time.Time            `db:"expires_at"`
+}
+
+func (d dbCampaign) ToNonDB() Campaign {
+	return Campaign{
+		ID:                    d.ID,
+		VendorID:              d.VendorID,
+		SourceID:              d.SourceID,
+		URL:                   d.URL,
+		IsActive:              d.IsActive,
+		ShouldApplyToAllUsers: d.ShouldApplyToAllUsers,
+		Name:                  d.Name,
+		ExpiresAt:             d.ExpiresAt,
+	}
+}
+
+type Campaign struct {
+	ID                    CampaignID            `json:"_id"`
+	VendorID              VendorID              `json:"vendor_id"`
+	SourceID              AdvertisementSourceID `json:"source_id"`
+	URL                   string                `json:"url"`
+	IsActive              bool                  `json:"is_active"`
+	ShouldApplyToAllUsers bool                  `json:"should_apply_to_all_users"`
+	Name                  string                `json:"name"`
+	ExpiresAt             *time.Time            `json:"expires_at"`
 }
 
 type CampaignTopicMappingID string

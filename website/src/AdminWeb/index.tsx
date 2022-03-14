@@ -26,6 +26,7 @@ import PodcastSearchPage from 'AdminWeb/components/ContentManager/podcasts/Podca
 
 import AdvertisingDashboard from 'AdminWeb/components/AdvertisingManagement/AdvertisingDashboard';
 import VendorsListPage from 'AdminWeb/components/AdvertisingManagement/vendors/VendorsListPage';
+import CampaignsListPage from 'AdminWeb/components/AdvertisingManagement/campaigns/CampaignListPage';
 import AdvertisingSourceListPage from 'AdminWeb/components/AdvertisingManagement/sources/SourcesListPage';
 
 class App extends React.Component{
@@ -49,6 +50,7 @@ class App extends React.Component{
 
                     <Route path="/advertising-manager/vendors" component={VendorsListPage} />
                     <Route path="/advertising-manager/sources" component={AdvertisingSourceListPage} />
+                    <Route path="/advertising-manager/campaigns" component={CampaignsListPage} />
                     <Route path="/advertising-manager" component={AdvertisingDashboard} />
 
                     <Route path="/blog-manager/edit/:blogPath" component={BlogEditPage} />
