@@ -65,7 +65,6 @@ const VendorsListPage = asBaseComponent(
                         <VendorDisplay
                             key={`vendor-display-${idx}`}
                             vendor={v}
-                            setIsLoading={props.setIsLoading}
                             onError={props.setError} />
                     ))
                 }
@@ -166,11 +165,12 @@ const AddNewVendorForm = (props: AddNewVendorFormProps) => {
 type VendorDisplayProps = {
     vendor: Vendor;
 
-    setIsLoading: (isLoading: boolean) => void;
     onError: (err: Error) => void;
 }
 
 const VendorDisplay = (props: VendorDisplayProps) => {
+    const [ isLoading, setIsLoading ] = useState<boolean>(false);
+
     const [ name, setName ] = useState<string>(props.vendor.name);
     const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setName((event.target as HTMLInputElement).value);
@@ -184,7 +184,7 @@ const VendorDisplay = (props: VendorDisplayProps) => {
     const [ isActive, setIsActive ] = useState<boolean>(props.vendor.isActive);
 
     const handleSubmit = () => {
-        props.setIsLoading(true);
+        setIsLoading(true);
         updateVendor({
             id: props.vendor.id,
             isActive: isActive,
@@ -192,10 +192,10 @@ const VendorDisplay = (props: VendorDisplayProps) => {
             name: name,
         },
         (resp: UpdateVendorResponse) => {
-            props.setIsLoading(false);
+            setIsLoading(false);
         },
         (err: Error) => {
-            props.setIsLoading(false);
+            setIsLoading(false);
             props.onError(err);
         });
     }
@@ -237,6 +237,7 @@ const VendorDisplay = (props: VendorDisplayProps) => {
                         </Grid>
                     </Grid>
                 </Form>
+                { isLoading && <LoadingSpinner /> }
             </DisplayCard>
         </Grid>
     );
