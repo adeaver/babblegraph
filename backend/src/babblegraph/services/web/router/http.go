@@ -2,11 +2,15 @@ package router
 
 import (
 	"babblegraph/util/deref"
+	"babblegraph/util/ptr"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"net/http/httputil"
+
+	"github.com/gorilla/mux"
 )
 
 type Request struct {
@@ -44,6 +48,15 @@ func (r *Request) GetJSONBody(v interface{}) error {
 
 func (r *Request) GetFile(formFileFieldName *string) (multipart.File, *multipart.FileHeader, error) {
 	return r.r.FormFile(deref.String(formFileFieldName, "file"))
+}
+
+func (r *Request) GetRouteVar(varName string) (*string, error) {
+	routeVars := mux.Vars(r.r)
+	routeVar, ok := routeVars[varName]
+	if !ok {
+		return nil, fmt.Errorf("Route var %s not found", varName)
+	}
+	return ptr.String(routeVar), nil
 }
 
 func (r *Request) GetFormValue(fieldName string) string {

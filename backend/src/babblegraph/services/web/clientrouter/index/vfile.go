@@ -4,29 +4,24 @@ import (
 	"babblegraph/model/content"
 	"babblegraph/model/podcasts"
 	"babblegraph/model/virtualfile"
+	"babblegraph/services/web/router"
 	"babblegraph/util/cache"
 	"babblegraph/util/database"
+	"babblegraph/util/ptr"
 	"fmt"
-	"net/http"
 	"time"
 
-	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
 )
 
-func HandleVirtualFile(w http.ResponseWriter, r *http.Request) {
-	routeVars := mux.Vars(r)
-	virtualFileName, ok := routeVars["fileName"]
-	if !ok {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	objectID, virtualFileType, err := virtualfile.GetObjectIDAndType(virtualFileName)
+func handleVirtualFile(r *router.Request) (interface{}, error) {
+	virtualFileName, err := r.GetRouteVar("fileName")
 	if err != nil {
-		if !ok {
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
+		return nil, err
+	}
+	objectID, virtualFileType, err := virtualfile.GetObjectIDAndType(*virtualFileName)
+	if err != nil {
+		return nil, err
 	}
 	switch *virtualFileType {
 	case virtualfile.TypePodcast:
@@ -47,10 +42,9 @@ func HandleVirtualFile(w http.ResponseWriter, r *http.Request) {
 			}
 			return episode, nil
 		}); err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			return
+			return nil, err
 		}
-		http.Redirect(w, r, episode.AudioFile.URL, http.StatusFound)
+		return ptr.String(episode.AudioFile.URL), nil
 	case virtualfile.TypePodcastImage:
 		sourceID := content.SourceID(*objectID)
 		var podcastMetadata *podcasts.PodcastMetadata
@@ -61,15 +55,13 @@ func HandleVirtualFile(w http.ResponseWriter, r *http.Request) {
 		})
 		switch {
 		case err != nil:
-			w.WriteHeader(http.StatusBadRequest)
-			return
+			return nil, err
 		case podcastMetadata.ImageURL == nil:
-			w.WriteHeader(http.StatusBadRequest)
-			return
+			return nil, fmt.Errorf("Podcast %s does not have an image url", sourceID)
 		default:
-			http.Redirect(w, r, *podcastMetadata.ImageURL, http.StatusFound)
+			return podcastMetadata.ImageURL, nil
 		}
 	default:
-		w.WriteHeader(http.StatusBadRequest)
+		return nil, fmt.Errorf("Got unsupported vfile type %s", *virtualFileType)
 	}
 }

@@ -29,6 +29,9 @@ func RegisterClientRouter(r *mux.Router) error {
 	}); err != nil {
 		return err
 	}
+	if err := router.WithIndexRouter(r, index.Routes); err != nil {
+		return err
+	}
 	return index.RegisterIndexRoutes(r, []index.IndexPage{})
 }
 

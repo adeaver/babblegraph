@@ -3,29 +3,17 @@ package index
 import (
 	"babblegraph/actions/verification"
 	"babblegraph/model/routes"
-	"babblegraph/services/web/clientrouter/middleware"
-	"net/http"
-
-	"github.com/gorilla/mux"
+	"babblegraph/services/web/router"
 )
 
-func HandleVerificationForToken(w http.ResponseWriter, r *http.Request) {
-	middleware.LogRequestWithoutBody(r)
-	routeVars := mux.Vars(r)
-	token, ok := routeVars["token"]
-	if !ok {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-	userID, err := verification.VerifyUserByToken(token)
+func handleVerification(r *router.Request) (interface{}, error) {
+	token, err := r.GetRouteVar("token")
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
+		return nil, err
 	}
-	subscriptionManagementLink, err := routes.MakeSubscriptionManagementRouteForUserID(*userID)
+	userID, err := verification.VerifyUserByToken(*token)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
+		return nil, err
 	}
-	http.Redirect(w, r, *subscriptionManagementLink, http.StatusMovedPermanently)
+	return routes.MakeSubscriptionManagementRouteForUserID(*userID)
 }
