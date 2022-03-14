@@ -23,31 +23,30 @@ const Dashboard = () => {
                 babblegraph
             </Heading1>
             <Grid container>
-                <Grid item xs={false} md={3}>
-                    &nbsp;
-                </Grid>
-                <Grid item xs={12} md={6}>
-                    <NavigationCard
-                        location="/ops/permission-manager"
-                        title="Manage Admin Permissions"
-                        description="Activate or deactivate permissions for admin users" />
-                    <NavigationCard
-                        location="/ops/user-metrics"
-                        title="View User Metrics"
-                        description="View metrics such as user counts, email usage statistics, etc." />
-                    <NavigationCard
-                        location="/ops/content-manager"
-                        title="Content Manager"
-                        description="View and edit content topics and available content sources" />
-                    <NavigationCard
-                        location="/ops/blog-manager"
-                        title="Blog Manager"
-                        description="Write, edit, delete, or promote blog posts." />
-                    <NavigationCard
-                        location="/ops/billing-manager"
-                        title="Billing Manager"
-                        description="Manage premium newsletter subscriptions" />
-                </Grid>
+                <NavigationCard
+                    location="/ops/permission-manager"
+                    title="Manage Admin Permissions"
+                    description="Activate or deactivate permissions for admin users" />
+                <NavigationCard
+                    location="/ops/user-metrics"
+                    title="View User Metrics"
+                    description="View metrics such as user counts, email usage statistics, etc." />
+                <NavigationCard
+                    location="/ops/advertising-manager"
+                    title="Advertising Manager"
+                    description="View and edit affiliate and sponsor advertisements" />
+                <NavigationCard
+                    location="/ops/content-manager"
+                    title="Content Manager"
+                    description="View and edit content topics and available content sources" />
+                <NavigationCard
+                    location="/ops/billing-manager"
+                    title="Billing Manager"
+                    description="Manage premium newsletter subscriptions" />
+                <NavigationCard
+                    location="/ops/blog-manager"
+                    title="Blog Manager"
+                    description="Write, edit, delete, or promote blog posts." />
             </Grid>
         </Page>
     );
@@ -62,14 +61,16 @@ type NavigationCardProps = {
 const NavigationCard = (props: NavigationCardProps) => {
     const classes = styleClasses();
     return (
-        <ActionCard className={classes.navigationCard} onClick={() => setLocation(props.location)}>
-            <Heading2 color={TypographyColor.Primary}>
-                { props.title }
-            </Heading2>
-            <Paragraph>
-                { props.description }
-            </Paragraph>
-        </ActionCard>
+        <Grid item xs={12} md={4}>
+            <ActionCard className={classes.navigationCard} onClick={() => setLocation(props.location)}>
+                <Heading2 color={TypographyColor.Primary}>
+                    { props.title }
+                </Heading2>
+                <Paragraph>
+                    { props.description }
+                </Paragraph>
+            </ActionCard>
+        </Grid>
     );
 }
 
