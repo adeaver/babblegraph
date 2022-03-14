@@ -9,7 +9,7 @@ import (
 const (
 	getAllVendorsQuery  = "SELECT * FROM advertising_vendors"
 	insertVendorQuery   = "INSERT INTO advertising_vendors (name, website_url, is_active) VALUES ($1, $2, $3) RETURNING _id"
-	editVendorByIDQuery = "UPDATE advertising_vendors SET name = $1, website_url = $2, is_active = $3 WEHRE _id = $4"
+	editVendorByIDQuery = "UPDATE advertising_vendors SET name = $1, website_url = $2, is_active = $3 WHERE _id = $4"
 )
 
 func GetAllVendors(tx *sqlx.Tx) ([]Vendor, error) {
