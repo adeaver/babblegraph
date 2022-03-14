@@ -21,7 +21,7 @@ import TopicManagementPage from 'AdminWeb/components/ContentManager/topics/Topic
 import SourcesListPage from 'AdminWeb/components/ContentManager/sources/SourcesListPage';
 import SourceManagementPage from 'AdminWeb/components/ContentManager/sources/SourceManagementPage';
 import PodcastSearchPage from 'AdminWeb/components/ContentManager/podcasts/PodcastSearchPage/PodcastSearchPage';
-import VendorsListPage from 'AdminWeb/components/AdvertisingManagement/VendorsListPage';
+import VendorsListPage from 'AdminWeb/components/AdvertisingManagement/vendors/VendorsListPage';
 import AdvertisingDashboard from 'AdminWeb/components/AdvertisingManagement/AdvertisingDashboard';
 
 class App extends React.Component{

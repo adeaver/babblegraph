@@ -15,6 +15,18 @@ var Routes = router.RouteGroup{
 				admin.PermissionEditAdvertisingVendors,
 				getAllVendors,
 			),
+		}, {
+			Path: "insert_vendor_1",
+			Handler: middleware.WithPermission(
+				admin.PermissionEditAdvertisingVendors,
+				insertVendor,
+			),
+		}, {
+			Path: "update_vendor_1",
+			Handler: middleware.WithPermission(
+				admin.PermissionEditAdvertisingVendors,
+				editVendor,
+			),
 		},
 	},
 }
