@@ -12,3 +12,17 @@ CREATE TABLE IF NOT EXISTS advertising_vendors(
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS advertising_vendors_website_url_unique_idx ON advertising_vendors(website_url);
+
+CREATE TABLE IF NOT EXISTS advertising_sources(
+    _id uuid DEFAULT uuid_generate_v4 (),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()),
+    last_modified_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()),
+    is_active BOOLEAN DEFAULT false,
+    name TEXT NOT NULL,
+    url TEXT NOT NULL,
+    type TEXT NOT NULL,
+
+    PRIMARY KEY(_id)
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS advertising_sources_url_unique_idx ON advertising_sources(url);

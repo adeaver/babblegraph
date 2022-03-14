@@ -1,6 +1,5 @@
 import { makePostRequestWithStandardEncoding } from 'util/bgfetch/bgfetch';
 
-
 export type Vendor = {
     id: string;
     isActive: boolean;
@@ -67,6 +66,85 @@ export function updateVendor(
 ) {
     makePostRequestWithStandardEncoding<UpdateVendorRequest, UpdateVendorResponse>(
         '/ops/api/advertising/update_vendor_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}
+
+export enum AdvertisementSourceType {
+    affiliate = 'affiliate',
+}
+
+export type AdvertisementSource = {
+    id: string;
+    name: string;
+    url: string;
+    type: AdvertisementSourceType;
+    isActive: boolean;
+}
+
+export type GetAllSourcesRequest = {}
+
+export type GetAllSourcesResponse = {
+    sources: Array<AdvertisementSource>;
+}
+
+export function getAllSources(
+    req: GetAllSourcesRequest,
+    onSuccess: (resp: GetAllSourcesResponse) => void,
+    onError: (e: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<GetAllSourcesRequest, GetAllSourcesResponse>(
+        '/ops/api/advertising/get_all_sources_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}
+
+export type InsertSourceRequest = {
+    name: string;
+    websiteUrl: string;
+    sourceType: AdvertisementSourceType,
+}
+
+export type InsertSourceResponse = {
+    id: string;
+}
+
+export function insertSource(
+    req: InsertSourceRequest,
+    onSuccess: (resp: InsertSourceResponse) => void,
+    onError: (e: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<InsertSourceRequest, InsertSourceResponse>(
+        '/ops/api/advertising/insert_source_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}
+
+export type UpdateSourceRequest = {
+    id: string;
+    name: string;
+    websiteUrl: string;
+    sourceType: AdvertisementSourceType,
+    isActive: boolean;
+}
+
+export type UpdateSourceResponse = {
+    success: boolean;
+}
+
+export function updateSource(
+    req: UpdateSourceRequest,
+    onSuccess: (resp: UpdateSourceResponse) => void,
+    onError: (e: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<UpdateSourceRequest, UpdateSourceResponse>(
+        '/ops/api/advertising/update_source_1',
         req,
         onSuccess,
         onError,

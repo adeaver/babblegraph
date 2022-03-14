@@ -10,6 +10,7 @@ export enum Permission {
 	ManageBilling = 'manage-billing',
 	PodcastSearch = 'podcast-search',
 	EditAdvertisingVendors = 'edit-advertising-vendors',
+	EditAdvertisingSources = 'edit-advertising-sources',
 }
 
 export type ManageUserPermissionsRequest = {

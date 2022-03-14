@@ -4,6 +4,8 @@ import (
 	"babblegraph/model/content"
 	"babblegraph/model/email"
 	"babblegraph/wordsmith"
+	"fmt"
+	"strings"
 	"time"
 )
 
@@ -41,8 +43,27 @@ type dbAdvertisementSource struct {
 	LastModifiedAt time.Time               `db:"last_modified_at"`
 	ID             AdvertisementSourceID   `db:"_id"`
 	Name           string                  `db:"name"`
+	URL            string                  `db:"url"`
 	Type           AdvertisementSourceType `db:"type"`
 	IsActive       bool                    `db:"is_active"`
+}
+
+func (d dbAdvertisementSource) ToNonDB() AdvertisementSource {
+	return AdvertisementSource{
+		ID:       d.ID,
+		Name:     d.Name,
+		URL:      d.URL,
+		Type:     d.Type,
+		IsActive: d.IsActive,
+	}
+}
+
+type AdvertisementSource struct {
+	ID       AdvertisementSourceID   `json:"id"`
+	Name     string                  `json:"name"`
+	URL      string                  `json:"url"`
+	Type     AdvertisementSourceType `json:"type"`
+	IsActive bool                    `json:"is_active"`
 }
 
 type AdvertisementSourceType string
@@ -50,6 +71,23 @@ type AdvertisementSourceType string
 const (
 	AdvertisementSourceTypeAffiliate AdvertisementSourceType = "affiliate"
 )
+
+func (a AdvertisementSourceType) Ptr() *AdvertisementSourceType {
+	return &a
+}
+
+func (a AdvertisementSourceType) Str() string {
+	return string(a)
+}
+
+func GetSourceTypeFromString(s string) (*AdvertisementSourceType, error) {
+	switch strings.ToLower(s) {
+	case AdvertisementSourceTypeAffiliate.Str():
+		return AdvertisementSourceTypeAffiliate.Ptr(), nil
+	default:
+		return nil, fmt.Errorf("Unsupported source type %s", s)
+	}
+}
 
 type CampaignID string
 

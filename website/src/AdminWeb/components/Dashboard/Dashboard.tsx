@@ -13,6 +13,7 @@ import { setLocation } from 'util/window/Location';
 const styleClasses = makeStyles({
     navigationCard: {
         margin: '15px',
+        height: '100%',
     }
 });
 
