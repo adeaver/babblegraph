@@ -70,7 +70,7 @@ const CampaignsListPage = asBaseComponent(
                     onError={props.setError} />
                 <Grid container>
                 {
-                    addedCampaigns.concat(props.campaigns).map((v: Campaign, idx: number) => (
+                    addedCampaigns.concat(props.campaigns || []).map((v: Campaign, idx: number) => (
                         <CampaignDisplay
                             key={`campaign-display-${idx}`}
                             campaign={v}

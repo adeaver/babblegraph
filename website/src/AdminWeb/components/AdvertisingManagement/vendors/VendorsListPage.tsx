@@ -61,7 +61,7 @@ const VendorsListPage = asBaseComponent(
                     onError={props.setError} />
                 <Grid container>
                 {
-                    addedVendors.concat(props.vendors).map((v: Vendor, idx: number) => (
+                    addedVendors.concat(props.vendors || []).map((v: Vendor, idx: number) => (
                         <VendorDisplay
                             key={`vendor-display-${idx}`}
                             vendor={v}

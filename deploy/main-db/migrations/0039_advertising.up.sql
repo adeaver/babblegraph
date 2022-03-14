@@ -36,9 +36,9 @@ CREATE TABLE IF NOT EXISTS advertising_campaigns(
     name TEXT NOT NULL,
     url TEXT NOT NULL,
     vendor_id uuid NOT NULL REFERENCES advertising_vendors(_id),
-    advertising_sources uuid NOT NULL REFERENCES advertising_sources(_id),
+    source_id uuid NOT NULL REFERENCES advertising_sources(_id),
 
-    PRIMARY KEY (_id),
+    PRIMARY KEY (_id)
 );
 
 CREATE INDEX IF NOT EXISTS advertising_campaigns_by_vendor_idx ON advertising_campaigns(vendor_id);
