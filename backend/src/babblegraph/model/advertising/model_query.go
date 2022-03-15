@@ -1,6 +1,7 @@
 package advertising
 
 import (
+	"babblegraph/model/content"
 	"babblegraph/util/urlparser"
 	"fmt"
 	"time"
@@ -45,6 +46,16 @@ const (
         expires_at = $7,
         last_modified_at = timezone('utc', now())
     WHERE _id = $8`
+
+	getCampaignTopicMappingQuery                = "SELECT * FROM advertising_campaign_topic_mappings WHERE campaign_id = $1 AND is_active = TRUE"
+	markAllCampaignTopicMappingsAsInActiveQuery = "UPDATE advertising_campaign_topic_mappings SET is_active=FALSE, last_modified_at = timezone('utc', now()) WHERE campaign_id = $1"
+	upsertCampaignTopicMappingQuery             = `INSERT INTO
+        advertising_campaign_topic_mappings (
+            campaign_id, topic_id, is_active
+        ) VALUES (
+            $1, $2, $3
+        ) ON CONFLICT (campaign_id, topic_id) DO UPDATE
+        SET last_modified_at = timezone('utc', now()), is_active = $3`
 )
 
 func GetAllVendors(tx *sqlx.Tx) ([]Vendor, error) {
@@ -186,6 +197,30 @@ type UpdateCampaignInput struct {
 func UpdateCampaign(tx *sqlx.Tx, id CampaignID, input UpdateCampaignInput) error {
 	if _, err := tx.Exec(editCampaignByIDQuery, input.VendorID, input.SourceID, input.URL.URL, input.IsActive, input.ShouldApplyToAllUsers, input.Name, input.ExpiresAt, id); err != nil {
 		return err
+	}
+	return nil
+}
+
+func GetActiveTopicMappingsForCampaignID(tx *sqlx.Tx, campaignID CampaignID) ([]content.TopicID, error) {
+	var matches []dbCampaignTopicMapping
+	if err := tx.Select(&matches, getCampaignTopicMappingQuery, campaignID); err != nil {
+		return nil, err
+	}
+	var out []content.TopicID
+	for _, m := range matches {
+		out = append(out, m.TopicID)
+	}
+	return out, nil
+}
+
+func UpsertActiveTopicMappingsForCampaignID(tx *sqlx.Tx, campaignID CampaignID, topics []content.TopicID) error {
+	if _, err := tx.Exec(markAllCampaignTopicMappingsAsInActiveQuery, campaignID); err != nil {
+		return err
+	}
+	for _, t := range topics {
+		if _, err := tx.Exec(upsertCampaignTopicMappingQuery, campaignID, t, true); err != nil {
+			return err
+		}
 	}
 	return nil
 }

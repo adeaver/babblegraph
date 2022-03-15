@@ -253,3 +253,46 @@ export function updateCampaign(
         onError,
     );
 }
+
+export type GetCampaignTopicMappingsRequest = {
+    campaignId: string;
+}
+
+export type GetCampaignTopicMappingsResponse = {
+    topicIds: string[];
+}
+
+export function getCampaignTopicMappings(
+    req: GetCampaignTopicMappingsRequest,
+    onSuccess: (resp: GetCampaignTopicMappingsResponse) => void,
+    onError: (e: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<GetCampaignTopicMappingsRequest, GetCampaignTopicMappingsResponse>(
+        '/ops/api/advertising/get_campaign_topic_mappings_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}
+
+export type UpdateCampaignTopicMappingsRequest = {
+    campaignId: string;
+    activeTopicMappings: string[];
+}
+
+export type UpdateCampaignTopicMappingsResponse = {
+    success: boolean;
+}
+
+export function updateCampaignTopicMappings(
+    req: UpdateCampaignTopicMappingsRequest,
+    onSuccess: (resp: UpdateCampaignTopicMappingsResponse) => void,
+    onError: (e: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<UpdateCampaignTopicMappingsRequest, UpdateCampaignTopicMappingsResponse>(
+        '/ops/api/advertising/update_campaign_topic_mappings_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}

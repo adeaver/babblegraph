@@ -44,3 +44,16 @@ CREATE TABLE IF NOT EXISTS advertising_campaigns(
 
 CREATE INDEX IF NOT EXISTS advertising_campaigns_by_vendor_idx ON advertising_campaigns(vendor_id);
 CREATE INDEX IF NOT EXISTS advertising_campaigns_by_source_idx ON advertising_campaigns(source_id);
+
+CREATE TABLE IF NOT EXISTS advertising_campaign_topic_mappings(
+    _id uuid DEFAULT uuid_generate_v4 (),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()),
+    last_modified_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()),
+    campaign_id uuid NOT NULL REFERENCES advertising_campaigns(_id),
+    topic_id uuid NOT NULL REFERENCES content_topic(_id),
+    is_active BOOLEAN DEFAULT false,
+
+    PRIMARY KEY(_id)
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS advertising_campaign_topic_mappings_unique_idx ON advertising_campaign_topic_mappings(campaign_id, topic_id);

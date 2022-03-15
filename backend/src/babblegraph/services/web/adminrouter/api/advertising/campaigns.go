@@ -3,6 +3,7 @@ package advertising
 import (
 	"babblegraph/model/admin"
 	"babblegraph/model/advertising"
+	"babblegraph/model/content"
 	"babblegraph/services/web/router"
 	"babblegraph/util/database"
 	"babblegraph/util/urlparser"
@@ -133,6 +134,56 @@ func updateCampaign(adminID admin.ID, r *router.Request) (interface{}, error) {
 		return nil, err
 	}
 	return updateCampaignResponse{
+		Success: true,
+	}, nil
+}
+
+type getCampaignTopicMappingsRequest struct {
+	CampaignID advertising.CampaignID `json:"campaign_id"`
+}
+
+type getCampaignTopicMappingsResponse struct {
+	TopicIDs []content.TopicID `json:"topic_ids"`
+}
+
+func getCampaignTopicMappings(adminID admin.ID, r *router.Request) (interface{}, error) {
+	var req getCampaignTopicMappingsRequest
+	if err := r.GetJSONBody(&req); err != nil {
+		return nil, err
+	}
+	var topicIDs []content.TopicID
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		var err error
+		topicIDs, err = advertising.GetActiveTopicMappingsForCampaignID(tx, req.CampaignID)
+		return err
+	}); err != nil {
+		return nil, err
+	}
+	return getCampaignTopicMappingsResponse{
+		TopicIDs: topicIDs,
+	}, nil
+}
+
+type updateCampaignTopicMappingsRequest struct {
+	CampaignID          advertising.CampaignID `json:"campaign_id"`
+	ActiveTopicMappings []content.TopicID      `json:"active_topic_mappings"`
+}
+
+type updateCampaignTopicMappingsResponse struct {
+	Success bool `json:"success"`
+}
+
+func updateCampaignTopicMappings(adminID admin.ID, r *router.Request) (interface{}, error) {
+	var req updateCampaignTopicMappingsRequest
+	if err := r.GetJSONBody(&req); err != nil {
+		return nil, err
+	}
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		return advertising.UpsertActiveTopicMappingsForCampaignID(tx, req.CampaignID, req.ActiveTopicMappings)
+	}); err != nil {
+		return nil, err
+	}
+	return updateCampaignTopicMappingsResponse{
 		Success: true,
 	}, nil
 }

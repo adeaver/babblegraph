@@ -69,6 +69,18 @@ var Routes = router.RouteGroup{
 				admin.PermissionEditAdvertisingCampaigns,
 				updateCampaign,
 			),
+		}, {
+			Path: "get_campaign_topic_mappings_1",
+			Handler: middleware.WithPermission(
+				admin.PermissionEditAdvertisingCampaigns,
+				getCampaignTopicMappings,
+			),
+		}, {
+			Path: "update_campaign_topic_mappings_1",
+			Handler: middleware.WithPermission(
+				admin.PermissionEditAdvertisingCampaigns,
+				updateCampaignTopicMappings,
+			),
 		},
 	},
 }
