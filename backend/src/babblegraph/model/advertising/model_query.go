@@ -3,6 +3,7 @@ package advertising
 import (
 	"babblegraph/model/content"
 	"babblegraph/util/urlparser"
+	"babblegraph/wordsmith"
 	"fmt"
 	"time"
 
@@ -56,6 +57,21 @@ const (
             $1, $2, $3
         ) ON CONFLICT (campaign_id, topic_id) DO UPDATE
         SET last_modified_at = timezone('utc', now()), is_active = $3`
+
+	getAllAdvertisementsForCampaignID = "SELECT * FROM advertising_advertisement WHERE campaign_id = $1"
+	insertAdvertisementQuery          = `INSERT INTO advertising_advertisements (
+        language_code, campaign_id, title, image_url, description, is_active
+    ) VALUES (
+        $1, $2, $3, $4, $5, $6
+    ) RETURNING _id`
+	editAdvertisementQuery = `UPDATE advertising_advertisements SET
+        language_code=$1,
+        title=$2,
+        image_url=$3,
+        description=$4,
+        is_active=$5
+    WHERE
+        _id = $6`
 )
 
 func GetAllVendors(tx *sqlx.Tx) ([]Vendor, error) {
@@ -221,6 +237,57 @@ func UpsertActiveTopicMappingsForCampaignID(tx *sqlx.Tx, campaignID CampaignID, 
 		if _, err := tx.Exec(upsertCampaignTopicMappingQuery, campaignID, t, true); err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+func GetAllAdvertisementsForCampaignID(tx *sqlx.Tx, campaignID CampaignID) ([]Advertisement, error) {
+	var matches []dbAdvertisement
+	if err := tx.Select(&matches, getAllAdvertisementsForCampaignID, campaignID); err != nil {
+		return nil, err
+	}
+	var out []Advertisement
+	for _, m := range matches {
+		out = append(out, m.ToNonDB())
+	}
+	return out, nil
+}
+
+type InsertNewAdvertisementInput struct {
+	LanguageCode wordsmith.LanguageCode
+	CampaignID   CampaignID
+	Title        string
+	Description  string
+	ImageURL     string
+	IsActive     bool
+}
+
+func InsertNewAdvertisement(tx *sqlx.Tx, input InsertNewAdvertisementInput) (*AdvertisementID, error) {
+	rows, err := tx.Queryx(insertAdvertisementQuery, input.LanguageCode, input.CampaignID, input.Title, input.ImageURL, input.Description, input.IsActive)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var advertisementID AdvertisementID
+	for rows.Next() {
+		if err := rows.Scan(&advertisementID); err != nil {
+			return nil, err
+		}
+	}
+	return &advertisementID, nil
+}
+
+type UpdateAdvertisementInput struct {
+	LanguageCode wordsmith.LanguageCode
+	Title        string
+	Description  string
+	ImageURL     string
+	IsActive     bool
+}
+
+func UpdateAdvertisement(tx *sqlx.Tx, id AdvertisementID, input UpdateAdvertisementInput) error {
+	if _, err := tx.Exec(editAdvertisementQuery, input.LanguageCode, input.Title, input.ImageURL, input.Description, input.IsActive, id); err != nil {
+		return err
 	}
 	return nil
 }

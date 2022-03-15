@@ -1,4 +1,5 @@
 import { makePostRequestWithStandardEncoding } from 'util/bgfetch/bgfetch';
+import { WordsmithLanguageCode } from 'common/model/language/language';
 
 export type Vendor = {
     id: string;
@@ -291,6 +292,88 @@ export function updateCampaignTopicMappings(
 ) {
     makePostRequestWithStandardEncoding<UpdateCampaignTopicMappingsRequest, UpdateCampaignTopicMappingsResponse>(
         '/ops/api/advertising/update_campaign_topic_mappings_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}
+
+export type Advertisement = {
+	id: string;
+	languageCode: WordsmithLanguageCode,
+	campaignId: string;
+    title: string;
+	imageUrl: string;
+	description: string;
+	isActive: boolean;
+}
+
+export type GetAllAdvertisementsForCampaignRequest = {
+    campaignId: string;
+}
+
+export type GetAllAdvertisementsForCampaignResponse = {
+    advertisements: Array<Advertisement>;
+}
+
+export function getAllAdvertisementsForCampaign(
+    req: GetAllAdvertisementsForCampaignRequest,
+    onSuccess: (resp: GetAllAdvertisementsForCampaignResponse) => void,
+    onError: (e: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<GetAllAdvertisementsForCampaignRequest, GetAllAdvertisementsForCampaignResponse>(
+        '/ops/api/advertising/get_all_advertisements_for_campaign_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}
+
+export type InsertAdvertisementRequest = {
+    languageCode: WordsmithLanguageCode,
+    campaignId: string;
+    title: string;
+    description: string;
+    imageUrl: string;
+}
+
+export type InsertAdvertisementResponse = {
+    id: string;
+}
+
+export function insertAdvertisement(
+    req: InsertAdvertisementRequest,
+    onSuccess: (resp: InsertAdvertisementResponse) => void,
+    onError: (e: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<InsertAdvertisementRequest, InsertAdvertisementResponse>(
+        '/ops/api/advertising/insert_advertisement_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}
+
+export type UpdateAdvertisementRequest = {
+    id: string;
+    languageCode: WordsmithLanguageCode,
+    title: string;
+    description: string;
+    imageUrl: string;
+    isActive: boolean;
+}
+
+export type UpdateAdvertisementResponse = {
+    success: boolean;
+}
+
+export function updateAdvertisement(
+    req: UpdateAdvertisementRequest,
+    onSuccess: (resp: UpdateAdvertisementResponse) => void,
+    onError: (e: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<UpdateAdvertisementRequest, UpdateAdvertisementResponse>(
+        '/ops/api/advertising/update_advertisement_1',
         req,
         onSuccess,
         onError,

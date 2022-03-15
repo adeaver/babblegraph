@@ -19,6 +19,8 @@ import DisplayCard from 'common/components/DisplayCard/DisplayCard';
 import DisplayCardHeader from 'common/components/DisplayCard/DisplayCardHeader';
 
 import {
+    Advertisement,
+
     GetCampaignResponse,
     getCampaign,
 
@@ -44,6 +46,7 @@ import {
 import { asBaseComponent, BaseComponentProps } from 'common/base/BaseComponent';
 
 import EditCampaignForm from './EditCampaignForm';
+import EditAdvertisementForm from './EditAdvertisementForm';
 
 const styleClasses = makeStyles({
     formComponent: {
@@ -70,6 +73,10 @@ type CampaignsEditPageAPIProps = GetCampaignResponse & GetAllSourcesResponse & G
 
 const CampaignEditPage = asBaseComponent<CampaignsEditPageAPIProps, CampaignEditPageProps>(
     (props: CampaignsEditPageAPIProps & CampaignEditPageProps & BaseComponentProps) => {
+        const handleNewAdvertisement = (ad: Advertisement) => {
+
+        }
+
         return (
             <CenteredComponent>
                 <DisplayCard>
@@ -82,6 +89,13 @@ const CampaignEditPage = asBaseComponent<CampaignsEditPageAPIProps, CampaignEdit
                         vendors={props.vendors}
                         onError={props.setError} />
                     <TopicMappingEditForm campaignID={props.campaign.id} />
+                    <Heading3 color={TypographyColor.Primary}>
+                        Add a new advertisement in this campaign
+                    </Heading3>
+                    <EditAdvertisementForm
+                        campaignID={props.campaign.id}
+                        handleNewAdvertisement={handleNewAdvertisement}
+                        onError={props.setError} />
                 </DisplayCard>
             </CenteredComponent>
         )

@@ -153,6 +153,28 @@ type dbAdvertisement struct {
 	IsActive       bool                   `db:"is_active"`
 }
 
+func (d dbAdvertisement) ToNonDB() Advertisement {
+	return Advertisement{
+		ID:           d.ID,
+		LanguageCode: d.LanguageCode,
+		CampaignID:   d.CampaignID,
+		Title:        d.Title,
+		ImageURL:     d.ImageURL,
+		Description:  d.Description,
+		IsActive:     d.IsActive,
+	}
+}
+
+type Advertisement struct {
+	ID           AdvertisementID        `json:"id"`
+	LanguageCode wordsmith.LanguageCode `json:"language_code"`
+	CampaignID   CampaignID             `json:"campaign_id"`
+	Title        string                 `json:"title"`
+	ImageURL     string                 `json:"image_url"`
+	Description  string                 `json:"description"`
+	IsActive     bool                   `json:"is_active"`
+}
+
 type UserAdvertisementID string
 
 type dbUserAdvertisement struct {
