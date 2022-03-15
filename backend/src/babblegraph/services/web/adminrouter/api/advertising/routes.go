@@ -52,6 +52,12 @@ var Routes = router.RouteGroup{
 				getAllCampaigns,
 			),
 		}, {
+			Path: "get_campaign_1",
+			Handler: middleware.WithPermission(
+				admin.PermissionViewAdvertisingCampaigns,
+				getCampaign,
+			),
+		}, {
 			Path: "insert_campaign_1",
 			Handler: middleware.WithPermission(
 				admin.PermissionEditAdvertisingCampaigns,
@@ -61,7 +67,7 @@ var Routes = router.RouteGroup{
 			Path: "update_campaign_1",
 			Handler: middleware.WithPermission(
 				admin.PermissionEditAdvertisingCampaigns,
-				insertCampaign,
+				updateCampaign,
 			),
 		},
 	},

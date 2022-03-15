@@ -184,7 +184,7 @@ type UpdateCampaignInput struct {
 }
 
 func UpdateCampaign(tx *sqlx.Tx, id CampaignID, input UpdateCampaignInput) error {
-	if _, err := tx.Exec(editCampaignByIDQuery, input.VendorID, input.SourceID, input.URL.URL, input.IsActive, input.Name, input.ShouldApplyToAllUsers, input.ExpiresAt); err != nil {
+	if _, err := tx.Exec(editCampaignByIDQuery, input.VendorID, input.SourceID, input.URL.URL, input.IsActive, input.ShouldApplyToAllUsers, input.Name, input.ExpiresAt, id); err != nil {
 		return err
 	}
 	return nil

@@ -37,6 +37,7 @@ CREATE TABLE IF NOT EXISTS advertising_campaigns(
     url TEXT NOT NULL,
     vendor_id uuid NOT NULL REFERENCES advertising_vendors(_id),
     source_id uuid NOT NULL REFERENCES advertising_sources(_id),
+    expires_at TIMESTAMP WITH TIME ZONE,
 
     PRIMARY KEY (_id)
 );

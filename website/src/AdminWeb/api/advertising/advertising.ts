@@ -162,6 +162,27 @@ export type Campaign = {
 	expiresAt: Date | undefined;
 }
 
+export type GetCampaignRequest = {
+    id: string;
+}
+
+export type GetCampaignResponse = {
+    campaign: Campaign;
+}
+
+export function getCampaign(
+    req: GetCampaignRequest,
+    onSuccess: (resp: GetCampaignResponse) => void,
+    onError: (e: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<GetCampaignRequest, GetCampaignResponse>(
+        '/ops/api/advertising/get_campaign_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}
+
 export type GetAllCampaignsRequest = {}
 
 export type GetAllCampaignsResponse = {

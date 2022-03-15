@@ -11,6 +11,32 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+type getCampaignRequest struct {
+	ID advertising.CampaignID `json:"id"`
+}
+
+type getCampaignResponse struct {
+	Campaign advertising.Campaign `json:"campaign"`
+}
+
+func getCampaign(adminID admin.ID, r *router.Request) (interface{}, error) {
+	var req getCampaignRequest
+	if err := r.GetJSONBody(&req); err != nil {
+		return nil, err
+	}
+	var campaign *advertising.Campaign
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		var err error
+		campaign, err = advertising.GetCampaignByID(tx, req.ID)
+		return err
+	}); err != nil {
+		return nil, err
+	}
+	return getCampaignResponse{
+		Campaign: *campaign,
+	}, nil
+}
+
 type getAllCampaignsRequest struct{}
 
 type getAllCampaignsResponse struct {

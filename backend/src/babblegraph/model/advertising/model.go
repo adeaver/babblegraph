@@ -118,7 +118,7 @@ func (d dbCampaign) ToNonDB() Campaign {
 }
 
 type Campaign struct {
-	ID                    CampaignID            `json:"_id"`
+	ID                    CampaignID            `json:"id"`
 	VendorID              VendorID              `json:"vendor_id"`
 	SourceID              AdvertisementSourceID `json:"source_id"`
 	URL                   string                `json:"url"`
