@@ -338,6 +338,9 @@ func TestUserAdvertisementIneligible(t *testing.T) {
 			LowerBound: 30,
 			UpperBound: 80,
 		},
+		userNewsletterSchedule: usernewsletterschedule.TestNewsletterSchedule{
+			SendRequested: false,
+		},
 	}
 	docsAccessor := &testDocsAccessor{}
 	testNewsletter, err := CreateNewsletter(c, CreateNewsletterInput{
@@ -387,6 +390,9 @@ func TestUserSubscriptionHasNoAdvertisement(t *testing.T) {
 			LowerBound: 30,
 			UpperBound: 80,
 		},
+		userNewsletterSchedule: usernewsletterschedule.TestNewsletterSchedule{
+			SendRequested: false,
+		},
 	}
 	docsAccessor := &testDocsAccessor{}
 	testNewsletter, err := CreateNewsletter(c, CreateNewsletterInput{
@@ -434,6 +440,9 @@ func TestNoAdvertisementIsOkay(t *testing.T) {
 		readingLevel: &userReadingLevel{
 			LowerBound: 30,
 			UpperBound: 80,
+		},
+		userNewsletterSchedule: usernewsletterschedule.TestNewsletterSchedule{
+			SendRequested: false,
 		},
 	}
 	docsAccessor := &testDocsAccessor{}
