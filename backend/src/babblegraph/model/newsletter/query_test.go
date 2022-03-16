@@ -1,6 +1,7 @@
 package newsletter
 
 import (
+	"babblegraph/model/advertising"
 	"babblegraph/model/content"
 	"babblegraph/model/documents"
 	"babblegraph/model/email"
@@ -30,12 +31,13 @@ func TestUserHasAccount(t *testing.T) {
 	}
 	docsAccessor := &testDocsAccessor{}
 	testNewsletter, err := CreateNewsletter(c, CreateNewsletterInput{
-		WordsmithAccessor: wordsmithAccessor,
-		EmailAccessor:     emailAccessor,
-		UserAccessor:      userAccessor,
-		DocsAccessor:      docsAccessor,
-		PodcastAccessor:   &testPodcastAccessor{},
-		ContentAccessor:   &testContentAccessor{},
+		WordsmithAccessor:     wordsmithAccessor,
+		EmailAccessor:         emailAccessor,
+		UserAccessor:          userAccessor,
+		DocsAccessor:          docsAccessor,
+		PodcastAccessor:       &testPodcastAccessor{},
+		ContentAccessor:       &testContentAccessor{},
+		AdvertisementAccessor: &testAdvertisementAccessor{},
 	})
 	if err != nil {
 		t.Fatalf(err.Error())
@@ -62,11 +64,12 @@ func TestUserDoesNotHaveAccount(t *testing.T) {
 	}
 	docsAccessor := &testDocsAccessor{}
 	testNewsletter, err := CreateNewsletter(c, CreateNewsletterInput{
-		WordsmithAccessor: wordsmithAccessor,
-		EmailAccessor:     emailAccessor,
-		UserAccessor:      userAccessor,
-		DocsAccessor:      docsAccessor,
-		ContentAccessor:   &testContentAccessor{},
+		WordsmithAccessor:     wordsmithAccessor,
+		EmailAccessor:         emailAccessor,
+		UserAccessor:          userAccessor,
+		DocsAccessor:          docsAccessor,
+		ContentAccessor:       &testContentAccessor{},
+		AdvertisementAccessor: &testAdvertisementAccessor{},
 	})
 	if err != nil {
 		t.Fatalf(err.Error())
@@ -97,12 +100,13 @@ func TestNoSetTopicsLink(t *testing.T) {
 	}
 	docsAccessor := &testDocsAccessor{}
 	testNewsletter, err := CreateNewsletter(c, CreateNewsletterInput{
-		WordsmithAccessor: wordsmithAccessor,
-		EmailAccessor:     emailAccessor,
-		UserAccessor:      userAccessor,
-		DocsAccessor:      docsAccessor,
-		PodcastAccessor:   &testPodcastAccessor{},
-		ContentAccessor:   &testContentAccessor{},
+		WordsmithAccessor:     wordsmithAccessor,
+		EmailAccessor:         emailAccessor,
+		UserAccessor:          userAccessor,
+		DocsAccessor:          docsAccessor,
+		PodcastAccessor:       &testPodcastAccessor{},
+		ContentAccessor:       &testContentAccessor{},
+		AdvertisementAccessor: &testAdvertisementAccessor{},
 	})
 	if err != nil {
 		t.Fatalf(err.Error())
@@ -137,12 +141,13 @@ func TestUserScheduleDay(t *testing.T) {
 	}
 	docsAccessor := &testDocsAccessor{}
 	testNewsletter, err := CreateNewsletter(c, CreateNewsletterInput{
-		WordsmithAccessor: wordsmithAccessor,
-		EmailAccessor:     emailAccessor,
-		UserAccessor:      userAccessor,
-		DocsAccessor:      docsAccessor,
-		PodcastAccessor:   &testPodcastAccessor{},
-		ContentAccessor:   &testContentAccessor{},
+		WordsmithAccessor:     wordsmithAccessor,
+		EmailAccessor:         emailAccessor,
+		UserAccessor:          userAccessor,
+		DocsAccessor:          docsAccessor,
+		PodcastAccessor:       &testPodcastAccessor{},
+		ContentAccessor:       &testContentAccessor{},
+		AdvertisementAccessor: &testAdvertisementAccessor{},
 	})
 	if err != nil {
 		t.Fatalf(err.Error())
@@ -172,12 +177,13 @@ func TestUserScheduleDayNoSubscription(t *testing.T) {
 	}
 	docsAccessor := &testDocsAccessor{}
 	testNewsletter, err := CreateNewsletter(c, CreateNewsletterInput{
-		WordsmithAccessor: wordsmithAccessor,
-		EmailAccessor:     emailAccessor,
-		UserAccessor:      userAccessor,
-		DocsAccessor:      docsAccessor,
-		PodcastAccessor:   &testPodcastAccessor{},
-		ContentAccessor:   &testContentAccessor{},
+		WordsmithAccessor:     wordsmithAccessor,
+		EmailAccessor:         emailAccessor,
+		UserAccessor:          userAccessor,
+		DocsAccessor:          docsAccessor,
+		PodcastAccessor:       &testPodcastAccessor{},
+		ContentAccessor:       &testContentAccessor{},
+		AdvertisementAccessor: &testAdvertisementAccessor{},
 	})
 	if err != nil {
 		t.Fatalf(err.Error())
@@ -254,8 +260,9 @@ func TestWholeNewsletterHasPodcasts(t *testing.T) {
 		DocsAccessor: &testDocsAccessor{
 			documents: docs,
 		},
-		PodcastAccessor: podcastAccessor,
-		ContentAccessor: &testContentAccessor{},
+		PodcastAccessor:       podcastAccessor,
+		ContentAccessor:       &testContentAccessor{},
+		AdvertisementAccessor: &testAdvertisementAccessor{},
 	})
 	if err != nil {
 		t.Fatalf(err.Error())
@@ -270,5 +277,188 @@ func TestWholeNewsletterHasPodcasts(t *testing.T) {
 		if len(c.PodcastLinks) != 0 {
 			t.Errorf("Error on category with name %s: expected 0 podcast, but got %d", *c.Name, len(c.PodcastLinks))
 		}
+	}
+}
+
+func TestUserShouldShowAdvertisement(t *testing.T) {
+	c := ctx.GetDefaultLogContext()
+	wordsmithAccessor := &testWordsmithAccessor{}
+	emailAccessor := getTestEmailAccessor()
+	userAccessor := &testUserAccessor{
+		languageCode: wordsmith.LanguageCodeSpanish,
+		readingLevel: &userReadingLevel{
+			LowerBound: 30,
+			UpperBound: 80,
+		},
+	}
+	docsAccessor := &testDocsAccessor{}
+	testNewsletter, err := CreateNewsletter(c, CreateNewsletterInput{
+		WordsmithAccessor: wordsmithAccessor,
+		EmailAccessor:     emailAccessor,
+		UserAccessor:      userAccessor,
+		DocsAccessor:      docsAccessor,
+		ContentAccessor:   &testContentAccessor{},
+		AdvertisementAccessor: &testAdvertisementAccessor{
+			isUserEligibleForAdvertisement: true,
+			advertisements: []advertising.Advertisement{
+				{
+					ID:           advertising.AdvertisementID("test-advertisement"),
+					LanguageCode: wordsmith.LanguageCodeSpanish,
+					CampaignID:   advertising.CampaignID("test-campaign"),
+					Title:        "An Advertisement",
+					ImageURL:     "www.babblegraph.com/test-image",
+					Description:  "This is a description of an advertisement",
+					IsActive:     true,
+				},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+	body := testNewsletter.Body
+	if body.SetTopicsLink == nil || !strings.Contains(*body.SetTopicsLink, "/manage/") {
+		t.Errorf("Error on set topics link. Expected it to contain /manage/ but got, but got %v", body.SetTopicsLink)
+	}
+	if !strings.Contains(body.ReinforcementLink, "/manage/") {
+		t.Errorf("Error on set topics link. Expected it to contain /manage/ but got, but got %s", body.ReinforcementLink)
+	}
+	if body.Advertisement == nil {
+		t.Errorf("Expected an advertisement, but there was none")
+	}
+}
+
+func TestUserAdvertisementIneligible(t *testing.T) {
+	c := ctx.GetDefaultLogContext()
+	wordsmithAccessor := &testWordsmithAccessor{}
+	emailAccessor := getTestEmailAccessor()
+	userAccessor := &testUserAccessor{
+		languageCode: wordsmith.LanguageCodeSpanish,
+		readingLevel: &userReadingLevel{
+			LowerBound: 30,
+			UpperBound: 80,
+		},
+	}
+	docsAccessor := &testDocsAccessor{}
+	testNewsletter, err := CreateNewsletter(c, CreateNewsletterInput{
+		WordsmithAccessor: wordsmithAccessor,
+		EmailAccessor:     emailAccessor,
+		UserAccessor:      userAccessor,
+		DocsAccessor:      docsAccessor,
+		ContentAccessor:   &testContentAccessor{},
+		AdvertisementAccessor: &testAdvertisementAccessor{
+			isUserEligibleForAdvertisement: false,
+			advertisements: []advertising.Advertisement{
+				{
+					ID:           advertising.AdvertisementID("test-advertisement"),
+					LanguageCode: wordsmith.LanguageCodeSpanish,
+					CampaignID:   advertising.CampaignID("test-campaign"),
+					Title:        "An Advertisement",
+					ImageURL:     "www.babblegraph.com/test-image",
+					Description:  "This is a description of an advertisement",
+					IsActive:     true,
+				},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+	body := testNewsletter.Body
+	if body.SetTopicsLink == nil || !strings.Contains(*body.SetTopicsLink, "/manage/") {
+		t.Errorf("Error on set topics link. Expected it to contain /manage/ but got, but got %v", body.SetTopicsLink)
+	}
+	if !strings.Contains(body.ReinforcementLink, "/manage/") {
+		t.Errorf("Error on set topics link. Expected it to contain /manage/ but got, but got %s", body.ReinforcementLink)
+	}
+	if body.Advertisement != nil {
+		t.Errorf("Expected no advertisement, but there was one")
+	}
+}
+
+func TestUserSubscriptionHasNoAdvertisement(t *testing.T) {
+	c := ctx.GetDefaultLogContext()
+	wordsmithAccessor := &testWordsmithAccessor{}
+	emailAccessor := getTestEmailAccessor()
+	userAccessor := &testUserAccessor{
+		userSubscriptionLevel: useraccounts.SubscriptionLevelPremium.Ptr(),
+		languageCode:          wordsmith.LanguageCodeSpanish,
+		readingLevel: &userReadingLevel{
+			LowerBound: 30,
+			UpperBound: 80,
+		},
+	}
+	docsAccessor := &testDocsAccessor{}
+	testNewsletter, err := CreateNewsletter(c, CreateNewsletterInput{
+		WordsmithAccessor: wordsmithAccessor,
+		EmailAccessor:     emailAccessor,
+		UserAccessor:      userAccessor,
+		DocsAccessor:      docsAccessor,
+		ContentAccessor:   &testContentAccessor{},
+		AdvertisementAccessor: &testAdvertisementAccessor{
+			isUserEligibleForAdvertisement: true,
+			advertisements: []advertising.Advertisement{
+				{
+					ID:           advertising.AdvertisementID("test-advertisement"),
+					LanguageCode: wordsmith.LanguageCodeSpanish,
+					CampaignID:   advertising.CampaignID("test-campaign"),
+					Title:        "An Advertisement",
+					ImageURL:     "www.babblegraph.com/test-image",
+					Description:  "This is a description of an advertisement",
+					IsActive:     true,
+				},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+	body := testNewsletter.Body
+	if body.SetTopicsLink == nil || !strings.Contains(*body.SetTopicsLink, "/manage/") {
+		t.Errorf("Error on set topics link. Expected it to contain /manage/ but got, but got %v", body.SetTopicsLink)
+	}
+	if !strings.Contains(body.ReinforcementLink, "/manage/") {
+		t.Errorf("Error on set topics link. Expected it to contain /manage/ but got, but got %s", body.ReinforcementLink)
+	}
+	if body.Advertisement != nil {
+		t.Errorf("Expected no advertisement, but there was one")
+	}
+}
+
+func TestNoAdvertisementIsOkay(t *testing.T) {
+	c := ctx.GetDefaultLogContext()
+	wordsmithAccessor := &testWordsmithAccessor{}
+	emailAccessor := getTestEmailAccessor()
+	userAccessor := &testUserAccessor{
+		languageCode: wordsmith.LanguageCodeSpanish,
+		readingLevel: &userReadingLevel{
+			LowerBound: 30,
+			UpperBound: 80,
+		},
+	}
+	docsAccessor := &testDocsAccessor{}
+	testNewsletter, err := CreateNewsletter(c, CreateNewsletterInput{
+		WordsmithAccessor: wordsmithAccessor,
+		EmailAccessor:     emailAccessor,
+		UserAccessor:      userAccessor,
+		DocsAccessor:      docsAccessor,
+		ContentAccessor:   &testContentAccessor{},
+		AdvertisementAccessor: &testAdvertisementAccessor{
+			isUserEligibleForAdvertisement: true,
+			advertisements:                 []advertising.Advertisement{},
+		},
+	})
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+	body := testNewsletter.Body
+	if body.SetTopicsLink == nil || !strings.Contains(*body.SetTopicsLink, "/manage/") {
+		t.Errorf("Error on set topics link. Expected it to contain /manage/ but got, but got %v", body.SetTopicsLink)
+	}
+	if !strings.Contains(body.ReinforcementLink, "/manage/") {
+		t.Errorf("Error on set topics link. Expected it to contain /manage/ but got, but got %s", body.ReinforcementLink)
+	}
+	if body.Advertisement != nil {
+		t.Errorf("Expected no advertisement, but there was one")
 	}
 }

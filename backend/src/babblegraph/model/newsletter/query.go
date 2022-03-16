@@ -23,12 +23,13 @@ const (
 )
 
 type CreateNewsletterInput struct {
-	WordsmithAccessor wordsmithAccessor
-	EmailAccessor     emailAccessor
-	UserAccessor      userPreferencesAccessor
-	DocsAccessor      documentAccessor
-	PodcastAccessor   podcastAccessor
-	ContentAccessor   contentAccessor
+	WordsmithAccessor     wordsmithAccessor
+	EmailAccessor         emailAccessor
+	UserAccessor          userPreferencesAccessor
+	DocsAccessor          documentAccessor
+	PodcastAccessor       podcastAccessor
+	ContentAccessor       contentAccessor
+	AdvertisementAccessor advertisementAccessor
 }
 
 func CreateNewsletter(c ctx.LogContext, input CreateNewsletterInput) (*Newsletter, error) {
@@ -104,6 +105,19 @@ func CreateNewsletter(c ctx.LogContext, input CreateNewsletterInput) (*Newslette
 	if err != nil {
 		return nil, err
 	}
+	var advertisement *NewsletterAdvertisement
+	switch {
+	case userSubscriptionLevel == nil:
+		advertisement, err = lookupAdvertisement(c, emailRecordID, input.UserAccessor, input.AdvertisementAccessor)
+		if err != nil {
+			return nil, err
+		}
+	case *userSubscriptionLevel == useraccounts.SubscriptionLevelBetaPremium,
+		*userSubscriptionLevel == useraccounts.SubscriptionLevelPremium:
+		// no-op
+	default:
+		return nil, fmt.Errorf("Unrecognized subscription level: %s", *userSubscriptionLevel)
+	}
 	return &Newsletter{
 		UserID:        input.UserAccessor.getUserID(),
 		EmailRecordID: emailRecordID,
@@ -114,6 +128,7 @@ func CreateNewsletter(c ctx.LogContext, input CreateNewsletterInput) (*Newslette
 			SetTopicsLink:               setTopicsLink,
 			ReinforcementLink:           *reinforcementLink,
 			PreferencesLink:             preferencesLink,
+			Advertisement:               advertisement,
 		},
 	}, nil
 }

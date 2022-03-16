@@ -4,6 +4,7 @@ import (
 	"babblegraph/model/content"
 	"babblegraph/model/email"
 	"babblegraph/model/users"
+	"babblegraph/util/env"
 	"babblegraph/wordsmith"
 	"fmt"
 	"strings"
@@ -177,6 +178,10 @@ type Advertisement struct {
 }
 
 type UserAdvertisementID string
+
+func (u UserAdvertisementID) GetAdvertisementURL() string {
+	return env.GetAbsoluteURLForEnvironment(fmt.Sprintf("link/%s", u))
+}
 
 type dbUserAdvertisement struct {
 	CreatedAt       time.Time           `db:"created_at"`
