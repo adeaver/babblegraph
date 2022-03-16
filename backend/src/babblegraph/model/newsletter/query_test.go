@@ -390,7 +390,7 @@ func TestUserAdvertisementIneligible(t *testing.T) {
 			UpperBound: 80,
 		},
 		userNewsletterSchedule: usernewsletterschedule.TestNewsletterSchedule{
-			SendRequested: false,
+			SendRequested: true,
 		},
 		userCreatedDate: time.Now().Add(-180 * 24 * time.Hour),
 	}
@@ -443,7 +443,7 @@ func TestUserSubscriptionHasNoAdvertisement(t *testing.T) {
 			UpperBound: 80,
 		},
 		userNewsletterSchedule: usernewsletterschedule.TestNewsletterSchedule{
-			SendRequested: false,
+			SendRequested: true,
 		},
 		userCreatedDate: time.Now().Add(-180 * 24 * time.Hour),
 	}
@@ -495,7 +495,7 @@ func TestNoAdvertisementIsOkay(t *testing.T) {
 			UpperBound: 80,
 		},
 		userNewsletterSchedule: usernewsletterschedule.TestNewsletterSchedule{
-			SendRequested: false,
+			SendRequested: true,
 		},
 		userCreatedDate: time.Now().Add(-180 * 24 * time.Hour),
 	}
