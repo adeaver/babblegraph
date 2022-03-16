@@ -3,6 +3,7 @@ package advertising
 import (
 	"babblegraph/model/content"
 	"babblegraph/model/email"
+	"babblegraph/model/users"
 	"babblegraph/wordsmith"
 	"fmt"
 	"strings"
@@ -181,6 +182,7 @@ type dbUserAdvertisement struct {
 	CreatedAt       time.Time           `db:"created_at"`
 	LastModifiedAt  time.Time           `db:"last_modified_at"`
 	ID              UserAdvertisementID `db:"_id"`
+	UserID          users.UserID        `db:"user_id"`
 	AdvertisementID AdvertisementID     `db:"advertisement_id"`
 	CampaignID      CampaignID          `db:"campaign_id"`
 	EmailRecordID   email.ID            `db:"email_record_id"`

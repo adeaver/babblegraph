@@ -34,5 +34,12 @@ var Routes = []router.IndexRoute{
 		Handler: routermiddleware.WithNoBodyRequestLogger(
 			handleVerification,
 		),
+	}, {
+		Path: router.IndexPath{
+			Text: "/link/{token}",
+		},
+		Handler: routermiddleware.WithNoBodyRequestLogger(
+			handleAdClick,
+		),
 	},
 }

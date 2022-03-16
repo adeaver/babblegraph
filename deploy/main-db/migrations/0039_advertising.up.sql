@@ -73,3 +73,26 @@ CREATE TABLE IF NOT EXISTS advertising_advertisements(
 );
 
 CREATE INDEX IF NOT EXISTS advertising_advertisement_campaign_id_idx ON advertising_advertisement(campaign_id);
+
+CREATE TABLE IF NOT EXISTS advertising_user_advertisements(
+    _id uuid DEFAULT uuid_generate_v4 (),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()),
+    last_modified_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()),
+    campaign_id uuid NOT NULL REFERENCES advertising_campaigns(_id),
+    user_id uuid NOT NULL REFERENCES users(_id),
+    advertisement_id uuid NOT NULL REFERENCES advertising_advertisements(_id),
+    email_record_id TEXT NOT NULL REFERENCES email_records(_id),
+
+    PRIMARY KEY (_id)
+);
+
+CREATE INDEX IF NOT EXISTS advertising_user_advertisements_user_idx ON advertising_user_advertisements(user_id);
+
+CREATE TABLE IF NOT EXISTS advertising_advertisement_clicks(
+    _id uuid DEFAULT uuid_generate_v4 (),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()),
+    last_modified_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()),
+    user_advertisement_id uuid NOT NULL REFERENCES advertising_user_advertisements(_id),
+
+    PRIMARY KEY (_id)
+);
