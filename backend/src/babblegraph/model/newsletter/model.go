@@ -64,8 +64,10 @@ type Domain struct {
 }
 
 type NewsletterAdvertisement struct {
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	ImageURL    string `json:"image_url"`
-	URL         string `json:"url"`
+	Title                   string `json:"title"`
+	Description             string `json:"description"`
+	ImageURL                string `json:"image_url"`
+	URL                     string `json:"url"`
+	PremiumLink             string `json:"premium_link"`
+	AdvertisementPolicyLink string `json:"advertisement_policy_link"`
 }

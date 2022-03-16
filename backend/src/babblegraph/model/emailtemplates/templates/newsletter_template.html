@@ -262,6 +262,38 @@
                                 {{end}}
                           </tbody>
                         </table>
+                        {{ if .Body.Advertisement }}
+                        <table border="0" cellpadding="0" cellspacing="0" style="border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt; width: 100%; box-sizing: border-box; border: solid 3px #A663CC; border-radius: 5px; padding: 10px; margin: 10px 0;">
+                          <tbody>
+                            <tr>
+                              <td align="center" style="font-family: sans-serif; font-size: 14px; vertical-align: top; padding-bottom: 15px;">
+                                <table border="0" cellpadding="0" cellspacing="0" style="border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt; width: auto;">
+                                  <tbody>
+                                    <tr>
+                                      <td style="font-family: sans-serif; font-size: 14px; vertical-align: top; text-align: center;">
+                                        <h3 style="color: #A663CC; cursor: pointer; text-decoration: none; font-size: 18px; font-weight: bold; margin: 0; padding: 12px 25px; text-transform: capitalize;">
+                                            Algo que nos gusta
+                                        </h3>
+                                        <a href="{{.Body.Advertisement.URL}}" target="_blank" style="display: inline-block; cursor: pointer; text-decoration: none; margin: 0;">
+                                            <img src="{{.Body.Advertisement.ImageURL}}" style="width: 100%; height: auto; border: 0;" alt="" border="0" width="100%" height="auto" />
+                                        </a>
+                                        <a href="{{.Body.Advertisement.URL}}" target="_blank" style="display: inline-block; color: #A663CC; cursor: pointer; text-decoration: none; font-size: 14px; font-weight: bold; margin: 0; padding: 12px 25px; text-transform: capitalize;">{{ .Body.Advertisement.Title }}</a>
+                                        <p style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; Margin-bottom: 15px;">{{.Body.Advertisement.Description}}</p>
+                                        <p style="font-family: sans-serif; font-size: 12px; font-weight: normal; margin: 0; Margin-bottom: 15px;">
+                                            Asociarnos con excelentes productos y marcas permite que Babblegraph siga funcionando. Podemos ganar una comisión si compra algo a través de uno de estos enlaces. Puede obtener más información sobre anuncios como estos <a href="{{.Body.Advertisement.AdvertisementPolicyLink}}" style="color: #20A4F3; cursor: pointer; text-decoration: none; font-size: 14px; font-weight: normal;">aquí</a>.
+                                        </p>
+                                        <p style="font-family: sans-serif; font-size: 12px; font-weight: normal; margin: 0; Margin-bottom: 15px;">
+                                            Si desea apoyar a Babblegraph sin anuncios, obtenga más información sobre <a href="{{.Body.Advertisement.PremiumLink}}" style="color: #20A4F3; cursor: pointer; text-decoration: none; font-size: 14px; font-weight: normal;">Babblegraph Premium aquí</a>.
+                                        </p>
+                                      </td>
+                                    </tr>
+                                  </tbody>
+                                </table>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                        {{ end}}
                         {{ if .Body.SetTopicsLink }}
                         <table border="0" cellpadding="0" cellspacing="0" style="border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt; width: 100%; box-sizing: border-box; border: solid 3px #B8D0EB; border-radius: 5px; padding: 10px; margin: 10px 0;">
                           <tbody>
