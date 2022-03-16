@@ -11,6 +11,8 @@ import (
 	"time"
 )
 
+const MinimumUserAccountAge = 60 * 24 * time.Hour
+
 type VendorID string
 
 type dbVendor struct {

@@ -8,12 +8,13 @@ import (
 	"babblegraph/util/ctx"
 	"babblegraph/util/ptr"
 	"babblegraph/wordsmith"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 )
 
 func lookupAdvertisement(c ctx.LogContext, emailRecordID email.ID, userAccessor userPreferencesAccessor, advertisementAccessor advertisementAccessor) (*NewsletterAdvertisement, error) {
-	if !advertisementAccessor.IsEligibleForAdvertisement() {
+	if !advertisementAccessor.IsEligibleForAdvertisement() || userAccessor.getUserCreatedDate().Add(advertising.MinimumUserAccountAge).Before(time.Now()) {
 		return nil, nil
 	}
 	for _, t := range userAccessor.getUserTopics() {

@@ -15,6 +15,7 @@ import (
 	"babblegraph/wordsmith"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestUserHasAccount(t *testing.T) {
@@ -290,6 +291,7 @@ func TestUserShouldShowAdvertisement(t *testing.T) {
 			LowerBound: 30,
 			UpperBound: 80,
 		},
+		userCreatedDate: time.Now().Add(-180 * 24 * time.Hour),
 	}
 	docsAccessor := &testDocsAccessor{}
 	testNewsletter, err := CreateNewsletter(c, CreateNewsletterInput{
@@ -328,6 +330,55 @@ func TestUserShouldShowAdvertisement(t *testing.T) {
 	}
 }
 
+func TestNoAdvertisementUserAccountAge(t *testing.T) {
+	c := ctx.GetDefaultLogContext()
+	wordsmithAccessor := &testWordsmithAccessor{}
+	emailAccessor := getTestEmailAccessor()
+	userAccessor := &testUserAccessor{
+		languageCode: wordsmith.LanguageCodeSpanish,
+		readingLevel: &userReadingLevel{
+			LowerBound: 30,
+			UpperBound: 80,
+		},
+		userCreatedDate: time.Now().Add(-7 * 24 * time.Hour),
+	}
+	docsAccessor := &testDocsAccessor{}
+	testNewsletter, err := CreateNewsletter(c, CreateNewsletterInput{
+		WordsmithAccessor: wordsmithAccessor,
+		EmailAccessor:     emailAccessor,
+		UserAccessor:      userAccessor,
+		DocsAccessor:      docsAccessor,
+		ContentAccessor:   &testContentAccessor{},
+		AdvertisementAccessor: &testAdvertisementAccessor{
+			isUserEligibleForAdvertisement: true,
+			advertisements: []advertising.Advertisement{
+				{
+					ID:           advertising.AdvertisementID("test-advertisement"),
+					LanguageCode: wordsmith.LanguageCodeSpanish,
+					CampaignID:   advertising.CampaignID("test-campaign"),
+					Title:        "An Advertisement",
+					ImageURL:     "www.babblegraph.com/test-image",
+					Description:  "This is a description of an advertisement",
+					IsActive:     true,
+				},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+	body := testNewsletter.Body
+	if body.SetTopicsLink == nil || !strings.Contains(*body.SetTopicsLink, "/manage/") {
+		t.Errorf("Error on set topics link. Expected it to contain /manage/ but got, but got %v", body.SetTopicsLink)
+	}
+	if !strings.Contains(body.ReinforcementLink, "/manage/") {
+		t.Errorf("Error on set topics link. Expected it to contain /manage/ but got, but got %s", body.ReinforcementLink)
+	}
+	if body.Advertisement != nil {
+		t.Errorf("Expected no advertisement, but there was one")
+	}
+}
+
 func TestUserAdvertisementIneligible(t *testing.T) {
 	c := ctx.GetDefaultLogContext()
 	wordsmithAccessor := &testWordsmithAccessor{}
@@ -341,6 +392,7 @@ func TestUserAdvertisementIneligible(t *testing.T) {
 		userNewsletterSchedule: usernewsletterschedule.TestNewsletterSchedule{
 			SendRequested: false,
 		},
+		userCreatedDate: time.Now().Add(-180 * 24 * time.Hour),
 	}
 	docsAccessor := &testDocsAccessor{}
 	testNewsletter, err := CreateNewsletter(c, CreateNewsletterInput{
@@ -393,6 +445,7 @@ func TestUserSubscriptionHasNoAdvertisement(t *testing.T) {
 		userNewsletterSchedule: usernewsletterschedule.TestNewsletterSchedule{
 			SendRequested: false,
 		},
+		userCreatedDate: time.Now().Add(-180 * 24 * time.Hour),
 	}
 	docsAccessor := &testDocsAccessor{}
 	testNewsletter, err := CreateNewsletter(c, CreateNewsletterInput{
@@ -444,6 +497,7 @@ func TestNoAdvertisementIsOkay(t *testing.T) {
 		userNewsletterSchedule: usernewsletterschedule.TestNewsletterSchedule{
 			SendRequested: false,
 		},
+		userCreatedDate: time.Now().Add(-180 * 24 * time.Hour),
 	}
 	docsAccessor := &testDocsAccessor{}
 	testNewsletter, err := CreateNewsletter(c, CreateNewsletterInput{
