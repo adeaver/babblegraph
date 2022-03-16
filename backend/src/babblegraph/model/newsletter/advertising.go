@@ -4,6 +4,7 @@ import (
 	"babblegraph/model/advertising"
 	"babblegraph/model/content"
 	"babblegraph/model/email"
+	"babblegraph/model/routes"
 	"babblegraph/model/users"
 	"babblegraph/util/ctx"
 	"babblegraph/util/ptr"
@@ -15,29 +16,38 @@ import (
 
 func lookupAdvertisement(c ctx.LogContext, emailRecordID email.ID, userAccessor userPreferencesAccessor, advertisementAccessor advertisementAccessor) (*NewsletterAdvertisement, error) {
 	if !advertisementAccessor.IsEligibleForAdvertisement() || userAccessor.getUserCreatedDate().Add(advertising.MinimumUserAccountAge).Before(time.Now()) {
+		c.Debugf("User is not eligible for ad")
 		return nil, nil
 	}
+	premiumInformationLink, err := routes.MakePremiumInformationLink(userAccessor.getUserID())
+	if err != nil {
+		return nil, err
+	}
+	advertisingPolicyLink := routes.GetAdvertisingPolicyURL()
 	for _, t := range userAccessor.getUserTopics() {
-		advertisement, err := advertisementAccessor.LookupAdvertisementForTopic(t)
+		advertisement, err := advertisementAccessor.LookupAdvertisementForTopic(c, t)
 		switch {
 		case err != nil:
 			c.Errorf("Error getting advertisement for user %s: %s", userAccessor.getUserID(), err.Error())
 			return nil, err
 		case advertisement != nil:
+			c.Debugf("ad found for topic %s", t)
 			advertisementURL, err := advertisementAccessor.GetAdvertisementURL(emailRecordID, *advertisement)
 			if err != nil {
 				c.Errorf("Error inserting advertisement for user %s: %s", userAccessor.getUserID(), err.Error())
 				return nil, err
 			}
 			return &NewsletterAdvertisement{
-				Title:       advertisement.Title,
-				Description: advertisement.Description,
-				ImageURL:    advertisement.ImageURL,
-				URL:         *advertisementURL,
+				Title:                   advertisement.Title,
+				Description:             advertisement.Description,
+				ImageURL:                advertisement.ImageURL,
+				URL:                     *advertisementURL,
+				PremiumLink:             *premiumInformationLink,
+				AdvertisementPolicyLink: advertisingPolicyLink,
 			}, nil
 		}
 	}
-	advertisement, err := advertisementAccessor.LookupGeneralAdvertisement()
+	advertisement, err := advertisementAccessor.LookupGeneralAdvertisement(c)
 	switch {
 	case err != nil:
 		c.Errorf("Error getting advertisement for user %s: %s", userAccessor.getUserID(), err.Error())
@@ -49,10 +59,12 @@ func lookupAdvertisement(c ctx.LogContext, emailRecordID email.ID, userAccessor 
 			return nil, err
 		}
 		return &NewsletterAdvertisement{
-			Title:       advertisement.Title,
-			Description: advertisement.Description,
-			ImageURL:    advertisement.ImageURL,
-			URL:         *advertisementURL,
+			Title:                   advertisement.Title,
+			Description:             advertisement.Description,
+			ImageURL:                advertisement.ImageURL,
+			URL:                     *advertisementURL,
+			PremiumLink:             *premiumInformationLink,
+			AdvertisementPolicyLink: advertisingPolicyLink,
 		}, nil
 	}
 	return nil, nil
@@ -61,8 +73,8 @@ func lookupAdvertisement(c ctx.LogContext, emailRecordID email.ID, userAccessor 
 type advertisementAccessor interface {
 	IsEligibleForAdvertisement() bool
 
-	LookupAdvertisementForTopic(t content.TopicID) (*advertising.Advertisement, error)
-	LookupGeneralAdvertisement() (*advertising.Advertisement, error)
+	LookupAdvertisementForTopic(c ctx.LogContext, t content.TopicID) (*advertising.Advertisement, error)
+	LookupGeneralAdvertisement(c ctx.LogContext) (*advertising.Advertisement, error)
 	GetAdvertisementURL(emailRecordID email.ID, ad advertising.Advertisement) (*string, error)
 }
 
@@ -92,12 +104,12 @@ func (d *DefaultAdvertisementAccessor) IsEligibleForAdvertisement() bool {
 	return d.userAdvertisementEligibility.IsUserEligibleForAdvertisement
 }
 
-func (d *DefaultAdvertisementAccessor) LookupAdvertisementForTopic(t content.TopicID) (*advertising.Advertisement, error) {
-	return advertising.QueryAdvertisementsForUser(d.tx, d.userID, t.Ptr(), d.languageCode, d.userAdvertisementEligibility.IneligibleCampaignIDs)
+func (d *DefaultAdvertisementAccessor) LookupAdvertisementForTopic(c ctx.LogContext, t content.TopicID) (*advertising.Advertisement, error) {
+	return advertising.QueryAdvertisementsForUser(c, d.tx, d.userID, t.Ptr(), d.languageCode, d.userAdvertisementEligibility.IneligibleCampaignIDs)
 }
 
-func (d *DefaultAdvertisementAccessor) LookupGeneralAdvertisement() (*advertising.Advertisement, error) {
-	return advertising.QueryAdvertisementsForUser(d.tx, d.userID, nil, d.languageCode, d.userAdvertisementEligibility.IneligibleCampaignIDs)
+func (d *DefaultAdvertisementAccessor) LookupGeneralAdvertisement(c ctx.LogContext) (*advertising.Advertisement, error) {
+	return advertising.QueryAdvertisementsForUser(c, d.tx, d.userID, nil, d.languageCode, d.userAdvertisementEligibility.IneligibleCampaignIDs)
 }
 
 func (d *DefaultAdvertisementAccessor) GetAdvertisementURL(emailRecordID email.ID, ad advertising.Advertisement) (*string, error) {

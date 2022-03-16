@@ -4,6 +4,7 @@ import (
 	"babblegraph/model/advertising"
 	"babblegraph/model/content"
 	"babblegraph/model/email"
+	"babblegraph/util/ctx"
 	"babblegraph/util/ptr"
 )
 
@@ -17,14 +18,14 @@ func (t *testAdvertisementAccessor) IsEligibleForAdvertisement() bool {
 	return t.isUserEligibleForAdvertisement
 }
 
-func (t *testAdvertisementAccessor) LookupAdvertisementForTopic(topic content.TopicID) (*advertising.Advertisement, error) {
+func (t *testAdvertisementAccessor) LookupAdvertisementForTopic(c ctx.LogContext, topic content.TopicID) (*advertising.Advertisement, error) {
 	if len(t.advertisements) == 0 {
 		return nil, nil
 	}
 	return &t.advertisements[0], nil
 }
 
-func (t *testAdvertisementAccessor) LookupGeneralAdvertisement() (*advertising.Advertisement, error) {
+func (t *testAdvertisementAccessor) LookupGeneralAdvertisement(c ctx.LogContext) (*advertising.Advertisement, error) {
 	if len(t.advertisements) == 0 {
 		return nil, nil
 	}

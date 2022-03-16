@@ -19,6 +19,10 @@ func GetLoginRoute() string {
 	return env.GetAbsoluteURLForEnvironment("login")
 }
 
+func GetAdvertisingPolicyURL() string {
+	return env.GetAbsoluteURLForEnvironment("advertising-policy")
+}
+
 func MakeSubscriptionManagementRouteForUserID(userID users.UserID) (*string, error) {
 	token, err := MakeSubscriptionManagementToken(userID)
 	if err != nil {

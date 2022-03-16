@@ -71,13 +71,18 @@ func createNewsletter(tx *sqlx.Tx, userID users.UserID, emailRecordID email.ID) 
 	if err != nil {
 		return nil, err
 	}
+	advertisementAccessor, err := newsletter.GetDefaultAdvertisementAccessor(tx, userID, wordsmith.LanguageCodeSpanish)
+	if err != nil {
+		return nil, err
+	}
 	return newsletter.CreateNewsletter(c, newsletter.CreateNewsletterInput{
-		WordsmithAccessor: newsletter.GetDefaultWordsmithAccessor(),
-		EmailAccessor:     emailAccessor,
-		UserAccessor:      userAccessor,
-		DocsAccessor:      documentAccessor,
-		ContentAccessor:   contentAccessor,
-		PodcastAccessor:   podcastAccessor,
+		WordsmithAccessor:     newsletter.GetDefaultWordsmithAccessor(),
+		EmailAccessor:         emailAccessor,
+		UserAccessor:          userAccessor,
+		DocsAccessor:          documentAccessor,
+		ContentAccessor:       contentAccessor,
+		PodcastAccessor:       podcastAccessor,
+		AdvertisementAccessor: advertisementAccessor,
 	})
 }
 

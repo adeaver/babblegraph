@@ -4,6 +4,7 @@ import (
 	"babblegraph/model/content"
 	"babblegraph/model/email"
 	"babblegraph/model/users"
+	"babblegraph/util/ctx"
 	"babblegraph/wordsmith"
 	"time"
 
@@ -51,7 +52,7 @@ const (
             advertising_campaign_topic_mappings
         WHERE
             (
-               is_active = TRUE AND
+                is_active = TRUE AND
                 topic_id = $1
             ) = FALSE
         `
@@ -111,13 +112,19 @@ func determineEligiblityFromUserAdvertisements(matches []dbUserAdvertisement) (_
 	return true, out
 }
 
-func QueryAdvertisementsForUser(tx *sqlx.Tx, userID users.UserID, topic *content.TopicID, languageCode wordsmith.LanguageCode, ineligibleCampaignIDs []CampaignID) (*Advertisement, error) {
-	allIneligibleCampaignIDs, err := getFullListOfIneligibleCampaignIDs(tx, topic, ineligibleCampaignIDs)
+func QueryAdvertisementsForUser(c ctx.LogContext, tx *sqlx.Tx, userID users.UserID, topic *content.TopicID, languageCode wordsmith.LanguageCode, ineligibleCampaignIDs []CampaignID) (*Advertisement, error) {
+	allIneligibleCampaignIDs, err := getFullListOfIneligibleCampaignIDs(c, tx, topic, ineligibleCampaignIDs)
 	if err != nil {
 		return nil, err
 	}
+	c.Debugf("Got %d ineligible campaign ids", len(allIneligibleCampaignIDs))
+	query, args, err := sqlx.In(lookupAdvertisementQuery, allIneligibleCampaignIDs)
+	if err != nil {
+		return nil, err
+	}
+	sql := tx.Rebind(query)
 	var matches []dbAdvertisement
-	if err := tx.Select(&matches, lookupAdvertisementQuery, allIneligibleCampaignIDs); err != nil {
+	if err := tx.Select(&matches, sql, args...); err != nil {
 		return nil, err
 	}
 	for _, m := range matches {
@@ -127,10 +134,11 @@ func QueryAdvertisementsForUser(tx *sqlx.Tx, userID users.UserID, topic *content
 			return &out, nil
 		}
 	}
+	c.Debugf("Did not find suitable ad in %+v", matches)
 	return nil, nil
 }
 
-func getFullListOfIneligibleCampaignIDs(tx *sqlx.Tx, topic *content.TopicID, ineligibleCampaignIDs []CampaignID) ([]CampaignID, error) {
+func getFullListOfIneligibleCampaignIDs(c ctx.LogContext, tx *sqlx.Tx, topic *content.TopicID, ineligibleCampaignIDs []CampaignID) ([]CampaignID, error) {
 	type queryMatch struct {
 		CampaignID CampaignID `db:"_id"`
 	}

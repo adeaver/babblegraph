@@ -26,6 +26,7 @@ type GetSampleNewsletterUserAccessorInput struct {
 
 	// Overrideable Features
 	DoesUserHaveAccount       *bool
+	CreatedDate               *time.Time
 	UserSubscriptionLevel     *useraccounts.SubscriptionLevel
 	UserNewsletterPreferences *usernewsletterpreferences.UserNewsletterPreferences
 	UserNewsletterSchedule    *usernewsletterschedule.UserNewsletterSchedule
@@ -69,6 +70,9 @@ func GetSampleNewsletterUserAccessor(c ctx.LogContext, tx *sqlx.Tx, input GetSam
 	if input.SpotlightRecords != nil {
 		defaultUserPreferencesAccessor.userSpotlightRecords = input.SpotlightRecords
 	}
+	if input.CreatedDate != nil {
+		defaultUserPreferencesAccessor.userCreatedDate = *input.CreatedDate
+	}
 	return &SampleNewsletterUserAccessor{
 		defaultUserPreferencesAccessor: defaultUserPreferencesAccessor,
 	}, nil
@@ -84,6 +88,10 @@ func (s *SampleNewsletterUserAccessor) getUserID() users.UserID {
 
 func (s *SampleNewsletterUserAccessor) getLanguageCode() wordsmith.LanguageCode {
 	return s.defaultUserPreferencesAccessor.getLanguageCode()
+}
+
+func (s *SampleNewsletterUserAccessor) getUserCreatedDate() time.Time {
+	return s.defaultUserPreferencesAccessor.getUserCreatedDate()
 }
 
 func (s *SampleNewsletterUserAccessor) getDoesUserHaveAccount() bool {
