@@ -35,6 +35,9 @@ import {
 
     UpdateCampaignTopicMappingsResponse,
     updateCampaignTopicMappings,
+
+    GetAllAdvertisementsForCampaignResponse,
+    getAllAdvertisementsForCampaign,
 } from 'AdminWeb/api/advertising/advertising';
 import {
     Topic,
@@ -68,36 +71,55 @@ type Params = {
 
 type CampaignEditPageProps = RouteComponentProps<Params>;
 
-type CampaignsEditPageAPIProps = GetCampaignResponse & GetAllSourcesResponse & GetAllVendorsResponse;
+type CampaignsEditPageAPIProps = GetCampaignResponse & GetAllAdvertisementsForCampaignResponse & GetAllSourcesResponse & GetAllVendorsResponse;
 
 
 const CampaignEditPage = asBaseComponent<CampaignsEditPageAPIProps, CampaignEditPageProps>(
     (props: CampaignsEditPageAPIProps & CampaignEditPageProps & BaseComponentProps) => {
-        const handleNewAdvertisement = (ad: Advertisement) => {
 
+        const [ addedAdvertisements, setAddedAdvertisements ] = useState<Array<Advertisement>>([]);
+        const handleNewAdvertisement = (ad: Advertisement) => {
+            setAddedAdvertisements(addedAdvertisements.concat(ad));
         }
 
         return (
-            <CenteredComponent>
-                <DisplayCard>
-                    <DisplayCardHeader
-                        title="Edit Campaign"
-                        backArrowDestination="/ops/advertising-manager/campaigns" />
-                    <EditCampaignForm
-                        campaign={props.campaign}
-                        sources={props.sources}
-                        vendors={props.vendors}
-                        onError={props.setError} />
-                    <TopicMappingEditForm campaignID={props.campaign.id} />
-                    <Heading3 color={TypographyColor.Primary}>
-                        Add a new advertisement in this campaign
-                    </Heading3>
-                    <EditAdvertisementForm
-                        campaignID={props.campaign.id}
-                        handleNewAdvertisement={handleNewAdvertisement}
-                        onError={props.setError} />
-                </DisplayCard>
-            </CenteredComponent>
+            <Grid>
+                <Grid item xs={12}>
+                    <CenteredComponent>
+                        <DisplayCard>
+                            <DisplayCardHeader
+                                title="Edit Campaign"
+                                backArrowDestination="/ops/advertising-manager/campaigns" />
+                            <EditCampaignForm
+                                campaign={props.campaign}
+                                sources={props.sources}
+                                vendors={props.vendors}
+                                onError={props.setError} />
+                            <TopicMappingEditForm campaignID={props.campaign.id} />
+                            <Heading3 color={TypographyColor.Primary}>
+                                Add a new advertisement in this campaign
+                            </Heading3>
+                            <EditAdvertisementForm
+                                campaignID={props.campaign.id}
+                                handleNewAdvertisement={handleNewAdvertisement}
+                                onError={props.setError} />
+                        </DisplayCard>
+                    </CenteredComponent>
+                </Grid>
+                {
+                    addedAdvertisements.concat(props.advertisements || []).map((a: Advertisement) => (
+                        <Grid item xs={12} md={4}>
+                            <DisplayCard>
+                                <EditAdvertisementForm
+                                    campaignID={props.campaign.id}
+                                    advertisement={a}
+                                    handleNewAdvertisement={handleNewAdvertisement}
+                                    onError={props.setError} />
+                            </DisplayCard>
+                        </Grid>
+                    ))
+                }
+            </Grid>
         )
     },
     (
@@ -113,17 +135,24 @@ const CampaignEditPage = asBaseComponent<CampaignsEditPageAPIProps, CampaignEdit
             (resp2: GetAllSourcesResponse) => {
                 getAllVendors({},
                 (resp3: GetAllVendorsResponse) => {
-                    onSuccess({
-                        ...resp,
-                        ...resp2,
-                        ...resp3,
-                    });
+                    getAllAdvertisementsForCampaign({
+                        campaignId: ownProps.match.params.id,
+                    },
+                    (resp4: GetAllAdvertisementsForCampaignResponse) => {
+                        onSuccess({
+                            ...resp,
+                            ...resp2,
+                            ...resp3,
+                            ...resp4,
+                        });
+                    },
+                    onError);
                 },
-                (err: Error) => onError(err));
+                onError);
             },
-            (err: Error) => onError(err));
+            onError);
         },
-        (err: Error) => onError(err));
+        onError);
     },
     true,
 );

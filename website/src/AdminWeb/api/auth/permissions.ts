@@ -13,6 +13,8 @@ export enum Permission {
 	EditAdvertisingSources = 'edit-advertising-sources',
 	ViewAdvertisingCampaigns = 'view-advertising-campaigns',
 	EditAdvertisingCampaigns = 'edit-advertising-campaigns',
+	ViewAdvertisingAdvertisements = 'view-advertising-advertisements',
+	EditAdvertisingAdvertisements = 'edit-advertising-advertisements',
 }
 
 export type ManageUserPermissionsRequest = {

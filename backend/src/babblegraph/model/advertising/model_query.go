@@ -58,7 +58,7 @@ const (
         ) ON CONFLICT (campaign_id, topic_id) DO UPDATE
         SET last_modified_at = timezone('utc', now()), is_active = $3`
 
-	getAllAdvertisementsForCampaignID = "SELECT * FROM advertising_advertisement WHERE campaign_id = $1"
+	getAllAdvertisementsForCampaignID = "SELECT * FROM advertising_advertisements WHERE campaign_id = $1"
 	insertAdvertisementQuery          = `INSERT INTO advertising_advertisements (
         language_code, campaign_id, title, image_url, description, is_active
     ) VALUES (
