@@ -1,6 +1,6 @@
 #!/bin/bash
 curl -X PUT --user $ES_USERNAME:$ES_PASSWORD -k -H "Content-Type: application/json" -d '{
-    "schedule": "30 */6 * * *",
+    "schedule": "30 */6 * * * ?",
     "name": "<babblegraph_es_prod_snap-{now/d}>",
     "repository": "prod_babblegraph_data_snapshots",
     "config": {
