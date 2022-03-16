@@ -15,9 +15,14 @@ import (
 )
 
 func lookupAdvertisement(c ctx.LogContext, emailRecordID email.ID, userAccessor userPreferencesAccessor, advertisementAccessor advertisementAccessor) (*NewsletterAdvertisement, error) {
-	if !advertisementAccessor.IsEligibleForAdvertisement() || userAccessor.getUserCreatedDate().Add(advertising.MinimumUserAccountAge).Before(time.Now()) {
+	switch {
+	case !advertisementAccessor.IsEligibleForAdvertisement():
 		c.Debugf("User is not eligible for ad")
 		return nil, nil
+	case userAccessor.getUserCreatedDate().Add(advertising.MinimumUserAccountAge).After(time.Now()):
+		c.Debugf("User account is too new for ad")
+	default:
+		c.Debugf("Finding ad for user")
 	}
 	premiumInformationLink, err := routes.MakePremiumInformationLink(userAccessor.getUserID())
 	if err != nil {
