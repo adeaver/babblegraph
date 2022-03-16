@@ -119,7 +119,7 @@ func GetDefaultUserPreferencesAccessor(c ctx.LogContext, tx *sqlx.Tx, userID use
 		userID:                    userID,
 		languageCode:              languageCode,
 		doesUserHaveAccount:       doesUserHaveAccount,
-		userCreatedDate:           user.LastModifiedAt,
+		userCreatedDate:           user.CreatedDate,
 		userSubscriptionLevel:     userSubscriptionLevel,
 		userNewsletterPreferences: userNewsletterPreferences,
 		userNewsletterSchedule:    userNewsletterSchedule,

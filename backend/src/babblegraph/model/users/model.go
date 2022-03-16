@@ -24,6 +24,7 @@ type dbUser struct {
 
 func (d dbUser) ToNonDB() User {
 	return User{
+		CreatedDate:  d.LastModifiedAt, // Users move to verified and the last modified at is set.
 		ID:           d.ID,
 		EmailAddress: d.EmailAddress,
 		Status:       d.Status,
@@ -31,6 +32,7 @@ func (d dbUser) ToNonDB() User {
 }
 
 type User struct {
+	CreatedDate  time.Time  `json:"created_at"`
 	ID           UserID     `json:"id"`
 	EmailAddress string     `json:"email_address"`
 	Status       UserStatus `json:"status"`
