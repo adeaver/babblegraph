@@ -7,6 +7,6 @@ curl -X PUT --user $ES_USERNAME:$ES_PASSWORD -k -H "Content-Type: application/js
         "ignore_unavailable": true
     },
     "retention": {
-        "expire_after": "60d",
+        "expire_after": "60d"
     }
 }' http://localhost:9200/_slm/policy/data-snapshots
