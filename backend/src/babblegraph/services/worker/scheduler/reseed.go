@@ -63,7 +63,7 @@ func fetchNewLinksForSeedURLs(c async.Context) {
 			c.Infof("Processing task for source ID %s", sourceID)
 			task := tasks[0]
 			if err := processRefetchTask(c, sourceID, task); err != nil {
-				c.Errorf("Error processing task %+v: %s", task, err.Error())
+				c.Infof("Error processing task %+v: %s", task, err.Error())
 			}
 			nextTasks := append([]fetchNewLinksTask{}, tasks[1:]...)
 			if len(nextTasks) == 0 {
