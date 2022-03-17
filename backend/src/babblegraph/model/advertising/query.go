@@ -155,8 +155,13 @@ func QueryAdvertisementsForUser(c ctx.LogContext, tx *sqlx.Tx, userID users.User
 		c.Debugf("Filtered all valid advertisements")
 		return nil, nil
 	}
+	query, args, err := sqlx.In(lookupAdvertisementQuery, validCampaignIDs)
+	if err != nil {
+		return nil, err
+	}
+	sql := tx.Rebind(query)
 	var advertisementMatches []dbAdvertisement
-	if err := tx.Select(&advertisementMatches, lookupAdvertisementQuery, validCampaignIDs); err != nil {
+	if err := tx.Select(&advertisementMatches, sql, args...); err != nil {
 		return nil, err
 	}
 	for _, m := range advertisementMatches {
