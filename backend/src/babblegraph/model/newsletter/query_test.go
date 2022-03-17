@@ -300,6 +300,7 @@ func TestUserShouldShowAdvertisement(t *testing.T) {
 		UserAccessor:      userAccessor,
 		DocsAccessor:      docsAccessor,
 		ContentAccessor:   &testContentAccessor{},
+		PodcastAccessor:   &testPodcastAccessor{},
 		AdvertisementAccessor: &testAdvertisementAccessor{
 			isUserEligibleForAdvertisement: true,
 			advertisements: []advertising.Advertisement{
@@ -349,6 +350,7 @@ func TestNoAdvertisementUserAccountAge(t *testing.T) {
 		UserAccessor:      userAccessor,
 		DocsAccessor:      docsAccessor,
 		ContentAccessor:   &testContentAccessor{},
+		PodcastAccessor:   &testPodcastAccessor{},
 		AdvertisementAccessor: &testAdvertisementAccessor{
 			isUserEligibleForAdvertisement: true,
 			advertisements: []advertising.Advertisement{
@@ -401,6 +403,7 @@ func TestUserAdvertisementIneligible(t *testing.T) {
 		UserAccessor:      userAccessor,
 		DocsAccessor:      docsAccessor,
 		ContentAccessor:   &testContentAccessor{},
+		PodcastAccessor:   &testPodcastAccessor{},
 		AdvertisementAccessor: &testAdvertisementAccessor{
 			isUserEligibleForAdvertisement: false,
 			advertisements: []advertising.Advertisement{
@@ -454,6 +457,7 @@ func TestUserSubscriptionHasNoAdvertisement(t *testing.T) {
 		UserAccessor:      userAccessor,
 		DocsAccessor:      docsAccessor,
 		ContentAccessor:   &testContentAccessor{},
+		PodcastAccessor:   &testPodcastAccessor{},
 		AdvertisementAccessor: &testAdvertisementAccessor{
 			isUserEligibleForAdvertisement: true,
 			advertisements: []advertising.Advertisement{
@@ -506,6 +510,7 @@ func TestNoAdvertisementIsOkay(t *testing.T) {
 		UserAccessor:      userAccessor,
 		DocsAccessor:      docsAccessor,
 		ContentAccessor:   &testContentAccessor{},
+		PodcastAccessor:   &testPodcastAccessor{},
 		AdvertisementAccessor: &testAdvertisementAccessor{
 			isUserEligibleForAdvertisement: true,
 			advertisements:                 []advertising.Advertisement{},
