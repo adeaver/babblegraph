@@ -8,7 +8,7 @@ import Grid from '@material-ui/core/Grid';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
-import DateRangeIcon from '@material-ui/icons/DateRange';
+import NotificationsOffIcon from '@material-ui/icons/NotificationsOff';
 import FindInPageIcon from '@material-ui/icons/FindInPage';
 import BallotIcon from '@material-ui/icons/Ballot';
 import GraphicEqIcon from '@material-ui/icons/GraphicEq';
@@ -111,13 +111,13 @@ const PremiumInformationPage = withUserProfileInformation<PremiumInformationPage
                         <Divider />
                         <List>
                             <PremiumFeatureListItem
+                                title={translations[TextBlock.AdvertisementsTitle]}
+                                description={translations[TextBlock.AdvertisementsDescription]}
+                                icon={<NotificationsOffIcon className={classes.featureIcon} />} />
+                            <PremiumFeatureListItem
                                 title={translations[TextBlock.PodcastsTitle]}
                                 description={translations[TextBlock.PodcastsDescription]}
                                 icon={<GraphicEqIcon className={classes.featureIcon} />} />
-                            <PremiumFeatureListItem
-                                title={translations[TextBlock.SchedulingTitle]}
-                                description={translations[TextBlock.SchedulingDescription]}
-                                icon={<DateRangeIcon className={classes.featureIcon} />} />
                             <PremiumFeatureListItem
                                 title={translations[TextBlock.CustomizationTitle]}
                                 description={translations[TextBlock.CustomizationDescription]}
