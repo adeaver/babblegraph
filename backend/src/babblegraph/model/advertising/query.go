@@ -45,16 +45,23 @@ const (
                     is_active = FALSE
             )
         `
+	// These two need to fetch eligible campaigns
 	getAllCampaignIDsWithNoTopicMappingQuery = `
         SELECT
-            DISTINCT(campaign_id) AS _id
+            _id
         FROM
-            advertising_campaign_topic_mappings
+            advertising_campaigns
         WHERE
+            _id NOT IN
             (
-                is_active = TRUE AND
-                topic_id = $1
-            ) = FALSE
+                SELECT
+                    campaign_id
+                FROM
+                    advertising_campaign_topic_mappings
+                WHERE
+                    is_active = TRUE AND
+                    topic_id = $1
+            )
         `
 	getAllCampaignIDsNotEligibleForAllUsersQuery = `
         SELECT
@@ -144,16 +151,18 @@ func getFullListOfIneligibleCampaignIDs(c ctx.LogContext, tx *sqlx.Tx, topic *co
 	}
 	ineligibleCampaignIDHashSet := make(map[CampaignID]bool)
 	// Collect all the campaigns for which this user is not eligible
-	for _, c := range ineligibleCampaignIDs {
-		ineligibleCampaignIDHashSet[c] = true
+	for _, campaignID := range ineligibleCampaignIDs {
+		c.Debugf("Campaign ID %s was ineligible for user", campaignID)
+		ineligibleCampaignIDHashSet[campaignID] = true
 	}
 	// Collect all campaigns that are inactive or have inactive vendors/sources
 	var inactiveCampaigns []queryMatch
 	if err := tx.Select(&inactiveCampaigns, getAllInactiveCampaignIDsQuery); err != nil {
 		return nil, err
 	}
-	for _, c := range inactiveCampaigns {
-		ineligibleCampaignIDHashSet[c.CampaignID] = true
+	for _, campaign := range inactiveCampaigns {
+		c.Debugf("Campaign %s is inactive", campaign.CampaignID)
+		ineligibleCampaignIDHashSet[campaign.CampaignID] = true
 	}
 	if topic != nil {
 		// Collect all campaigns that don't apply to
@@ -161,8 +170,9 @@ func getFullListOfIneligibleCampaignIDs(c ctx.LogContext, tx *sqlx.Tx, topic *co
 		if err := tx.Select(&noTopicCampaigns, getAllCampaignIDsWithNoTopicMappingQuery, *topic); err != nil {
 			return nil, err
 		}
-		for _, c := range noTopicCampaigns {
-			ineligibleCampaignIDHashSet[c.CampaignID] = true
+		for _, campaign := range noTopicCampaigns {
+			c.Debugf("Campaign %s does not match topic %s", campaign.CampaignID, *topic)
+			ineligibleCampaignIDHashSet[campaign.CampaignID] = true
 		}
 	} else {
 		// Collect all campaigns that don't apply to all users
@@ -170,8 +180,9 @@ func getFullListOfIneligibleCampaignIDs(c ctx.LogContext, tx *sqlx.Tx, topic *co
 		if err := tx.Select(&applyToAllCampaigns, getAllCampaignIDsNotEligibleForAllUsersQuery); err != nil {
 			return nil, err
 		}
-		for _, c := range applyToAllCampaigns {
-			ineligibleCampaignIDHashSet[c.CampaignID] = true
+		for _, campaign := range applyToAllCampaigns {
+			c.Debugf("Campaign %s does not apply to all users", campaign.CampaignID)
+			ineligibleCampaignIDHashSet[campaign.CampaignID] = true
 		}
 	}
 	var out []CampaignID
