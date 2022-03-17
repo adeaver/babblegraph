@@ -34,6 +34,7 @@ export type TypographyProps = {
     className?: string,
     align?: Alignment,
     color?: TypographyColor,
+    isBold?: boolean;
 }
 
 export function asTypography<P extends TypographyProps>(WrappedComponent: React.ComponentType<P>) {

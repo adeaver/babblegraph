@@ -10,6 +10,7 @@ const styleClasses = makeStyles({
         fontFamily: "'Roboto', sans-serif",
         lineHeight: 1.5,
         fontSize: props.size != null ? props.size : Size.Medium,
+        fontWeight: !!props.isBold ? 700 : 400,
     }),
 })
 
