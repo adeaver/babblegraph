@@ -45,14 +45,14 @@ const (
                     is_active = FALSE
             )
         `
-	// These two need to fetch eligible campaigns
-	getAllCampaignIDsWithNoTopicMappingQuery = `
+
+	getAllCampaignIDsWithForTopicMappingQuery = `
         SELECT
             _id
         FROM
             advertising_campaigns
         WHERE
-            _id NOT IN
+            _id IN
             (
                 SELECT
                     campaign_id
@@ -63,13 +63,13 @@ const (
                     topic_id = $1
             )
         `
-	getAllCampaignIDsNotEligibleForAllUsersQuery = `
+	getAllCampaignIDsEligibleForAllUsersQuery = `
         SELECT
             _id
         FROM
             advertising_campaigns
         WHERE
-            should_apply_to_all_users = FALSE AND
+            should_apply_to_all_users = TRUE AND
             is_active = TRUE
     `
 	lookupAdvertisementQuery = `
@@ -79,7 +79,7 @@ const (
             advertising_advertisements
         WHERE
             is_active=TRUE AND
-            campaign_id NOT IN (?)
+            campaign_id IN (?)
     `
 )
 
@@ -120,32 +120,55 @@ func determineEligiblityFromUserAdvertisements(matches []dbUserAdvertisement) (_
 }
 
 func QueryAdvertisementsForUser(c ctx.LogContext, tx *sqlx.Tx, userID users.UserID, topic *content.TopicID, languageCode wordsmith.LanguageCode, ineligibleCampaignIDs []CampaignID) (*Advertisement, error) {
-	allIneligibleCampaignIDs, err := getFullListOfIneligibleCampaignIDs(c, tx, topic, ineligibleCampaignIDs)
+	allIneligibleCampaigns, err := getFullListOfIneligibleCampaignIDs(c, tx, topic, ineligibleCampaignIDs)
 	if err != nil {
 		return nil, err
 	}
-	c.Debugf("Got %d ineligible campaign ids", len(allIneligibleCampaignIDs))
-	query, args, err := sqlx.In(lookupAdvertisementQuery, allIneligibleCampaignIDs)
-	if err != nil {
-		return nil, err
+	c.Debugf("Got %d ineligible campaign ids", len(allIneligibleCampaigns))
+	var matches []struct {
+		CampaignID CampaignID `db:"_id"`
 	}
-	sql := tx.Rebind(query)
-	var matches []dbAdvertisement
-	if err := tx.Select(&matches, sql, args...); err != nil {
-		return nil, err
+	switch {
+	case topic != nil:
+		if err := tx.Select(&matches, getAllCampaignIDsWithForTopicMappingQuery, *topic); err != nil {
+			return nil, err
+		}
+	case topic == nil:
+		if err := tx.Select(&matches, getAllCampaignIDsEligibleForAllUsersQuery); err != nil {
+			return nil, err
+		}
+	default:
+		panic("unreachable")
 	}
+	if len(matches) == 0 {
+		c.Debugf("No potentially valid advertisements found")
+		return nil, nil
+	}
+	var validCampaignIDs []CampaignID
 	for _, m := range matches {
+		// TODO(here): add experiment code
+		if _, ok := allIneligibleCampaigns[m.CampaignID]; !ok {
+			validCampaignIDs = append(validCampaignIDs, m.CampaignID)
+		}
+	}
+	if len(validCampaignIDs) == 0 {
+		c.Debugf("Filtered all valid advertisements")
+		return nil, nil
+	}
+	var advertisementMatches []dbAdvertisement
+	if err := tx.Select(&advertisementMatches, lookupAdvertisementQuery, validCampaignIDs); err != nil {
+		return nil, err
+	}
+	for _, m := range advertisementMatches {
 		if m.LanguageCode == languageCode {
-			// TODO(here): use experiment package to determine eligbility
 			out := m.ToNonDB()
 			return &out, nil
 		}
 	}
-	c.Debugf("Did not find suitable ad in %+v", matches)
 	return nil, nil
 }
 
-func getFullListOfIneligibleCampaignIDs(c ctx.LogContext, tx *sqlx.Tx, topic *content.TopicID, ineligibleCampaignIDs []CampaignID) ([]CampaignID, error) {
+func getFullListOfIneligibleCampaignIDs(c ctx.LogContext, tx *sqlx.Tx, topic *content.TopicID, ineligibleCampaignIDs []CampaignID) (map[CampaignID]bool, error) {
 	type queryMatch struct {
 		CampaignID CampaignID `db:"_id"`
 	}
@@ -164,32 +187,7 @@ func getFullListOfIneligibleCampaignIDs(c ctx.LogContext, tx *sqlx.Tx, topic *co
 		c.Debugf("Campaign %s is inactive", campaign.CampaignID)
 		ineligibleCampaignIDHashSet[campaign.CampaignID] = true
 	}
-	if topic != nil {
-		// Collect all campaigns that don't apply to
-		var noTopicCampaigns []queryMatch
-		if err := tx.Select(&noTopicCampaigns, getAllCampaignIDsWithNoTopicMappingQuery, *topic); err != nil {
-			return nil, err
-		}
-		for _, campaign := range noTopicCampaigns {
-			c.Debugf("Campaign %s does not match topic %s", campaign.CampaignID, *topic)
-			ineligibleCampaignIDHashSet[campaign.CampaignID] = true
-		}
-	} else {
-		// Collect all campaigns that don't apply to all users
-		var applyToAllCampaigns []queryMatch
-		if err := tx.Select(&applyToAllCampaigns, getAllCampaignIDsNotEligibleForAllUsersQuery); err != nil {
-			return nil, err
-		}
-		for _, campaign := range applyToAllCampaigns {
-			c.Debugf("Campaign %s does not apply to all users", campaign.CampaignID)
-			ineligibleCampaignIDHashSet[campaign.CampaignID] = true
-		}
-	}
-	var out []CampaignID
-	for campaignID := range ineligibleCampaignIDHashSet {
-		out = append(out, campaignID)
-	}
-	return out, nil
+	return ineligibleCampaignIDHashSet, nil
 }
 
 func InsertUserAdvertisementAndGetID(tx *sqlx.Tx, userID users.UserID, ad Advertisement, emailRecordID email.ID) (*UserAdvertisementID, error) {
