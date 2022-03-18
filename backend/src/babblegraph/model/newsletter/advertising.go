@@ -21,6 +21,7 @@ func lookupAdvertisement(c ctx.LogContext, emailRecordID email.ID, userAccessor 
 		return nil, nil
 	case userAccessor.getUserCreatedDate().Add(advertising.MinimumUserAccountAge).After(time.Now()):
 		c.Debugf("User account is too new for ad")
+		return nil, nil
 	default:
 		c.Debugf("Finding ad for user")
 	}
