@@ -106,6 +106,7 @@ type updateCampaignRequest struct {
 	Name                  string                            `json:"name"`
 	ShouldApplyToAllUsers bool                              `json:"should_apply_to_all_users"`
 	IsActive              bool                              `json:"is_active"`
+	RolloutPercentage     int64                             `json:"rollout_percentage"`
 }
 
 type updateCampaignResponse struct {
@@ -129,6 +130,7 @@ func updateCampaign(adminID admin.ID, r *router.Request) (interface{}, error) {
 			Name:                  req.Name,
 			ShouldApplyToAllUsers: req.ShouldApplyToAllUsers,
 			IsActive:              req.IsActive,
+			RolloutPercentage:     req.RolloutPercentage,
 		})
 	}); err != nil {
 		return nil, err

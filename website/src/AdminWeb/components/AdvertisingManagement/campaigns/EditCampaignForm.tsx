@@ -65,6 +65,11 @@ const EditCampaignForm = (props: EditCampaignFormProps) => {
         setVendorID(selectedVendor.id);
     }
 
+    const [ rolloutPercentage, setRolloutPercentage ] = useState<number>(props.campaign.rolloutPercentage);
+    const handleRolloutPercentageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setRolloutPercentage(parseInt((event.target as HTMLInputElement).value, 10));
+    }
+
     const [ isActive, setIsActive ] = useState<boolean>(props.campaign.isActive);
 
     const handleSubmit = () => {
@@ -77,6 +82,7 @@ const EditCampaignForm = (props: EditCampaignFormProps) => {
             vendorId: vendorID,
             sourceId: sourceID,
             shouldApplyToAllUsers: false,
+            rolloutPercentage: rolloutPercentage,
         },
         (resp: UpdateCampaignResponse) => {
             setIsLoading(false);
@@ -133,6 +139,15 @@ const EditCampaignForm = (props: EditCampaignFormProps) => {
                         getOptionLabel={(option: Vendor) => `${option.name} (${option.websiteUrl})`}
                         getOptionSelected={(option: Vendor) => option.id === vendorID}
                         renderInput={(params) => <PrimaryTextField label="Select Vendor" {...params} />} />
+                </Grid>
+                <Grid item xs={12}>
+                    <PrimaryTextField
+                        id="campaign-rollout-percentage"
+                        className={classes.formComponent}
+                        label="Current Rollout Percentage"
+                        variant="outlined"
+                        defaultValue={rolloutPercentage}
+                        onChange={handleRolloutPercentageChange} />
                 </Grid>
                 <Grid item xs={6}>
                     <PrimaryButton

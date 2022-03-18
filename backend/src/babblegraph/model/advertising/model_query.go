@@ -2,6 +2,8 @@ package advertising
 
 import (
 	"babblegraph/model/content"
+	"babblegraph/model/experiment"
+	"babblegraph/util/math/decimal"
 	"babblegraph/util/urlparser"
 	"babblegraph/wordsmith"
 	"fmt"
@@ -33,7 +35,7 @@ const (
             expires_at
         ) VALUES (
             $1, $2, $3, $4, $5, $6, $7
-        )`
+        ) RETURNING _id`
 	editCampaignByIDQuery = `
     UPDATE
         advertising_campaigns
@@ -156,7 +158,11 @@ func GetAllCampaigns(tx *sqlx.Tx) ([]Campaign, error) {
 	}
 	var out []Campaign
 	for _, m := range matches {
-		out = append(out, m.ToNonDB())
+		campaign, err := m.ToNonDB(tx)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, *campaign)
 	}
 	return out, nil
 }
@@ -170,8 +176,7 @@ func GetCampaignByID(tx *sqlx.Tx, id CampaignID) (*Campaign, error) {
 	case len(matches) != 1:
 		return nil, fmt.Errorf("Expected exactly one campaign for id %s, but got %d", id, len(matches))
 	default:
-		out := matches[0].ToNonDB()
-		return &out, nil
+		return matches[0].ToNonDB(tx)
 	}
 }
 
@@ -197,6 +202,9 @@ func InsertNewCampaign(tx *sqlx.Tx, input InsertNewCampaignInput) (*CampaignID, 
 			return nil, err
 		}
 	}
+	if err := experiment.SetExperimentIsActive(tx, getExperimentNameForCampaignID(campaignID), true); err != nil {
+		return nil, err
+	}
 	return &campaignID, nil
 }
 
@@ -208,9 +216,13 @@ type UpdateCampaignInput struct {
 	Name                  string
 	ShouldApplyToAllUsers bool
 	ExpiresAt             *time.Time
+	RolloutPercentage     int64
 }
 
 func UpdateCampaign(tx *sqlx.Tx, id CampaignID, input UpdateCampaignInput) error {
+	if err := experiment.SetCurrentStepForExperiment(tx, getExperimentNameForCampaignID(id), decimal.FromInt64(input.RolloutPercentage)); err != nil {
+		return err
+	}
 	if _, err := tx.Exec(editCampaignByIDQuery, input.VendorID, input.SourceID, input.URL.URL, input.IsActive, input.ShouldApplyToAllUsers, input.Name, input.ExpiresAt, id); err != nil {
 		return err
 	}

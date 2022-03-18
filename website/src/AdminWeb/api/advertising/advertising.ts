@@ -161,6 +161,7 @@ export type Campaign = {
 	name: string;
 	shouldApplyToAllUsers: boolean;
 	expiresAt: Date | undefined;
+    rolloutPercentage: number;
 }
 
 export type GetCampaignRequest = {
@@ -236,6 +237,7 @@ export type UpdateCampaignRequest = {
     name: string,
     isActive: boolean;
     shouldApplyToAllUsers: boolean;
+    rolloutPercentage: number;
 }
 
 export type UpdateCampaignResponse = {

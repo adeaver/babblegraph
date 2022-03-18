@@ -11,7 +11,19 @@ import (
 
 const (
 	getExperimentByNameQuery = "SELECT * FROM experiments WHERE name=$1"
-	updateExperimentQuery    = "UPDATE experiments SET current_step = $1, previous_step = $2, is_active = $3, last_modified_at = timezone('utc', now()) WHERE _id = $4"
+	upsertExperimentQuery    = `INSERT INTO
+        experiments (
+            name,
+            current_step,
+            previous_step,
+            is_active
+        ) VALUES (
+            $1, $2, $3, $4
+        ) ON CONFLICT (name) DO UPDATE SET
+            current_step=$2,
+            previous_step=$3,
+            is_active=$4,
+            last_modified_at = timezone('utc', now())`
 
 	getUserExperimentVariationQuery    = "SELECT * FROM experiments_user_variations WHERE experiment_id = $1 AND user = $2"
 	insertUserExperimentVariationQuery = `
@@ -40,11 +52,40 @@ func GetCurrentStepForExperiment(tx *sqlx.Tx, experimentName string) (*decimal.N
 }
 
 func SetCurrentStepForExperiment(tx *sqlx.Tx, experimentName string, nextStep decimal.Number) error {
-	return nil
+	experiment, err := lookupExperimentByName(tx, experimentName)
+	switch {
+	case err != nil:
+		return err
+	case experiment == nil:
+		return upsertExperiment(tx, &dbExperiment{
+			Name:         experimentName,
+			CurrentStep:  nextStep.ToInt64Rounded(),
+			PreviousStep: 0,
+			IsActive:     false,
+		})
+	default:
+		experiment.PreviousStep = experiment.CurrentStep
+		experiment.CurrentStep = nextStep.ToInt64Rounded()
+		return upsertExperiment(tx, experiment)
+	}
 }
 
 func SetExperimentIsActive(tx *sqlx.Tx, experimentName string, isActive bool) error {
-	return nil
+	experiment, err := lookupExperimentByName(tx, experimentName)
+	switch {
+	case err != nil:
+		return err
+	case experiment == nil:
+		return upsertExperiment(tx, &dbExperiment{
+			Name:         experimentName,
+			CurrentStep:  0,
+			PreviousStep: 0,
+			IsActive:     isActive,
+		})
+	default:
+		experiment.IsActive = isActive
+		return upsertExperiment(tx, experiment)
+	}
 }
 
 func lookupExperimentByName(tx *sqlx.Tx, experimentName string) (*dbExperiment, error) {
@@ -64,7 +105,7 @@ func lookupExperimentByName(tx *sqlx.Tx, experimentName string) (*dbExperiment, 
 }
 
 func upsertExperiment(tx *sqlx.Tx, experiment *dbExperiment) error {
-	_, err := tx.Exec(updateExperimentQuery, experiment.IsActive, experiment.CurrentStep, experiment.PreviousStep, experiment.ID)
+	_, err := tx.Exec(upsertExperimentQuery, experiment.Name, experiment.CurrentStep, experiment.PreviousStep, experiment.IsActive)
 	return err
 }
 

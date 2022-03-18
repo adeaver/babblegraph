@@ -170,6 +170,7 @@ const AddNewCampaignForm = (props: AddNewCampaignFormProps) => {
                 shouldApplyToAllUsers: false,
                 isActive: false,
                 expiresAt: undefined,
+                rolloutPercentage: 0,
             });
         },
         (err: Error) => {

@@ -3,12 +3,15 @@ package advertising
 import (
 	"babblegraph/model/content"
 	"babblegraph/model/email"
+	"babblegraph/model/experiment"
 	"babblegraph/model/users"
 	"babblegraph/util/env"
 	"babblegraph/wordsmith"
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/jmoiron/sqlx"
 )
 
 const MinimumUserAccountAge = 60 * 24 * time.Hour
@@ -95,6 +98,10 @@ func GetSourceTypeFromString(s string) (*AdvertisementSourceType, error) {
 
 type CampaignID string
 
+func (c CampaignID) Ptr() *CampaignID {
+	return &c
+}
+
 type dbCampaign struct {
 	CreatedAt             time.Time             `db:"created_at"`
 	LastModifiedAt        time.Time             `db:"last_modified_at"`
@@ -108,8 +115,12 @@ type dbCampaign struct {
 	ExpiresAt             *time.Time            `db:"expires_at"`
 }
 
-func (d dbCampaign) ToNonDB() Campaign {
-	return Campaign{
+func (d dbCampaign) ToNonDB(tx *sqlx.Tx) (*Campaign, error) {
+	rolloutPercentage, err := experiment.GetCurrentStepForExperiment(tx, getExperimentNameForCampaignID(d.ID))
+	if err != nil {
+		return nil, err
+	}
+	return &Campaign{
 		ID:                    d.ID,
 		VendorID:              d.VendorID,
 		SourceID:              d.SourceID,
@@ -118,7 +129,8 @@ func (d dbCampaign) ToNonDB() Campaign {
 		ShouldApplyToAllUsers: d.ShouldApplyToAllUsers,
 		Name:                  d.Name,
 		ExpiresAt:             d.ExpiresAt,
-	}
+		RolloutPercentage:     rolloutPercentage.ToInt64Rounded(),
+	}, nil
 }
 
 type Campaign struct {
@@ -130,6 +142,7 @@ type Campaign struct {
 	ShouldApplyToAllUsers bool                  `json:"should_apply_to_all_users"`
 	Name                  string                `json:"name"`
 	ExpiresAt             *time.Time            `json:"expires_at"`
+	RolloutPercentage     int64                 `json:"rollout_percentage"`
 }
 
 type CampaignTopicMappingID string

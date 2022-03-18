@@ -3,6 +3,7 @@ package advertising
 import (
 	"babblegraph/model/content"
 	"babblegraph/model/email"
+	"babblegraph/model/experiment"
 	"babblegraph/model/users"
 	"babblegraph/util/ctx"
 	"babblegraph/wordsmith"
@@ -146,10 +147,19 @@ func QueryAdvertisementsForUser(c ctx.LogContext, tx *sqlx.Tx, userID users.User
 	}
 	var validCampaignIDs []CampaignID
 	for _, m := range matches {
-		// TODO(here): add experiment code
-		if _, ok := allIneligibleCampaigns[m.CampaignID]; !ok {
-			validCampaignIDs = append(validCampaignIDs, m.CampaignID)
+		if _, ok := allIneligibleCampaigns[m.CampaignID]; ok {
+			c.Debugf("Campaign ID %s is ineligible for user %s", m.CampaignID, userID)
+			continue
 		}
+		isUserInVariation, err := experiment.IsUserInVariation(tx, getExperimentNameForCampaignID(m.CampaignID), userID, false)
+		switch {
+		case err != nil:
+			return nil, err
+		case !isUserInVariation:
+			c.Debugf("User %s is not in variation for campaign id %s", userID, m.CampaignID)
+			continue
+		}
+		validCampaignIDs = append(validCampaignIDs, m.CampaignID)
 	}
 	if len(validCampaignIDs) == 0 {
 		c.Debugf("Filtered all valid advertisements")
