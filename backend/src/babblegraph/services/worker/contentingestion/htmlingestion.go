@@ -72,7 +72,7 @@ func processWebsiteHTML1Link(c ctx.LogContext, link links2.Link) error {
 		SourceFilter: sourceFilter,
 	})
 	if err != nil {
-		c.Errorf("Error parsing html for link %s: %s", link.URL, err.Error())
+		c.Infof("Error parsing html for link %s: %s", link.URL, err.Error())
 		return nil
 	}
 	if err := insertLinks(parsedHTMLPage.Links); err != nil {

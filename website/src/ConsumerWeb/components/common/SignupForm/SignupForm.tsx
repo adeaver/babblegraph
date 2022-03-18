@@ -4,6 +4,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 import ErrorOutlineIcon from '@material-ui/icons/ErrorOutline';
 
+import CenteredComponent from 'common/components/CenteredComponent/CenteredComponent';
 import Color from 'common/styles/colors';
 import Form from 'common/components/Form/Form';
 import Paragraph, { Size } from 'common/typography/Paragraph';
@@ -26,6 +27,9 @@ const styleClasses = makeStyles({
         display: 'flex',
         justifyContent: 'end',
         padding: '5px 0',
+    },
+    verificationButton: {
+        width: '100%',
     },
     emailField: {
         width: '100%',
@@ -215,19 +219,11 @@ const VerificationComponent = (props: VerificationComponentProps) => {
             <Paragraph>
                 { translations[TextBlock.VerificationWarningDisclaimer] }
             </Paragraph>
-            <Grid container>
-                <Grid item xs={3} md={4}>
-                    &nbsp;
-                </Grid>
-                <Grid item xs={6} md={4}>
-                    <PrimaryButton className={classes.verificationButton} onClick={handleReenqueueSignupAttempt} disabled={props.disabled}>
-                        { translations[TextBlock.VerificationResendButtonText] }
-                    </PrimaryButton>
-                </Grid>
-                <Grid item xs={3} md={4}>
-                    &nbsp;
-                </Grid>
-            </Grid>
+            <CenteredComponent>
+                <PrimaryButton className={classes.verificationButton} onClick={handleReenqueueSignupAttempt} disabled={props.disabled}>
+                    { translations[TextBlock.VerificationResendButtonText] }
+                </PrimaryButton>
+            </CenteredComponent>
         </div>
     );
 }

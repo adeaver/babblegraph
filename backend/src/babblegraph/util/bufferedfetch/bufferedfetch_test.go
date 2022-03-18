@@ -1,13 +1,14 @@
 package bufferedfetch
 
 import (
+	"babblegraph/util/ctx"
 	"fmt"
 	"testing"
 )
 
 func TestSingleCall(t *testing.T) {
 	numCalls := 0
-	if err := Register("test-single", func() (interface{}, error) {
+	if err := Register(ctx.GetDefaultLogContext(), "test-single", func() (interface{}, error) {
 		numCalls++
 		var ints []int
 		for i := 0; i < 5; i++ {
@@ -40,7 +41,7 @@ func TestSingleCall(t *testing.T) {
 
 func TestDoubleCall(t *testing.T) {
 	numCalls := 0
-	if err := Register("test-double", func() (interface{}, error) {
+	if err := Register(ctx.GetDefaultLogContext(), "test-double", func() (interface{}, error) {
 		numCalls++
 		var ints []int
 		for i := 0; i < 5; i++ {

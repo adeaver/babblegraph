@@ -121,7 +121,7 @@ func (i *ingestor) registerBufferedFetchForSource(c ctx.LogContext, sourceID con
 	bufferedFetchKey := i.getBufferedKeyFetchForSourceID(sourceID)
 	switch i.ingestionType {
 	case content.IngestStrategyWebsiteHTML1:
-		if err := bufferedfetch.Register(bufferedFetchKey, func() (interface{}, error) {
+		if err := bufferedfetch.Register(c, bufferedFetchKey, func() (interface{}, error) {
 			var links []links2.Link
 			if err := database.WithTx(func(tx *sqlx.Tx) error {
 				var err error
@@ -137,7 +137,7 @@ func (i *ingestor) registerBufferedFetchForSource(c ctx.LogContext, sourceID con
 		return bufferedfetch.ForceRefill(c, bufferedFetchKey)
 	case content.IngestStrategyPodcastRSS1:
 		// This is definitely not necessary, but it cleans up the code a lot and doesn't hurt
-		if err := bufferedfetch.Register(bufferedFetchKey, func() (interface{}, error) {
+		if err := bufferedfetch.Register(c, bufferedFetchKey, func() (interface{}, error) {
 			var sourceSeeds []content.SourceSeed
 			if err := database.WithTx(func(tx *sqlx.Tx) error {
 				var err error

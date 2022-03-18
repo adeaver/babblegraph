@@ -1,0 +1,12 @@
+#!/bin/bash
+curl -X PUT --user $ES_USERNAME:$ES_PASSWORD -k -H "Content-Type: application/json" -d '{
+    "schedule": "30 6 * * * ?",
+    "name": "<babblegraph_es_prod_snap-{now/d}>",
+    "repository": "prod_babblegraph_data_snapshots",
+    "config": {
+        "ignore_unavailable": true
+    },
+    "retention": {
+        "expire_after": "60d"
+    }
+}' http://localhost:9200/_slm/policy/data-snapshots
