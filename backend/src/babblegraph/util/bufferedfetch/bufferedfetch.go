@@ -16,9 +16,10 @@ type fetchState struct {
 
 var bufferedState = map[string]*fetchState{}
 
-func Register(key string, fn refillFunc) error {
+func Register(c ctx.LogContext, key string, fn refillFunc) error {
 	if _, exists := bufferedState[key]; exists {
-		return fmt.Errorf("Cannot register bufferedfetch for key %s: already exists", key)
+		c.Infof("Cannot register bufferedfetch for key %s: already exists", key)
+		return nil
 	}
 	bufferedState[key] = &fetchState{
 		refillFn: fn,
