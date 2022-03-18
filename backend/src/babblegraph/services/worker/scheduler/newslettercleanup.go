@@ -31,15 +31,14 @@ func handleCleanupOldNewsletter(c async.Context) {
 				newslettersendrequests.PayloadStatusUnverifiedUser:
 				return newslettersendrequests.UpdateSendRequestStatus(tx, req.ID, newslettersendrequests.PayloadStatusDeleted)
 			case newslettersendrequests.PayloadStatusNeedsPreload:
-				c.Warnf("Got preload with ID %s that was never sent.", req.ID)
+				c.Infof("Got preload with ID %s that was never sent.", req.ID)
 				return newslettersendrequests.UpdateSendRequestStatus(tx, req.ID, newslettersendrequests.PayloadStatusDeleted)
 			case newslettersendrequests.PayloadStatusDeleted:
 				return nil
 			case newslettersendrequests.PayloadStatusSent:
 				// no-op
 			case newslettersendrequests.PayloadStatusPayloadReady:
-				c.Warnf("Got ready send request with ID %s that was never sent.", req.ID)
-				// no-op
+				c.Infof("Got ready send request with ID %s that was never sent.", req.ID)
 			}
 			if err := newslettersendrequests.UpdateSendRequestStatus(tx, req.ID, newslettersendrequests.PayloadStatusDeleted); err != nil {
 				return err

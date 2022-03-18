@@ -191,7 +191,7 @@ const PodcastResultsDisplay = (props: PodcastResultsDisplayProps) => {
                 <Grid className={classes.formComponent} item xs={12}>
                     <PrimaryButton
                         type="submit"
-                        disabled={props.hasNextPage}
+                        disabled={!props.hasNextPage}
                         onClick={props.handleNextPage}>
                         Next Page
                     </PrimaryButton>
