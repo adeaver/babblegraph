@@ -11,6 +11,10 @@ type Number struct {
 	millionths int64
 }
 
+func (n Number) Ptr() *Number {
+	return &n
+}
+
 func FromInt64(i int64) Number {
 	return Number{
 		millionths: i * percision,
