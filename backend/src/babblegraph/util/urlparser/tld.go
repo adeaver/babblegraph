@@ -40,4 +40,7 @@ var validTLDs = map[string]bool{
 	"bz": true, // Belize
 
 	"musica": true, // Random second level domain for Argentina
+
+	// Podcast feeds
+	"fm": true,
 }
