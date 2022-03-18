@@ -43,4 +43,5 @@ var validTLDs = map[string]bool{
 
 	// Podcast feeds
 	"fm": true,
+	"io": true,
 }
