@@ -15,7 +15,8 @@ type getAllAdvertisementsForCampaignRequest struct {
 }
 
 type getAllAdvertisementsForCampaignResponse struct {
-	Advertisements []advertising.Advertisement `json:"advertisements"`
+	Advertisements  []advertising.Advertisement `json:"advertisements"`
+	CampaignMetrics advertising.CampaignMetrics `json:"campaign_metrics"`
 }
 
 func getAllAdvertisementsForCampaign(adminID admin.ID, r *router.Request) (interface{}, error) {
@@ -24,15 +25,21 @@ func getAllAdvertisementsForCampaign(adminID admin.ID, r *router.Request) (inter
 		return nil, err
 	}
 	var advertisements []advertising.Advertisement
+	var campaignMetrics *advertising.CampaignMetrics
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		var err error
 		advertisements, err = advertising.GetAllAdvertisementsForCampaignID(tx, req.CampaignID)
+		if err != nil {
+			return err
+		}
+		campaignMetrics, err = advertising.GetAdvertisementMetrics(tx, req.CampaignID)
 		return err
 	}); err != nil {
 		return nil, err
 	}
 	return getAllAdvertisementsForCampaignResponse{
-		Advertisements: advertisements,
+		Advertisements:  advertisements,
+		CampaignMetrics: *campaignMetrics,
 	}, nil
 }
 

@@ -20,6 +20,7 @@ import DisplayCardHeader from 'common/components/DisplayCard/DisplayCardHeader';
 
 import {
     Advertisement,
+    AdvertisementMetrics,
 
     GetCampaignResponse,
     getCampaign,
@@ -82,8 +83,17 @@ const CampaignEditPage = asBaseComponent<CampaignsEditPageAPIProps, CampaignEdit
             setAddedAdvertisements(addedAdvertisements.concat(ad));
         }
 
+        const metricsByAdvertisementID = props.campaignMetrics.advertisementMetrics
+            .reduce(
+                (acc: { [id: string]: AdvertisementMetrics }, curr: AdvertisementMetrics) => ({
+                    ...acc,
+                    [curr.advertisementId]: curr,
+                }),
+                {}
+            );
+
         return (
-            <Grid>
+            <Grid container>
                 <Grid item xs={12}>
                     <CenteredComponent>
                         <DisplayCard>
@@ -107,17 +117,39 @@ const CampaignEditPage = asBaseComponent<CampaignsEditPageAPIProps, CampaignEdit
                     </CenteredComponent>
                 </Grid>
                 {
-                    addedAdvertisements.concat(props.advertisements || []).map((a: Advertisement) => (
-                        <Grid item xs={12} md={4}>
-                            <DisplayCard>
-                                <EditAdvertisementForm
-                                    campaignID={props.campaign.id}
-                                    advertisement={a}
-                                    handleNewAdvertisement={handleNewAdvertisement}
-                                    onError={props.setError} />
-                            </DisplayCard>
-                        </Grid>
-                    ))
+                    addedAdvertisements.concat(props.advertisements || []).map((a: Advertisement) => {
+                        const advertisementMetrics = metricsByAdvertisementID[a.id];
+                        return (
+                            <Grid item xs={12} md={4}>
+                                <DisplayCard>
+                                    <EditAdvertisementForm
+                                        campaignID={props.campaign.id}
+                                        advertisement={a}
+                                        handleNewAdvertisement={handleNewAdvertisement}
+                                        onError={props.setError} />
+                                    {
+                                        !!advertisementMetrics ? (
+                                            <div>
+                                                <Paragraph>
+                                                    Sent {advertisementMetrics.numberOfSends.total} times ({advertisementMetrics.numberOfSends.unique} unique by user)
+                                                </Paragraph>
+                                                <Paragraph>
+                                                    Opened in {advertisementMetrics.numberOfOpenedEmails.total} emails ({advertisementMetrics.numberOfOpenedEmails.unique} unique by user)
+                                                </Paragraph>
+                                                <Paragraph>
+                                                    Clicked {advertisementMetrics.numberOfClicks.total} times ({advertisementMetrics.numberOfClicks.unique} unique)
+                                                </Paragraph>
+                                            </div>
+                                        ) : (
+                                            <Paragraph color={TypographyColor.Warning}>
+                                                No data
+                                            </Paragraph>
+                                        )
+                                    }
+                                </DisplayCard>
+                            </Grid>
+                        )
+                    })
                 }
             </Grid>
         )

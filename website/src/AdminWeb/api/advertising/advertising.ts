@@ -310,12 +310,30 @@ export type Advertisement = {
 	isActive: boolean;
 }
 
+export type CampaignMetrics = {
+    lastRefreshedAt: string;
+    advertisementMetrics: Array<AdvertisementMetrics>;
+}
+
+export type AdvertisementMetrics = {
+    advertisementId: string;
+    numberOfSends: AdvertisementMetricsNumber;
+    numberOfOpenedEmails: AdvertisementMetricsNumber;
+    numberOfClicks: AdvertisementMetricsNumber;
+}
+
+export type AdvertisementMetricsNumber = {
+    total: number;
+    unique: number;
+}
+
 export type GetAllAdvertisementsForCampaignRequest = {
     campaignId: string;
 }
 
 export type GetAllAdvertisementsForCampaignResponse = {
     advertisements: Array<Advertisement>;
+    campaignMetrics: CampaignMetrics;
 }
 
 export function getAllAdvertisementsForCampaign(
