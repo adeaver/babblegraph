@@ -62,7 +62,7 @@ func (p PodcastExplicitity) ToBool(c ctx.LogContext) bool {
 		PodcastExplicitityFalse.Str():
 		return false
 	default:
-		c.Warnf("Found unrecognized podcast explicit label %s. Assuming explicit", p.Str())
+		c.Infof("Found unrecognized podcast explicit label %s. Assuming explicit", p.Str())
 		return true
 	}
 }
