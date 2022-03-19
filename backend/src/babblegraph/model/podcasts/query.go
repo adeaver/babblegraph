@@ -107,7 +107,7 @@ func QueryEpisodes(languageCode wordsmith.LanguageCode, input QueryEpisodesInput
 		}
 		queryBuilder.AddMust(durationQueryBuilder.BuildRangeQuery())
 	}
-	if len(input.SeenPodcastsIDs) != 0 {
+	if len(input.SeenPodcastIDs) != 0 {
 		var seenPodcastIDs []string
 		for _, s := range input.SeenPodcastIDs {
 			seenPodcastIDs = append(seenPodcastIDs, s.Str())
