@@ -95,7 +95,10 @@ const PodcastPlayerPage = asBaseComponent<GetPodcastMetadataResponse, PodcastPla
         const [ seekValue, setSeekValue ] = useState<number>(0);
         const handleSeekValueChange = (event: Event, newValue: number | number[]) => {
             const val = newValue as number;
-            audio.currentTime = val / seekStepGranularity * audio.duration;
+            const newTime = val / seekStepGranularity * audio.duration;
+            const timeParts = getTimePartsFromSeconds(newTime);
+            setAudioCurrentTimeString(`${asLeftZeroPaddedString(timeParts.hours, 99)}:${asLeftZeroPaddedString(timeParts.minutes, 60)}:${asLeftZeroPaddedString(timeParts.seconds, 60)}`)
+            audio.currentTime = newTime;
             setSeekValue(val);
         };
 
@@ -123,7 +126,6 @@ const PodcastPlayerPage = asBaseComponent<GetPodcastMetadataResponse, PodcastPla
             audio.addEventListener("timeupdate", function() {
                 setSeekValue(this.currentTime / audio.duration * seekStepGranularity);
                 const timeParts = getTimePartsFromSeconds(this.currentTime);
-                console.log(timeParts);
                 setAudioCurrentTimeString(`${asLeftZeroPaddedString(timeParts.hours, 99)}:${asLeftZeroPaddedString(timeParts.minutes, 60)}:${asLeftZeroPaddedString(timeParts.seconds, 60)}`)
             });
             audio.addEventListener("ended", function() {
@@ -171,17 +173,21 @@ const PodcastPlayerPage = asBaseComponent<GetPodcastMetadataResponse, PodcastPla
                             </Paragraph>
                         </Grid>
                         <Grid item xs={12} md={10}>
-                            <PrimarySlider aria-label="Time" max={seekStepGranularity} value={seekValue} onChange={handleSeekValueChange} />
-                        </Grid>
-                        <Grid item xs={6}>
-                            <Paragraph size={Size.Small} align={Alignment.Left}>
-                                {audioCurrentTimeString}
-                            </Paragraph>
-                        </Grid>
-                        <Grid item xs={6}>
-                            <Paragraph size={Size.Small} align={Alignment.Right}>
-                                {totalTimeString}
-                            </Paragraph>
+                            <Grid container>
+                                <Grid item xs={12}>
+                                    <PrimarySlider aria-label="Time" max={seekStepGranularity} value={seekValue} onChange={handleSeekValueChange} />
+                                </Grid>
+                                <Grid item xs={6}>
+                                    <Paragraph size={Size.Small} align={Alignment.Left}>
+                                        {audioCurrentTimeString}
+                                    </Paragraph>
+                                </Grid>
+                                <Grid item xs={6}>
+                                    <Paragraph size={Size.Small} align={Alignment.Right}>
+                                        {totalTimeString}
+                                    </Paragraph>
+                                </Grid>
+                            </Grid>
                         </Grid>
                         <Grid item xs={12} md={2}>
                             <CenteredComponent>
