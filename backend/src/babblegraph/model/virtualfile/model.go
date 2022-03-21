@@ -2,6 +2,7 @@ package virtualfile
 
 import (
 	"babblegraph/util/encrypt"
+	"babblegraph/util/env"
 	"babblegraph/util/ptr"
 	"fmt"
 	"strings"
@@ -33,11 +34,15 @@ func typeFromString(t string) (*Type, error) {
 	}
 }
 
-func EncodeAsVirtualFileWithType(id string, t Type) (*string, error) {
-	return encrypt.GetToken(encrypt.TokenPair{
+func GetVirtualFileURL(id string, t Type) (*string, error) {
+	token, err := encrypt.GetToken(encrypt.TokenPair{
 		Key:   t.Str(),
 		Value: id,
 	})
+	if err != nil {
+		return nil, err
+	}
+	return ptr.String(env.GetAbsoluteURLForEnvironment(fmt.Sprintf("vfile/%s", *token))), nil
 }
 
 func GetObjectIDAndType(virtualFileKey string) (*string, *Type, error) {

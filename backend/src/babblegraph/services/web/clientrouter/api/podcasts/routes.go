@@ -97,13 +97,13 @@ func getPodcastMetadata(r *router.Request) (interface{}, error) {
 		}); err != nil {
 			return nil, err
 		}
-		audioURL, err := virtualfile.EncodeAsVirtualFileWithType(episode.ID.Str(), virtualfile.TypePodcast)
+		audioURL, err := virtualfile.GetVirtualFileURL(episode.ID.Str(), virtualfile.TypePodcast)
 		if err != nil {
 			return nil, err
 		}
 		var imageURL *string
 		if showMetadata.ImageURL != nil {
-			imageURL, err = virtualfile.EncodeAsVirtualFileWithType(source.ID.Str(), virtualfile.TypePodcastImage)
+			imageURL, err = virtualfile.GetVirtualFileURL(source.ID.Str(), virtualfile.TypePodcastImage)
 			if err != nil {
 				return nil, err
 			}

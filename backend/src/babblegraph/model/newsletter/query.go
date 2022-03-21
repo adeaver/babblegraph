@@ -207,7 +207,7 @@ func makeLinkFromPodcast(c ctx.LogContext, podcastAccessor podcastAccessor, cont
 	}
 	var imageURL *string
 	if podcastMetadata.ImageURL != nil {
-		imageURL, err = virtualfile.EncodeAsVirtualFileWithType(source.ID.Str(), virtualfile.TypePodcastImage)
+		imageURL, err = virtualfile.GetVirtualFileURL(source.ID.Str(), virtualfile.TypePodcastImage)
 		if err != nil {
 			return nil, nil
 		}
