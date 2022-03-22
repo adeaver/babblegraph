@@ -11,12 +11,14 @@ import (
 	"babblegraph/model/usernewsletterschedule"
 	"babblegraph/model/users"
 	"babblegraph/wordsmith"
+	"time"
 )
 
 type testUserAccessor struct {
 	userID                    users.UserID
 	languageCode              wordsmith.LanguageCode
 	doesUserHaveAccount       bool
+	userCreatedDate           time.Time
 	userSubscriptionLevel     *useraccounts.SubscriptionLevel
 	userNewsletterPreferences *usernewsletterpreferences.UserNewsletterPreferences
 	userNewsletterSchedule    usernewsletterschedule.UserNewsletterSchedule
@@ -88,4 +90,8 @@ func (t *testUserAccessor) insertDocumentForUserAndReturnID(emailRecordID email.
 func (t *testUserAccessor) insertSpotlightReinforcementRecord(lemmaID wordsmith.LemmaID) error {
 	t.insertedSpotlightRecords = append(t.insertedSpotlightRecords, lemmaID)
 	return nil
+}
+
+func (t *testUserAccessor) getUserCreatedDate() time.Time {
+	return t.userCreatedDate
 }

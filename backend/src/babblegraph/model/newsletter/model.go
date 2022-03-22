@@ -1,6 +1,7 @@
 package newsletter
 
 import (
+	"babblegraph/model/content"
 	"babblegraph/model/documents"
 	"babblegraph/model/email"
 	"babblegraph/model/users"
@@ -20,6 +21,7 @@ type NewsletterBody struct {
 	SetTopicsLink               *string                      `json:"set_topics_link,omitempty"`
 	ReinforcementLink           string                       `json:"reinforcement_link"`
 	PreferencesLink             *string                      `json:"preferences_link,omitempty"`
+	Advertisement               *NewsletterAdvertisement     `json:"advertisement,omitempty"`
 }
 
 type LemmaReinforcementSpotlight struct {
@@ -29,6 +31,9 @@ type LemmaReinforcementSpotlight struct {
 }
 
 type Category struct {
+	// This is not needed on deserialization
+	topicID *content.TopicID
+
 	Name         *string       `json:"name,omitempty"`
 	Links        []Link        `json:"links"`
 	PodcastLinks []PodcastLink `json:"podcast_links,omitempty"`
@@ -56,4 +61,13 @@ type Link struct {
 type Domain struct {
 	FlagAsset string `json:"flag_asset"`
 	Name      string `json:"name"`
+}
+
+type NewsletterAdvertisement struct {
+	Title                   string `json:"title"`
+	Description             string `json:"description"`
+	ImageURL                string `json:"image_url"`
+	URL                     string `json:"url"`
+	PremiumLink             string `json:"premium_link"`
+	AdvertisementPolicyLink string `json:"advertisement_policy_link"`
 }

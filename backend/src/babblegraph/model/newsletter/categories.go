@@ -177,6 +177,7 @@ func joinDocumentsIntoCategories(c ctx.LogContext, input joinDocumentsIntoCatego
 				categoryName = ptr.String(text.ToTitleCaseForLanguage(*displayName, input.languageCode))
 			}
 			categories = append(categories, Category{
+				topicID:      documentGroup.topic.Ptr(),
 				Name:         categoryName,
 				Links:        links,
 				PodcastLinks: podcastLinks,

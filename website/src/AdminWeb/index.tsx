@@ -13,14 +13,22 @@ import Dashboard from 'AdminWeb/components/Dashboard/Dashboard';
 import UserMetricsPage from 'AdminWeb/components/UserMetricsPage/UserMetricsPage';
 import BillingManagementPage from 'AdminWeb/components/BillingManagementPage/BillingManagementPage';
 import PermissionManagerPage from 'AdminWeb/components/PermissionManagerPage/PermissionManagerPage';
+
 import BlogListPage from 'AdminWeb/components/Blog/BlogListPage/BlogListPage';
 import BlogEditPage from 'AdminWeb/components/Blog/BlogEditPage/BlogEditPage';
+
 import ContentManagerDashboard from 'AdminWeb/components/ContentManager/ContentManagerDashboard';
 import TopicListPage from 'AdminWeb/components/ContentManager/topics/TopicListPage';
 import TopicManagementPage from 'AdminWeb/components/ContentManager/topics/TopicManagementPage';
 import SourcesListPage from 'AdminWeb/components/ContentManager/sources/SourcesListPage';
 import SourceManagementPage from 'AdminWeb/components/ContentManager/sources/SourceManagementPage';
 import PodcastSearchPage from 'AdminWeb/components/ContentManager/podcasts/PodcastSearchPage/PodcastSearchPage';
+
+import AdvertisingDashboard from 'AdminWeb/components/AdvertisingManagement/AdvertisingDashboard';
+import VendorsListPage from 'AdminWeb/components/AdvertisingManagement/vendors/VendorsListPage';
+import CampaignsListPage from 'AdminWeb/components/AdvertisingManagement/campaigns/CampaignListPage';
+import CampaignEditPage from 'AdminWeb/components/AdvertisingManagement/campaigns/CampaignEditPage';
+import AdvertisingSourceListPage from 'AdminWeb/components/AdvertisingManagement/sources/SourcesListPage';
 
 class App extends React.Component{
     render() {
@@ -40,6 +48,12 @@ class App extends React.Component{
                     <Route path="/content-manager/sources" component={SourcesListPage} />
                     <Route path="/content-manager/podcasts" component={PodcastSearchPage} />
                     <Route path="/content-manager" component={ContentManagerDashboard} />
+
+                    <Route path="/advertising-manager/vendors" component={VendorsListPage} />
+                    <Route path="/advertising-manager/sources" component={AdvertisingSourceListPage} />
+                    <Route path="/advertising-manager/campaigns/:id" component={CampaignEditPage} />
+                    <Route path="/advertising-manager/campaigns" component={CampaignsListPage} />
+                    <Route path="/advertising-manager" component={AdvertisingDashboard} />
 
                     <Route path="/blog-manager/edit/:blogPath" component={BlogEditPage} />
                     <Route path="/blog-manager" component={BlogListPage} />

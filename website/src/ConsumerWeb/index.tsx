@@ -11,6 +11,7 @@ import HomePage from 'ConsumerWeb/components/HomePage/HomePage';
 import AboutPage from 'ConsumerWeb/components/AboutPage/AboutPage';
 import PrivacyPolicyPage from 'ConsumerWeb/components/PrivacyPolicyPage/PrivacyPolicyPage';
 import PaywallReportPage from 'ConsumerWeb/components/PaywallReportPage/PaywallReportPage';
+import AdvertisingPolicyPage from 'ConsumerWeb/components/AdvertisingPolicyPage/AdvertisingPolicyPage';
 
 import BlogListPage from 'ConsumerWeb/components/BlogListPage/BlogListPage';
 import BlogPostPage from 'ConsumerWeb/components/BlogPostPage/BlogPostPage';
@@ -68,6 +69,7 @@ class App extends React.Component{
                     { /* Home Page & About Page */ }
                     <Route path="/about" component={AboutPage} />
                     <Route path="/privacy-policy" component={PrivacyPolicyPage} />
+                    <Route path="/advertising-policy" component={AdvertisingPolicyPage} />
                     <Route exact path="/" component={HomePage} />
 
                     { /* 404 Page */ }

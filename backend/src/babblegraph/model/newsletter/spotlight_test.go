@@ -88,11 +88,13 @@ func TestSpotlightRecordsForUserWithAccount(t *testing.T) {
 	}
 	docsAccessor := &testDocsAccessor{documents: docs}
 	testNewsletter, err := CreateNewsletter(c, CreateNewsletterInput{
-		WordsmithAccessor: wordsmithAccessor,
-		EmailAccessor:     emailAccessor,
-		UserAccessor:      userAccessor,
-		DocsAccessor:      docsAccessor,
-		ContentAccessor:   contentAccessor,
+		WordsmithAccessor:     wordsmithAccessor,
+		EmailAccessor:         emailAccessor,
+		UserAccessor:          userAccessor,
+		DocsAccessor:          docsAccessor,
+		ContentAccessor:       contentAccessor,
+		AdvertisementAccessor: &testAdvertisementAccessor{},
+		PodcastAccessor:       &testPodcastAccessor{},
 	})
 	switch {
 	case err != nil:
@@ -191,11 +193,13 @@ func TestSpotlightRecordsForUserWithoutAccount(t *testing.T) {
 	}
 	docsAccessor := &testDocsAccessor{documents: docs}
 	testNewsletter, err := CreateNewsletter(c, CreateNewsletterInput{
-		WordsmithAccessor: wordsmithAccessor,
-		EmailAccessor:     emailAccessor,
-		UserAccessor:      userAccessor,
-		DocsAccessor:      docsAccessor,
-		ContentAccessor:   contentAccessor,
+		WordsmithAccessor:     wordsmithAccessor,
+		EmailAccessor:         emailAccessor,
+		UserAccessor:          userAccessor,
+		DocsAccessor:          docsAccessor,
+		ContentAccessor:       contentAccessor,
+		AdvertisementAccessor: &testAdvertisementAccessor{},
+		PodcastAccessor:       &testPodcastAccessor{},
 	})
 	switch {
 	case err != nil:
@@ -297,11 +301,13 @@ func TestSpotlightRecordsForTrackedLemmaWithoutSpotlight(t *testing.T) {
 	}
 	docsAccessor := &testDocsAccessor{documents: docs}
 	testNewsletter, err := CreateNewsletter(c, CreateNewsletterInput{
-		WordsmithAccessor: wordsmithAccessor,
-		EmailAccessor:     emailAccessor,
-		UserAccessor:      userAccessor,
-		DocsAccessor:      docsAccessor,
-		ContentAccessor:   contentAccessor,
+		WordsmithAccessor:     wordsmithAccessor,
+		EmailAccessor:         emailAccessor,
+		UserAccessor:          userAccessor,
+		DocsAccessor:          docsAccessor,
+		ContentAccessor:       contentAccessor,
+		AdvertisementAccessor: &testAdvertisementAccessor{},
+		PodcastAccessor:       &testPodcastAccessor{},
 	})
 	switch {
 	case err != nil:

@@ -29,6 +29,7 @@ type userPreferencesAccessor interface {
 	getLanguageCode() wordsmith.LanguageCode
 
 	getDoesUserHaveAccount() bool
+	getUserCreatedDate() time.Time
 
 	getUserSubscriptionLevel() *useraccounts.SubscriptionLevel
 	getUserNewsletterPreferences() *usernewsletterpreferences.UserNewsletterPreferences
@@ -50,6 +51,7 @@ type DefaultUserPreferencesAccessor struct {
 	languageCode wordsmith.LanguageCode
 
 	doesUserHaveAccount       bool
+	userCreatedDate           time.Time
 	userSubscriptionLevel     *useraccounts.SubscriptionLevel
 	userNewsletterPreferences *usernewsletterpreferences.UserNewsletterPreferences
 	userNewsletterSchedule    usernewsletterschedule.UserNewsletterSchedule
@@ -62,6 +64,10 @@ type DefaultUserPreferencesAccessor struct {
 }
 
 func GetDefaultUserPreferencesAccessor(c ctx.LogContext, tx *sqlx.Tx, userID users.UserID, languageCode wordsmith.LanguageCode, dateOfSendUTCMidnight time.Time) (*DefaultUserPreferencesAccessor, error) {
+	user, err := users.GetUser(tx, userID)
+	if err != nil {
+		return nil, err
+	}
 	userSubscriptionLevel, err := useraccounts.LookupSubscriptionLevelForUser(tx, userID)
 	if err != nil {
 		return nil, err
@@ -113,6 +119,7 @@ func GetDefaultUserPreferencesAccessor(c ctx.LogContext, tx *sqlx.Tx, userID use
 		userID:                    userID,
 		languageCode:              languageCode,
 		doesUserHaveAccount:       doesUserHaveAccount,
+		userCreatedDate:           user.CreatedDate,
 		userSubscriptionLevel:     userSubscriptionLevel,
 		userNewsletterPreferences: userNewsletterPreferences,
 		userNewsletterSchedule:    userNewsletterSchedule,
@@ -140,6 +147,10 @@ func (d *DefaultUserPreferencesAccessor) getLanguageCode() wordsmith.LanguageCod
 
 func (d *DefaultUserPreferencesAccessor) getDoesUserHaveAccount() bool {
 	return d.doesUserHaveAccount
+}
+
+func (d *DefaultUserPreferencesAccessor) getUserCreatedDate() time.Time {
+	return d.userCreatedDate
 }
 
 func (d *DefaultUserPreferencesAccessor) getUserSubscriptionLevel() *useraccounts.SubscriptionLevel {

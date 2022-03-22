@@ -6,18 +6,15 @@ import (
 	"babblegraph/model/userdocuments"
 	"babblegraph/model/userlinks"
 	"babblegraph/model/users"
-	"babblegraph/services/web/clientrouter/middleware"
+	"babblegraph/services/web/router"
 	"babblegraph/util/database"
 	"babblegraph/util/encrypt"
-	"babblegraph/util/random"
+	"babblegraph/util/ptr"
 	"babblegraph/util/urlparser"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"reflect"
 
-	"github.com/getsentry/sentry-go"
-	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -33,22 +30,15 @@ func getArticleLinkBodyFromMap(m map[string]interface{}) (*routes.ArticleLinkBod
 	return &articleBody, nil
 }
 
-func HandleArticleLink(w http.ResponseWriter, r *http.Request) {
-	middleware.LogRequestWithoutBody(r)
-	routeVars := mux.Vars(r)
-	token, ok := routeVars["token"]
-	if !ok {
-		w.WriteHeader(http.StatusBadRequest)
-		return
+func handleArticleRoute(r *router.Request) (interface{}, error) {
+	token, err := r.GetRouteVar("token")
+	if err != nil {
+		return nil, err
 	}
-	localHub := sentry.CurrentHub().Clone()
-	localHub.ConfigureScope(func(scope *sentry.Scope) {
-		scope.SetTag("handle-article-link", fmt.Sprintf("article-link-%s", random.MustMakeRandomString(12)))
-	})
 	var emailRecordID *email.ID
 	var userID *users.UserID
 	var url *urlparser.ParsedURL
-	if err := encrypt.WithDecodedToken(token, func(tokenPair encrypt.TokenPair) error {
+	if err := encrypt.WithDecodedToken(*token, func(tokenPair encrypt.TokenPair) error {
 		switch {
 		case tokenPair.Key == routes.ArticleLinkKeyDEPRECATED.Str():
 			m, ok := tokenPair.Value.(map[string]interface{})
@@ -88,23 +78,17 @@ func HandleArticleLink(w http.ResponseWriter, r *http.Request) {
 			return fmt.Errorf("Incorrect key type: %s", tokenPair.Key)
 		}
 	}); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		localHub.CaptureException(err)
-		return
+		return nil, fmt.Errorf("Unable to parse token: %s", err.Error())
 	}
 	if emailRecordID == nil || userID == nil || url == nil {
-		w.WriteHeader(http.StatusBadRequest)
-		localHub.CaptureException(fmt.Errorf("Token does not have email record, user id, or url: %s", token))
-		return
+		return nil, fmt.Errorf("Token does not have email record, user id, or url: %s", *token)
 	}
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		return userlinks.RegisterUserLinkClick(tx, *userID, *url, *emailRecordID)
 	}); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		localHub.CaptureException(err)
-		return
+		r.Warnf("Failed to capture link click for user: %s", *userID)
 	}
-	http.Redirect(w, r, url.URL, http.StatusFound)
+	return ptr.String(url.URL), nil
 }
 
 func getPaywallReportBodyFromMap(m map[string]interface{}) (*routes.PaywallReportBodyDEPRECATED, error) {
@@ -119,22 +103,15 @@ func getPaywallReportBodyFromMap(m map[string]interface{}) (*routes.PaywallRepor
 	return &paywallReportBody, nil
 }
 
-func HandlePaywallReport(w http.ResponseWriter, r *http.Request) {
-	middleware.LogRequestWithoutBody(r)
-	routeVars := mux.Vars(r)
-	token, ok := routeVars["token"]
-	if !ok {
-		w.WriteHeader(http.StatusBadRequest)
-		return
+func handlePaywallReport(r *router.Request) (interface{}, error) {
+	token, err := r.GetRouteVar("token")
+	if err != nil {
+		return nil, err
 	}
-	localHub := sentry.CurrentHub().Clone()
-	localHub.ConfigureScope(func(scope *sentry.Scope) {
-		scope.SetTag("handle-paywall-report-link", fmt.Sprintf("paywall-report-link-%s", random.MustMakeRandomString(12)))
-	})
 	var emailRecordID *email.ID
 	var userID *users.UserID
 	var url *urlparser.ParsedURL
-	if err := encrypt.WithDecodedToken(token, func(tokenPair encrypt.TokenPair) error {
+	if err := encrypt.WithDecodedToken(*token, func(tokenPair encrypt.TokenPair) error {
 		switch {
 		case tokenPair.Key == routes.PaywallReportKeyDEPRECATED.Str():
 			m, ok := tokenPair.Value.(map[string]interface{})
@@ -174,27 +151,19 @@ func HandlePaywallReport(w http.ResponseWriter, r *http.Request) {
 			return fmt.Errorf("Incorrect key type: %s", tokenPair.Key)
 		}
 	}); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		localHub.CaptureException(err)
-		return
+		return nil, fmt.Errorf("Unable to parse token: %s", err.Error())
 	}
 	if emailRecordID == nil || userID == nil || url == nil {
-		w.WriteHeader(http.StatusBadRequest)
-		localHub.CaptureException(fmt.Errorf("Token does not have email record, user id, or url: %s", token))
-		return
+		return nil, fmt.Errorf("Token does not have email record, user id, or url: %s", *token)
 	}
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		return userlinks.ReportPaywall(tx, *userID, *url, *emailRecordID)
 	}); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		localHub.CaptureException(err)
-		return
+		r.Warnf("Failed to capture paywall report for user: %s", *userID)
 	}
 	subscriptionManagementLink, err := routes.MakeSubscriptionManagementToken(*userID)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		localHub.CaptureException(err)
-		return
+		return nil, err
 	}
-	http.Redirect(w, r, fmt.Sprintf("/paywall-thank-you/%s", *subscriptionManagementLink), http.StatusPermanentRedirect)
+	return ptr.String(fmt.Sprintf("/paywall-thank-you/%s", *subscriptionManagementLink)), nil
 }
