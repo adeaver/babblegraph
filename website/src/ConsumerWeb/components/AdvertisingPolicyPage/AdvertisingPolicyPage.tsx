@@ -35,11 +35,11 @@ const AdvertisingPolicyPage = () => {
                     <ul>
                         <li>
                             <Paragraph align={Alignment.Left} isBold>
-                                Babblegraph primarily uses affiliate-based advertisements. This means that Babblegraph may earn commission if you purchase items through links in your newsletter. All of these links will contain a disclaimer about this.
+                                Babblegraph primarily uses affiliate-based advertisements. This means that Babblegraph may earn commission if you purchase items through links in your newsletter. It’s a great way to help support Babblegraph at no additional cost to you.
                             </Paragraph>
                         </li>
                         <Paragraph align={Alignment.Left}>
-                            Unlike other advertising strategies, affiliate-based marketing means that I’m incentivized to show products that you’re actually interested in purchasing because Babblegraph only compensated if you purchase an item.
+                            Unlike other advertising strategies, affiliate-based marketing means that I’m incentivized to show products that you’re actually interested in purchasing because Babblegraph only compensated if you purchase an item. As a general rule, the website from which you purchase a product is who is paying the commission that we earn. All advertisements will contain a disclaimer that it is an adveritsement.
                         </Paragraph>
                         <li>
                             <Paragraph align={Alignment.Left} isBold>
@@ -57,6 +57,11 @@ const AdvertisingPolicyPage = () => {
                         <Paragraph align={Alignment.Left}>
                             If you have any feedback about advertisements, please reach out to hello@babblegraph.com. Likewise, if you want to support Babblegraph without ads, you can subscribe to Babblegraph Premium (and get some new exclusive features in the process.)
                         </Paragraph>
+                        <li>
+                            <Paragraph align={Alignment.Left} isBold>
+                                Lastly, and perhaps most importantly, Babblegraph does not sell any information about you. While we try to partner with brands and vendors that are respectful about privacy, it is worth noting that we are not responsible for their policies around data privacy.
+                            </Paragraph>
+                        </li>
                     </ul>
                 </DisplayCard>
             </CenteredComponent>
