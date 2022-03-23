@@ -64,10 +64,16 @@ type Domain struct {
 }
 
 type NewsletterAdvertisement struct {
-	Title                   string `json:"title"`
-	Description             string `json:"description"`
-	ImageURL                string `json:"image_url"`
-	URL                     string `json:"url"`
-	PremiumLink             string `json:"premium_link"`
-	AdvertisementPolicyLink string `json:"advertisement_policy_link"`
+	Title                       string                       `json:"title"`
+	Description                 string                       `json:"description"`
+	ImageURL                    string                       `json:"image_url"`
+	URL                         string                       `json:"url"`
+	AdditionalAdvertisementLink *AdditionalAdvertisementLink `json:"additional_link,omitempty"`
+	PremiumLink                 string                       `json:"premium_link"`
+	AdvertisementPolicyLink     string                       `json:"advertisement_policy_link"`
+}
+
+type AdditionalAdvertisementLink struct {
+	URL      string  `json:"url"`
+	LinkText *string `json:"link_text"`
 }

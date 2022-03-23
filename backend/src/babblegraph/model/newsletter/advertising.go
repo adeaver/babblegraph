@@ -1,6 +1,7 @@
 package newsletter
 
 import (
+	"babblegraph/config"
 	"babblegraph/model/advertising"
 	"babblegraph/model/content"
 	"babblegraph/model/email"
@@ -9,6 +10,7 @@ import (
 	"babblegraph/util/ctx"
 	"babblegraph/util/ptr"
 	"babblegraph/wordsmith"
+	"fmt"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -43,13 +45,21 @@ func lookupAdvertisement(c ctx.LogContext, emailRecordID email.ID, userAccessor 
 				c.Errorf("Error inserting advertisement for user %s: %s", userAccessor.getUserID(), err.Error())
 				return nil, err
 			}
+			var additionalLink *AdditionalAdvertisementLink
+			if advertisement.AdditionalLinkURL != nil {
+				additionalLink = &AdditionalAdvertisementLink{
+					URL:      fmt.Sprintf("%s?%s=%s", *advertisementURL, config.AdvertisingUseAdditionalLinkQueryParamName, config.AdvertisingUseAdditionalLinkQueryParamValue),
+					LinkText: advertisement.AdditionalLinkText,
+				}
+			}
 			return &NewsletterAdvertisement{
-				Title:                   advertisement.Title,
-				Description:             advertisement.Description,
-				ImageURL:                advertisement.ImageURL,
-				URL:                     *advertisementURL,
-				PremiumLink:             *premiumInformationLink,
-				AdvertisementPolicyLink: advertisingPolicyLink,
+				Title:                       advertisement.Title,
+				Description:                 advertisement.Description,
+				ImageURL:                    advertisement.ImageURL,
+				URL:                         *advertisementURL,
+				AdditionalAdvertisementLink: additionalLink,
+				PremiumLink:                 *premiumInformationLink,
+				AdvertisementPolicyLink:     advertisingPolicyLink,
 			}, nil
 		}
 	}
@@ -64,13 +74,21 @@ func lookupAdvertisement(c ctx.LogContext, emailRecordID email.ID, userAccessor 
 			c.Errorf("Error inserting advertisement for user %s: %s", userAccessor.getUserID(), err.Error())
 			return nil, err
 		}
+		var additionalLink *AdditionalAdvertisementLink
+		if advertisement.AdditionalLinkURL != nil {
+			additionalLink = &AdditionalAdvertisementLink{
+				URL:      fmt.Sprintf("%s?%s=%s", *advertisementURL, config.AdvertisingUseAdditionalLinkQueryParamName, config.AdvertisingUseAdditionalLinkQueryParamValue),
+				LinkText: advertisement.AdditionalLinkText,
+			}
+		}
 		return &NewsletterAdvertisement{
-			Title:                   advertisement.Title,
-			Description:             advertisement.Description,
-			ImageURL:                advertisement.ImageURL,
-			URL:                     *advertisementURL,
-			PremiumLink:             *premiumInformationLink,
-			AdvertisementPolicyLink: advertisingPolicyLink,
+			Title:                       advertisement.Title,
+			Description:                 advertisement.Description,
+			ImageURL:                    advertisement.ImageURL,
+			URL:                         *advertisementURL,
+			AdditionalAdvertisementLink: additionalLink,
+			PremiumLink:                 *premiumInformationLink,
+			AdvertisementPolicyLink:     advertisingPolicyLink,
 		}, nil
 	}
 	return nil, nil

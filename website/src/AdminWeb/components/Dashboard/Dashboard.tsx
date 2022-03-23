@@ -14,16 +14,20 @@ const styleClasses = makeStyles({
     navigationCard: {
         margin: '15px',
         height: '100%',
-    }
+    },
+    navigationCardContainer: {
+        padding: '10px',
+    },
 });
 
 const Dashboard = () => {
+    const classes = styleClasses();
     return (
         <Page>
             <Heading1 color={TypographyColor.Primary}>
                 babblegraph
             </Heading1>
-            <Grid container>
+            <Grid className={classes.navigationCardContainer} container>
                 <NavigationCard
                     location="/ops/permission-manager"
                     title="Manage Admin Permissions"

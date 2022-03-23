@@ -159,37 +159,43 @@ type dbCampaignTopicMapping struct {
 type AdvertisementID string
 
 type dbAdvertisement struct {
-	CreatedAt      time.Time              `db:"created_at"`
-	LastModifiedAt time.Time              `db:"last_modified_at"`
-	ID             AdvertisementID        `db:"_id"`
-	LanguageCode   wordsmith.LanguageCode `db:"language_code"`
-	CampaignID     CampaignID             `db:"campaign_id"`
-	Title          string                 `db:"title"`
-	ImageURL       string                 `db:"image_url"`
-	Description    string                 `db:"description"`
-	IsActive       bool                   `db:"is_active"`
+	CreatedAt          time.Time              `db:"created_at"`
+	LastModifiedAt     time.Time              `db:"last_modified_at"`
+	ID                 AdvertisementID        `db:"_id"`
+	LanguageCode       wordsmith.LanguageCode `db:"language_code"`
+	CampaignID         CampaignID             `db:"campaign_id"`
+	Title              string                 `db:"title"`
+	ImageURL           string                 `db:"image_url"`
+	Description        string                 `db:"description"`
+	IsActive           bool                   `db:"is_active"`
+	AdditionalLinkURL  *string                `db:"additional_link_url"`
+	AdditionalLinkText *string                `db:"additional_link_text"`
 }
 
 func (d dbAdvertisement) ToNonDB() Advertisement {
 	return Advertisement{
-		ID:           d.ID,
-		LanguageCode: d.LanguageCode,
-		CampaignID:   d.CampaignID,
-		Title:        d.Title,
-		ImageURL:     d.ImageURL,
-		Description:  d.Description,
-		IsActive:     d.IsActive,
+		ID:                 d.ID,
+		LanguageCode:       d.LanguageCode,
+		CampaignID:         d.CampaignID,
+		Title:              d.Title,
+		ImageURL:           d.ImageURL,
+		Description:        d.Description,
+		IsActive:           d.IsActive,
+		AdditionalLinkURL:  d.AdditionalLinkURL,
+		AdditionalLinkText: d.AdditionalLinkText,
 	}
 }
 
 type Advertisement struct {
-	ID           AdvertisementID        `json:"id"`
-	LanguageCode wordsmith.LanguageCode `json:"language_code"`
-	CampaignID   CampaignID             `json:"campaign_id"`
-	Title        string                 `json:"title"`
-	ImageURL     string                 `json:"image_url"`
-	Description  string                 `json:"description"`
-	IsActive     bool                   `json:"is_active"`
+	ID                 AdvertisementID        `json:"id"`
+	LanguageCode       wordsmith.LanguageCode `json:"language_code"`
+	CampaignID         CampaignID             `json:"campaign_id"`
+	Title              string                 `json:"title"`
+	ImageURL           string                 `json:"image_url"`
+	Description        string                 `json:"description"`
+	IsActive           bool                   `json:"is_active"`
+	AdditionalLinkURL  *string                `json:"additional_link_url,omitempty"`
+	AdditionalLinkText *string                `json:"additional_link_text,omitempty"`
 }
 
 type UserAdvertisementID string

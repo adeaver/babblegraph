@@ -1,6 +1,7 @@
 package index
 
 import (
+	"babblegraph/config"
 	"babblegraph/model/advertising"
 	"babblegraph/services/web/router"
 	"babblegraph/util/database"
@@ -10,6 +11,10 @@ import (
 )
 
 func handleAdClick(r *router.Request) (interface{}, error) {
+	var useAdditionalLink bool
+	if additionalLinkParam := r.GetQueryParam(config.AdvertisingUseAdditionalLinkQueryParamName); additionalLinkParam != nil && *additionalLinkParam == config.AdvertisingUseAdditionalLinkQueryParamValue {
+		useAdditionalLink = true
+	}
 	userAdvertisementIDStr, err := r.GetRouteVar("token")
 	if err != nil {
 		return nil, err
@@ -23,7 +28,7 @@ func handleAdClick(r *router.Request) (interface{}, error) {
 	var url *string
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		var err error
-		url, err = advertising.GetURLForUserAdvertisementID(tx, userAdvertisementID)
+		url, err = advertising.GetURLForUserAdvertisementID(tx, userAdvertisementID, useAdditionalLink)
 		return err
 	}); err != nil {
 		return nil, err

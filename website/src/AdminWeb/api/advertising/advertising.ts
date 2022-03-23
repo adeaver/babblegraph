@@ -308,6 +308,8 @@ export type Advertisement = {
 	imageUrl: string;
 	description: string;
 	isActive: boolean;
+    additionalLinkUrl: string | undefined;
+    additionalLinkText: string | undefined;
 }
 
 export type CampaignMetrics = {
@@ -355,6 +357,8 @@ export type InsertAdvertisementRequest = {
     title: string;
     description: string;
     imageUrl: string;
+    additionalLinkUrl: string | undefined;
+    additionalLinkText: string | undefined;
 }
 
 export type InsertAdvertisementResponse = {
@@ -381,6 +385,8 @@ export type UpdateAdvertisementRequest = {
     description: string;
     imageUrl: string;
     isActive: boolean;
+    additionalLinkUrl: string | undefined;
+    additionalLinkText: string | undefined;
 }
 
 export type UpdateAdvertisementResponse = {

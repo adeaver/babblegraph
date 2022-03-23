@@ -83,7 +83,7 @@ const CampaignEditPage = asBaseComponent<CampaignsEditPageAPIProps, CampaignEdit
             setAddedAdvertisements(addedAdvertisements.concat(ad));
         }
 
-        const metricsByAdvertisementID = props.campaignMetrics.advertisementMetrics
+        const metricsByAdvertisementID = (props.campaignMetrics.advertisementMetrics || [])
             .reduce(
                 (acc: { [id: string]: AdvertisementMetrics }, curr: AdvertisementMetrics) => ({
                     ...acc,
@@ -120,7 +120,7 @@ const CampaignEditPage = asBaseComponent<CampaignsEditPageAPIProps, CampaignEdit
                     addedAdvertisements.concat(props.advertisements || []).map((a: Advertisement) => {
                         const advertisementMetrics = metricsByAdvertisementID[a.id];
                         return (
-                            <Grid item xs={12} md={4}>
+                            <Grid key={a.id} item xs={12} md={4}>
                                 <DisplayCard>
                                     <EditAdvertisementForm
                                         campaignID={props.campaign.id}
@@ -234,7 +234,7 @@ const TopicMappingEditForm = asBaseComponent<GetCampaignTopicMappingsResponse, T
                     </Heading3>
                     {
                         activeTopicMappings.map((topic: Topic, idx: number) => (
-                            <Grid container
+                            <Grid key={topic.id} container
                                 className={classes.alignedContainer}>
                                 <Grid item xs={10} md={11}>
                                     <Paragraph align={Alignment.Left}>

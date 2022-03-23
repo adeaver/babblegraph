@@ -59,6 +59,14 @@ func (r *Request) GetRouteVar(varName string) (*string, error) {
 	return ptr.String(routeVar), nil
 }
 
+func (r *Request) GetQueryParam(varName string) *string {
+	param := r.r.URL.Query().Get(varName)
+	if param != "" {
+		return ptr.String(param)
+	}
+	return nil
+}
+
 func (r *Request) GetFormValue(fieldName string) string {
 	return r.r.FormValue(fieldName)
 }
