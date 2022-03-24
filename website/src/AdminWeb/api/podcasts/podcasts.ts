@@ -87,7 +87,7 @@ export type AddPodcastRequest = {
 }
 
 export type AddPodcastResponse = {
-    success: boolean;
+    error: string | undefined;
 }
 
 export function addPodcast(

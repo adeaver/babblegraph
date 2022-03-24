@@ -9,6 +9,7 @@ import (
 	"babblegraph/services/web/router"
 	"babblegraph/util/database"
 	"babblegraph/util/geo"
+	"babblegraph/util/ptr"
 	"babblegraph/wordsmith"
 
 	"github.com/jmoiron/sqlx"
@@ -89,7 +90,7 @@ type addPodcastRequest struct {
 }
 
 type addPodcastResponse struct {
-	Success bool `json:"success"`
+	Error *string `json:"error,omitempty"`
 }
 
 func addPodcast(adminID admin.ID, r *router.Request) (interface{}, error) {
@@ -99,11 +100,15 @@ func addPodcast(adminID admin.ID, r *router.Request) (interface{}, error) {
 	}
 	languageCode, err := wordsmith.GetLanguageCodeFromString(req.LanguageCode)
 	if err != nil {
-		return nil, err
+		return addPodcastResponse{
+			Error: ptr.String(err.Error()),
+		}, nil
 	}
 	countryCode, err := geo.GetCountryCodeFromString(req.CountryCode)
 	if err != nil {
-		return nil, err
+		return addPodcastResponse{
+			Error: ptr.String(err.Error()),
+		}, nil
 	}
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		return podcasts.AddPodcast(tx, podcasts.AddPodcastInput{
@@ -115,9 +120,11 @@ func addPodcast(adminID admin.ID, r *router.Request) (interface{}, error) {
 			RSSFeedURL:   req.RSSFeedURL,
 		})
 	}); err != nil {
-		return nil, err
+		return addPodcastResponse{
+			Error: ptr.String(err.Error()),
+		}, nil
 	}
 	return addPodcastResponse{
-		Success: true,
+		Error: nil,
 	}, nil
 }
