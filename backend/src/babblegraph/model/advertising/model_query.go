@@ -4,6 +4,7 @@ import (
 	"babblegraph/model/content"
 	"babblegraph/model/experiment"
 	"babblegraph/util/math/decimal"
+	"babblegraph/util/ptr"
 	"babblegraph/util/urlparser"
 	"babblegraph/wordsmith"
 	"fmt"
@@ -60,20 +61,23 @@ const (
         ) ON CONFLICT (campaign_id, topic_id) DO UPDATE
         SET last_modified_at = timezone('utc', now()), is_active = $3`
 
-	getAllAdvertisementsForCampaignID = "SELECT * FROM advertising_advertisements WHERE campaign_id = $1"
-	insertAdvertisementQuery          = `INSERT INTO advertising_advertisements (
-        language_code, campaign_id, title, image_url, description, is_active
+	getAdvertisementByIDQuery              = "SELECT * FROM advertising_advertisements WHERE _id = $1"
+	getAllAdvertisementsForCampaignIDQuery = "SELECT * FROM advertising_advertisements WHERE campaign_id = $1"
+	insertAdvertisementQuery               = `INSERT INTO advertising_advertisements (
+        language_code, campaign_id, title, image_url, description, additional_link_url, additional_link_text, is_active
     ) VALUES (
-        $1, $2, $3, $4, $5, $6
+        $1, $2, $3, $4, $5, $6, $7, $8
     ) RETURNING _id`
 	editAdvertisementQuery = `UPDATE advertising_advertisements SET
         language_code=$1,
         title=$2,
         image_url=$3,
         description=$4,
-        is_active=$5
+        is_active=$5,
+        additional_link_url=$6,
+        additional_link_text=$7
     WHERE
-        _id = $6`
+        _id = $8`
 )
 
 func GetAllVendors(tx *sqlx.Tx) ([]Vendor, error) {
@@ -253,9 +257,25 @@ func UpsertActiveTopicMappingsForCampaignID(tx *sqlx.Tx, campaignID CampaignID, 
 	return nil
 }
 
+func lookupAdvertisementByID(tx *sqlx.Tx, id AdvertisementID) (*dbAdvertisement, error) {
+	var matches []dbAdvertisement
+	err := tx.Select(&matches, getAdvertisementByIDQuery, id)
+	switch {
+	case err != nil:
+		return nil, err
+	case len(matches) == 0:
+		return nil, nil
+	case len(matches) != 1:
+		return nil, fmt.Errorf("Expected at most one match for advertisement id %s, but got %d", id, len(matches))
+	default:
+		m := matches[0]
+		return &m, nil
+	}
+}
+
 func GetAllAdvertisementsForCampaignID(tx *sqlx.Tx, campaignID CampaignID) ([]Advertisement, error) {
 	var matches []dbAdvertisement
-	if err := tx.Select(&matches, getAllAdvertisementsForCampaignID, campaignID); err != nil {
+	if err := tx.Select(&matches, getAllAdvertisementsForCampaignIDQuery, campaignID); err != nil {
 		return nil, err
 	}
 	var out []Advertisement
@@ -266,16 +286,22 @@ func GetAllAdvertisementsForCampaignID(tx *sqlx.Tx, campaignID CampaignID) ([]Ad
 }
 
 type InsertNewAdvertisementInput struct {
-	LanguageCode wordsmith.LanguageCode
-	CampaignID   CampaignID
-	Title        string
-	Description  string
-	ImageURL     string
-	IsActive     bool
+	LanguageCode       wordsmith.LanguageCode
+	CampaignID         CampaignID
+	Title              string
+	Description        string
+	ImageURL           string
+	IsActive           bool
+	AdditionalLinkURL  *urlparser.ParsedURL
+	AdditionalLinkText *string
 }
 
 func InsertNewAdvertisement(tx *sqlx.Tx, input InsertNewAdvertisementInput) (*AdvertisementID, error) {
-	rows, err := tx.Queryx(insertAdvertisementQuery, input.LanguageCode, input.CampaignID, input.Title, input.ImageURL, input.Description, input.IsActive)
+	var additionalLinkURL *string
+	if input.AdditionalLinkURL != nil {
+		additionalLinkURL = ptr.String(input.AdditionalLinkURL.URL)
+	}
+	rows, err := tx.Queryx(insertAdvertisementQuery, input.LanguageCode, input.CampaignID, input.Title, input.ImageURL, input.Description, additionalLinkURL, input.AdditionalLinkText, input.IsActive)
 	if err != nil {
 		return nil, err
 	}
@@ -290,15 +316,21 @@ func InsertNewAdvertisement(tx *sqlx.Tx, input InsertNewAdvertisementInput) (*Ad
 }
 
 type UpdateAdvertisementInput struct {
-	LanguageCode wordsmith.LanguageCode
-	Title        string
-	Description  string
-	ImageURL     string
-	IsActive     bool
+	LanguageCode       wordsmith.LanguageCode
+	Title              string
+	Description        string
+	ImageURL           string
+	IsActive           bool
+	AdditionalLinkURL  *urlparser.ParsedURL
+	AdditionalLinkText *string
 }
 
 func UpdateAdvertisement(tx *sqlx.Tx, id AdvertisementID, input UpdateAdvertisementInput) error {
-	if _, err := tx.Exec(editAdvertisementQuery, input.LanguageCode, input.Title, input.ImageURL, input.Description, input.IsActive, id); err != nil {
+	var additionalLinkURL *string
+	if input.AdditionalLinkURL != nil {
+		additionalLinkURL = ptr.String(input.AdditionalLinkURL.URL)
+	}
+	if _, err := tx.Exec(editAdvertisementQuery, input.LanguageCode, input.Title, input.ImageURL, input.Description, input.IsActive, additionalLinkURL, input.AdditionalLinkText, id); err != nil {
 		return err
 	}
 	return nil

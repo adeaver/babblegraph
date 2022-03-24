@@ -66,6 +66,16 @@ const EditAdvertisementForm = (props: EditAdvertisementFormProps) => {
         setImageURL((event.target as HTMLInputElement).value);
     }
 
+    const [ additionalLinkURL, setAdditionalLinkURL ] = useState<string>(props.advertisement ? props.advertisement.additionalLinkUrl : null);
+    const handleAdditionalLinkURLChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setAdditionalLinkURL((event.target as HTMLInputElement).value);
+    }
+
+    const [ additionalLinkText, setAdditionalLinkText ] = useState<string>(props.advertisement ? props.advertisement.additionalLinkText : null);
+    const handleAdditionalLinkTextChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setAdditionalLinkText((event.target as HTMLInputElement).value);
+    }
+
     const [ languageCode, setLanguageCode ] = useState<WordsmithLanguageCode>(props.advertisement ? props.advertisement.languageCode : null);
     const handleLanguageCodeUpdate = (_: React.ChangeEvent<HTMLSelectElement>, selectedLanguageCode: WordsmithLanguageCode) => {
         setLanguageCode(selectedLanguageCode);
@@ -83,6 +93,8 @@ const EditAdvertisementForm = (props: EditAdvertisementFormProps) => {
                 languageCode: languageCode,
                 description: description,
                 imageUrl: imageURL,
+                additionalLinkUrl: !!additionalLinkURL ? additionalLinkURL : undefined,
+                additionalLinkText: !!additionalLinkText ? additionalLinkText : undefined,
             },
             (resp: UpdateAdvertisementResponse) => {
                 setIsLoading(false);
@@ -98,6 +110,8 @@ const EditAdvertisementForm = (props: EditAdvertisementFormProps) => {
                 description: description,
                 imageUrl: imageURL,
                 campaignId: props.campaignID,
+                additionalLinkUrl: !!additionalLinkURL ? additionalLinkURL : undefined,
+                additionalLinkText: !!additionalLinkText ? additionalLinkText : undefined,
             },
             (resp: InsertAdvertisementResponse) => {
                 setIsLoading(false);
@@ -109,6 +123,8 @@ const EditAdvertisementForm = (props: EditAdvertisementFormProps) => {
                     languageCode: languageCode,
                     imageUrl: imageURL,
                     isActive: false,
+                    additionalLinkUrl: !!additionalLinkURL ? additionalLinkURL : undefined,
+                    additionalLinkText: !!additionalLinkText ? additionalLinkText : undefined,
                 });
             },
             (err: Error) => {
@@ -156,6 +172,24 @@ const EditAdvertisementForm = (props: EditAdvertisementFormProps) => {
                         variant="outlined"
                         defaultValue={imageURL}
                         onChange={handleImageURLChange} />
+                </Grid>
+                <Grid item xs={12}>
+                    <PrimaryTextField
+                        id="advertisement-additional-link-url"
+                        className={classes.formComponent}
+                        label="Additional Link URL"
+                        variant="outlined"
+                        defaultValue={additionalLinkURL}
+                        onChange={handleAdditionalLinkURLChange} />
+                </Grid>
+                <Grid item xs={12}>
+                    <PrimaryTextField
+                        id="advertisement-additional-link-text"
+                        className={classes.formComponent}
+                        label="Additional Link Text"
+                        variant="outlined"
+                        defaultValue={additionalLinkText}
+                        onChange={handleAdditionalLinkTextChange} />
                 </Grid>
                 <Grid item xs={12}>
                     <Autocomplete

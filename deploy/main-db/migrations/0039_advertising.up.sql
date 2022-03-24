@@ -96,3 +96,6 @@ CREATE TABLE IF NOT EXISTS advertising_advertisement_clicks(
 
     PRIMARY KEY (_id)
 );
+
+ALTER TABLE advertising_advertisements ADD COLUMN IF NOT EXISTS additional_link_url TEXT;
+ALTER TABLE advertising_advertisements ADD COLUMN IF NOT EXISTS additional_link_text TEXT;
