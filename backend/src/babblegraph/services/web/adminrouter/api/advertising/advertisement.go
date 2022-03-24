@@ -71,7 +71,7 @@ func insertAdvertisement(adminID admin.ID, r *router.Request) (interface{}, erro
 	if req.AdditionalLinkURL != nil {
 		parsedAdditionalLink = urlparser.ParseURL(*req.AdditionalLinkURL)
 		if parsedAdditionalLink == nil {
-			r.Warnf("Got nil additional link %s", req.AdditionalLinkURL)
+			r.Warnf("Got nil additional link %s", *req.AdditionalLinkURL)
 		}
 	}
 	var advertisementID *advertising.AdvertisementID
@@ -123,7 +123,7 @@ func updateAdvertisement(adminID admin.ID, r *router.Request) (interface{}, erro
 	if req.AdditionalLinkURL != nil {
 		parsedAdditionalLink = urlparser.ParseURL(*req.AdditionalLinkURL)
 		if parsedAdditionalLink == nil {
-			r.Warnf("Got nil additional link %s", req.AdditionalLinkURL)
+			r.Warnf("Got nil additional link %s", *req.AdditionalLinkURL)
 		}
 	}
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
