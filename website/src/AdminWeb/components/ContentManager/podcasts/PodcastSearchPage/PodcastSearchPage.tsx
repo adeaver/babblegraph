@@ -4,7 +4,9 @@ import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 import Divider from '@material-ui/core/Divider';
 import ClearIcon from '@material-ui/icons/Clear';
+import Snackbar from '@material-ui/core/Snackbar';
 
+import Alert from 'common/components/Alert/Alert';
 import CenteredComponent from 'common/components/CenteredComponent/CenteredComponent';
 import DisplayCard from 'common/components/DisplayCard/DisplayCard';
 import DisplayCardHeader from 'common/components/DisplayCard/DisplayCardHeader';
@@ -28,6 +30,7 @@ import {
     SupportedGenre,
     SupportedRegion,
     SearchOptions,
+    PodcastMetadataWithSourceInfo,
     PodcastMetadata,
 
     GetPodcastSearchOptionsResponse,
@@ -85,8 +88,12 @@ const PodcastSearchPage = asBaseComponent<GetPodcastSearchOptionsResponse, {}>(
             setGenre(selectedGenre.apiValue);
         }
 
-        const [ podcasts, setPodcasts ] = useState<Array<PodcastMetadata>>(null);
+        const [ podcasts, setPodcasts ] = useState<Array<PodcastMetadataWithSourceInfo>>(null);
         const [ pageNumber, setPageNumber ] = useState<number>(undefined);
+
+        const [ addPodcastErrorMessage, setAddPodcastErrorMessage ] = useState<string>(null);
+        const [ addPodcastSuccess, setAddPodcastSuccess ] = useState<boolean>(false);
+
 
         const handleSubmit = () => {
             setIsLoading(true);
@@ -157,11 +164,19 @@ const PodcastSearchPage = asBaseComponent<GetPodcastSearchOptionsResponse, {}>(
                 {
                     isLoading && <LoadingSpinner />
                 }
+                <Snackbar open={!!addPodcastErrorMessage} autoHideDuration={6000} onClose={() => {setAddPodcastErrorMessage(null)}}>
+                    <Alert severity="error">{addPodcastErrorMessage}</Alert>
+                </Snackbar>
+                <Snackbar open={addPodcastSuccess} autoHideDuration={6000} onClose={() => {setAddPodcastSuccess(false)}}>
+                    <Alert severity="success">Added</Alert>
+                </Snackbar>
                 {
                     (!!podcasts && !!podcasts.length) && (
                         <PodcastResultsDisplay
                             podcasts={podcasts}
                             hasNextPage={pageNumber != null}
+                            setAddPodcastErrorMessage={setAddPodcastErrorMessage}
+                            setAddPodcastSuccess={setAddPodcastSuccess}
                             handleNextPage={handleSubmit} />
                     )
                 }
@@ -178,8 +193,10 @@ const PodcastSearchPage = asBaseComponent<GetPodcastSearchOptionsResponse, {}>(
 
 type PodcastResultsDisplayProps = {
     hasNextPage: boolean;
-    podcasts: Array<PodcastMetadata>;
+    podcasts: Array<PodcastMetadataWithSourceInfo>;
 
+    setAddPodcastErrorMessage: (errorMessage: string) => void;
+    setAddPodcastSuccess: (success: boolean) => void;
     handleNextPage: () => void;
 }
 
@@ -197,8 +214,12 @@ const PodcastResultsDisplay = (props: PodcastResultsDisplayProps) => {
                     </PrimaryButton>
                 </Grid>
                 {
-                    props.podcasts.map((p: PodcastMetadata, idx: number) => (
-                        <PodcastDisplay key={`podcast-${idx}`} {...p} />
+                    props.podcasts.map((p: PodcastMetadataWithSourceInfo, idx: number) => (
+                        <PodcastDisplay
+                            key={`podcast-${p.metadata.externalId}`}
+                            setAddPodcastErrorMessage={props.setAddPodcastErrorMessage}
+                            setAddPodcastSuccess={props.setAddPodcastSuccess}
+                            {...p} />
                     ))
                 }
             </Grid>
@@ -206,7 +227,12 @@ const PodcastResultsDisplay = (props: PodcastResultsDisplayProps) => {
     )
 }
 
-const PodcastDisplay = (props: PodcastMetadata) => {
+type PodcastDisplayProps = {
+    setAddPodcastErrorMessage: (errorMessage: string) => void;
+    setAddPodcastSuccess: (success: boolean) => void;
+} & PodcastMetadataWithSourceInfo;
+
+const PodcastDisplay = (props: PodcastDisplayProps) => {
     const [ rssFeedURL, setRSSFeedURL ] = useState<string>(null);
     const handleRSSFeedURLChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setRSSFeedURL((event.target as HTMLInputElement).value);
@@ -226,48 +252,58 @@ const PodcastDisplay = (props: PodcastMetadata) => {
     return (
         <Grid className={classes.podcastDisplayRoot} item xs={12}>
             <Heading3 color={TypographyColor.Primary}>
-                {props.title}
+                {props.metadata.title}
             </Heading3>
             <Paragraph>
-                {props.description}
+                {props.metadata.description}
             </Paragraph>
-            <Link href={props.website}>
+            <Link href={props.metadata.website}>
                 View website
             </Link>
-            <Link href={props.listenNotesUrl}>
+            <Link href={props.metadata.listenNotesUrl}>
                 View on third party
             </Link>
             <Paragraph size={Size.Small}>
-                Type: {props.type}, {props.totalNumberOfEpisodes} episodes
+                Type: {props.metadata.type}, {props.metadata.totalNumberOfEpisodes} episodes
             </Paragraph>
             <Paragraph size={Size.Small}>
-                Country: {props.country}, in {props.language}
+                Country: {props.metadata.country}, in {props.metadata.language}
             </Paragraph>
-            <Form handleSubmit={handlePreparePodcast}>
-                <Grid className={classes.addPodcastForm} container>
-                    <Grid className={classes.formComponent} item xs={8}>
-                        <PrimaryTextField
-                            id="rss-feed-url"
-                            label="RSS Feed URL"
-                            variant="outlined"
-                            className={classes.addPodcastFormComponent}
-                            defaultValue={rssFeedURL}
-                            disabled={shouldShowCaptureForm}
-                            onChange={handleRSSFeedURLChange} />
-                    </Grid>
-                    <Grid className={classes.formComponent} item xs={4}>
-                        <PrimaryButton className={classes.addPodcastFormComponent} type="submit" disabled={shouldShowCaptureForm}>
-                            Add Podcast
-                        </PrimaryButton>
-                    </Grid>
-                </Grid>
-            </Form>
+            {
+                !!props.sourceId ? (
+                    <Link href={`/ops/content-manager/sources/${props.sourceId}`}>
+                        Already added, click here to manage
+                    </Link>
+                ) : (
+                    <Form handleSubmit={handlePreparePodcast}>
+                        <Grid className={classes.addPodcastForm} container>
+                            <Grid className={classes.formComponent} item xs={8}>
+                                <PrimaryTextField
+                                    id="rss-feed-url"
+                                    label="RSS Feed URL"
+                                    variant="outlined"
+                                    className={classes.addPodcastFormComponent}
+                                    defaultValue={rssFeedURL}
+                                    disabled={shouldShowCaptureForm}
+                                    onChange={handleRSSFeedURLChange} />
+                            </Grid>
+                            <Grid className={classes.formComponent} item xs={4}>
+                                <PrimaryButton className={classes.addPodcastFormComponent} type="submit" disabled={shouldShowCaptureForm}>
+                                    Add Podcast
+                                </PrimaryButton>
+                            </Grid>
+                        </Grid>
+                    </Form>
+                )
+            }
             {
                 shouldShowCaptureForm && (
                     <PodcastCaptureForm
+                        setAddPodcastErrorMessage={props.setAddPodcastErrorMessage}
+                        setAddPodcastSuccess={props.setAddPodcastSuccess}
                         rssFeedURL={rssFeedURL}
-                        website={props.website}
-                        title={props.title} />
+                        website={props.metadata.website}
+                        title={props.metadata.title} />
                 )
             }
             <Divider />
@@ -276,6 +312,8 @@ const PodcastDisplay = (props: PodcastMetadata) => {
 }
 
 type PodcastCaptureFormOwnProps = {
+    setAddPodcastErrorMessage: (errorMessage: string) => void;
+    setAddPodcastSuccess: (success: boolean) => void;
     rssFeedURL: string;
     website: string;
     title: string;
@@ -310,10 +348,13 @@ const PodcastCaptureForm = asBaseComponent<GetAllContentTopicsResponse, PodcastC
             },
             (resp: AddPodcastResponse) => {
                 props.setIsLoading(false);
+                props.setAddPodcastSuccess(!resp.error);
+                props.setAddPodcastErrorMessage(resp.error);
             },
             (err: Error) => {
                 props.setIsLoading(false);
                 props.setError(err);
+                props.setAddPodcastSuccess(false);
             });
         }
 

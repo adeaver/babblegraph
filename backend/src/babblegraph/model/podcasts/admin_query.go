@@ -2,6 +2,7 @@ package podcasts
 
 import (
 	"babblegraph/model/content"
+	podcastsearch "babblegraph/model/podcasts/search"
 	"babblegraph/util/geo"
 	"babblegraph/util/urlparser"
 	"babblegraph/wordsmith"
@@ -24,18 +25,14 @@ type AddPodcastInput struct {
 }
 
 func AddPodcast(tx *sqlx.Tx, input AddPodcastInput) error {
-	parsedWebsite := urlparser.ParseURL(input.WebsiteURL)
-	if parsedWebsite == nil {
-		return fmt.Errorf("Website was incorrect")
-	}
-	websiteURL := fmt.Sprintf("%s/%s", parsedWebsite.Domain, parsedWebsite.Path)
-	if parsedWebsite.Protocol != nil {
-		websiteURL = fmt.Sprintf("%s//%s", *parsedWebsite.Protocol, websiteURL)
+	parsedWebsiteURL := podcastsearch.MaybeParseURLForListenNotesWebsiteURL(input.WebsiteURL)
+	if parsedWebsiteURL == nil {
+		return fmt.Errorf("URL %s did not parse correctly", input.WebsiteURL)
 	}
 	sourceID, err := content.InsertSource(tx, content.InsertSourceInput{
 		Title:                 input.Title,
 		LanguageCode:          input.LanguageCode,
-		URL:                   websiteURL,
+		URL:                   parsedWebsiteURL.URL,
 		Country:               input.CountryCode,
 		ShouldUseURLAsSeedURL: false,
 		IsActive:              true,

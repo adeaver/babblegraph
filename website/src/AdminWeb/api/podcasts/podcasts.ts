@@ -45,6 +45,7 @@ export type SearchPodcastsParams = {
 }
 
 export type PodcastMetadata = {
+    externalId: string;
     title: string;
     country: string;
     description: string;
@@ -55,12 +56,17 @@ export type PodcastMetadata = {
     listenNotesUrl: string;
 }
 
+export type PodcastMetadataWithSourceInfo = {
+    metadata: PodcastMetadata;
+    sourceId: string | undefined;
+}
+
 export type SearchPodcastsRequest = {
     params: SearchPodcastsParams;
 }
 
 export type SearchPodcastsResponse = {
-    podcasts: Array<PodcastMetadata>;
+    podcasts: Array<PodcastMetadataWithSourceInfo>;
     nextPageNumber: number | undefined;
 }
 
@@ -87,7 +93,7 @@ export type AddPodcastRequest = {
 }
 
 export type AddPodcastResponse = {
-    success: boolean;
+    error: string | undefined;
 }
 
 export function addPodcast(

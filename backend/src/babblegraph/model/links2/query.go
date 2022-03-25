@@ -28,28 +28,6 @@ func GetDomainsWithUnfetchedLinks(tx *sqlx.Tx) ([]string, error) {
 	return out, nil
 }
 
-// TODO: this is deprecated
-func InsertLinks(tx *sqlx.Tx, urls []urlparser.ParsedURL) error {
-	queryBuilder, err := database.NewBulkInsertQueryBuilder("links2", "url_identifier", "domain", "url", "source_id")
-	if err != nil {
-		return err
-	}
-	queryBuilder.AddConflictResolution("DO NOTHING")
-	for _, u := range urls {
-		sourceID, err := content.LookupSourceIDForParsedURL(tx, u)
-		switch {
-		case err != nil:
-			return err
-		case sourceID == nil:
-			return fmt.Errorf("No source ID found for url %s", u.URL)
-		}
-		if err := queryBuilder.AddValues(u.URLIdentifier, u.Domain, u.URL, *sourceID); err != nil {
-			log.Println(fmt.Sprintf("Error inserting url with identifier %s: %s", u.URLIdentifier, err.Error()))
-		}
-	}
-	return queryBuilder.Execute(tx)
-}
-
 type URLWithSourceMapping struct {
 	URL      urlparser.ParsedURL
 	SourceID content.SourceID
@@ -110,32 +88,6 @@ func LookupBulkUnfetchedLinksForSourceID(tx *sqlx.Tx, sourceID content.SourceID,
 		out = append(out, match.ToNonDB())
 	}
 	return out, nil
-}
-
-// Should be deprecated
-func UpsertLinkWithEmptyFetchStatus(tx *sqlx.Tx, urls []urlparser.ParsedURL, includeTimestamp bool) error {
-	queryBuilder, err := database.NewBulkInsertQueryBuilder("links2", "url_identifier", "domain", "url", "source_id", "seed_job_ingest_timestamp")
-	if err != nil {
-		return err
-	}
-	queryBuilder.AddConflictResolution("(url_identifier) DO UPDATE SET last_fetch_version = NULL")
-	var firstSeedFetchTimestamp *int64
-	if includeTimestamp {
-		firstSeedFetchTimestamp = ptr.Int64(time.Now().Unix())
-	}
-	for _, u := range urls {
-		sourceID, err := content.LookupSourceIDForParsedURL(tx, u)
-		switch {
-		case err != nil:
-			return err
-		case sourceID == nil:
-			return fmt.Errorf("No source available for URL %s", u.URL)
-		}
-		if err := queryBuilder.AddValues(u.URLIdentifier, u.Domain, u.URL, *sourceID, firstSeedFetchTimestamp); err != nil {
-			log.Println(fmt.Sprintf("Error inserting url with identifier %s: %s", u.URLIdentifier, err.Error()))
-		}
-	}
-	return queryBuilder.Execute(tx)
 }
 
 func UpsertURLMappingsWithEmptyFetchStatus(tx *sqlx.Tx, urls []URLWithSourceMapping, includeTimestamp bool) error {

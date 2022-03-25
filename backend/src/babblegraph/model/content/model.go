@@ -143,6 +143,8 @@ func GetSourceTypeFromString(t string) (*SourceType, error) {
 	switch strings.ToLower(t) {
 	case SourceTypeNewsWebsite.Str():
 		return SourceTypeNewsWebsite.Ptr(), nil
+	case SourceTypePodcast.Str():
+		return SourceTypePodcast.Ptr(), nil
 	default:
 		return nil, fmt.Errorf("Unsupported source type: %s", t)
 	}
@@ -167,6 +169,8 @@ func GetIngestStrategyFromString(i string) (*IngestStrategy, error) {
 	switch strings.ToLower(i) {
 	case IngestStrategyWebsiteHTML1.Str():
 		return IngestStrategyWebsiteHTML1.Ptr(), nil
+	case IngestStrategyPodcastRSS1.Str():
+		return IngestStrategyPodcastRSS1.Ptr(), nil
 	default:
 		return nil, fmt.Errorf("Unsupported ingest strategy type: %s", i)
 	}

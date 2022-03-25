@@ -107,8 +107,15 @@ func findURLParts(rawURL string) *urlParts {
 			continue
 		case website == nil && strings.Count(part, ".") > 0:
 			// the first occurrence of a dot indicates a url
-			p := part
-			website = &p
+			// There is an edge case in which the URL parser doesn't work if there is a query string immediately after
+			// the domain
+			subParts := strings.Split(part, "?")
+			if len(subParts) == 0 {
+				// This shouldn't be possible, but I guess continue?
+				continue
+			}
+			website = ptr.String(subParts[0])
+			paramParts = append(paramParts, subParts[1:]...)
 		case website != nil && page == nil:
 			// now, we've captured the website name and are capturing pages
 			if pageSeparatorRegex.MatchString(part) {
@@ -149,7 +156,11 @@ func verifyDomain(website string) (_subdomain, _domain *string) {
 	websiteParts := strings.Split(website, ".")
 	var domainParts, tldParts []string
 	for i := len(websiteParts) - 1; i >= 0; i-- {
-		_, isValidTLD := validTLDs[websiteParts[i]]
+		subParts := strings.Split(websiteParts[i], "?")
+		if len(subParts) == 0 {
+			continue
+		}
+		_, isValidTLD := validTLDs[subParts[0]]
 		switch {
 		case websiteParts[i] == "www":
 			// We've gotten to what should be the top of the domain, exit.

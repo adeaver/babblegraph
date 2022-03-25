@@ -9,6 +9,8 @@ import (
 	"babblegraph/services/web/router"
 	"babblegraph/util/database"
 	"babblegraph/util/geo"
+	"babblegraph/util/ptr"
+	"babblegraph/util/urlparser"
 	"babblegraph/wordsmith"
 
 	"github.com/jmoiron/sqlx"
@@ -61,7 +63,12 @@ type searchPodcastsRequest struct {
 
 type searchPodcastsResponse struct {
 	NextPageNumber *int64                          `json:"next_page_number,omitempty"`
-	Podcasts       []podcastsearch.PodcastMetadata `json:"podcasts"`
+	Podcasts       []podcastMetadataWithSourceInfo `json:"podcasts"`
+}
+
+type podcastMetadataWithSourceInfo struct {
+	Metadata podcastsearch.PodcastMetadata `json:"metadata"`
+	SourceID *content.SourceID             `json:"source_id,omitempty"`
 }
 
 func searchPodcasts(adminID admin.ID, r *router.Request) (interface{}, error) {
@@ -73,9 +80,30 @@ func searchPodcasts(adminID admin.ID, r *router.Request) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
+	var out []podcastMetadataWithSourceInfo
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		for _, p := range podcasts {
+			parsedURL := urlparser.ParseURL(p.Website)
+			if parsedURL == nil {
+				continue
+			}
+			var sourceID *content.SourceID
+			sourceID, err := content.LookupSourceIDForParsedURL(tx, *parsedURL)
+			if err != nil {
+				return err
+			}
+			out = append(out, podcastMetadataWithSourceInfo{
+				Metadata: p,
+				SourceID: sourceID,
+			})
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
 	return searchPodcastsResponse{
 		NextPageNumber: nextPageNumber,
-		Podcasts:       podcasts,
+		Podcasts:       out,
 	}, nil
 }
 
@@ -89,7 +117,7 @@ type addPodcastRequest struct {
 }
 
 type addPodcastResponse struct {
-	Success bool `json:"success"`
+	Error *string `json:"error,omitempty"`
 }
 
 func addPodcast(adminID admin.ID, r *router.Request) (interface{}, error) {
@@ -99,11 +127,15 @@ func addPodcast(adminID admin.ID, r *router.Request) (interface{}, error) {
 	}
 	languageCode, err := wordsmith.GetLanguageCodeFromString(req.LanguageCode)
 	if err != nil {
-		return nil, err
+		return addPodcastResponse{
+			Error: ptr.String(err.Error()),
+		}, nil
 	}
 	countryCode, err := geo.GetCountryCodeFromString(req.CountryCode)
 	if err != nil {
-		return nil, err
+		return addPodcastResponse{
+			Error: ptr.String(err.Error()),
+		}, nil
 	}
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		return podcasts.AddPodcast(tx, podcasts.AddPodcastInput{
@@ -115,9 +147,11 @@ func addPodcast(adminID admin.ID, r *router.Request) (interface{}, error) {
 			RSSFeedURL:   req.RSSFeedURL,
 		})
 	}); err != nil {
-		return nil, err
+		return addPodcastResponse{
+			Error: ptr.String(err.Error()),
+		}, nil
 	}
 	return addPodcastResponse{
-		Success: true,
+		Error: nil,
 	}, nil
 }
