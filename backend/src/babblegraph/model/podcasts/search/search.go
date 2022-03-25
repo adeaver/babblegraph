@@ -3,6 +3,7 @@ package search
 import (
 	"babblegraph/util/ctx"
 	"babblegraph/util/ptr"
+	"fmt"
 )
 
 type Options struct {
@@ -49,6 +50,7 @@ type Params struct {
 }
 
 type PodcastMetadata struct {
+	ExternalID            string `json:"external_id"`
 	Title                 string `json:"title"`
 	Country               string `json:"country"`
 	Description           string `json:"description"`
@@ -70,11 +72,17 @@ func SearchPodcasts(c ctx.LogContext, params Params) (_results []PodcastMetadata
 	}
 	var out []PodcastMetadata
 	for _, p := range resp.Podcasts {
+		parsedWebsiteURL := MaybeParseURLForListenNotesWebsiteURL(p.Website)
+		if parsedWebsiteURL == nil {
+			c.Infof("Skipping url %s", p.Website)
+			continue
+		}
 		out = append(out, PodcastMetadata{
+			ExternalID:            fmt.Sprintf("%v", p.ExternalID),
 			Title:                 p.Title,
 			Country:               p.Country,
 			Description:           p.Description,
-			Website:               p.Website,
+			Website:               parsedWebsiteURL.URL,
 			Language:              p.Language,
 			Type:                  p.Type,
 			TotalNumberOfEpisodes: p.TotalNumberOfEpisodes,

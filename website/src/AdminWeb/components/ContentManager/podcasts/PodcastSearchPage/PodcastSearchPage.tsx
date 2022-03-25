@@ -30,6 +30,7 @@ import {
     SupportedGenre,
     SupportedRegion,
     SearchOptions,
+    PodcastMetadataWithSourceInfo,
     PodcastMetadata,
 
     GetPodcastSearchOptionsResponse,
@@ -87,7 +88,7 @@ const PodcastSearchPage = asBaseComponent<GetPodcastSearchOptionsResponse, {}>(
             setGenre(selectedGenre.apiValue);
         }
 
-        const [ podcasts, setPodcasts ] = useState<Array<PodcastMetadata>>(null);
+        const [ podcasts, setPodcasts ] = useState<Array<PodcastMetadataWithSourceInfo>>(null);
         const [ pageNumber, setPageNumber ] = useState<number>(undefined);
 
         const [ addPodcastErrorMessage, setAddPodcastErrorMessage ] = useState<string>(null);
@@ -192,7 +193,7 @@ const PodcastSearchPage = asBaseComponent<GetPodcastSearchOptionsResponse, {}>(
 
 type PodcastResultsDisplayProps = {
     hasNextPage: boolean;
-    podcasts: Array<PodcastMetadata>;
+    podcasts: Array<PodcastMetadataWithSourceInfo>;
 
     setAddPodcastErrorMessage: (errorMessage: string) => void;
     setAddPodcastSuccess: (success: boolean) => void;
@@ -213,9 +214,9 @@ const PodcastResultsDisplay = (props: PodcastResultsDisplayProps) => {
                     </PrimaryButton>
                 </Grid>
                 {
-                    props.podcasts.map((p: PodcastMetadata, idx: number) => (
+                    props.podcasts.map((p: PodcastMetadataWithSourceInfo, idx: number) => (
                         <PodcastDisplay
-                            key={`podcast-${idx}`}
+                            key={`podcast-${p.metadata.externalId}`}
                             setAddPodcastErrorMessage={props.setAddPodcastErrorMessage}
                             setAddPodcastSuccess={props.setAddPodcastSuccess}
                             {...p} />
@@ -229,7 +230,7 @@ const PodcastResultsDisplay = (props: PodcastResultsDisplayProps) => {
 type PodcastDisplayProps = {
     setAddPodcastErrorMessage: (errorMessage: string) => void;
     setAddPodcastSuccess: (success: boolean) => void;
-} & PodcastMetadata;
+} & PodcastMetadataWithSourceInfo;
 
 const PodcastDisplay = (props: PodcastDisplayProps) => {
     const [ rssFeedURL, setRSSFeedURL ] = useState<string>(null);
@@ -251,50 +252,58 @@ const PodcastDisplay = (props: PodcastDisplayProps) => {
     return (
         <Grid className={classes.podcastDisplayRoot} item xs={12}>
             <Heading3 color={TypographyColor.Primary}>
-                {props.title}
+                {props.metadata.title}
             </Heading3>
             <Paragraph>
-                {props.description}
+                {props.metadata.description}
             </Paragraph>
-            <Link href={props.website}>
+            <Link href={props.metadata.website}>
                 View website
             </Link>
-            <Link href={props.listenNotesUrl}>
+            <Link href={props.metadata.listenNotesUrl}>
                 View on third party
             </Link>
             <Paragraph size={Size.Small}>
-                Type: {props.type}, {props.totalNumberOfEpisodes} episodes
+                Type: {props.metadata.type}, {props.metadata.totalNumberOfEpisodes} episodes
             </Paragraph>
             <Paragraph size={Size.Small}>
-                Country: {props.country}, in {props.language}
+                Country: {props.metadata.country}, in {props.metadata.language}
             </Paragraph>
-            <Form handleSubmit={handlePreparePodcast}>
-                <Grid className={classes.addPodcastForm} container>
-                    <Grid className={classes.formComponent} item xs={8}>
-                        <PrimaryTextField
-                            id="rss-feed-url"
-                            label="RSS Feed URL"
-                            variant="outlined"
-                            className={classes.addPodcastFormComponent}
-                            defaultValue={rssFeedURL}
-                            disabled={shouldShowCaptureForm}
-                            onChange={handleRSSFeedURLChange} />
-                    </Grid>
-                    <Grid className={classes.formComponent} item xs={4}>
-                        <PrimaryButton className={classes.addPodcastFormComponent} type="submit" disabled={shouldShowCaptureForm}>
-                            Add Podcast
-                        </PrimaryButton>
-                    </Grid>
-                </Grid>
-            </Form>
+            {
+                !!props.sourceId ? (
+                    <Link href={`/content-manager/sources/${props.sourceId}`}>
+                        Already added, click here to manage
+                    </Link>
+                ) : (
+                    <Form handleSubmit={handlePreparePodcast}>
+                        <Grid className={classes.addPodcastForm} container>
+                            <Grid className={classes.formComponent} item xs={8}>
+                                <PrimaryTextField
+                                    id="rss-feed-url"
+                                    label="RSS Feed URL"
+                                    variant="outlined"
+                                    className={classes.addPodcastFormComponent}
+                                    defaultValue={rssFeedURL}
+                                    disabled={shouldShowCaptureForm}
+                                    onChange={handleRSSFeedURLChange} />
+                            </Grid>
+                            <Grid className={classes.formComponent} item xs={4}>
+                                <PrimaryButton className={classes.addPodcastFormComponent} type="submit" disabled={shouldShowCaptureForm}>
+                                    Add Podcast
+                                </PrimaryButton>
+                            </Grid>
+                        </Grid>
+                    </Form>
+                )
+            }
             {
                 shouldShowCaptureForm && (
                     <PodcastCaptureForm
                         setAddPodcastErrorMessage={props.setAddPodcastErrorMessage}
                         setAddPodcastSuccess={props.setAddPodcastSuccess}
                         rssFeedURL={rssFeedURL}
-                        website={props.website}
-                        title={props.title} />
+                        website={props.metadata.website}
+                        title={props.metadata.title} />
                 )
             }
             <Divider />
