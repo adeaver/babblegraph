@@ -143,6 +143,8 @@ func GetSourceTypeFromString(t string) (*SourceType, error) {
 	switch strings.ToLower(t) {
 	case SourceTypeNewsWebsite.Str():
 		return SourceTypeNewsWebsite.Ptr(), nil
+	case SourceTypePodcast.Str():
+		return SourceTypePodcast.Ptr(), nil
 	default:
 		return nil, fmt.Errorf("Unsupported source type: %s", t)
 	}

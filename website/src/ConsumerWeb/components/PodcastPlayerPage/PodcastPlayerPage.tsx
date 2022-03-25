@@ -17,6 +17,7 @@ import Paragraph, { Size } from 'common/typography/Paragraph';
 import Color from 'common/styles/colors';
 import { asLeftZeroPaddedString } from 'util/string/NumberString';
 import { PrimaryTextField } from 'common/components/TextField/TextField';
+import Link from 'common/components/Link/Link';
 
 import {
     PodcastMetadata,
@@ -165,9 +166,9 @@ const PodcastPlayerPage = asBaseComponent<GetPodcastMetadataResponse, PodcastPla
                             <Heading1 color={TypographyColor.Primary}>
                                 {props.metadata.episodeTitle}
                             </Heading1>
-                            <Heading3>
+                            <Link href={props.metadata.podcastUrl}>
                                 {props.metadata.podcastTitle}
-                            </Heading3>
+                            </Link>
                             <Paragraph>
                                 {props.metadata.episodeDescription}
                             </Paragraph>

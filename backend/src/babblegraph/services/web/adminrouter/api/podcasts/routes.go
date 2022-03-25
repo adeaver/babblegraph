@@ -83,7 +83,6 @@ func searchPodcasts(adminID admin.ID, r *router.Request) (interface{}, error) {
 	var out []podcastMetadataWithSourceInfo
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		for _, p := range podcasts {
-			r.Infof("Website %s", p.Website)
 			parsedURL := urlparser.ParseURL(p.Website)
 			if parsedURL == nil {
 				continue

@@ -103,46 +103,37 @@ type UserNewsletterPreferencesDisplayOwnProps = {
 }
 
 enum PodcastDurationPreference {
-    LessThanFifteen = 'Less than 15 minutes',
+    LessThanFifteen = 'Less than 15 minutes (least number of podcasts)',
     FifteenToThirty = '15 minutes to 30 minutes',
-    ThirtyToOneHour = '30 minutes to 1 hour',
+    ThirtyToOneHour = '30 minutes to 1 hour (recommended)',
     MoreThanOneHour = 'More than an hour',
+    NoPreference = 'Any podcast length (most number of podcasts)',
 }
 
 const getPodcastDurationByMinimumAndMaximium = (minimumDurationSeconds: number | undefined, maximumDurationSeconds: number | undefined) => {
-    if (!!minimumDurationSeconds) {
-        if (!!maximumDurationSeconds) {
-            return null;
-        } else if (maximumDurationSeconds / 60 === 15) {
+    if (!minimumDurationSeconds) {
+        if (!!maximumDurationSeconds && maximumDurationSeconds / 60 === 15) {
             return PodcastDurationPreference.LessThanFifteen;
-        } else {
-            return null;
         }
     } else if (minimumDurationSeconds / 60 === 15) {
-        if (!!maximumDurationSeconds) {
-            return null
-        } else if (maximumDurationSeconds / 60 === 30) {
+        if (!!maximumDurationSeconds && maximumDurationSeconds / 60 === 30) {
             return PodcastDurationPreference.FifteenToThirty;
         }
-        return null
     } else if (minimumDurationSeconds / 60 === 30) {
-        if (!!maximumDurationSeconds) {
-            return null
-        } else if (maximumDurationSeconds / 60 === 60) {
+        if (!!maximumDurationSeconds && maximumDurationSeconds / 60 === 60) {
             return PodcastDurationPreference.ThirtyToOneHour;
         }
-        return null
     } else if (minimumDurationSeconds / 60 === 60) {
         return PodcastDurationPreference.MoreThanOneHour;
     }
-    return null
+    return PodcastDurationPreference.NoPreference;
 }
 
 const getPodcastDurationBoundsSeconds = (podcastDuration: PodcastDurationPreference | null) => {
     if (!podcastDuration) {
         return [undefined, undefined];
     }
-    switch (PodcastDurationPreference[podcastDuration]) {
+    switch (podcastDuration) {
         case PodcastDurationPreference.LessThanFifteen:
             return [undefined, 15 * 60];
         case PodcastDurationPreference.FifteenToThirty:
@@ -306,8 +297,8 @@ const UserNewsletterPreferencesDisplay = asBaseComponent<GetUserNewsletterPrefer
                                                 <Grid container>
                                                     {
                                                         Object.keys(PodcastDurationPreference).map((p: PodcastDurationPreference) => ((
-                                                            <Grid key={`podcast-option-${p}`} item xs={6}>
-                                                                <FormControlLabel value={p} control={<PrimaryRadio disabled={isLoading} />} label={PodcastDurationPreference[p]} />
+                                                            <Grid key={`podcast-option-${p}`} item xs={12}>
+                                                                <FormControlLabel value={PodcastDurationPreference[p]} control={<PrimaryRadio disabled={isLoading} />} label={PodcastDurationPreference[p]} />
                                                             </Grid>
                                                         )))
                                                     }
