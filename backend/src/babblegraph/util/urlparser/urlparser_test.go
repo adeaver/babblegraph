@@ -105,6 +105,11 @@ func TestParseURL(t *testing.T) {
 			input:                 "https://www.google.com/#position?q=abc",
 			expectedDomain:        "google.com",
 			expectedURLIdentifier: "google.com",
+		}, {
+			// https with with query params, no page
+			input:                 "https://www.google.com?q=abc",
+			expectedDomain:        "google.com",
+			expectedURLIdentifier: "google.com",
 		},
 	}
 	for idx, tc := range testCases {
@@ -155,6 +160,11 @@ func TestFindURLParts(t *testing.T) {
 			expectedWebsite: "www.google.com",
 			expectedPage:    "some-page.html",
 			expectedParams:  "",
+		}, {
+			rawURL:          "www.google.com?q=abc",
+			expectedWebsite: "www.google.com",
+			expectedPage:    "",
+			expectedParams:  "q=abc",
 		},
 	}
 	for idx, tc := range testCases {

@@ -271,7 +271,7 @@ const PodcastDisplay = (props: PodcastDisplayProps) => {
             </Paragraph>
             {
                 !!props.sourceId ? (
-                    <Link href={`/content-manager/sources/${props.sourceId}`}>
+                    <Link href={`/ops/content-manager/sources/${props.sourceId}`}>
                         Already added, click here to manage
                     </Link>
                 ) : (
