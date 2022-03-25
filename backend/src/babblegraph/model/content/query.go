@@ -39,7 +39,7 @@ func GetSourceIDForParsedURL(tx *sqlx.Tx, u urlparser.ParsedURL) (*SourceID, err
 
 func LookupSourceIDForParsedURL(tx *sqlx.Tx, u urlparser.ParsedURL) (*SourceID, error) {
 	var matches []dbSource
-	err := tx.Select(&matches, getSourceForURLQuery, u.Domain)
+	err := tx.Select(&matches, getSourceForURLQuery, u.URLIdentifier)
 	switch {
 	case err != nil:
 		return nil, err

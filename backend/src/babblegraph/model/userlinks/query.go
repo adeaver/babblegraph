@@ -18,7 +18,8 @@ const (
 
 func RegisterUserLinkClick(tx *sqlx.Tx, userID users.UserID, u urlparser.ParsedURL, emailRecordID email.ID) error {
 	currentAccessMonth := getCurrentAccessMonth()
-	sourceID, err := content.GetSourceIDForParsedURL(tx, u)
+	parsedDomain := urlparser.MustParseURL(u.Domain)
+	sourceID, err := content.GetSourceIDForParsedURL(tx, parsedDomain)
 	if err != nil {
 		return err
 	}

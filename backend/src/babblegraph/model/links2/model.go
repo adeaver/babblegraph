@@ -29,7 +29,8 @@ func (l *Link) GetSourceID(tx *sqlx.Tx) (*content.SourceID, error) {
 	if l.SourceID != nil {
 		return l.SourceID, nil
 	}
-	return content.GetSourceIDForParsedURL(tx, urlparser.MustParseURL(l.URL))
+	parsedDomain := urlparser.MustParseURL(urlparser.MustParseURL(l.URL).Domain)
+	return content.GetSourceIDForParsedURL(tx, parsedDomain)
 }
 
 type FetchVersion int64
