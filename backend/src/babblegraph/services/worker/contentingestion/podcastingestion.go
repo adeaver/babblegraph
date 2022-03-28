@@ -7,6 +7,7 @@ import (
 	"babblegraph/util/ctx"
 	"babblegraph/util/database"
 	"babblegraph/util/ptr"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -48,10 +49,11 @@ func processPodcastRSS1SourceSeed(c ctx.LogContext, sourceSeed content.SourceSee
 	}); err != nil {
 		return err
 	}
+	var errs []string
 	for _, episode := range channel.Episodes {
 		toIndex, err := convertIngestEpisodeToModelEpisode(c, episode)
 		if err != nil {
-			c.Warnf("Error converting episode with GUID %s for source id %s: %s", episode.ID, sourceSeed.RootID, err.Error())
+			errs = append(errs, fmt.Sprintf("Error converting episode with GUID %s for source id %s: %s", episode.ID, sourceSeed.RootID, err.Error()))
 			continue
 		}
 		toIndex.Version = podcasts.CurrentVersion
@@ -60,10 +62,13 @@ func processPodcastRSS1SourceSeed(c ctx.LogContext, sourceSeed content.SourceSee
 		toIndex.TopicIDs = topicIDs
 		podcastEpisodeID, err := podcasts.AssignIDAndIndexPodcastEpisode(c, *toIndex)
 		if err != nil {
-			c.Errorf("Error indexing podcast for source %s with GUID %s: %s", source.ID, toIndex.GUID)
+			errs = append(errs, fmt.Sprintf("Error indexing podcast for source %s with GUID %s: %s", source.ID, toIndex.GUID))
 			continue
 		}
 		c.Infof("Indexed podcast episode with ID %s", *podcastEpisodeID)
+	}
+	if len(errs) > 0 {
+		c.Warnf("Got %d errors for source %s: %s", len(errs), source.ID, strings.Join(errs, "\n"))
 	}
 	return nil
 }
@@ -88,7 +93,7 @@ func convertIngestEpisodeToModelEpisode(c ctx.LogContext, in ingestrss.PodcastEp
 		Description:         in.Description,
 		PublicationDate:     publicationDate,
 		EpisodeType:         in.EpisodeType.Str(),
-		DurationNanoseconds: *episodeDuration,
+		DurationNanoseconds: episodeDuration,
 		IsExplicit:          in.IsExplicit.ToBool(c),
 		GUID:                in.ID,
 		AudioFile: podcasts.AudioFile{
@@ -115,7 +120,7 @@ func parseDuration(durationStr string) (*time.Duration, error) {
 	}
 	numberOfSeconds, err := strconv.Atoi(durationStr)
 	if err != nil {
-		return nil, err
+		return nil, nil
 	}
 	return ptr.Duration(time.Duration(numberOfSeconds) * time.Second), nil
 }
