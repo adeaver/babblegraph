@@ -45,7 +45,7 @@ type IndexPodcastEpisodeInput struct {
 	Description         string
 	PublicationDate     time.Time
 	EpisodeType         string
-	DurationNanoseconds time.Duration
+	DurationNanoseconds *time.Duration
 	IsExplicit          bool
 	AudioFile           AudioFile
 	GUID                string
