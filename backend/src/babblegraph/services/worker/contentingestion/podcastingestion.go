@@ -62,7 +62,7 @@ func processPodcastRSS1SourceSeed(c ctx.LogContext, sourceSeed content.SourceSee
 		toIndex.TopicIDs = topicIDs
 		podcastEpisodeID, err := podcasts.AssignIDAndIndexPodcastEpisode(c, *toIndex)
 		if err != nil {
-			errs = append(errs, fmt.Sprintf("Error indexing podcast for source %s with GUID %s: %s", source.ID, toIndex.GUID))
+			errs = append(errs, fmt.Sprintf("Error indexing podcast for source %s with GUID %s: %s", source.ID, toIndex.GUID, err.Error()))
 			continue
 		}
 		c.Infof("Indexed podcast episode with ID %s", *podcastEpisodeID)
