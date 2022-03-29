@@ -76,6 +76,9 @@ func getPodcastMetadata(r *router.Request) (interface{}, error) {
 		if err != nil {
 			return err
 		}
+		if err := userpodcasts.RegisterOpenedPodcast(tx, userPodcast.ID); err != nil {
+			return err
+		}
 		showMetadata, err = podcasts.GetPodcastMetadataForSourceID(tx, userPodcast.SourceID)
 		return err
 	})
