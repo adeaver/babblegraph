@@ -1,7 +1,7 @@
 from typing import NamedTuple
 
 from reader import Reader
-from special_tokens import StartToken
+from special_tokens import StartToken, SpecialToken
 from util import (
     make_lemma_id,
     make_word_id,
@@ -12,19 +12,37 @@ START_TOKEN = StartToken()
 MINIMUM_WORD_COUNT = 2
 MINIMUM_BIGRAM_COUNT = 10
 
+TOKEN_AL = SpecialToken(
+    "al",
+    "espos1sps00",
+    "espos1s-eslm1a"
+)
+TOKEN_DEL = SpecialToken(
+    "del",
+    "espos1sps00",
+    "espos1s-eslm1de"
+)
+
 observed_parts_of_speech = {
     START_TOKEN.get_token(): START_TOKEN.get_part_of_speech_id()
 }
 observed_lemmas = {
-    START_TOKEN.get_lemma_key(): START_TOKEN.get_lemma_id()
+    START_TOKEN.get_lemma_key(): START_TOKEN.get_lemma_id(),
+    TOKEN_DEL.get_lemma_key(): TOKEN_DEL.get_lemma_id(),
+    TOKEN_AL.get_lemma_key(): TOKEN_AL.get_lemma_id(),
 }
 observed_words = {
-    START_TOKEN.get_word_key(): START_TOKEN.get_word_key_value()
+    START_TOKEN.get_word_key(): START_TOKEN.get_word_key_value(),
+    TOKEN_DEL.get_word_key(): TOKEN_DEL.get_word_key_value(),
+    TOKEN_AL.get_word_key(): TOKEN_AL.get_word_key_value(),
+
 }
 bigram_counts = {}
 current_bigram = [START_TOKEN.get_word_key(), START_TOKEN.get_word_key()]
 lemma_counts = {
     START_TOKEN.get_lemma_key(): MINIMUM_WORD_COUNT + 1,
+    TOKEN_DEL.get_lemma_key(): MINIMUM_WORD_COUNT + 1,
+    TOKEN_AL.get_lemma_key(): MINIMUM_WORD_COUNT + 1,
 }
 
 def get_data_from_read():

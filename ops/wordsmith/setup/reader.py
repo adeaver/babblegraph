@@ -47,8 +47,11 @@ class Reader:
         elif line_type == _EMPTY_LINE and self.empty_line_fn is not None:
             self.empty_line_fn()
         elif line_type == _TEXT_LINE:
-            word, lemma, pos, _ = line.split(" ")
-            self.text_fn(word.lower(), lemma.lower(), pos)
+            try:
+                word, lemma, pos, _ = line.split(" ")
+                self.text_fn(word.lower(), lemma.lower(), pos)
+            except:
+                print(f"Error on line {line}")
 
     def _classify_line(self, line):
         if line.startswith("ENDOFARTICLE"):
