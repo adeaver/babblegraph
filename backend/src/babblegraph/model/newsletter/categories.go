@@ -158,11 +158,12 @@ func joinDocumentsIntoCategories(c ctx.LogContext, input joinDocumentsIntoCatego
 						return nil, err
 					case podcastLink == nil:
 						// no-op
-					}
-					podcastsInEmailByID[episode.ID] = true
-					podcastLinks = append(podcastLinks, *podcastLink)
-					if len(podcastLinks) >= maxPodcastsPerTopic {
-						break
+					default:
+						podcastsInEmailByID[episode.ID] = true
+						podcastLinks = append(podcastLinks, *podcastLink)
+						if len(podcastLinks) >= maxPodcastsPerTopic {
+							break
+						}
 					}
 				}
 			}
@@ -226,11 +227,12 @@ func joinDocumentsIntoCategories(c ctx.LogContext, input joinDocumentsIntoCatego
 						return nil, err
 					case podcastLink == nil:
 						// no-op
-					}
-					podcastsInEmailByID[episode.ID] = true
-					podcastLinks = append(podcastLinks, *podcastLink)
-					if len(podcastLinks) >= maxPodcastsPerTopic {
-						break
+					default:
+						podcastsInEmailByID[episode.ID] = true
+						podcastLinks = append(podcastLinks, *podcastLink)
+						if len(podcastLinks) >= maxPodcastsPerTopic {
+							break
+						}
 					}
 				}
 			}
