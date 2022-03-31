@@ -36,6 +36,9 @@ class SpecialToken:
     def get_part_of_speech_id(self):
         return self._part_of_speech_id
 
+    def get_word_id(self):
+        return self._word_id
+
 class StartToken(SpecialToken):
     def __init__(self):
         part_of_speech_id = make_part_of_speech_id("<<START>>")

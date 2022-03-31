@@ -25,11 +25,19 @@ class Reader:
 
     def read_data(self):
         files = os.listdir("./data")
-        for idx in range(2):
+        for idx in range(len(files)):
             print("Currently on document {} of {}".format(idx+1, len(files)))
             file_name = files[idx]
             self._read_lines_in_file(file_name)
         return self.get_data_fn()
+
+    def read_data_yielding(self):
+        files = os.listdir("./data")
+        for idx in range(len(files)):
+            print("Currently on document {} of {}".format(idx+1, len(files)))
+            file_name = files[idx]
+            self._read_lines_in_file(file_name)
+            yield self.get_data_fn()
 
     def _read_lines_in_file(self, file_name):
         with io.open("./data/{}".format(file_name), 'r', encoding='latin1') as tagged_file:
