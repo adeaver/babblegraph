@@ -25,7 +25,7 @@ class Reader:
 
     def read_data(self):
         files = os.listdir("./data")
-        for idx in range(len(files)):
+        for idx in range(2):
             print("Currently on document {} of {}".format(idx+1, len(files)))
             file_name = files[idx]
             self._read_lines_in_file(file_name)

@@ -59,3 +59,26 @@ func (d dbUserLemmaReinforcementSpotlightRecord) ToNonDB() UserLemmaReinforcemen
 		NumberOfTimesSent: d.NumberOfTimesSent,
 	}
 }
+
+type PhraseMappingID string
+
+type dbUserPhraseMapping struct {
+	ID             PhraseMappingID `db:"_id"`
+	CreatedAt      time.Time       `db:"created_at"`
+	LastModifiedAt time.Time       `db:"last_modified_at"`
+	UserID         users.UserID    `db:"user_id"`
+	IsActive       bool            `db:"is_active"`
+}
+
+type dbUserPhraseOption struct {
+	ID             PhraseMappingID `db:"_id"`
+	CreatedAt      time.Time       `db:"created_at"`
+	LastModifiedAt time.Time       `db:"last_modified_at"`
+}
+
+type UserPhraseMapping struct {
+	ID         PhraseMappingID `db:"_id"`
+	UserID     users.UserID    `db:"user_id"`
+	IsActive   bool            `db:"is_active"`
+	PhraseText string          `db:"phrase_text"`
+}
