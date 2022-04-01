@@ -6,6 +6,7 @@ import (
 	"babblegraph/model/emailtemplates"
 	"babblegraph/model/newsletter"
 	"babblegraph/model/userlemma"
+	"babblegraph/model/usernewsletterpreferences"
 	"babblegraph/model/users"
 	"babblegraph/util/ctx"
 	"babblegraph/util/database"
@@ -13,13 +14,16 @@ import (
 	"babblegraph/util/ptr"
 	"babblegraph/util/random"
 	"babblegraph/util/ses"
+	"babblegraph/util/timeutils"
 	"babblegraph/wordsmith"
 	"fmt"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 )
 
 func SendSampleNewsletter(cl *ses.Client, emailAddress string) error {
+	c := ctx.GetDefaultLogContext()
 	switch env.MustEnvironmentName() {
 	case env.EnvironmentLocal,
 		env.EnvironmentLocalTestEmail:
@@ -34,9 +38,13 @@ func SendSampleNewsletter(cl *ses.Client, emailAddress string) error {
 				return fmt.Errorf("User found was not verified")
 			}
 			emailRecordID := email.NewEmailRecordID()
-			newsletter, err := createNewsletter(tx, user.ID, emailRecordID)
+			newsletter, err := createNewsletter(c, tx, user.ID, emailRecordID)
 			if err != nil {
 				return err
+			}
+			if newsletter == nil {
+				c.Infof("Newsletter is null")
+				return nil
 			}
 			return createNewsletterHTMLAndSend(cl, tx, emailAddress, user.ID, emailRecordID, newsletter.Body)
 		})
@@ -50,15 +58,20 @@ func SendSampleNewsletter(cl *ses.Client, emailAddress string) error {
 	}
 }
 
-func createNewsletter(tx *sqlx.Tx, userID users.UserID, emailRecordID email.ID) (*newsletter.Newsletter, error) {
-	c := ctx.GetDefaultLogContext()
+func createNewsletter(c ctx.LogContext, tx *sqlx.Tx, userID users.UserID, emailRecordID email.ID) (*newsletter.Newsletter, error) {
 	emailAccessor := newsletter.GetDefaultEmailAccessor(tx)
 	documentAccessor := newsletter.GetDefaultDocumentsAccessor()
+	utcMidnight := timeutils.ConvertToMidnight(time.Now().UTC())
+	userNewsletterPreferences, err := usernewsletterpreferences.GetUserNewsletterPrefrencesForLanguage(c, tx, userID, wordsmith.LanguageCodeSpanish, ptr.Time(utcMidnight))
+	if err != nil {
+		return nil, err
+	}
 	userAccessor, err := newsletter.GetSampleNewsletterUserAccessor(c, tx, newsletter.GetSampleNewsletterUserAccessorInput{
-		UserID:           userID,
-		LanguageCode:     wordsmith.LanguageCodeSpanish,
-		SentDocumentIDs:  []documents.DocumentID{},
-		SpotlightRecords: []userlemma.UserLemmaReinforcementSpotlightRecord{},
+		UserID:                    userID,
+		LanguageCode:              wordsmith.LanguageCodeSpanish,
+		SentDocumentIDs:           []documents.DocumentID{},
+		SpotlightRecords:          []userlemma.UserLemmaReinforcementSpotlightRecord{},
+		UserNewsletterPreferences: userNewsletterPreferences,
 	})
 	if err != nil {
 		return nil, err
@@ -67,7 +80,7 @@ func createNewsletter(tx *sqlx.Tx, userID users.UserID, emailRecordID email.ID) 
 	if err != nil {
 		return nil, err
 	}
-	podcastAccessor, err := newsletter.GetDefaultPodcastAccessor(tx, wordsmith.LanguageCodeSpanish, userID)
+	podcastAccessor, err := newsletter.GetDefaultPodcastAccessor(c, tx, wordsmith.LanguageCodeSpanish, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -76,6 +89,7 @@ func createNewsletter(tx *sqlx.Tx, userID users.UserID, emailRecordID email.ID) 
 		return nil, err
 	}
 	return newsletter.CreateNewsletter(c, newsletter.CreateNewsletterInput{
+		DateOfSendMidnightUTC: utcMidnight,
 		WordsmithAccessor:     newsletter.GetDefaultWordsmithAccessor(),
 		EmailAccessor:         emailAccessor,
 		UserAccessor:          userAccessor,

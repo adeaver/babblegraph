@@ -52,6 +52,10 @@ const SubscriptionManagementHomePage = withUserProfileInformation<SubscriptionMa
             <div>
                 <Grid container spacing={2}>
                     <NavigationCard
+                        location={`/manage/${token}/preferences`}
+                        title="Schedule and newsletter settings"
+                        description="Select which days you receive your newsletter and at what time. Also, toggle other settings, such as how many articles appear per email." />
+                    <NavigationCard
                         location={`/manage/${token}/interests`}
                         title="Manage Your Interests"
                         description="Select some topics you’re interested in reading more about or deselect some topics you’d like to read about less. This is a great way to make sure that the content you get is fun and engaging." />
@@ -59,22 +63,6 @@ const SubscriptionManagementHomePage = withUserProfileInformation<SubscriptionMa
                         location={`/manage/${reinforcementToken}/vocabulary`}
                         title="Track words to reinforce"
                         description="Learn a new word recently and want to make sure it sticks? You can track it, which will send you articles containing these words. Seeing a word frequently is a great way to make sure you remember it." />
-                    <NavigationCard
-                        location={`/manage/${token}/schedule`}
-                        title={!!props.userProfile.subscriptionLevel ? (
-                            "Newsletter schedule and customization"
-                        ) : (
-                            "Newsletter schedule settings"
-                        )}
-                        description={!!props.userProfile.subscriptionLevel ? (
-                            "Select which days you receive newsletter emails from Babblegraph. You can also configure how many articles you receive in each email and what topics are in each email."
-                        ) : (
-                            "Select which time you receive your daily newsletter emails from Babblegraph"
-                        )} />
-                    <NavigationCard
-                        location={`/manage/${token}/preferences`}
-                        title="Newsletter general settings"
-                        description="Adjust general settings for your newsletter, such as toggling whether or not you want to receive word tracking spotlights in your newsletters." />
                     {
                         props.userProfile.hasAccount && (
                             <NavigationCard

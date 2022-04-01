@@ -5,13 +5,13 @@ import (
 	"babblegraph/model/emailtemplates"
 	"babblegraph/model/newsletter"
 	"babblegraph/model/newslettersendrequests"
-	"babblegraph/model/useraccounts"
-	"babblegraph/model/usernewsletterschedule"
+	"babblegraph/model/usernewsletterpreferences"
 	"babblegraph/model/users"
 	"babblegraph/services/worker/newsletterprocessing"
 	"babblegraph/util/async"
 	"babblegraph/util/database"
 	"babblegraph/util/env"
+	"babblegraph/util/ptr"
 	"babblegraph/util/ses"
 	"babblegraph/util/storage"
 	"babblegraph/util/timeutils"
@@ -44,25 +44,12 @@ func StartNewsletterPreloadWorkerThread(newsletterProcessor *newsletterprocessin
 			c.Infof("Got send request with ID %s", sendRequest.ID)
 			dateOfSendUTCMidnight := timeutils.ConvertToMidnight(sendRequest.DateOfSend.UTC())
 			if err := database.WithTx(func(tx *sqlx.Tx) error {
-				subscriptionLevel, err := useraccounts.LookupSubscriptionLevelForUser(tx, sendRequest.UserID)
-				switch {
-				case err != nil:
+				userNewsletterPreferences, err := usernewsletterpreferences.GetUserNewsletterPrefrencesForLanguage(c, tx, sendRequest.UserID, sendRequest.LanguageCode, ptr.Time(dateOfSendUTCMidnight))
+				if err != nil {
 					return err
-				case subscriptionLevel == nil:
-					// no-op
-				case *subscriptionLevel == useraccounts.SubscriptionLevelBetaPremium,
-					*subscriptionLevel == useraccounts.SubscriptionLevelPremium:
-					userNewsletterSchedule, err := usernewsletterschedule.GetUserNewsletterScheduleForUTCMidnight(c, tx, usernewsletterschedule.GetUserNewsletterScheduleForUTCMidnightInput{
-						UserID:           sendRequest.UserID,
-						LanguageCode:     sendRequest.LanguageCode,
-						DayAtUTCMidnight: dateOfSendUTCMidnight,
-					})
-					if err != nil {
-						return err
-					}
-					if !userNewsletterSchedule.IsSendRequested() {
-						return newslettersendrequests.UpdateSendRequestStatus(tx, sendRequest.ID, newslettersendrequests.PayloadStatusNoSendRequested)
-					}
+				}
+				if !userNewsletterPreferences.Schedule.IsSendRequested(dateOfSendUTCMidnight.Weekday()) {
+					return newslettersendrequests.UpdateSendRequestStatus(tx, sendRequest.ID, newslettersendrequests.PayloadStatusNoSendRequested)
 				}
 				if err := newslettersendrequests.UpdateSendRequestStatus(tx, sendRequest.ID, newslettersendrequests.PayloadStatusPayloadReady); err != nil {
 					return err
@@ -78,7 +65,7 @@ func StartNewsletterPreloadWorkerThread(newsletterProcessor *newsletterprocessin
 				if err != nil {
 					return err
 				}
-				podcastAccessor, err := newsletter.GetDefaultPodcastAccessor(tx, sendRequest.LanguageCode, sendRequest.UserID)
+				podcastAccessor, err := newsletter.GetDefaultPodcastAccessor(c, tx, sendRequest.LanguageCode, sendRequest.UserID)
 				if err != nil {
 					return err
 				}
@@ -88,6 +75,7 @@ func StartNewsletterPreloadWorkerThread(newsletterProcessor *newsletterprocessin
 				}
 				c.Infof("Creating newsletter for send request with ID %s", sendRequest.ID)
 				newsletter, err := newsletter.CreateNewsletter(c, newsletter.CreateNewsletterInput{
+					DateOfSendMidnightUTC: dateOfSendUTCMidnight,
 					WordsmithAccessor:     wordsmithAccessor,
 					EmailAccessor:         emailAccessor,
 					UserAccessor:          userAccessor,
@@ -161,11 +149,7 @@ func StartNewsletterFulfillmentWorkerThread(newsletterProcessor *newsletterproce
 				if err := newslettersendrequests.UpdateSendRequestStatus(tx, sendRequest.ID, newslettersendrequests.PayloadStatusSent); err != nil {
 					return err
 				}
-				userNewsletterSchedule, err := usernewsletterschedule.GetUserNewsletterScheduleForUTCMidnight(c, tx, usernewsletterschedule.GetUserNewsletterScheduleForUTCMidnightInput{
-					UserID:           sendRequest.UserID,
-					LanguageCode:     sendRequest.LanguageCode,
-					DayAtUTCMidnight: dateOfSendUTCMidnight,
-				})
+				userNewsletterPreferences, err := usernewsletterpreferences.GetUserNewsletterPrefrencesForLanguage(c, tx, sendRequest.UserID, sendRequest.LanguageCode, ptr.Time(dateOfSendUTCMidnight))
 				if err != nil {
 					return err
 				}
@@ -192,7 +176,10 @@ func StartNewsletterFulfillmentWorkerThread(newsletterProcessor *newsletterproce
 					return err
 				}
 				c.Debugf("Created HTML %s", *newsletterHTML)
-				today := userNewsletterSchedule.GetSendTimeInUserTimezone()
+				today, err := userNewsletterPreferences.Schedule.ConvertUTCTimeToUserDate(c, dateOfSendUTCMidnight)
+				if err != nil {
+					return err
+				}
 				subject := fmt.Sprintf("Babblegraph Newsletter - %s %d, %d", today.Month().String(), today.Day(), today.Year())
 				return email.SendEmailWithHTMLBody(tx, emailClient, email.SendEmailWithHTMLBodyInput{
 					ID:           newsletter.EmailRecordID,
