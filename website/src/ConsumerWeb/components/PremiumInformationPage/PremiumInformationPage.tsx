@@ -10,8 +10,9 @@ import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
 import NotificationsOffIcon from '@material-ui/icons/NotificationsOff';
 import FindInPageIcon from '@material-ui/icons/FindInPage';
-import BallotIcon from '@material-ui/icons/Ballot';
+import FavoriteIcon from '@material-ui/icons/Favorite';
 import GraphicEqIcon from '@material-ui/icons/GraphicEq';
+import HelpOutlineIcon from '@material-ui/icons/HelpOutline';
 
 import Color from 'common/styles/colors';
 import DisplayCard from 'common/components/DisplayCard/DisplayCard';
@@ -119,9 +120,13 @@ const PremiumInformationPage = withUserProfileInformation<PremiumInformationPage
                                 description={translations[TextBlock.PodcastsDescription]}
                                 icon={<GraphicEqIcon className={classes.featureIcon} />} />
                             <PremiumFeatureListItem
-                                title={translations[TextBlock.CustomizationTitle]}
-                                description={translations[TextBlock.CustomizationDescription]}
-                                icon={<BallotIcon className={classes.featureIcon} />} />
+                                title={translations[TextBlock.IndependentCreatorTitle]}
+                                description={translations[TextBlock.IndependentCreatorDescription]}
+                                icon={<FavoriteIcon className={classes.featureIcon} />} />
+                            <PremiumFeatureListItem
+                                title={translations[TextBlock.AndMoreTitle]}
+                                description={translations[TextBlock.AndMoreDescription]}
+                                icon={<HelpOutlineIcon className={classes.featureIcon} />} />
                         </List>
                         <Heading3 color={TypographyColor.Primary}>
                             {translations[TextBlock.Price]}

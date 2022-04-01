@@ -3,6 +3,7 @@ package usernewsletterpreferences
 import (
 	"babblegraph/model/content"
 	"babblegraph/model/users"
+	"babblegraph/util/ctx"
 	"babblegraph/wordsmith"
 	"fmt"
 	"time"
@@ -41,7 +42,7 @@ const (
         last_modified_at=timezone('utc', now())`
 )
 
-func GetUserNewsletterPrefrencesForLanguage(tx *sqlx.Tx, userID users.UserID, languageCode wordsmith.LanguageCode) (*UserNewsletterPreferences, error) {
+func GetUserNewsletterPrefrencesForLanguage(c ctx.LogContext, tx *sqlx.Tx, userID users.UserID, languageCode wordsmith.LanguageCode, forSendTime *time.Time) (*UserNewsletterPreferences, error) {
 	shouldIncludeLemmaReinforcementSpotlight := true
 	lemmaReinforcementSpotlightPreferences, err := lookupLemmaReinforcementSpotlightPreferences(tx, userID, languageCode)
 	if err != nil {
@@ -70,11 +71,16 @@ func GetUserNewsletterPrefrencesForLanguage(tx *sqlx.Tx, userID users.UserID, la
 	if err != nil {
 		return nil, err
 	}
+	userSchedule, err := getUserNewsletterSchedule(c, tx, userID, languageCode, forSendTime)
+	if err != nil {
+		return nil, err
+	}
 	return &UserNewsletterPreferences{
 		UserID:                                   userID,
 		LanguageCode:                             languageCode,
 		ShouldIncludeLemmaReinforcementSpotlight: shouldIncludeLemmaReinforcementSpotlight,
 		PodcastPreferences:                       podcastPreferences,
+		Schedule:                                 userSchedule,
 	}, nil
 }
 
@@ -83,6 +89,11 @@ type UpdateUserNewsletterPreferencesInput struct {
 	LanguageCode                        wordsmith.LanguageCode
 	IsLemmaReinforcementSpotlightActive bool
 	PodcastPreferences                  *PodcastPreferencesInput
+	IANATimezone                        *time.Location
+	HourIndex                           int
+	QuarterHourIndex                    int
+	NumberOfArticlesPerEmail            int
+	IsActiveForDays                     []bool
 }
 
 type PodcastPreferencesInput struct {
@@ -97,15 +108,38 @@ type SourceIDUpdate struct {
 	IsActive bool
 }
 
-func UpdateUserNewsletterPreferences(tx *sqlx.Tx, input UpdateUserNewsletterPreferencesInput) error {
+func UpdateUserNewsletterPreferences(c ctx.LogContext, tx *sqlx.Tx, input UpdateUserNewsletterPreferencesInput) error {
+	c.Debugf("Inserting lemma reinforcement")
 	err := updateLemmaReinforcementSpotlightPreferences(tx, input.UserID, input.LanguageCode, input.IsLemmaReinforcementSpotlightActive)
 	if err != nil {
 		return err
 	}
 	if input.PodcastPreferences != nil {
-		return updatePodcastPreferences(tx, input.UserID, input.LanguageCode, *input.PodcastPreferences)
+		c.Debugf("Inserting podcasts")
+		if err := updatePodcastPreferences(tx, input.UserID, input.LanguageCode, *input.PodcastPreferences); err != nil {
+			return err
+		}
 	}
-	return nil
+	c.Debugf("Inserting days")
+	for idx, isActive := range input.IsActiveForDays {
+		if err := upsertNewsletterDayMetadataForUser(tx, upsertNewsletterDayMetadataForUserInput{
+			UserID:         input.UserID,
+			LanguageCode:   input.LanguageCode,
+			DayOfWeekIndex: idx,
+			IsActive:       isActive,
+		}); err != nil {
+			return err
+		}
+	}
+	c.Debugf("Inserting schedule")
+	return upsertUserNewsletterSchedule(tx, upsertUserNewsletterScheduleInput{
+		UserID:                   input.UserID,
+		LanguageCode:             input.LanguageCode,
+		IANATimezone:             input.IANATimezone,
+		HourIndex:                input.HourIndex,
+		QuarterHourIndex:         input.QuarterHourIndex,
+		NumberOfArticlesPerEmail: input.NumberOfArticlesPerEmail,
+	})
 }
 
 func updateLemmaReinforcementSpotlightPreferences(tx *sqlx.Tx, userID users.UserID, languageCode wordsmith.LanguageCode, isActive bool) error {

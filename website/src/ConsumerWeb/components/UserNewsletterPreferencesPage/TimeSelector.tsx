@@ -9,7 +9,7 @@ import MenuItem from '@material-ui/core/MenuItem';
 import Select from '@material-ui/core/Select';
 import Autocomplete from '@material-ui/lab/Autocomplete';
 
-import { Heading3 } from 'common/typography/Heading';
+import { Heading4 } from 'common/typography/Heading';
 import Paragraph, { Size } from 'common/typography/Paragraph';
 import { Alignment, TypographyColor } from 'common/typography/common';
 import timezones, { TimeZone } from 'common/data/timezone/timezone';
@@ -90,19 +90,18 @@ const TimeSelector = (props: TimeSelectorProps) => {
         ) : (
             Math.abs(props.hourIndex - 12)
         );
-        debugger;
         props.handleUpdateHourIndex(updatedHourIndexForProposedPeriod);
         setPeriod(proposedPeriod);
     }
     return (
         <div>
-            <Heading3 color={TypographyColor.Primary}>
+            <Heading4 color={TypographyColor.Primary} align={Alignment.Left}>
                 What time do you want to receive your newsletter?
-            </Heading3>
+            </Heading4>
             <Grid container>
                 <Grid item xs={4} className={classes.timeSelectorContainer}>
                     <FormControl className={classes.timeSelector}>
-                        <InputLabel id="hour-selector-label">Select Hour</InputLabel>
+                        <InputLabel id="hour-selector-label">Hour</InputLabel>
                         <Select
                             labelId="hour-selector-label"
                             id="hour-selector"
@@ -118,7 +117,7 @@ const TimeSelector = (props: TimeSelectorProps) => {
                 </Grid>
                 <Grid item xs={4} className={classes.timeSelectorContainer}>
                     <FormControl className={classes.timeSelector}>
-                        <InputLabel id="quarter-hour-selector-label">Select Minute</InputLabel>
+                        <InputLabel id="quarter-hour-selector-label">Minute</InputLabel>
                         <Select
                             labelId="quarter-hour-selector-label"
                             id="quarter-hour-selector"
@@ -134,7 +133,7 @@ const TimeSelector = (props: TimeSelectorProps) => {
                 </Grid>
                 <Grid item xs={4} className={classes.timeSelectorContainer}>
                     <FormControl className={classes.timeSelector}>
-                        <InputLabel id="period-selector-label">Select Period (AM/PM)</InputLabel>
+                        <InputLabel id="period-selector-label">AM or PM?</InputLabel>
                         <Select
                             labelId="period-selector-label"
                             id="period-selector"

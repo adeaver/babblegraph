@@ -14,11 +14,19 @@ import (
 	"babblegraph/util/email"
 	"babblegraph/util/ptr"
 	"babblegraph/wordsmith"
+	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/jmoiron/sqlx"
 )
+
+type userSchedule struct {
+	IANATimezone     string `json:"iana_timezone"`
+	HourIndex        int    `json:"hour_index"`
+	QuarterHourIndex int    `json:"quarter_hour_index"`
+	IsActiveForDays  []bool `json:"is_active_for_days"`
+}
 
 type userNewsletterPreferences struct {
 	LanguageCode                        wordsmith.LanguageCode `json:"language_code"`
@@ -27,6 +35,8 @@ type userNewsletterPreferences struct {
 	IncludeExplicitPodcasts             *bool                  `json:"include_explicit_podcasts,omitempty"`
 	MinimumPodcastDurationSeconds       *int64                 `json:"minimum_podcast_duration_seconds,omitempty"`
 	MaximumPodcastDurationSeconds       *int64                 `json:"maximum_podcast_duration_seconds,omitempty"`
+	NumberOfArticlesPerEmail            int                    `json:"number_of_articles_per_email"`
+	Schedule                            userSchedule           `json:"schedule"`
 }
 
 type getUserNewsletterPreferencesRequest struct {
@@ -60,7 +70,7 @@ func getUserNewsletterPreferences(userAuth *routermiddleware.UserAuthentication,
 	var prefs *usernewsletterpreferences.UserNewsletterPreferences
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		var err error
-		prefs, err = usernewsletterpreferences.GetUserNewsletterPrefrencesForLanguage(tx, *userID, *languageCode)
+		prefs, err = usernewsletterpreferences.GetUserNewsletterPrefrencesForLanguage(r, tx, *userID, *languageCode, nil)
 		if err != nil {
 			return err
 		}
@@ -69,9 +79,20 @@ func getUserNewsletterPreferences(userAuth *routermiddleware.UserAuthentication,
 	}); err != nil {
 		return nil, err
 	}
+	schedule, ok := prefs.Schedule.(*usernewsletterpreferences.ScheduleWithMetadata)
+	if !ok {
+		return nil, fmt.Errorf("Schedule did not correctly convert to schedule with metadata")
+	}
 	userPreferences := &userNewsletterPreferences{
 		LanguageCode:                        *languageCode,
 		IsLemmaReinforcementSpotlightActive: prefs.ShouldIncludeLemmaReinforcementSpotlight,
+		NumberOfArticlesPerEmail:            schedule.NumberOfArticlesPerEmail,
+		Schedule: userSchedule{
+			IANATimezone:     schedule.IANATimezone,
+			HourIndex:        schedule.HourIndex,
+			QuarterHourIndex: schedule.QuarterHourIndex,
+			IsActiveForDays:  schedule.IsActiveForDay,
+		},
 	}
 	switch {
 	case userAuth != nil:
@@ -117,6 +138,8 @@ type updateUserNewsletterPreferencesResponse struct {
 
 const (
 	errorEmptyEmailAddress clienterror.Error = "no-email-address"
+	errorInvalidTimezone   clienterror.Error = "invalid-timezone"
+	errorNoActiveDay       clienterror.Error = "no-active-day"
 )
 
 func updateUserNewsletterPreferences(userAuth *routermiddleware.UserAuthentication, r *router.Request) (interface{}, error) {
@@ -134,6 +157,21 @@ func updateUserNewsletterPreferences(userAuth *routermiddleware.UserAuthenticati
 	if err != nil {
 		return getUserNewsletterPreferencesResponse{
 			Error: clienterror.ErrorInvalidLanguageCode.Ptr(),
+		}, nil
+	}
+	userTimezone, err := time.LoadLocation(req.Preferences.Schedule.IANATimezone)
+	if err != nil {
+		return getUserNewsletterPreferencesResponse{
+			Error: errorInvalidTimezone.Ptr(),
+		}, nil
+	}
+	var hasAtLeastOneActiveDay bool
+	for _, isActive := range req.Preferences.Schedule.IsActiveForDays {
+		hasAtLeastOneActiveDay = hasAtLeastOneActiveDay || isActive
+	}
+	if !hasAtLeastOneActiveDay {
+		return getUserNewsletterPreferencesResponse{
+			Error: errorNoActiveDay.Ptr(),
 		}, nil
 	}
 	if userAuth != nil {
@@ -156,11 +194,16 @@ func updateUserNewsletterPreferences(userAuth *routermiddleware.UserAuthenticati
 			}
 		}
 		if err := database.WithTx(func(tx *sqlx.Tx) error {
-			return usernewsletterpreferences.UpdateUserNewsletterPreferences(tx, usernewsletterpreferences.UpdateUserNewsletterPreferencesInput{
+			return usernewsletterpreferences.UpdateUserNewsletterPreferences(r, tx, usernewsletterpreferences.UpdateUserNewsletterPreferencesInput{
 				UserID:                              *userID,
 				LanguageCode:                        *languageCode,
 				IsLemmaReinforcementSpotlightActive: req.Preferences.IsLemmaReinforcementSpotlightActive,
 				PodcastPreferences:                  podcastPreferences,
+				IANATimezone:                        userTimezone,
+				HourIndex:                           req.Preferences.Schedule.HourIndex,
+				QuarterHourIndex:                    req.Preferences.Schedule.QuarterHourIndex,
+				IsActiveForDays:                     req.Preferences.Schedule.IsActiveForDays,
+				NumberOfArticlesPerEmail:            req.Preferences.NumberOfArticlesPerEmail,
 			})
 		}); err != nil {
 			return nil, err
@@ -182,10 +225,15 @@ func updateUserNewsletterPreferences(userAuth *routermiddleware.UserAuthenticati
 				cErr = clienterror.ErrorInvalidEmailAddress.Ptr()
 				return nil
 			}
-			return usernewsletterpreferences.UpdateUserNewsletterPreferences(tx, usernewsletterpreferences.UpdateUserNewsletterPreferencesInput{
+			return usernewsletterpreferences.UpdateUserNewsletterPreferences(r, tx, usernewsletterpreferences.UpdateUserNewsletterPreferencesInput{
 				UserID:                              *userID,
 				LanguageCode:                        *languageCode,
 				IsLemmaReinforcementSpotlightActive: req.Preferences.IsLemmaReinforcementSpotlightActive,
+				IANATimezone:                        userTimezone,
+				HourIndex:                           req.Preferences.Schedule.HourIndex,
+				QuarterHourIndex:                    req.Preferences.Schedule.QuarterHourIndex,
+				IsActiveForDays:                     req.Preferences.Schedule.IsActiveForDays,
+				NumberOfArticlesPerEmail:            req.Preferences.NumberOfArticlesPerEmail,
 			})
 		})
 		switch {
