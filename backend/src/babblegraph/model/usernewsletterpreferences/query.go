@@ -92,6 +92,8 @@ type UpdateUserNewsletterPreferencesInput struct {
 	IANATimezone                        *time.Location
 	HourIndex                           int
 	QuarterHourIndex                    int
+	NumberOfArticlesPerEmail            int
+	IsActiveForDays                     []bool
 }
 
 type PodcastPreferencesInput struct {
@@ -116,12 +118,23 @@ func UpdateUserNewsletterPreferences(tx *sqlx.Tx, input UpdateUserNewsletterPref
 			return err
 		}
 	}
+	for idx, isActive := range input.IsActiveForDays {
+		if err := upsertNewsletterDayMetadataForUser(tx, upsertNewsletterDayMetadataForUserInput{
+			UserID:         input.UserID,
+			LanguageCode:   input.LanguageCode,
+			DayOfWeekIndex: idx,
+			IsActive:       isActive,
+		}); err != nil {
+			return err
+		}
+	}
 	return upsertUserNewsletterSchedule(tx, upsertUserNewsletterScheduleInput{
-		UserID:           input.UserID,
-		LanguageCode:     input.LanguageCode,
-		IANATimezone:     input.IANATimezone,
-		HourIndex:        input.HourIndex,
-		QuarterHourIndex: input.QuarterHourIndex,
+		UserID:                   input.UserID,
+		LanguageCode:             input.LanguageCode,
+		IANATimezone:             input.IANATimezone,
+		HourIndex:                input.HourIndex,
+		QuarterHourIndex:         input.QuarterHourIndex,
+		NumberOfArticlesPerEmail: input.NumberOfArticlesPerEmail,
 	})
 }
 

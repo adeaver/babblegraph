@@ -25,6 +25,7 @@ import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
 
 import { ClientError } from 'ConsumerWeb/api/clienterror';
 import { WordsmithLanguageCode } from 'common/model/language/language';
+import { DisplayLanguage } from 'common/model/language/language';
 import {
     RouteEncryptionKey,
     LoginRedirectKey,
@@ -50,8 +51,18 @@ import {
 
     UserNewsletterPreferences,
 } from 'ConsumerWeb/api/user/userNewsletterPreferences';
+import {
+    toTitleCase
+} from 'util/string/StringConvert';
 
 import TimeSelector from './TimeSelector';
+
+const minimumNumberOfArticles = 4;
+const maximumNumberOfArticles = 12;
+const daysOfTheWeekByLanguageCode: { [key: string]: Array<string> } = {
+    [DisplayLanguage.Spanish]: [ "Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"],
+    [DisplayLanguage.English]: [ "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" ],
+}
 
 const styleClasses = makeStyles({
     toggleContainer: {
@@ -169,6 +180,12 @@ const UserNewsletterPreferencesDisplay = asBaseComponent<GetUserNewsletterPrefer
         const [ ianaTimezone, setIANATimezone ] = useState<string>(props.preferences.schedule.ianaTimezone);
         const [ hourIndex, setHourIndex ] = useState<number>(props.preferences.schedule.hourIndex);
         const [ quarterHourIndex, setQuarterHourIndex ] = useState<number>(props.preferences.schedule.quarterHourIndex * 15);
+        const [ isActiveForDays, setIsActiveForDays ] = useState<Array<boolean>>(props.preferences.schedule.isActiveForDays);
+        const [ numberOfArticlesPerEmail, setNumberOfArticlesPerEmail ] = useState<number>(props.preferences.numberOfArticlesPerEmail);
+        const handleUpdateNumberOfArticles = (event: React.ChangeEvent<HTMLInputElement>) => {
+            const numberOfArticles = parseInt((event.target as HTMLInputElement).value, 10);
+            setNumberOfArticlesPerEmail(numberOfArticles);
+        }
 
         const [ isLoading, setIsLoading ] = useState<boolean>(false);
         const [ error, setError ] = useState<ClientError>(null);
@@ -205,11 +222,12 @@ const UserNewsletterPreferencesDisplay = asBaseComponent<GetUserNewsletterPrefer
                     includeExplicitPodcasts: includeExplicitPodcasts,
                     minimumPodcastDurationSeconds: minimumPodcastDurationSeconds,
                     maximumPodcastDurationSeconds: maximumPodcastDurationSeconds,
+                    numberOfArticlesPerEmail: numberOfArticlesPerEmail,
                     schedule: {
                         ianaTimezone: ianaTimezone,
                         hourIndex: hourIndex,
                         quarterHourIndex: quarterHourIndex / 15,
-                        isActiveForDay: props.preferences.schedule.isActiveForDay,
+                        isActiveForDays: isActiveForDays,
                     },
                 },
             },
@@ -235,7 +253,26 @@ const UserNewsletterPreferencesDisplay = asBaseComponent<GetUserNewsletterPrefer
                         title="Manage Preferences"
                         backArrowDestination={`/manage/${props.subscriptionManagementToken}`} />
                     <Grid container>
-                        <Grid xs={12}>
+                        <Grid item xs={12} md={8}>
+                            <Heading4 align={Alignment.Left} color={TypographyColor.Primary}>
+                                How many articles would you like to receive per email?
+                            </Heading4>
+                            <Paragraph align={Alignment.Left}>
+                                You can set the number of articles that will appear in each email. I recommend 8 or 12 in case you get articles that you’re less interested in, but it can be overwhelming to receive so many emails. This number must be between {minimumNumberOfArticles} and {maximumNumberOfArticles}.
+                            </Paragraph>
+                        </Grid>
+                        <Grid className={classes.toggleContainer} item xs={12} md={4}>
+                            <PrimaryTextField
+                                id="number-of-articles"
+                                value={numberOfArticlesPerEmail}
+                                type="number"
+                                label="Number of articles per email"
+                                variant="outlined"
+                                error={numberOfArticlesPerEmail < minimumNumberOfArticles || numberOfArticlesPerEmail > maximumNumberOfArticles}
+                                helperText={`Must select between ${minimumNumberOfArticles} and ${maximumNumberOfArticles}`}
+                                onChange={handleUpdateNumberOfArticles} />
+                        </Grid>
+                        <Grid item xs={12}>
                             <TimeSelector
                                 initialIANATimezone={initialIANATimezone}
                                 ianaTimezone={ianaTimezone}
@@ -245,6 +282,37 @@ const UserNewsletterPreferencesDisplay = asBaseComponent<GetUserNewsletterPrefer
                                 handleUpdateHourIndex={setHourIndex}
                                 handleUpdateQuarterHourIndex={setQuarterHourIndex} />
                         </Grid>
+                        <Grid item xs={12}>
+                            <Heading4 align={Alignment.Left} color={TypographyColor.Primary}>
+                                Which days would you like to receive your newsletter?
+                            </Heading4>
+                        </Grid>
+                        {
+                            (daysOfTheWeekByLanguageCode[DisplayLanguage.English] || []).map((day: string, idx: number) => (
+                                <Grid item xs={12}>
+                                    <Grid container>
+                                        <Grid item xs={10} xl={11}>
+                                            <Paragraph align={Alignment.Left}>
+                                                {toTitleCase(day)}
+                                            </Paragraph>
+                                        </Grid>
+                                        <Grid item
+                                            className={classes.toggleContainer}
+                                            xs={2}
+                                            xl={1}>
+                                            <PrimarySwitch
+                                                checked={isActiveForDays[idx]}
+                                                onClick={() => {
+                                                    setIsActiveForDays(
+                                                        isActiveForDays.map((val: boolean, i: number) => i === idx ? !val : val)
+                                                    )
+                                                }}
+                                                disabled={isLoading} />
+                                        </Grid>
+                                    </Grid>
+                                </Grid>
+                            ))
+                        }
                         <Grid item xs={10} xl={11}>
                             <Heading4 align={Alignment.Left} color={TypographyColor.Primary}>
                                 Include word tracking spotlights in your newsletter?

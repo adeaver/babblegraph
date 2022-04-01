@@ -24,7 +24,7 @@ func (t TestNewsletterSchedule) GetUTCSendTime(utcWeekday time.Weekday) time.Tim
 	return t.UserSendTime.UTC()
 }
 
-func (t TestNewsletterSchedule) GetNumberOfDocuments(utcWeekday time.Weekday) int {
+func (t TestNewsletterSchedule) GetNumberOfDocuments() int {
 	return t.NumberOfDocuments
 }
 

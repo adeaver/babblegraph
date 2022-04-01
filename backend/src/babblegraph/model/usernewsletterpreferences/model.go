@@ -16,6 +16,7 @@ import (
 const (
 	minimumNumberOfArticles = 4
 	maximumNumberOfArticles = 12
+	defaultNumberOfArticles = 12
 
 	defaultUTCSendTimeHour = 11
 )
@@ -74,29 +75,29 @@ type dbUserPodcastSourcePreferences struct {
 type scheduleID string
 
 type dbUserNewsletterSchedule struct {
-	ID               scheduleID             `db:"_id"`
-	UserID           users.UserID           `db:"user_id"`
-	LanguageCode     wordsmith.LanguageCode `db:"language_code"`
-	IANATimezone     string                 `db:"iana_timezone"`
-	HourIndex        int                    `db:"hour_of_day_index"`
-	QuarterHourIndex int                    `db:"quarter_hour_index"`
+	ID                       scheduleID             `db:"_id"`
+	UserID                   users.UserID           `db:"user_id"`
+	LanguageCode             wordsmith.LanguageCode `db:"language_code"`
+	IANATimezone             string                 `db:"iana_timezone"`
+	HourIndex                int                    `db:"hour_of_day_index"`
+	QuarterHourIndex         int                    `db:"quarter_hour_index"`
+	NumberOfArticlesPerEmail int                    `db:"number_of_articles_per_email"`
 }
 
 type dayID string
 
 type dbUserNewsletterDayMetadata struct {
-	ID               dayID                  `db:"_id"`
-	UserID           users.UserID           `db:"user_id"`
-	LanguageCode     wordsmith.LanguageCode `db:"language_code"`
-	DayOfWeekIndex   int                    `db:"day_of_week_index"`
-	NumberOfArticles int                    `db:"number_of_articles"`
-	IsActive         bool                   `db:"is_active"`
+	ID             dayID                  `db:"_id"`
+	UserID         users.UserID           `db:"user_id"`
+	LanguageCode   wordsmith.LanguageCode `db:"language_code"`
+	DayOfWeekIndex int                    `db:"day_of_week_index"`
+	IsActive       bool                   `db:"is_active"`
 }
 
 type Schedule interface {
 	IsSendRequested(utcWeekday time.Weekday) bool
 	GetUTCHourAndQuarterHourIndex() (_hourIndex, _quarterHourIndex int)
-	GetNumberOfDocuments(utcWeekday time.Weekday) int
+	GetNumberOfDocuments() int
 	ConvertUTCTimeToUserDate(c ctx.LogContext, utcTime time.Time) (*time.Time, error)
 }
 
@@ -105,17 +106,18 @@ type ScheduleWithMetadata struct {
 	utcHourIndex        int
 	utcQuarterHourIndex int
 
-	IANATimezone     string `json:"iana_timezone"`
-	HourIndex        int    `json:"hour_index"`
-	QuarterHourIndex int    `json:"quarter_hour_index"`
-	IsActiveForDay   []bool `json:"is_active_for_day"`
+	NumberOfArticlesPerEmail int
+	IANATimezone             string
+	HourIndex                int
+	QuarterHourIndex         int
+	IsActiveForDay           []bool
 }
 
 func getUserNewsletterSchedule(c ctx.LogContext, tx *sqlx.Tx, userID users.UserID, languageCode wordsmith.LanguageCode, utcMidnight *time.Time) (*ScheduleWithMetadata, error) {
 	isActiveForDay := []bool{true, true, true, true, true, true, true}
 	var userScheduleDays []dbUserNewsletterDayMetadata
 	var ianaTimezone string
-	var utcHourIndex, utcQuarterHourIndex, hourIndex, quarterHourIndex int
+	var utcHourIndex, utcQuarterHourIndex, hourIndex, quarterHourIndex, numberOfArticlesPerEmail int
 	userSchedule, err := lookupUserNewsletterScheduleForUser(tx, userID, languageCode)
 	switch {
 	case err != nil:
@@ -123,12 +125,14 @@ func getUserNewsletterSchedule(c ctx.LogContext, tx *sqlx.Tx, userID users.UserI
 	case userSchedule == nil:
 		ianaTimezone = "UTC"
 		utcHourIndex, utcQuarterHourIndex, hourIndex, quarterHourIndex = defaultUTCSendTimeHour, 0, defaultUTCSendTimeHour, 0
+		numberOfArticlesPerEmail = defaultNumberOfArticles
 	default:
 		todayUTCMidnight := timeutils.ConvertToMidnight(deref.Time(utcMidnight, time.Now().UTC()))
 		userSendTime, err := resolveUTCMidnightWithNewsletterSchedule(c, todayUTCMidnight, *userSchedule)
 		if err != nil {
 			return nil, err
 		}
+		numberOfArticlesPerEmail = userSchedule.NumberOfArticlesPerEmail
 		ianaTimezone = userSchedule.IANATimezone
 		hourIndex = userSendTime.Hour()
 		quarterHourIndex = userSendTime.Minute() / 15
@@ -152,13 +156,14 @@ func getUserNewsletterSchedule(c ctx.LogContext, tx *sqlx.Tx, userID users.UserI
 		}
 	}
 	return &ScheduleWithMetadata{
-		userScheduleDays:    userScheduleDays,
-		utcHourIndex:        utcHourIndex,
-		utcQuarterHourIndex: utcQuarterHourIndex,
-		IANATimezone:        ianaTimezone,
-		HourIndex:           hourIndex,
-		QuarterHourIndex:    quarterHourIndex,
-		IsActiveForDay:      isActiveForDay,
+		NumberOfArticlesPerEmail: numberOfArticlesPerEmail,
+		userScheduleDays:         userScheduleDays,
+		utcHourIndex:             utcHourIndex,
+		utcQuarterHourIndex:      utcQuarterHourIndex,
+		IANATimezone:             ianaTimezone,
+		HourIndex:                hourIndex,
+		QuarterHourIndex:         quarterHourIndex,
+		IsActiveForDay:           isActiveForDay,
 	}, nil
 }
 
@@ -170,11 +175,8 @@ func (s *ScheduleWithMetadata) GetUTCHourAndQuarterHourIndex() (_hourIndex, _qua
 	return s.utcHourIndex, s.utcQuarterHourIndex
 }
 
-func (s *ScheduleWithMetadata) GetNumberOfDocuments(utcWeekday time.Weekday) int {
-	if len(s.userScheduleDays) == 0 {
-		return maximumNumberOfArticles
-	}
-	return s.userScheduleDays[int(utcWeekday)].NumberOfArticles
+func (s *ScheduleWithMetadata) GetNumberOfDocuments() int {
+	return s.NumberOfArticlesPerEmail
 }
 
 // NOTE: This function does not return an accurate time - just an accurate date

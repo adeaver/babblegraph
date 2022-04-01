@@ -102,7 +102,7 @@ const TimeSelector = (props: TimeSelectorProps) => {
             <Grid container>
                 <Grid item xs={4} className={classes.timeSelectorContainer}>
                     <FormControl className={classes.timeSelector}>
-                        <InputLabel id="hour-selector-label">Select Hour</InputLabel>
+                        <InputLabel id="hour-selector-label">Hour</InputLabel>
                         <Select
                             labelId="hour-selector-label"
                             id="hour-selector"
@@ -118,7 +118,7 @@ const TimeSelector = (props: TimeSelectorProps) => {
                 </Grid>
                 <Grid item xs={4} className={classes.timeSelectorContainer}>
                     <FormControl className={classes.timeSelector}>
-                        <InputLabel id="quarter-hour-selector-label">Select Minute</InputLabel>
+                        <InputLabel id="quarter-hour-selector-label">Minute</InputLabel>
                         <Select
                             labelId="quarter-hour-selector-label"
                             id="quarter-hour-selector"
@@ -134,7 +134,7 @@ const TimeSelector = (props: TimeSelectorProps) => {
                 </Grid>
                 <Grid item xs={4} className={classes.timeSelectorContainer}>
                     <FormControl className={classes.timeSelector}>
-                        <InputLabel id="period-selector-label">Select Period (AM/PM)</InputLabel>
+                        <InputLabel id="period-selector-label">AM or PM?</InputLabel>
                         <Select
                             labelId="period-selector-label"
                             id="period-selector"

@@ -6,7 +6,7 @@ export type Schedule = {
     ianaTimezone: string;
     hourIndex: number;
     quarterHourIndex: number;
-    isActiveForDay: Array<boolean>;
+    isActiveForDays: Array<boolean>;
 }
 
 export type UserNewsletterPreferences = {
@@ -16,6 +16,7 @@ export type UserNewsletterPreferences = {
     includeExplicitPodcasts: boolean;
     minimumPodcastDurationSeconds: number | undefined;
     maximumPodcastDurationSeconds: number | undefined;
+    numberOfArticlesPerEmail: number;
     schedule: Schedule;
 }
 

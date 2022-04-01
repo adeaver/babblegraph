@@ -16,16 +16,14 @@ const (
             user_id,
             day_of_week_index,
             language_code,
-            number_of_articles,
             is_active
         ) VALUES (
-            $1, $2, $3, $4, $5
+            $1, $2, $3, $4
         ) ON CONFLICT (
             user_id, language_code, day_of_week_index
         ) DO UPDATE
         SET
-            number_of_articles=$4,
-            is_active=$5
+            is_active=$4
         `
 
 	getNewsletterScheduleForUserQuery    = "SELECT * FROM user_newsletter_schedule WHERE user_id = $1 AND language_code = $2"
@@ -35,16 +33,18 @@ const (
             language_code,
             iana_timezone,
             hour_of_day_index,
-            quarter_hour_index
+            quarter_hour_index,
+            number_of_articles_per_email,
         ) VALUES (
-            $1, $2, $3, $4, $5
+            $1, $2, $3, $4, $5, $6
         ) ON CONFLICT (
             user_id, language_code
         ) DO UPDATE
         SET
             iana_timezone=$3,
             hour_of_day_index=$4,
-            quarter_hour_index=$5`
+            quarter_hour_index=$5,
+            number_of_articles_per_email=$6`
 )
 
 func lookupNewsletterDayMetadataForUser(tx *sqlx.Tx, userID users.UserID, languageCode wordsmith.LanguageCode) ([]dbUserNewsletterDayMetadata, error) {
@@ -56,21 +56,18 @@ func lookupNewsletterDayMetadataForUser(tx *sqlx.Tx, userID users.UserID, langua
 }
 
 type upsertNewsletterDayMetadataForUserInput struct {
-	UserID           users.UserID
-	DayOfWeekIndex   int
-	LanguageCode     wordsmith.LanguageCode
-	NumberOfArticles int
-	IsActive         bool
+	UserID         users.UserID
+	DayOfWeekIndex int
+	LanguageCode   wordsmith.LanguageCode
+	IsActive       bool
 }
 
 func upsertNewsletterDayMetadataForUser(tx *sqlx.Tx, input upsertNewsletterDayMetadataForUserInput) error {
 	switch {
 	case input.DayOfWeekIndex < 0 || input.DayOfWeekIndex > 6:
 		return fmt.Errorf("Day of week must be between 0 and 6")
-	case input.NumberOfArticles < minimumNumberOfArticles || input.NumberOfArticles > maximumNumberOfArticles:
-		return fmt.Errorf("Number of articles must be between %d and %d", minimumNumberOfArticles, maximumNumberOfArticles)
 	}
-	if _, err := tx.Query(upsertNewsletterScheduleMetadataQuery, input.UserID, input.DayOfWeekIndex, input.LanguageCode, input.NumberOfArticles, input.IsActive); err != nil {
+	if _, err := tx.Query(upsertNewsletterScheduleMetadataQuery, input.UserID, input.DayOfWeekIndex, input.LanguageCode, input.IsActive); err != nil {
 		return err
 	}
 	return nil
@@ -94,21 +91,24 @@ func lookupUserNewsletterScheduleForUser(tx *sqlx.Tx, userID users.UserID, langu
 }
 
 type upsertUserNewsletterScheduleInput struct {
-	UserID           users.UserID
-	LanguageCode     wordsmith.LanguageCode
-	IANATimezone     *time.Location
-	HourIndex        int
-	QuarterHourIndex int
+	UserID                   users.UserID
+	LanguageCode             wordsmith.LanguageCode
+	IANATimezone             *time.Location
+	HourIndex                int
+	QuarterHourIndex         int
+	NumberOfArticlesPerEmail int
 }
 
 func upsertUserNewsletterSchedule(tx *sqlx.Tx, input upsertUserNewsletterScheduleInput) error {
 	switch {
 	case input.HourIndex < 0 || input.HourIndex > 23:
-		return fmt.Errorf("Error should be between 0 and 23, but got %d", input.HourIndex)
+		return fmt.Errorf("Hour should be between 0 and 23, but got %d", input.HourIndex)
 	case input.QuarterHourIndex < 0 || input.QuarterHourIndex > 3:
-		return fmt.Errorf("Error should be between 0 and 3, but got %d", input.QuarterHourIndex)
+		return fmt.Errorf("Quarter hour index should be between 0 and 3, but got %d", input.QuarterHourIndex)
+	case input.NumberOfArticlesPerEmail < minimumNumberOfArticles || input.NumberOfArticlesPerEmail > maximumNumberOfArticles:
+		return fmt.Errorf("Number of articles per email should be between %d and %d but got %d", minimumNumberOfArticles, maximumNumberOfArticles, input.NumberOfArticlesPerEmail)
 	}
-	if _, err := tx.Exec(upsertNewsletterScheduleForUserQuery, input.UserID, input.LanguageCode, input.IANATimezone.String(), input.HourIndex, input.QuarterHourIndex); err != nil {
+	if _, err := tx.Exec(upsertNewsletterScheduleForUserQuery, input.UserID, input.LanguageCode, input.IANATimezone.String(), input.HourIndex, input.QuarterHourIndex, input.NumberOfArticlesPerEmail); err != nil {
 		return err
 	}
 	return nil

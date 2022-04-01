@@ -25,7 +25,7 @@ type userSchedule struct {
 	IANATimezone     string `json:"iana_timezone"`
 	HourIndex        int    `json:"hour_index"`
 	QuarterHourIndex int    `json:"quarter_hour_index"`
-	IsActiveForDay   []bool `json:"is_active_for_day"`
+	IsActiveForDays  []bool `json:"is_active_for_days"`
 }
 
 type userNewsletterPreferences struct {
@@ -35,7 +35,7 @@ type userNewsletterPreferences struct {
 	IncludeExplicitPodcasts             *bool                  `json:"include_explicit_podcasts,omitempty"`
 	MinimumPodcastDurationSeconds       *int64                 `json:"minimum_podcast_duration_seconds,omitempty"`
 	MaximumPodcastDurationSeconds       *int64                 `json:"maximum_podcast_duration_seconds,omitempty"`
-	NumberOfArticlesPerEmail            int64                  `json:"number_of_articles_per_email"`
+	NumberOfArticlesPerEmail            int                    `json:"number_of_articles_per_email"`
 	Schedule                            userSchedule           `json:"schedule"`
 }
 
@@ -86,11 +86,12 @@ func getUserNewsletterPreferences(userAuth *routermiddleware.UserAuthentication,
 	userPreferences := &userNewsletterPreferences{
 		LanguageCode:                        *languageCode,
 		IsLemmaReinforcementSpotlightActive: prefs.ShouldIncludeLemmaReinforcementSpotlight,
+		NumberOfArticlesPerEmail:            schedule.NumberOfArticlesPerEmail,
 		Schedule: userSchedule{
 			IANATimezone:     schedule.IANATimezone,
 			HourIndex:        schedule.HourIndex,
 			QuarterHourIndex: schedule.QuarterHourIndex,
-			IsActiveForDay:   schedule.IsActiveForDay,
+			IsActiveForDays:  schedule.IsActiveForDay,
 		},
 	}
 	switch {
@@ -138,6 +139,7 @@ type updateUserNewsletterPreferencesResponse struct {
 const (
 	errorEmptyEmailAddress clienterror.Error = "no-email-address"
 	errorInvalidTimezone   clienterror.Error = "invalid-timezone"
+	errorNoActiveDay       clienterror.Error = "no-active-day"
 )
 
 func updateUserNewsletterPreferences(userAuth *routermiddleware.UserAuthentication, r *router.Request) (interface{}, error) {
@@ -161,6 +163,15 @@ func updateUserNewsletterPreferences(userAuth *routermiddleware.UserAuthenticati
 	if err != nil {
 		return getUserNewsletterPreferencesResponse{
 			Error: errorInvalidTimezone.Ptr(),
+		}, nil
+	}
+	var hasAtLeastOneActiveDay bool
+	for _, isActive := range req.Preferences.Schedule.IsActiveForDays {
+		hasAtLeastOneActiveDay = hasAtLeastOneActiveDay || isActive
+	}
+	if !hasAtLeastOneActiveDay {
+		return getUserNewsletterPreferencesResponse{
+			Error: errorNoActiveDay.Ptr(),
 		}, nil
 	}
 	if userAuth != nil {
@@ -191,6 +202,8 @@ func updateUserNewsletterPreferences(userAuth *routermiddleware.UserAuthenticati
 				IANATimezone:                        userTimezone,
 				HourIndex:                           req.Preferences.Schedule.HourIndex,
 				QuarterHourIndex:                    req.Preferences.Schedule.QuarterHourIndex,
+				IsActiveForDays:                     req.Preferences.Schedule.IsActiveForDays,
+				NumberOfArticlesPerEmail:            req.Preferences.NumberOfArticlesPerEmail,
 			})
 		}); err != nil {
 			return nil, err
@@ -219,6 +232,8 @@ func updateUserNewsletterPreferences(userAuth *routermiddleware.UserAuthenticati
 				IANATimezone:                        userTimezone,
 				HourIndex:                           req.Preferences.Schedule.HourIndex,
 				QuarterHourIndex:                    req.Preferences.Schedule.QuarterHourIndex,
+				IsActiveForDays:                     req.Preferences.Schedule.IsActiveForDays,
+				NumberOfArticlesPerEmail:            req.Preferences.NumberOfArticlesPerEmail,
 			})
 		})
 		switch {
