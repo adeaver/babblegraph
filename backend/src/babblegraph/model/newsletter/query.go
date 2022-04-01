@@ -42,7 +42,7 @@ func CreateNewsletter(c ctx.LogContext, input CreateNewsletterInput) (*Newslette
 	if !input.UserAccessor.getUserNewsletterSchedule().IsSendRequested(input.DateOfSendMidnightUTC.Weekday()) {
 		return nil, nil
 	}
-	numberOfDocumentsInNewsletter = ptr.Int(input.UserAccessor.getUserNewsletterSchedule().GetNumberOfDocuments(input.DateOfSendMidnightUTC.Weekday()))
+	numberOfDocumentsInNewsletter = ptr.Int(input.UserAccessor.getUserNewsletterSchedule().GetNumberOfDocuments())
 	categories, err := getDocumentCategories(c, getDocumentCategoriesInput{
 		emailRecordID:                 emailRecordID,
 		languageCode:                  input.UserAccessor.getLanguageCode(),

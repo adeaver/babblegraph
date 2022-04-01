@@ -133,7 +133,7 @@ func TestUserScheduleDay(t *testing.T) {
 			content.TopicID("topicid-art"),
 		},
 		userSubscriptionLevel: useraccounts.SubscriptionLevelPremium.Ptr(),
-		userNewsletterSchedule: usernewsletterschedule.TestNewsletterSchedule{
+		userNewsletterSchedule: usernewsletterpreferences.TestNewsletterSchedule{
 			SendRequested: false,
 		},
 		readingLevel: &userReadingLevel{
@@ -169,7 +169,7 @@ func TestUserScheduleDayNoSubscription(t *testing.T) {
 		userTopics: []content.TopicID{
 			content.TopicID("topicid-art"),
 		},
-		userNewsletterSchedule: usernewsletterschedule.TestNewsletterSchedule{
+		userNewsletterSchedule: usernewsletterpreferences.TestNewsletterSchedule{
 			SendRequested: false,
 		},
 		readingLevel: &userReadingLevel{
@@ -190,8 +190,8 @@ func TestUserScheduleDayNoSubscription(t *testing.T) {
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
-	if testNewsletter == nil {
-		t.Errorf("Expected non-null newsletter, but it was not")
+	if testNewsletter != nil {
+		t.Errorf("Expected null newsletter, but it was not")
 	}
 }
 
@@ -392,7 +392,7 @@ func TestUserAdvertisementIneligible(t *testing.T) {
 			LowerBound: 30,
 			UpperBound: 80,
 		},
-		userNewsletterSchedule: usernewsletterschedule.TestNewsletterSchedule{
+		userNewsletterSchedule: usernewsletterpreferences.TestNewsletterSchedule{
 			SendRequested: true,
 		},
 		userCreatedDate: time.Now().Add(-180 * 24 * time.Hour),
@@ -446,7 +446,7 @@ func TestUserSubscriptionHasNoAdvertisement(t *testing.T) {
 			LowerBound: 30,
 			UpperBound: 80,
 		},
-		userNewsletterSchedule: usernewsletterschedule.TestNewsletterSchedule{
+		userNewsletterSchedule: usernewsletterpreferences.TestNewsletterSchedule{
 			SendRequested: true,
 		},
 		userCreatedDate: time.Now().Add(-180 * 24 * time.Hour),
