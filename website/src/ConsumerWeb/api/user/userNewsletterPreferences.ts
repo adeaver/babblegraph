@@ -2,6 +2,13 @@ import { makePostRequestWithStandardEncoding } from 'util/bgfetch/bgfetch';
 import { ClientError } from 'ConsumerWeb/api/clienterror';
 import { WordsmithLanguageCode } from 'common/model/language/language';
 
+export type DayPreferences = {
+    isActive: boolean;
+    numberOfArticles: number;
+    contentTopics: string[];
+    dayIndex: number;
+}
+
 export type UserNewsletterPreferences = {
     languageCode: WordsmithLanguageCode;
     isLemmaReinforcementSpotlightActive: boolean;

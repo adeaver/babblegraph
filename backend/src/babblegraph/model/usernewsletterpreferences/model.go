@@ -3,17 +3,29 @@ package usernewsletterpreferences
 import (
 	"babblegraph/model/content"
 	"babblegraph/model/users"
+	"babblegraph/util/ctx"
+	"babblegraph/util/deref"
+	"babblegraph/util/timeutils"
 	"babblegraph/wordsmith"
+	"sort"
 	"time"
+
+	"github.com/jmoiron/sqlx"
 )
 
-// TODO: move schedule into here maybe?
+const (
+	minimumNumberOfArticles = 4
+	maximumNumberOfArticles = 12
+
+	defaultUTCSendTimeHour = 11
+)
 
 type UserNewsletterPreferences struct {
 	UserID                                   users.UserID
 	LanguageCode                             wordsmith.LanguageCode
 	ShouldIncludeLemmaReinforcementSpotlight bool
 	PodcastPreferences                       PodcastPreferences
+	Schedule                                 Schedule
 }
 
 type PodcastPreferences struct {
@@ -57,4 +69,118 @@ type dbUserPodcastSourcePreferences struct {
 	UserID         users.UserID                 `db:"user_id"`
 	SourceID       content.SourceID             `db:"source_id"`
 	IsActive       bool                         `db:"is_active"`
+}
+
+type scheduleID string
+
+type dbUserNewsletterSchedule struct {
+	ID               scheduleID             `db:"_id"`
+	UserID           users.UserID           `db:"user_id"`
+	LanguageCode     wordsmith.LanguageCode `db:"language_code"`
+	IANATimezone     string                 `db:"iana_timezone"`
+	HourIndex        int                    `db:"hour_of_day_index"`
+	QuarterHourIndex int                    `db:"quarter_hour_index"`
+}
+
+type dayID string
+
+type dbUserNewsletterDayMetadata struct {
+	ID               dayID                  `db:"_id"`
+	UserID           users.UserID           `db:"user_id"`
+	LanguageCode     wordsmith.LanguageCode `db:"language_code"`
+	DayOfWeekIndex   int                    `db:"day_of_week_index"`
+	NumberOfArticles int                    `db:"number_of_articles"`
+	IsActive         bool                   `db:"is_active"`
+}
+
+type Schedule interface {
+	IsSendRequested(utcWeekday time.Weekday) bool
+	GetUTCHourAndQuarterHourIndex() (_hourIndex, _quarterHourIndex int)
+	GetNumberOfDocuments(utcWeekday time.Weekday) int
+	ConvertUTCTimeToUserDate(c ctx.LogContext, utcTime time.Time) (*time.Time, error)
+}
+
+type ScheduleWithMetadata struct {
+	userScheduleDays    []dbUserNewsletterDayMetadata
+	utcHourIndex        int
+	utcQuarterHourIndex int
+
+	IANATimezone     string `json:"iana_timezone"`
+	HourIndex        int    `json:"hour_of_day_index"`
+	QuarterHourIndex int    `json:"quarter_hour_index"`
+	IsActiveForDay   []bool `json:"is_active_for_day"`
+}
+
+func getUserNewsletterSchedule(c ctx.LogContext, tx *sqlx.Tx, userID users.UserID, languageCode wordsmith.LanguageCode, utcMidnight *time.Time) (*ScheduleWithMetadata, error) {
+	isActiveForDay := []bool{true, true, true, true, true, true, true}
+	var userScheduleDays []dbUserNewsletterDayMetadata
+	var ianaTimezone string
+	var utcHourIndex, utcQuarterHourIndex, hourIndex, quarterHourIndex int
+	userSchedule, err := lookupUserNewsletterScheduleForUser(tx, userID, languageCode)
+	switch {
+	case err != nil:
+		return nil, err
+	case userSchedule == nil:
+		ianaTimezone = "UTC"
+		utcHourIndex, utcQuarterHourIndex, hourIndex, quarterHourIndex = defaultUTCSendTimeHour, 0, defaultUTCSendTimeHour, 0
+	default:
+		todayUTCMidnight := timeutils.ConvertToMidnight(deref.Time(utcMidnight, time.Now().UTC()))
+		userSendTime, err := resolveUTCMidnightWithNewsletterSchedule(c, todayUTCMidnight, *userSchedule)
+		if err != nil {
+			return nil, err
+		}
+		ianaTimezone = userSchedule.IANATimezone
+		hourIndex = userSendTime.Hour()
+		quarterHourIndex = userSendTime.Minute() / 15
+		userSendTimeUTC := userSendTime.UTC()
+		utcHourIndex = userSendTimeUTC.Hour()
+		utcQuarterHourIndex = userSendTimeUTC.Minute() / 15
+		userScheduleDays, err = lookupNewsletterDayMetadataForUser(tx, userID, languageCode)
+		switch {
+		case err != nil:
+			return nil, err
+		case len(userScheduleDays) == 0:
+			// no-op
+		default:
+			for _, d := range userScheduleDays {
+				isActiveForDay[d.DayOfWeekIndex] = d.IsActive
+			}
+			offset := int(todayUTCMidnight.Weekday() - userSendTime.Weekday())
+			sort.SliceStable(userScheduleDays, func(i, j int) bool {
+				return userScheduleDays[i].DayOfWeekIndex+offset < userScheduleDays[j].DayOfWeekIndex+offset
+			})
+		}
+	}
+	return &ScheduleWithMetadata{
+		userScheduleDays:    userScheduleDays,
+		utcHourIndex:        utcHourIndex,
+		utcQuarterHourIndex: utcQuarterHourIndex,
+		IANATimezone:        ianaTimezone,
+		HourIndex:           hourIndex,
+		QuarterHourIndex:    quarterHourIndex,
+	}, nil
+}
+
+func (s *ScheduleWithMetadata) IsSendRequested(utcWeekday time.Weekday) bool {
+	return len(s.userScheduleDays) == 0 || s.userScheduleDays[int(utcWeekday)].IsActive
+}
+
+func (s *ScheduleWithMetadata) GetUTCHourAndQuarterHourIndex() (_hourIndex, _quarterHourIndex int) {
+	return s.utcHourIndex, s.utcQuarterHourIndex
+}
+
+func (s *ScheduleWithMetadata) GetNumberOfDocuments(utcWeekday time.Weekday) int {
+	if len(s.userScheduleDays) == 0 {
+		return maximumNumberOfArticles
+	}
+	return s.userScheduleDays[int(utcWeekday)].NumberOfArticles
+}
+
+// NOTE: This function does not return an accurate time - just an accurate date
+func (s *ScheduleWithMetadata) ConvertUTCTimeToUserDate(c ctx.LogContext, utcTime time.Time) (*time.Time, error) {
+	return resolveUTCMidnightWithNewsletterSchedule(c, timeutils.ConvertToMidnight(utcTime), dbUserNewsletterSchedule{
+		IANATimezone:     s.IANATimezone,
+		HourIndex:        s.HourIndex,
+		QuarterHourIndex: s.QuarterHourIndex,
+	})
 }

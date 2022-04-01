@@ -9,13 +9,6 @@ export enum UserScheduleError {
     InvalidSettings = 'invalid-settings',
 }
 
-export type DayPreferences = {
-    isActive: boolean;
-    numberOfArticles: number;
-    contentTopics: string[];
-    dayIndex: number;
-}
-
 export type GetUserScheduleRequest = {
     token: string;
     languageCode: string;

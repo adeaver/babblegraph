@@ -1,5 +1,7 @@
 package deref
 
+import "time"
+
 func String(s *string, d string) string {
 	if s == nil {
 		return d
@@ -26,4 +28,11 @@ func Bool(b *bool, d bool) bool {
 		return d
 	}
 	return *b
+}
+
+func Time(t *time.Time, d time.Time) time.Time {
+	if t == nil {
+		return d
+	}
+	return *t
 }

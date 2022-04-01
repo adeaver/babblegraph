@@ -3,6 +3,7 @@ package usernewsletterpreferences
 import (
 	"babblegraph/model/content"
 	"babblegraph/model/users"
+	"babblegraph/util/ctx"
 	"babblegraph/wordsmith"
 	"fmt"
 	"time"
@@ -41,7 +42,7 @@ const (
         last_modified_at=timezone('utc', now())`
 )
 
-func GetUserNewsletterPrefrencesForLanguage(tx *sqlx.Tx, userID users.UserID, languageCode wordsmith.LanguageCode) (*UserNewsletterPreferences, error) {
+func GetUserNewsletterPrefrencesForLanguage(c ctx.LogContext, tx *sqlx.Tx, userID users.UserID, languageCode wordsmith.LanguageCode, forSendTime *time.Time) (*UserNewsletterPreferences, error) {
 	shouldIncludeLemmaReinforcementSpotlight := true
 	lemmaReinforcementSpotlightPreferences, err := lookupLemmaReinforcementSpotlightPreferences(tx, userID, languageCode)
 	if err != nil {
@@ -70,11 +71,16 @@ func GetUserNewsletterPrefrencesForLanguage(tx *sqlx.Tx, userID users.UserID, la
 	if err != nil {
 		return nil, err
 	}
+	userSchedule, err := getUserNewsletterSchedule(c, tx, userID, languageCode, forSendTime)
+	if err != nil {
+		return nil, err
+	}
 	return &UserNewsletterPreferences{
 		UserID:                                   userID,
 		LanguageCode:                             languageCode,
 		ShouldIncludeLemmaReinforcementSpotlight: shouldIncludeLemmaReinforcementSpotlight,
 		PodcastPreferences:                       podcastPreferences,
+		Schedule:                                 userSchedule,
 	}, nil
 }
 

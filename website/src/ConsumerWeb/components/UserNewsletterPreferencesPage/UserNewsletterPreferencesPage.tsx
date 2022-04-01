@@ -48,8 +48,12 @@ import {
     updateUserNewsletterPreferences,
     UpdateUserNewsletterPreferencesResponse,
 
+    DayPreferences,
+
     UserNewsletterPreferences,
 } from 'ConsumerWeb/api/user/userNewsletterPreferences';
+
+import TimeSelector from './TimeSelector';
 
 const styleClasses = makeStyles({
     toggleContainer: {
@@ -163,6 +167,12 @@ const UserNewsletterPreferencesDisplay = asBaseComponent<GetUserNewsletterPrefer
             );
         }
 
+        const [ initialIANATimezone, setInitialIANATimezone ] = useState<string>(Intl.DateTimeFormat().resolvedOptions().timeZone || "America/New_York");
+        const [ ianaTimezone, setIANATimezone ] = useState<string>(Intl.DateTimeFormat().resolvedOptions().timeZone || "America/New_York");
+        const [ hourIndex, setHourIndex ] = useState<number>(7);
+        const [ quarterHourIndex, setQuarterHourIndex ] = useState<number>(0);
+        const [ preferencesByDay, setPreferencesByDay ] = useState<Array<DayPreferences>>([]);
+
         const [ isLoading, setIsLoading ] = useState<boolean>(false);
         const [ error, setError ] = useState<ClientError>(null);
         const [ success, setSuccess ] = useState<boolean>(false);
@@ -238,6 +248,16 @@ const UserNewsletterPreferencesDisplay = asBaseComponent<GetUserNewsletterPrefer
                                 checked={isLemmaSpotlightActive}
                                 onClick={() => {setIsLemmaSpotlightActive(!isLemmaSpotlightActive)}}
                                 disabled={isLoading} />
+                        </Grid>
+                        <Grid xs={12}>
+                            <TimeSelector
+                                initialIANATimezone={initialIANATimezone}
+                                ianaTimezone={ianaTimezone}
+                                hourIndex={hourIndex}
+                                quarterHourIndex={quarterHourIndex}
+                                handleUpdateIANATimezone={setIANATimezone}
+                                handleUpdateHourIndex={setHourIndex}
+                                handleUpdateQuarterHourIndex={setQuarterHourIndex} />
                         </Grid>
                         {
                             !!props.userProfile.subscriptionLevel && (

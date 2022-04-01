@@ -1,4 +1,4 @@
-package usernewsletterschedule
+package usernewsletterpreferences
 
 import (
 	"babblegraph/model/content"
