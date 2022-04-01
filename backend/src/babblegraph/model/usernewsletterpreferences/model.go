@@ -106,7 +106,7 @@ type ScheduleWithMetadata struct {
 	utcQuarterHourIndex int
 
 	IANATimezone     string `json:"iana_timezone"`
-	HourIndex        int    `json:"hour_of_day_index"`
+	HourIndex        int    `json:"hour_index"`
 	QuarterHourIndex int    `json:"quarter_hour_index"`
 	IsActiveForDay   []bool `json:"is_active_for_day"`
 }
@@ -158,6 +158,7 @@ func getUserNewsletterSchedule(c ctx.LogContext, tx *sqlx.Tx, userID users.UserI
 		IANATimezone:        ianaTimezone,
 		HourIndex:           hourIndex,
 		QuarterHourIndex:    quarterHourIndex,
+		IsActiveForDay:      isActiveForDay,
 	}, nil
 }
 

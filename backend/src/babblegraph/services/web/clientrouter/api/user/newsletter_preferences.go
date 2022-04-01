@@ -21,12 +21,14 @@ import (
 )
 
 type userNewsletterPreferences struct {
-	LanguageCode                        wordsmith.LanguageCode `json:"language_code"`
-	IsLemmaReinforcementSpotlightActive bool                   `json:"is_lemma_reinforcement_spotlight_active"`
-	ArePodcastsEnabled                  *bool                  `json:"are_podcasts_enabled,omitempty"`
-	IncludeExplicitPodcasts             *bool                  `json:"include_explicit_podcasts,omitempty"`
-	MinimumPodcastDurationSeconds       *int64                 `json:"minimum_podcast_duration_seconds,omitempty"`
-	MaximumPodcastDurationSeconds       *int64                 `json:"maximum_podcast_duration_seconds,omitempty"`
+	LanguageCode                        wordsmith.LanguageCode             `json:"language_code"`
+	IsLemmaReinforcementSpotlightActive bool                               `json:"is_lemma_reinforcement_spotlight_active"`
+	ArePodcastsEnabled                  *bool                              `json:"are_podcasts_enabled,omitempty"`
+	IncludeExplicitPodcasts             *bool                              `json:"include_explicit_podcasts,omitempty"`
+	MinimumPodcastDurationSeconds       *int64                             `json:"minimum_podcast_duration_seconds,omitempty"`
+	MaximumPodcastDurationSeconds       *int64                             `json:"maximum_podcast_duration_seconds,omitempty"`
+	NumberOfArticlesPerEmail            int64                              `json:"number_of_articles_per_email"`
+	Schedule                            usernewsletterpreferences.Schedule `json:"schedule"`
 }
 
 type getUserNewsletterPreferencesRequest struct {
@@ -60,7 +62,7 @@ func getUserNewsletterPreferences(userAuth *routermiddleware.UserAuthentication,
 	var prefs *usernewsletterpreferences.UserNewsletterPreferences
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		var err error
-		prefs, err = usernewsletterpreferences.GetUserNewsletterPrefrencesForLanguage(tx, *userID, *languageCode)
+		prefs, err = usernewsletterpreferences.GetUserNewsletterPrefrencesForLanguage(r, tx, *userID, *languageCode, nil)
 		if err != nil {
 			return err
 		}
@@ -72,6 +74,7 @@ func getUserNewsletterPreferences(userAuth *routermiddleware.UserAuthentication,
 	userPreferences := &userNewsletterPreferences{
 		LanguageCode:                        *languageCode,
 		IsLemmaReinforcementSpotlightActive: prefs.ShouldIncludeLemmaReinforcementSpotlight,
+		Schedule:                            prefs.Schedule,
 	}
 	switch {
 	case userAuth != nil:

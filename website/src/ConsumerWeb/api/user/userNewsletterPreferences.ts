@@ -2,11 +2,11 @@ import { makePostRequestWithStandardEncoding } from 'util/bgfetch/bgfetch';
 import { ClientError } from 'ConsumerWeb/api/clienterror';
 import { WordsmithLanguageCode } from 'common/model/language/language';
 
-export type DayPreferences = {
-    isActive: boolean;
-    numberOfArticles: number;
-    contentTopics: string[];
-    dayIndex: number;
+export type Schedule = {
+    ianaTimezone: string;
+    hourIndex: number;
+    quarterHourIndex: number;
+    isActiveForDay: Array<boolean>;
 }
 
 export type UserNewsletterPreferences = {
@@ -16,6 +16,7 @@ export type UserNewsletterPreferences = {
     includeExplicitPodcasts: boolean;
     minimumPodcastDurationSeconds: number | undefined;
     maximumPodcastDurationSeconds: number | undefined;
+    schedule: Schedule;
 }
 
 export type GetUserNewsletterPreferencesRequest = {

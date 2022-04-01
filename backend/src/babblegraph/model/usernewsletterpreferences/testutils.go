@@ -14,22 +14,18 @@ type TestNewsletterSchedule struct {
 	NumberOfDocuments int
 }
 
-func (t TestNewsletterSchedule) IsSendRequested() bool {
+func (t TestNewsletterSchedule) IsSendRequested(utcWeekday time.Weekday) bool {
 	return t.SendRequested
 }
 
-func (t TestNewsletterSchedule) GetUTCSendTime() time.Time {
+func (t TestNewsletterSchedule) GetUTCSendTime(utcWeekday time.Weekday) time.Time {
 	return t.UserSendTime.UTC()
 }
 
-func (t TestNewsletterSchedule) GetContentTopicsForDay() []content.TopicID {
-	return t.TopicIDs
-}
-
-func (t TestNewsletterSchedule) GetNumberOfDocuments() int {
+func (t TestNewsletterSchedule) GetNumberOfDocuments(utcWeekday time.Weekday) int {
 	return t.NumberOfDocuments
 }
 
-func (t TestNewsletterSchedule) GetSendTimeInUserTimezone() time.Time {
-	return t.UserSendTime
+func (t TestNewsletterSchedule) ConvertUTCTimeToUserDate(c ctx.LogContext, utcTime time.Time) (*time.Time, error)
+	return ptr.Time(t.UserSendTime), nil
 }

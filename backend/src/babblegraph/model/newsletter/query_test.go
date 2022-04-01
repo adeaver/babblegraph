@@ -8,6 +8,7 @@ import (
 	"babblegraph/model/podcasts"
 	"babblegraph/model/routes"
 	"babblegraph/model/useraccounts"
+	"babblegraph/model/usernewsletterpreferences"
 	"babblegraph/model/usernewsletterschedule"
 	"babblegraph/util/ctx"
 	"babblegraph/util/ptr"
@@ -498,7 +499,7 @@ func TestNoAdvertisementIsOkay(t *testing.T) {
 			LowerBound: 30,
 			UpperBound: 80,
 		},
-		userNewsletterSchedule: usernewsletterschedule.TestNewsletterSchedule{
+		userNewsletterSchedule: usernewsletterpreferences.TestNewsletterSchedule{
 			SendRequested: true,
 		},
 		userCreatedDate: time.Now().Add(-180 * 24 * time.Hour),

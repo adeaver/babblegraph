@@ -8,7 +8,6 @@ import (
 	"babblegraph/model/userdocuments"
 	"babblegraph/model/userlemma"
 	"babblegraph/model/usernewsletterpreferences"
-	"babblegraph/model/usernewsletterschedule"
 	"babblegraph/model/users"
 	"babblegraph/util/ctx"
 	"babblegraph/util/timeutils"
@@ -29,7 +28,7 @@ type GetSampleNewsletterUserAccessorInput struct {
 	CreatedDate               *time.Time
 	UserSubscriptionLevel     *useraccounts.SubscriptionLevel
 	UserNewsletterPreferences *usernewsletterpreferences.UserNewsletterPreferences
-	UserNewsletterSchedule    *usernewsletterschedule.UserNewsletterSchedule
+	UserNewsletterSchedule    *usernewsletterpreferences.Schedule
 	SentDocumentIDs           []documents.DocumentID
 	UserTopics                []content.TopicID
 	TrackingLemmas            []wordsmith.LemmaID
@@ -106,7 +105,7 @@ func (s *SampleNewsletterUserAccessor) getUserNewsletterPreferences() *usernewsl
 	return s.defaultUserPreferencesAccessor.getUserNewsletterPreferences()
 }
 
-func (s *SampleNewsletterUserAccessor) getUserNewsletterSchedule() usernewsletterschedule.UserNewsletterSchedule {
+func (s *SampleNewsletterUserAccessor) getUserNewsletterSchedule() usernewsletterpreferences.Schedule {
 	return s.defaultUserPreferencesAccessor.getUserNewsletterSchedule()
 }
 

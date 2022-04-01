@@ -23,6 +23,7 @@ const (
 )
 
 type CreateNewsletterInput struct {
+	DateOfSendMidnightUTC time.Time
 	WordsmithAccessor     wordsmithAccessor
 	EmailAccessor         emailAccessor
 	UserAccessor          userPreferencesAccessor
@@ -38,19 +39,10 @@ func CreateNewsletter(c ctx.LogContext, input CreateNewsletterInput) (*Newslette
 		return nil, err
 	}
 	var numberOfDocumentsInNewsletter *int
-	userSubscriptionLevel := input.UserAccessor.getUserSubscriptionLevel()
-	switch {
-	case userSubscriptionLevel == nil:
-		// no-op
-	case *userSubscriptionLevel == useraccounts.SubscriptionLevelBetaPremium,
-		*userSubscriptionLevel == useraccounts.SubscriptionLevelPremium:
-		if !input.UserAccessor.getUserNewsletterSchedule().IsSendRequested() {
-			return nil, nil
-		}
-		numberOfDocumentsInNewsletter = ptr.Int(input.UserAccessor.getUserNewsletterSchedule().GetNumberOfDocuments())
-	default:
-		return nil, fmt.Errorf("Unrecognized subscription level: %s", *userSubscriptionLevel)
+	if !input.UserAccessor.getUserNewsletterSchedule().IsSendRequested(input.DateOfSendMidnightUTC.Weekday()) {
+		return nil, nil
 	}
+	numberOfDocumentsInNewsletter = ptr.Int(input.UserAccessor.getUserNewsletterSchedule().GetNumberOfDocuments(input.DateOfSendMidnightUTC.Weekday()))
 	categories, err := getDocumentCategories(c, getDocumentCategoriesInput{
 		emailRecordID:                 emailRecordID,
 		languageCode:                  input.UserAccessor.getLanguageCode(),
@@ -105,6 +97,7 @@ func CreateNewsletter(c ctx.LogContext, input CreateNewsletterInput) (*Newslette
 	if err != nil {
 		return nil, err
 	}
+	userSubscriptionLevel := input.UserAccessor.getUserSubscriptionLevel()
 	var advertisement *NewsletterAdvertisement
 	switch {
 	case userSubscriptionLevel == nil:

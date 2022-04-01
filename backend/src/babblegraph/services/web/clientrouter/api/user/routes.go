@@ -2,7 +2,6 @@ package user
 
 import (
 	"babblegraph/model/routes"
-	"babblegraph/model/useraccounts"
 	"babblegraph/model/users"
 	"babblegraph/services/web/clientrouter/api"
 	"babblegraph/util/database"
@@ -19,12 +18,6 @@ func RegisterRouteGroups() error {
 		Prefix: "user",
 		Routes: []api.Route{
 			{
-				Path:    "get_user_preferences_for_token_1",
-				Handler: handleGetUserPreferencesForToken,
-			}, {
-				Path:    "update_user_preferences_for_token_1",
-				Handler: handleUpdateUserPreferencesForToken,
-			}, {
 				Path:    "get_user_content_topics_for_token_1",
 				Handler: handleGetUserContentTopicsForToken,
 			}, {
@@ -49,23 +42,8 @@ func RegisterRouteGroups() error {
 			}, {
 				Path:    "handle_request_password_reset_link_1",
 				Handler: requestPasswordResetLink,
-			}, {
-				Path:    "get_user_newsletter_schedule_1",
-				Handler: handleGetUserSchedule,
-			}, {
-				Path:    "update_user_newsletter_schedule_1",
-				Handler: handleUpdateUserSchedule,
 			},
 		},
-		AuthenticatedRoutes: []api.AuthenticatedRoute{
-			{
-				Path:    "update_user_newsletter_schedule_and_day_preferences_1",
-				Handler: handleUpdateUserScheduleWithDayPreferences,
-				ValidAuthorizationLevels: []useraccounts.SubscriptionLevel{
-					useraccounts.SubscriptionLevelBetaPremium,
-					useraccounts.SubscriptionLevelPremium,
-				},
-			}},
 	})
 }
 

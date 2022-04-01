@@ -48,8 +48,6 @@ import {
     updateUserNewsletterPreferences,
     UpdateUserNewsletterPreferencesResponse,
 
-    DayPreferences,
-
     UserNewsletterPreferences,
 } from 'ConsumerWeb/api/user/userNewsletterPreferences';
 
@@ -167,11 +165,10 @@ const UserNewsletterPreferencesDisplay = asBaseComponent<GetUserNewsletterPrefer
             );
         }
 
-        const [ initialIANATimezone, setInitialIANATimezone ] = useState<string>(Intl.DateTimeFormat().resolvedOptions().timeZone || "America/New_York");
-        const [ ianaTimezone, setIANATimezone ] = useState<string>(Intl.DateTimeFormat().resolvedOptions().timeZone || "America/New_York");
-        const [ hourIndex, setHourIndex ] = useState<number>(7);
-        const [ quarterHourIndex, setQuarterHourIndex ] = useState<number>(0);
-        const [ preferencesByDay, setPreferencesByDay ] = useState<Array<DayPreferences>>([]);
+        const [ initialIANATimezone, setInitialIANATimezone ] = useState<string>(props.preferences.schedule.ianaTimezone);
+        const [ ianaTimezone, setIANATimezone ] = useState<string>(props.preferences.schedule.ianaTimezone);
+        const [ hourIndex, setHourIndex ] = useState<number>(props.preferences.schedule.hourIndex);
+        const [ quarterHourIndex, setQuarterHourIndex ] = useState<number>(props.preferences.schedule.quarterHourIndex);
 
         const [ isLoading, setIsLoading ] = useState<boolean>(false);
         const [ error, setError ] = useState<ClientError>(null);
@@ -208,6 +205,12 @@ const UserNewsletterPreferencesDisplay = asBaseComponent<GetUserNewsletterPrefer
                     includeExplicitPodcasts: includeExplicitPodcasts,
                     minimumPodcastDurationSeconds: minimumPodcastDurationSeconds,
                     maximumPodcastDurationSeconds: maximumPodcastDurationSeconds,
+                    schedule: {
+                        ianaTimezone: ianaTimezone,
+                        hourIndex: hourIndex,
+                        quarterHourIndex: quarterHourIndex,
+                        isActiveForDay: props.preferences.schedule.isActiveForDay,
+                    },
                 },
             },
             (resp: UpdateUserNewsletterPreferencesResponse) => {
