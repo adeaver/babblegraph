@@ -34,7 +34,7 @@ const (
             iana_timezone,
             hour_of_day_index,
             quarter_hour_index,
-            number_of_articles_per_email,
+            number_of_articles_per_email
         ) VALUES (
             $1, $2, $3, $4, $5, $6
         ) ON CONFLICT (
@@ -67,7 +67,7 @@ func upsertNewsletterDayMetadataForUser(tx *sqlx.Tx, input upsertNewsletterDayMe
 	case input.DayOfWeekIndex < 0 || input.DayOfWeekIndex > 6:
 		return fmt.Errorf("Day of week must be between 0 and 6")
 	}
-	if _, err := tx.Query(upsertNewsletterScheduleMetadataQuery, input.UserID, input.DayOfWeekIndex, input.LanguageCode, input.IsActive); err != nil {
+	if _, err := tx.Exec(upsertNewsletterScheduleMetadataQuery, input.UserID, input.DayOfWeekIndex, input.LanguageCode, input.IsActive); err != nil {
 		return err
 	}
 	return nil

@@ -108,16 +108,19 @@ type SourceIDUpdate struct {
 	IsActive bool
 }
 
-func UpdateUserNewsletterPreferences(tx *sqlx.Tx, input UpdateUserNewsletterPreferencesInput) error {
+func UpdateUserNewsletterPreferences(c ctx.LogContext, tx *sqlx.Tx, input UpdateUserNewsletterPreferencesInput) error {
+	c.Debugf("Inserting lemma reinforcement")
 	err := updateLemmaReinforcementSpotlightPreferences(tx, input.UserID, input.LanguageCode, input.IsLemmaReinforcementSpotlightActive)
 	if err != nil {
 		return err
 	}
 	if input.PodcastPreferences != nil {
+		c.Debugf("Inserting podcasts")
 		if err := updatePodcastPreferences(tx, input.UserID, input.LanguageCode, *input.PodcastPreferences); err != nil {
 			return err
 		}
 	}
+	c.Debugf("Inserting days")
 	for idx, isActive := range input.IsActiveForDays {
 		if err := upsertNewsletterDayMetadataForUser(tx, upsertNewsletterDayMetadataForUserInput{
 			UserID:         input.UserID,
@@ -128,6 +131,7 @@ func UpdateUserNewsletterPreferences(tx *sqlx.Tx, input UpdateUserNewsletterPref
 			return err
 		}
 	}
+	c.Debugf("Inserting schedule")
 	return upsertUserNewsletterSchedule(tx, upsertUserNewsletterScheduleInput{
 		UserID:                   input.UserID,
 		LanguageCode:             input.LanguageCode,

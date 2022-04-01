@@ -194,7 +194,7 @@ func updateUserNewsletterPreferences(userAuth *routermiddleware.UserAuthenticati
 			}
 		}
 		if err := database.WithTx(func(tx *sqlx.Tx) error {
-			return usernewsletterpreferences.UpdateUserNewsletterPreferences(tx, usernewsletterpreferences.UpdateUserNewsletterPreferencesInput{
+			return usernewsletterpreferences.UpdateUserNewsletterPreferences(r, tx, usernewsletterpreferences.UpdateUserNewsletterPreferencesInput{
 				UserID:                              *userID,
 				LanguageCode:                        *languageCode,
 				IsLemmaReinforcementSpotlightActive: req.Preferences.IsLemmaReinforcementSpotlightActive,
@@ -225,7 +225,7 @@ func updateUserNewsletterPreferences(userAuth *routermiddleware.UserAuthenticati
 				cErr = clienterror.ErrorInvalidEmailAddress.Ptr()
 				return nil
 			}
-			return usernewsletterpreferences.UpdateUserNewsletterPreferences(tx, usernewsletterpreferences.UpdateUserNewsletterPreferencesInput{
+			return usernewsletterpreferences.UpdateUserNewsletterPreferences(r, tx, usernewsletterpreferences.UpdateUserNewsletterPreferencesInput{
 				UserID:                              *userID,
 				LanguageCode:                        *languageCode,
 				IsLemmaReinforcementSpotlightActive: req.Preferences.IsLemmaReinforcementSpotlightActive,

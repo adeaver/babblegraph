@@ -65,7 +65,7 @@ func StartNewsletterPreloadWorkerThread(newsletterProcessor *newsletterprocessin
 				if err != nil {
 					return err
 				}
-				podcastAccessor, err := newsletter.GetDefaultPodcastAccessor(tx, sendRequest.LanguageCode, sendRequest.UserID)
+				podcastAccessor, err := newsletter.GetDefaultPodcastAccessor(c, tx, sendRequest.LanguageCode, sendRequest.UserID)
 				if err != nil {
 					return err
 				}
@@ -75,6 +75,7 @@ func StartNewsletterPreloadWorkerThread(newsletterProcessor *newsletterprocessin
 				}
 				c.Infof("Creating newsletter for send request with ID %s", sendRequest.ID)
 				newsletter, err := newsletter.CreateNewsletter(c, newsletter.CreateNewsletterInput{
+					DateOfSendMidnightUTC: dateOfSendUTCMidnight,
 					WordsmithAccessor:     wordsmithAccessor,
 					EmailAccessor:         emailAccessor,
 					UserAccessor:          userAccessor,

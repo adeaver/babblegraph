@@ -9,7 +9,6 @@ import (
 	"babblegraph/model/routes"
 	"babblegraph/model/useraccounts"
 	"babblegraph/model/usernewsletterpreferences"
-	"babblegraph/model/usernewsletterschedule"
 	"babblegraph/util/ctx"
 	"babblegraph/util/ptr"
 	"babblegraph/util/testutils"
@@ -217,7 +216,7 @@ func TestWholeNewsletterHasPodcasts(t *testing.T) {
 		},
 		doesUserHaveAccount:   true,
 		userSubscriptionLevel: useraccounts.SubscriptionLevelPremium.Ptr(),
-		userNewsletterSchedule: &usernewsletterschedule.TestNewsletterSchedule{
+		userNewsletterSchedule: usernewsletterpreferences.TestNewsletterSchedule{
 			SendRequested: true,
 			TopicIDs: []content.TopicID{
 				content.TopicID("test-art"),

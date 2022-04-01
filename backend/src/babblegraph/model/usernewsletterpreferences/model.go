@@ -132,6 +132,7 @@ func getUserNewsletterSchedule(c ctx.LogContext, tx *sqlx.Tx, userID users.UserI
 		if err != nil {
 			return nil, err
 		}
+		c.Debugf("Input %+v, output %+v", todayUTCMidnight, userSendTime)
 		numberOfArticlesPerEmail = userSchedule.NumberOfArticlesPerEmail
 		ianaTimezone = userSchedule.IANATimezone
 		hourIndex = userSendTime.Hour()
@@ -150,9 +151,11 @@ func getUserNewsletterSchedule(c ctx.LogContext, tx *sqlx.Tx, userID users.UserI
 				isActiveForDay[d.DayOfWeekIndex] = d.IsActive
 			}
 			offset := int(todayUTCMidnight.Weekday() - userSendTime.Weekday())
+			c.Debugf("Offset %d", offset)
 			sort.SliceStable(userScheduleDays, func(i, j int) bool {
-				return userScheduleDays[i].DayOfWeekIndex+offset < userScheduleDays[j].DayOfWeekIndex+offset
+				return (userScheduleDays[i].DayOfWeekIndex+offset)%7 < (userScheduleDays[j].DayOfWeekIndex+offset)%7
 			})
+			c.Debugf("%+v", userScheduleDays)
 		}
 	}
 	return &ScheduleWithMetadata{
