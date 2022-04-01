@@ -149,6 +149,9 @@ func joinDocumentsIntoCategories(c ctx.LogContext, input joinDocumentsIntoCatego
 				// no-op
 			default:
 				for _, episode := range input.podcastEpisodesByTopic[documentGroup.topic] {
+					if len(podcastLinks) >= maxPodcastsPerTopic {
+						break
+					}
 					if _, ok := podcastsInEmailByID[episode.ID]; ok {
 						continue
 					}
@@ -161,9 +164,6 @@ func joinDocumentsIntoCategories(c ctx.LogContext, input joinDocumentsIntoCatego
 					default:
 						podcastsInEmailByID[episode.ID] = true
 						podcastLinks = append(podcastLinks, *podcastLink)
-						if len(podcastLinks) >= maxPodcastsPerTopic {
-							break
-						}
 					}
 				}
 			}
@@ -218,6 +218,9 @@ func joinDocumentsIntoCategories(c ctx.LogContext, input joinDocumentsIntoCatego
 				// no-op
 			default:
 				for _, episode := range podcasts {
+					if len(podcastLinks) >= maxPodcastsPerTopic {
+						break
+					}
 					if _, ok := podcastsInEmailByID[episode.ID]; ok {
 						continue
 					}
@@ -230,9 +233,6 @@ func joinDocumentsIntoCategories(c ctx.LogContext, input joinDocumentsIntoCatego
 					default:
 						podcastsInEmailByID[episode.ID] = true
 						podcastLinks = append(podcastLinks, *podcastLink)
-						if len(podcastLinks) >= maxPodcastsPerTopic {
-							break
-						}
 					}
 				}
 			}
