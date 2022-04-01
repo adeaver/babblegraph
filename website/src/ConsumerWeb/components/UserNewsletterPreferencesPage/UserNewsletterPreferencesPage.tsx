@@ -50,6 +50,7 @@ import {
     UpdateUserNewsletterPreferencesResponse,
 
     UserNewsletterPreferences,
+    UserPreferencesError,
 } from 'ConsumerWeb/api/user/userNewsletterPreferences';
 import {
     toTitleCase
@@ -62,6 +63,15 @@ const maximumNumberOfArticles = 12;
 const daysOfTheWeekByLanguageCode: { [key: string]: Array<string> } = {
     [DisplayLanguage.Spanish]: [ "Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"],
     [DisplayLanguage.English]: [ "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" ],
+}
+
+const errorMessages = {
+    [UserPreferencesError["InvalidToken"]]: "This link has expired. Try clicking on the link at the bottom of your newsletter",
+    [UserPreferencesError["InvalidLanguageCode"]]: "That language is not yet supported by Babblegraph, try again later",
+    [UserPreferencesError["InvalidTimezone"]]: "We didn't understand that timezone",
+    [UserPreferencesError["NoActiveDay"]]: "You must have at least one active day. Click the link at the bottom of your newsletter if you want to unsubscribe instead",
+    [UserPreferencesError["EmptyEmailAddress"]]: "You need to provide an email address",
+    "default": "Something went wrong processing that request. Try again later or email hello@babblegraph.com for support.",
 }
 
 const styleClasses = makeStyles({
@@ -188,7 +198,7 @@ const UserNewsletterPreferencesDisplay = asBaseComponent<GetUserNewsletterPrefer
         }
 
         const [ isLoading, setIsLoading ] = useState<boolean>(false);
-        const [ error, setError ] = useState<ClientError>(null);
+        const [ error, setError ] = useState<string>(null);
         const [ success, setSuccess ] = useState<boolean>(false);
 
         const [ emailAddress, setEmailAddress ] = useState<string>(undefined);
@@ -234,7 +244,8 @@ const UserNewsletterPreferencesDisplay = asBaseComponent<GetUserNewsletterPrefer
             (resp: UpdateUserNewsletterPreferencesResponse) => {
                 setIsLoading(false);
                 if (!!resp.error) {
-                    setError(resp.error);
+                    const errorMessage = !!errorMessages[`${resp.error}`] ? errorMessages[`${resp.error}`] : errorMessages["default"]
+                    setError(errorMessage);
                     return;
                 }
                 setSuccess(true);
@@ -437,7 +448,7 @@ const UserNewsletterPreferencesDisplay = asBaseComponent<GetUserNewsletterPrefer
                     }
                 </DisplayCard>
                 <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError(null)}>
-                    <Alert severity="error">Something went wrong processing your request.</Alert>
+                    <Alert severity="error">{error}</Alert>
                 </Snackbar>
                 <Snackbar open={success} autoHideDuration={6000} onClose={() => setSuccess(false)}>
                     <Alert severity="success">Successfully updated your preferences. Changes may take up to 24 hours to take effect!</Alert>

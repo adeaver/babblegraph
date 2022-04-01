@@ -43,6 +43,15 @@ export function getUserNewsletterPreferences(
     );
 }
 
+enum UserPreferencesClientError {
+    EmptyEmailAddress = 'no-email-address',
+    InvalidTimezone = 'invalid-timezone',
+    NoActiveDay = 'no-active-day',
+};
+
+export const UserPreferencesError = { ...UserPreferencesClientError, ...ClientError };
+export type  UserPreferencesError = typeof UserPreferencesError;
+
 export type UpdateUserNewsletterPreferencesRequest = {
     emailAddress: string | undefined;
     subscriptionManagementToken: string;
@@ -51,7 +60,7 @@ export type UpdateUserNewsletterPreferencesRequest = {
 
 export type UpdateUserNewsletterPreferencesResponse = {
     success: boolean;
-    error: ClientError | undefined;
+    error: UserPreferencesError | undefined;
 }
 
 export function updateUserNewsletterPreferences(
