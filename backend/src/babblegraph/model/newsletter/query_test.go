@@ -217,13 +217,7 @@ func TestWholeNewsletterHasPodcasts(t *testing.T) {
 		doesUserHaveAccount:   true,
 		userSubscriptionLevel: useraccounts.SubscriptionLevelPremium.Ptr(),
 		userNewsletterSchedule: usernewsletterpreferences.TestNewsletterSchedule{
-			SendRequested: true,
-			TopicIDs: []content.TopicID{
-				content.TopicID("test-art"),
-				content.TopicID("test-astronomy"),
-				content.TopicID("test-architecture"),
-				content.TopicID("test-automotive"),
-			},
+			SendRequested:     true,
 			NumberOfDocuments: 4,
 		},
 	}
