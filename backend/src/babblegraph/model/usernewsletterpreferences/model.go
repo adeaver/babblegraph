@@ -96,7 +96,6 @@ type dbUserNewsletterDayMetadata struct {
 
 type Schedule interface {
 	IsSendRequested(utcWeekday time.Weekday) bool
-	GetUTCHourAndQuarterHourIndex() (_hourIndex, _quarterHourIndex int)
 	GetNumberOfDocuments() int
 	ConvertUTCTimeToUserDate(c ctx.LogContext, utcTime time.Time) (*time.Time, error)
 }
@@ -174,15 +173,10 @@ func (s *ScheduleWithMetadata) IsSendRequested(utcWeekday time.Weekday) bool {
 	return len(s.userScheduleDays) == 0 || s.userScheduleDays[int(utcWeekday)].IsActive
 }
 
-func (s *ScheduleWithMetadata) GetUTCHourAndQuarterHourIndex() (_hourIndex, _quarterHourIndex int) {
-	return s.utcHourIndex, s.utcQuarterHourIndex
-}
-
 func (s *ScheduleWithMetadata) GetNumberOfDocuments() int {
 	return s.NumberOfArticlesPerEmail
 }
 
-// NOTE: This function does not return an accurate time - just an accurate date
 func (s *ScheduleWithMetadata) ConvertUTCTimeToUserDate(c ctx.LogContext, utcTime time.Time) (*time.Time, error) {
 	return resolveUTCMidnightWithNewsletterSchedule(c, timeutils.ConvertToMidnight(utcTime), dbUserNewsletterSchedule{
 		IANATimezone:     s.IANATimezone,

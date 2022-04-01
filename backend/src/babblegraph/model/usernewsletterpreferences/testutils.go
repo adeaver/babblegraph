@@ -16,11 +16,6 @@ func (t TestNewsletterSchedule) IsSendRequested(utcWeekday time.Weekday) bool {
 	return t.SendRequested
 }
 
-func (t TestNewsletterSchedule) GetUTCHourAndQuarterHourIndex(utcWeekday time.Weekday) (_hourIndex, _quarterHourIndex int) {
-	sendTime := t.UserSendTime.UTC()
-	return sendTime.Hour(), sendTime.Minute() / 15
-}
-
 func (t TestNewsletterSchedule) GetNumberOfDocuments() int {
 	return t.NumberOfDocuments
 }
