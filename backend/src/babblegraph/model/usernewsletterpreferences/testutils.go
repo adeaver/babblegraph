@@ -3,6 +3,8 @@ package usernewsletterpreferences
 import (
 	"babblegraph/model/content"
 	"babblegraph/model/contenttopics"
+	"babblegraph/util/ctx"
+	"babblegraph/util/ptr"
 	"time"
 )
 
@@ -26,6 +28,6 @@ func (t TestNewsletterSchedule) GetNumberOfDocuments(utcWeekday time.Weekday) in
 	return t.NumberOfDocuments
 }
 
-func (t TestNewsletterSchedule) ConvertUTCTimeToUserDate(c ctx.LogContext, utcTime time.Time) (*time.Time, error)
+func (t TestNewsletterSchedule) ConvertUTCTimeToUserDate(c ctx.LogContext, utcTime time.Time) (*time.Time, error) {
 	return ptr.Time(t.UserSendTime), nil
 }

@@ -14,21 +14,29 @@ import (
 	"babblegraph/util/email"
 	"babblegraph/util/ptr"
 	"babblegraph/wordsmith"
+	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/jmoiron/sqlx"
 )
 
+type userSchedule struct {
+	IANATimezone     string `json:"iana_timezone"`
+	HourIndex        int    `json:"hour_index"`
+	QuarterHourIndex int    `json:"quarter_hour_index"`
+	IsActiveForDay   []bool `json:"is_active_for_day"`
+}
+
 type userNewsletterPreferences struct {
-	LanguageCode                        wordsmith.LanguageCode             `json:"language_code"`
-	IsLemmaReinforcementSpotlightActive bool                               `json:"is_lemma_reinforcement_spotlight_active"`
-	ArePodcastsEnabled                  *bool                              `json:"are_podcasts_enabled,omitempty"`
-	IncludeExplicitPodcasts             *bool                              `json:"include_explicit_podcasts,omitempty"`
-	MinimumPodcastDurationSeconds       *int64                             `json:"minimum_podcast_duration_seconds,omitempty"`
-	MaximumPodcastDurationSeconds       *int64                             `json:"maximum_podcast_duration_seconds,omitempty"`
-	NumberOfArticlesPerEmail            int64                              `json:"number_of_articles_per_email"`
-	Schedule                            usernewsletterpreferences.Schedule `json:"schedule"`
+	LanguageCode                        wordsmith.LanguageCode `json:"language_code"`
+	IsLemmaReinforcementSpotlightActive bool                   `json:"is_lemma_reinforcement_spotlight_active"`
+	ArePodcastsEnabled                  *bool                  `json:"are_podcasts_enabled,omitempty"`
+	IncludeExplicitPodcasts             *bool                  `json:"include_explicit_podcasts,omitempty"`
+	MinimumPodcastDurationSeconds       *int64                 `json:"minimum_podcast_duration_seconds,omitempty"`
+	MaximumPodcastDurationSeconds       *int64                 `json:"maximum_podcast_duration_seconds,omitempty"`
+	NumberOfArticlesPerEmail            int64                  `json:"number_of_articles_per_email"`
+	Schedule                            userSchedule           `json:"schedule"`
 }
 
 type getUserNewsletterPreferencesRequest struct {
@@ -71,10 +79,19 @@ func getUserNewsletterPreferences(userAuth *routermiddleware.UserAuthentication,
 	}); err != nil {
 		return nil, err
 	}
+	schedule, ok := prefs.Schedule.(*usernewsletterpreferences.ScheduleWithMetadata)
+	if !ok {
+		return nil, fmt.Errorf("Schedule did not correctly convert to schedule with metadata")
+	}
 	userPreferences := &userNewsletterPreferences{
 		LanguageCode:                        *languageCode,
 		IsLemmaReinforcementSpotlightActive: prefs.ShouldIncludeLemmaReinforcementSpotlight,
-		Schedule:                            prefs.Schedule,
+		Schedule: userSchedule{
+			IANATimezone:     schedule.IANATimezone,
+			HourIndex:        schedule.HourIndex,
+			QuarterHourIndex: schedule.QuarterHourIndex,
+			IsActiveForDay:   schedule.IsActiveForDay,
+		},
 	}
 	switch {
 	case userAuth != nil:
@@ -120,6 +137,7 @@ type updateUserNewsletterPreferencesResponse struct {
 
 const (
 	errorEmptyEmailAddress clienterror.Error = "no-email-address"
+	errorInvalidTimezone   clienterror.Error = "invalid-timezone"
 )
 
 func updateUserNewsletterPreferences(userAuth *routermiddleware.UserAuthentication, r *router.Request) (interface{}, error) {
@@ -137,6 +155,12 @@ func updateUserNewsletterPreferences(userAuth *routermiddleware.UserAuthenticati
 	if err != nil {
 		return getUserNewsletterPreferencesResponse{
 			Error: clienterror.ErrorInvalidLanguageCode.Ptr(),
+		}, nil
+	}
+	userTimezone, err := time.LoadLocation(req.Preferences.Schedule.IANATimezone)
+	if err != nil {
+		return getUserNewsletterPreferencesResponse{
+			Error: errorInvalidTimezone.Ptr(),
 		}, nil
 	}
 	if userAuth != nil {
@@ -164,6 +188,9 @@ func updateUserNewsletterPreferences(userAuth *routermiddleware.UserAuthenticati
 				LanguageCode:                        *languageCode,
 				IsLemmaReinforcementSpotlightActive: req.Preferences.IsLemmaReinforcementSpotlightActive,
 				PodcastPreferences:                  podcastPreferences,
+				IANATimezone:                        userTimezone,
+				HourIndex:                           req.Preferences.Schedule.HourIndex,
+				QuarterHourIndex:                    req.Preferences.Schedule.QuarterHourIndex,
 			})
 		}); err != nil {
 			return nil, err
@@ -189,6 +216,9 @@ func updateUserNewsletterPreferences(userAuth *routermiddleware.UserAuthenticati
 				UserID:                              *userID,
 				LanguageCode:                        *languageCode,
 				IsLemmaReinforcementSpotlightActive: req.Preferences.IsLemmaReinforcementSpotlightActive,
+				IANATimezone:                        userTimezone,
+				HourIndex:                           req.Preferences.Schedule.HourIndex,
+				QuarterHourIndex:                    req.Preferences.Schedule.QuarterHourIndex,
 			})
 		})
 		switch {

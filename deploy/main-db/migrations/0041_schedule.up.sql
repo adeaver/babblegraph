@@ -1,0 +1,2 @@
+ALTER TABLE user_newsletter_schedule_day_metadata DROP COLUMN IF EXISTS content_topics;
+DROP TABLE IF EXISTS user_newsletter_schedule_day_topic_mapping;

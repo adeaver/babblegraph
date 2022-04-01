@@ -168,7 +168,7 @@ const UserNewsletterPreferencesDisplay = asBaseComponent<GetUserNewsletterPrefer
         const [ initialIANATimezone, setInitialIANATimezone ] = useState<string>(props.preferences.schedule.ianaTimezone);
         const [ ianaTimezone, setIANATimezone ] = useState<string>(props.preferences.schedule.ianaTimezone);
         const [ hourIndex, setHourIndex ] = useState<number>(props.preferences.schedule.hourIndex);
-        const [ quarterHourIndex, setQuarterHourIndex ] = useState<number>(props.preferences.schedule.quarterHourIndex);
+        const [ quarterHourIndex, setQuarterHourIndex ] = useState<number>(props.preferences.schedule.quarterHourIndex * 15);
 
         const [ isLoading, setIsLoading ] = useState<boolean>(false);
         const [ error, setError ] = useState<ClientError>(null);
@@ -208,7 +208,7 @@ const UserNewsletterPreferencesDisplay = asBaseComponent<GetUserNewsletterPrefer
                     schedule: {
                         ianaTimezone: ianaTimezone,
                         hourIndex: hourIndex,
-                        quarterHourIndex: quarterHourIndex,
+                        quarterHourIndex: quarterHourIndex / 15,
                         isActiveForDay: props.preferences.schedule.isActiveForDay,
                     },
                 },
@@ -235,6 +235,16 @@ const UserNewsletterPreferencesDisplay = asBaseComponent<GetUserNewsletterPrefer
                         title="Manage Preferences"
                         backArrowDestination={`/manage/${props.subscriptionManagementToken}`} />
                     <Grid container>
+                        <Grid xs={12}>
+                            <TimeSelector
+                                initialIANATimezone={initialIANATimezone}
+                                ianaTimezone={ianaTimezone}
+                                hourIndex={hourIndex}
+                                quarterHourIndex={quarterHourIndex}
+                                handleUpdateIANATimezone={setIANATimezone}
+                                handleUpdateHourIndex={setHourIndex}
+                                handleUpdateQuarterHourIndex={setQuarterHourIndex} />
+                        </Grid>
                         <Grid item xs={10} xl={11}>
                             <Heading4 align={Alignment.Left} color={TypographyColor.Primary}>
                                 Include word tracking spotlights in your newsletter?
@@ -251,16 +261,6 @@ const UserNewsletterPreferencesDisplay = asBaseComponent<GetUserNewsletterPrefer
                                 checked={isLemmaSpotlightActive}
                                 onClick={() => {setIsLemmaSpotlightActive(!isLemmaSpotlightActive)}}
                                 disabled={isLoading} />
-                        </Grid>
-                        <Grid xs={12}>
-                            <TimeSelector
-                                initialIANATimezone={initialIANATimezone}
-                                ianaTimezone={ianaTimezone}
-                                hourIndex={hourIndex}
-                                quarterHourIndex={quarterHourIndex}
-                                handleUpdateIANATimezone={setIANATimezone}
-                                handleUpdateHourIndex={setHourIndex}
-                                handleUpdateQuarterHourIndex={setQuarterHourIndex} />
                         </Grid>
                         {
                             !!props.userProfile.subscriptionLevel && (

@@ -89,6 +89,9 @@ type UpdateUserNewsletterPreferencesInput struct {
 	LanguageCode                        wordsmith.LanguageCode
 	IsLemmaReinforcementSpotlightActive bool
 	PodcastPreferences                  *PodcastPreferencesInput
+	IANATimezone                        *time.Location
+	HourIndex                           int
+	QuarterHourIndex                    int
 }
 
 type PodcastPreferencesInput struct {
@@ -109,9 +112,17 @@ func UpdateUserNewsletterPreferences(tx *sqlx.Tx, input UpdateUserNewsletterPref
 		return err
 	}
 	if input.PodcastPreferences != nil {
-		return updatePodcastPreferences(tx, input.UserID, input.LanguageCode, *input.PodcastPreferences)
+		if err := updatePodcastPreferences(tx, input.UserID, input.LanguageCode, *input.PodcastPreferences); err != nil {
+			return err
+		}
 	}
-	return nil
+	return upsertUserNewsletterSchedule(tx, upsertUserNewsletterScheduleInput{
+		UserID:           input.UserID,
+		LanguageCode:     input.LanguageCode,
+		IANATimezone:     input.IANATimezone,
+		HourIndex:        input.HourIndex,
+		QuarterHourIndex: input.QuarterHourIndex,
+	})
 }
 
 func updateLemmaReinforcementSpotlightPreferences(tx *sqlx.Tx, userID users.UserID, languageCode wordsmith.LanguageCode, isActive bool) error {
