@@ -25,6 +25,10 @@ func TestUserHasAccount(t *testing.T) {
 	userAccessor := &testUserAccessor{
 		languageCode:        wordsmith.LanguageCodeSpanish,
 		doesUserHaveAccount: true,
+		userNewsletterSchedule: usernewsletterpreferences.TestNewsletterSchedule{
+			SendRequested:     true,
+			NumberOfDocuments: 4,
+		},
 		readingLevel: &userReadingLevel{
 			LowerBound: 30,
 			UpperBound: 80,
@@ -62,6 +66,10 @@ func TestUserDoesNotHaveAccount(t *testing.T) {
 			LowerBound: 30,
 			UpperBound: 80,
 		},
+		userNewsletterSchedule: usernewsletterpreferences.TestNewsletterSchedule{
+			SendRequested:     true,
+			NumberOfDocuments: 4,
+		},
 	}
 	docsAccessor := &testDocsAccessor{}
 	testNewsletter, err := CreateNewsletter(c, CreateNewsletterInput{
@@ -97,6 +105,10 @@ func TestNoSetTopicsLink(t *testing.T) {
 		readingLevel: &userReadingLevel{
 			LowerBound: 30,
 			UpperBound: 80,
+		},
+		userNewsletterSchedule: usernewsletterpreferences.TestNewsletterSchedule{
+			SendRequested:     true,
+			NumberOfDocuments: 4,
 		},
 	}
 	docsAccessor := &testDocsAccessor{}
@@ -286,6 +298,10 @@ func TestUserShouldShowAdvertisement(t *testing.T) {
 			UpperBound: 80,
 		},
 		userCreatedDate: time.Now().Add(-180 * 24 * time.Hour),
+		userNewsletterSchedule: usernewsletterpreferences.TestNewsletterSchedule{
+			SendRequested:     true,
+			NumberOfDocuments: 4,
+		},
 	}
 	docsAccessor := &testDocsAccessor{}
 	testNewsletter, err := CreateNewsletter(c, CreateNewsletterInput{
@@ -336,6 +352,10 @@ func TestNoAdvertisementUserAccountAge(t *testing.T) {
 			UpperBound: 80,
 		},
 		userCreatedDate: time.Now().Add(-7 * 24 * time.Hour),
+		userNewsletterSchedule: usernewsletterpreferences.TestNewsletterSchedule{
+			SendRequested:     true,
+			NumberOfDocuments: 4,
+		},
 	}
 	docsAccessor := &testDocsAccessor{}
 	testNewsletter, err := CreateNewsletter(c, CreateNewsletterInput{
@@ -386,7 +406,8 @@ func TestUserAdvertisementIneligible(t *testing.T) {
 			UpperBound: 80,
 		},
 		userNewsletterSchedule: usernewsletterpreferences.TestNewsletterSchedule{
-			SendRequested: true,
+			SendRequested:     true,
+			NumberOfDocuments: 4,
 		},
 		userCreatedDate: time.Now().Add(-180 * 24 * time.Hour),
 	}
@@ -440,7 +461,8 @@ func TestUserSubscriptionHasNoAdvertisement(t *testing.T) {
 			UpperBound: 80,
 		},
 		userNewsletterSchedule: usernewsletterpreferences.TestNewsletterSchedule{
-			SendRequested: true,
+			SendRequested:     true,
+			NumberOfDocuments: 4,
 		},
 		userCreatedDate: time.Now().Add(-180 * 24 * time.Hour),
 	}
@@ -493,7 +515,8 @@ func TestNoAdvertisementIsOkay(t *testing.T) {
 			UpperBound: 80,
 		},
 		userNewsletterSchedule: usernewsletterpreferences.TestNewsletterSchedule{
-			SendRequested: true,
+			SendRequested:     true,
+			NumberOfDocuments: 4,
 		},
 		userCreatedDate: time.Now().Add(-180 * 24 * time.Hour),
 	}
