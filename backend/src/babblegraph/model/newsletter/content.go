@@ -12,6 +12,7 @@ import (
 type contentAccessor interface {
 	GetSourceByID(sourceID content.SourceID) (*content.Source, error)
 	GetDisplayNameByTopicID(topicID content.TopicID) (*string, error)
+	GetAllTopicsNotInList(topicIDs []content.TopicID) []content.TopicID
 }
 
 type DefaultContentAccessor struct {
@@ -56,4 +57,18 @@ func (d *DefaultContentAccessor) GetDisplayNameByTopicID(topicID content.TopicID
 		return nil, fmt.Errorf("No display name found for topic id %s", topicID)
 	}
 	return ptr.String(displayName), nil
+}
+
+func (d *DefaultContentAccessor) GetAllTopicsNotInList(topicIDs []content.TopicID) []content.TopicID {
+	topicIDMap := make(map[content.TopicID]bool)
+	for _, t := range topicIDs {
+		topicIDMap[t] = true
+	}
+	var out []content.TopicID
+	for topicID := range d.topicDisplayNamesByTopicID {
+		if _, ok := topicIDMap[topicID]; !ok {
+			out = append(out, topicID)
+		}
+	}
+	return out
 }
