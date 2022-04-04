@@ -25,6 +25,7 @@ type dbExperimentUserVariation struct {
 	ID             experimentUserVariationID `db:"_id"`
 	UserID         users.UserID              `db:"user_id"`
 	ExperimentID   experimentID              `db:"experiment_id"`
+	InExperiment   bool                      `db:"in_experiment"`
 	InVariation    bool                      `db:"in_variation"`
 	AccessedAtStep int64                     `db:"accessed_at_step"`
 }

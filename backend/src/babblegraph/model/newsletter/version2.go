@@ -183,7 +183,6 @@ func CreateNewsletterVersion2(c ctx.LogContext, dateOfSendMidnightUTC time.Time,
 		out = append(out, section)
 	}
 	var accountLinks []SectionLink
-	// TODO: make dynamic
 	var reinforcementLink, setTopicsLink, preferencesLink *string
 	if input.UserAccessor.getDoesUserHaveAccount() {
 		reinforcementLink = ptr.String(routes.MakeLoginLinkWithReinforcementRedirect())
@@ -203,6 +202,7 @@ func CreateNewsletterVersion2(c ctx.LogContext, dateOfSendMidnightUTC time.Time,
 			return nil, err
 		}
 	}
+	// TODO: make dynamic
 	accountLinks = append(accountLinks, SectionLink{
 		Title: "¿Has aprendido una palabra nueva? Haz clic aquí para añadirla a tu lista de vocabulario",
 		URL:   *reinforcementLink,
