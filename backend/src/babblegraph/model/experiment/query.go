@@ -25,7 +25,7 @@ const (
             is_active=$4,
             last_modified_at = timezone('utc', now())`
 
-	getUserExperimentVariationQuery    = "SELECT * FROM experiments_user_variations WHERE experiment_id = $1 AND user = $2"
+	getUserExperimentVariationQuery    = "SELECT * FROM experiments_user_variations WHERE experiment_id = $1 AND user_id = $2"
 	insertUserExperimentVariationQuery = `
     INSERT INTO
         experiments_user_variations (

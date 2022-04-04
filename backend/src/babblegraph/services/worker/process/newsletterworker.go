@@ -109,10 +109,6 @@ func StartNewsletterPreloadWorkerThread(newsletterProcessor *newsletterprocessin
 						Data:        string(newsletterBytes),
 					})
 				} else {
-					c.Debugf("Send request %s got not version 2", sendRequest.ID)
-					if env.MustEnvironmentName() == env.EnvironmentLocalTestEmail {
-						return nil
-					}
 					newsletter, err := newsletter.CreateNewsletter(c, newsletter.CreateNewsletterInput{
 						DateOfSendMidnightUTC: dateOfSendUTCMidnight,
 						WordsmithAccessor:     wordsmithAccessor,
@@ -212,6 +208,7 @@ func StartNewsletterFulfillmentWorkerThread(newsletterProcessor *newsletterproce
 					if err := json.Unmarshal([]byte(*data), &newsletterVersion2); err != nil {
 						return err
 					}
+					c.Debugf("ID %s was version 2", sendRequest.ID)
 					c.Debugf("Unmarshalled %+v", newsletterVersion2)
 					emailRecordID = newsletterVersion2.EmailRecordID
 					newsletterHTML, err = emailtemplates.MakeNewsletterVersion2HTML(emailtemplates.MakeNewsletterVersion2HTMLInput{
@@ -223,7 +220,7 @@ func StartNewsletterFulfillmentWorkerThread(newsletterProcessor *newsletterproce
 						return err
 					}
 				default:
-					// c.Debugf("Unmarshalled %+v", edition)
+					c.Debugf("Unmarshalled %+v", edition)
 					emailRecordID = edition.EmailRecordID
 					newsletterHTML, err = emailtemplates.MakeNewsletterHTML(emailtemplates.MakeNewsletterHTMLInput{
 						EmailRecordID: edition.EmailRecordID,
