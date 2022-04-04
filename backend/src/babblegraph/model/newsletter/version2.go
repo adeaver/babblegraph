@@ -4,6 +4,7 @@ import (
 	"babblegraph/model/content"
 	"babblegraph/model/documents"
 	"babblegraph/model/email"
+	"babblegraph/model/useraccounts"
 	"babblegraph/model/users"
 	"babblegraph/util/ctx"
 	"babblegraph/util/deref"
@@ -11,6 +12,7 @@ import (
 	"babblegraph/util/ptr"
 	"babblegraph/util/text"
 	"babblegraph/wordsmith"
+	"fmt"
 	"math/rand"
 	"sort"
 	"time"
@@ -81,7 +83,7 @@ func CreateNewsletterVersion2(c ctx.LogContext, dateOfSendMidnightUTC time.Time,
 		return nil, nil
 	}
 	numberOfDocumentsInNewsletter := input.UserAccessor.getUserNewsletterSchedule().GetNumberOfDocuments()
-	sections, err := getDocumentSections(c, numberOfDocumentsInNewsletter, getDocumentSectionsInput{
+	documentSections, documentIDs, err := getDocumentSections(c, numberOfDocumentsInNewsletter, getDocumentSectionsInput{
 		emailRecordID:   emailRecordID,
 		userAccessor:    input.UserAccessor,
 		docsAccessor:    input.DocsAccessor,
@@ -90,12 +92,89 @@ func CreateNewsletterVersion2(c ctx.LogContext, dateOfSendMidnightUTC time.Time,
 	if err != nil {
 		return nil, err
 	}
+	spotlightRecord, err := getSpotlightLemmaForNewsletter(c, getSpotlightLemmaForNewsletterInput{
+		emailRecordID:           emailRecordID,
+		documentIDsInNewsletter: documentIDs,
+		userAccessor:            input.UserAccessor,
+		docsAccessor:            input.DocsAccessor,
+		contentAccessor:         input.ContentAccessor,
+		wordsmithAccessor:       input.WordsmithAccessor,
+	})
+	if err != nil {
+		return nil, err
+	}
+	var advertisingDisclaimer *AdvertisingDisclaimer
+	var out []Section
+	out = append(out, documentSections[0])
+	documentSections = append([]Section{}, documentSections[1:]...)
+	if spotlightRecord != nil {
+		out = append(out, Section{
+			// TODO: make dynamic
+			Title: fmt.Sprintf("Tu vocabulario en las noticias: %s", spotlightRecord.LemmaText),
+			FocusContent: &SectionFocusContent{
+				Title:       *spotlightRecord.Document.Title,
+				ImageURL:    *spotlightRecord.Document.ImageURL,
+				Description: *spotlightRecord.Document.Description,
+				URL:         spotlightRecord.Document.URL,
+			},
+		})
+	}
+	userSubscriptionLevel := input.UserAccessor.getUserSubscriptionLevel()
+	switch {
+	case userSubscriptionLevel == nil:
+		advertisement, err := lookupAdvertisement(c, emailRecordID, input.UserAccessor, input.AdvertisementAccessor)
+		if err != nil {
+			return nil, err
+		}
+		if advertisement != nil {
+			var otherLinks []SectionLink
+			if advertisement.AdditionalAdvertisementLink != nil {
+				otherLinks = append(otherLinks, SectionLink{
+					Title: *advertisement.AdditionalAdvertisementLink.LinkText,
+					URL:   advertisement.AdditionalAdvertisementLink.URL,
+				})
+			}
+			// TODO: make this all dynamic
+			otherLinks = append(otherLinks, SectionLink{
+				Title:    "Si no quieres ver más anuncios, inscribete a Babblegraph Premium",
+				BodyText: ptr.String("Con Babblegraph Premium, no verás anuncios como esto. También, tendrás acceso a herramientas exclusivas: como recibir podcasts en el email."),
+				URL:      advertisement.PremiumLink,
+			})
+			out = append(out, Section{
+				Title: "Algo que nos gusta",
+				FocusContent: &SectionFocusContent{
+					Title:       fmt.Sprintf("%s*", advertisement.Title),
+					ImageURL:    advertisement.ImageURL,
+					URL:         advertisement.URL,
+					Description: advertisement.Description,
+				},
+				OtherLinks: otherLinks,
+			})
+			advertisingDisclaimer = &AdvertisingDisclaimer{
+				Text: "* Asociarnos con excelentes productos y marcas permite que Babblegraph siga funcionando. Podemos ganar una comisión si compra algo a través de uno de estos enlaces.",
+				AdvertisingPolicyLink: AdvertisingPolicyLink{
+					Text: "Puedes obtener más información sobre anuncios como estos aquí",
+					URL:  advertisement.AdvertisementPolicyLink,
+				},
+			}
+		}
+	case *userSubscriptionLevel == useraccounts.SubscriptionLevelBetaPremium,
+		*userSubscriptionLevel == useraccounts.SubscriptionLevelPremium:
+		// TODO: put podcasts here
+	default:
+		return nil, fmt.Errorf("Unrecognized subscription level: %s", *userSubscriptionLevel)
+	}
+	for _, section := range documentSections {
+		out = append(out, section)
+	}
+	// TODO: put account links here
 	return &NewsletterVersion2{
 		UserID:        input.UserAccessor.getUserID(),
 		EmailRecordID: emailRecordID,
 		LanguageCode:  input.UserAccessor.getLanguageCode(),
 		Body: NewsletterVersion2Body{
-			Sections: sections,
+			Sections:              out,
+			AdvertisingDisclaimer: advertisingDisclaimer,
 		},
 	}, nil
 }
@@ -116,7 +195,7 @@ type getDocumentSectionsInput struct {
 	contentAccessor contentAccessor
 }
 
-func getDocumentSections(c ctx.LogContext, numberOfDocumentsInNewsletter int, input getDocumentSectionsInput) ([]Section, error) {
+func getDocumentSections(c ctx.LogContext, numberOfDocumentsInNewsletter int, input getDocumentSectionsInput) ([]Section, []documents.DocumentID, error) {
 	topics := getSectionTopicsForUser(input.userAccessor, input.contentAccessor)
 	allowableSourceIDs := input.userAccessor.getAllowableSources()
 	numberOfArticlesInMainSection := int2.MustMinInt(numberOfDocumentsInNewsletter/2, maximumNumberOfDocumentsInSection)
@@ -136,7 +215,7 @@ func getDocumentSections(c ctx.LogContext, numberOfDocumentsInNewsletter int, in
 		})
 		switch {
 		case err != nil:
-			return nil, err
+			return nil, nil, err
 		case len(documentsForTopic.RecentDocuments)+len(documentsForTopic.NonRecentDocuments) == 0:
 			continue
 		case len(documentsForTopic.RecentDocuments) >= numberOfArticlesInMainSection:
@@ -170,6 +249,8 @@ func getDocumentSections(c ctx.LogContext, numberOfDocumentsInNewsletter int, in
 			return leftDocumentMaxScore.GreaterThan(rightDocumentMaxScore)
 		}
 	})
+	var documentIDs []documents.DocumentID
+	documentIDsHashSet := make(map[documents.DocumentID]bool)
 	numberOfDocumentsRemainingInNewsletter := numberOfDocumentsInNewsletter
 	var out []Section
 	for i := 0; i <= maximumNumberOfSections; i++ {
@@ -184,6 +265,11 @@ func getDocumentSections(c ctx.LogContext, numberOfDocumentsInNewsletter int, in
 		var focusContent *SectionFocusContent
 		var otherLinks []SectionLink
 		for _, document := range documentsWithScore {
+			if _, ok := documentIDsHashSet[document.Document.ID]; ok {
+				continue
+			}
+			documentIDsHashSet[document.Document.ID] = true
+			documentIDs = append(documentIDs, document.Document.ID)
 			isDocumentFocusContentEligible := isDocumentFocusContentEligible(document.Document)
 			link, err := makeLinkFromDocument(c, makeLinkFromDocumentInput{
 				emailRecordID:   input.emailRecordID,
@@ -193,7 +279,7 @@ func getDocumentSections(c ctx.LogContext, numberOfDocumentsInNewsletter int, in
 			})
 			switch {
 			case err != nil:
-				return nil, err
+				return nil, nil, err
 			case link == nil:
 				continue
 			}
@@ -211,9 +297,14 @@ func getDocumentSections(c ctx.LogContext, numberOfDocumentsInNewsletter int, in
 					numberOfDocumentsRemainingInNewsletter--
 				}
 			case len(otherLinks) <= numberOfDocumentsInSection:
+				var description *string
+				if link.Domain != nil {
+					description = ptr.String(fmt.Sprintf("por %s", link.Domain.Name))
+				}
 				otherLinks = append(otherLinks, SectionLink{
-					Title: deref.String(link.Title, document.Document.URL),
-					URL:   link.URL,
+					Title:    deref.String(link.Title, document.Document.URL),
+					BodyText: description,
+					URL:      link.URL,
 				})
 				numberOfDocumentsRemainingInNewsletter--
 			}
@@ -241,7 +332,7 @@ func getDocumentSections(c ctx.LogContext, numberOfDocumentsInNewsletter int, in
 			OtherLinksTitle: otherLinksTitle,
 		})
 	}
-	return out, nil
+	return out, documentIDs, nil
 }
 
 func isDocumentFocusContentEligible(doc documents.Document) bool {

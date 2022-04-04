@@ -15,12 +15,15 @@ import (
 )
 
 type getSpotlightLemmaForNewsletterInput struct {
-	emailRecordID     email.ID
-	categories        []Category
-	userAccessor      userPreferencesAccessor
-	docsAccessor      documentAccessor
-	contentAccessor   contentAccessor
-	wordsmithAccessor wordsmithAccessor
+	emailRecordID           email.ID
+	categories              []Category
+	documentIDsInNewsletter []documents.DocumentID
+	userAccessor            userPreferencesAccessor
+	docsAccessor            documentAccessor
+	contentAccessor         contentAccessor
+	wordsmithAccessor       wordsmithAccessor
+	// TODO: remove this option at the end of the experiment
+	excludeFocusContentIneligible bool
 }
 
 func getSpotlightLemmaForNewsletter(c ctx.LogContext, input getSpotlightLemmaForNewsletterInput) (*LemmaReinforcementSpotlight, error) {
@@ -33,6 +36,9 @@ func getSpotlightLemmaForNewsletter(c ctx.LogContext, input getSpotlightLemmaFor
 		for _, l := range category.Links {
 			documentIDsToExclude = append(documentIDsToExclude, l.DocumentID)
 		}
+	}
+	for _, documentID := range input.documentIDsInNewsletter {
+		documentIDsToExclude = append(documentIDsToExclude, documentID)
 	}
 	allowableSourceIDs := input.userAccessor.getAllowableSources()
 	orderedListOfSpotlightRecords := getOrderedListOfPotentialSpotlightLemmas(input.userAccessor)
@@ -53,6 +59,7 @@ func getSpotlightLemmaForNewsletter(c ctx.LogContext, input getSpotlightLemmaFor
 		potentialSpotlights:                 orderedListOfSpotlightRecords,
 		allowableSourceIDs:                  allowableSourceIDs,
 		preferencesLink:                     preferencesLink,
+		excludeFocusContentIneligible:       input.excludeFocusContentIneligible,
 	})
 	switch {
 	case err != nil:
@@ -69,6 +76,7 @@ func getSpotlightLemmaForNewsletter(c ctx.LogContext, input getSpotlightLemmaFor
 		allowableSourceIDs:                  allowableSourceIDs,
 		preferencesLink:                     preferencesLink,
 		shouldSearchNonRecentDocuments:      true,
+		excludeFocusContentIneligible:       input.excludeFocusContentIneligible,
 	})
 }
 
@@ -79,6 +87,7 @@ type lookupSpotlightForAllPotentialSpotlightsInput struct {
 	shouldSearchNonRecentDocuments bool
 	preferencesLink                string
 	allowableSourceIDs             []content.SourceID
+	excludeFocusContentIneligible  bool
 }
 
 func lookupSpotlightForAllPotentialSpotlights(c ctx.LogContext, input lookupSpotlightForAllPotentialSpotlightsInput) (*LemmaReinforcementSpotlight, error) {
@@ -99,6 +108,9 @@ func lookupSpotlightForAllPotentialSpotlights(c ctx.LogContext, input lookupSpot
 			return nil, err
 		}
 		for _, d := range documents {
+			if input.excludeFocusContentIneligible && !isDocumentFocusContentEligible(d.Document) {
+				continue
+			}
 			description := deref.String(d.Document.LemmatizedDescription, "")
 			for _, lemmaID := range strings.Split(description, " ") {
 				if lemmaID == string(potentialSpotlight) {
