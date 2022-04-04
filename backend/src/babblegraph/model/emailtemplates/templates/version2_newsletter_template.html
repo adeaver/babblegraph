@@ -16,14 +16,6 @@
         font-size: 28px !important;
         margin-bottom: 10px !important;
       }
-      table[class=body] p,
-            table[class=body] ul,
-            table[class=body] ol,
-            table[class=body] td,
-            table[class=body] span,
-            table[class=body] a {
-        font-size: 16px !important;
-      }
       table[class=body] .wrapper,
             table[class=body] .article {
         padding: 10px !important;
@@ -124,6 +116,7 @@
                                 <h2 style="color: #A663CC; cursor: pointer; text-decoration: none; font-size: 24px; font-weight: bold; margin: 0; padding: 12px 0; text-transform: capitalize;">
                                     {{ $section.Title }}
                                 </h2>
+                                {{ if $section.FocusContent }}
                                 <a href="{{$section.FocusContent.URL}}" target="_blank" style="display: inline-block; cursor: pointer; text-decoration: none; margin: 10px 0;">
                                     <img src="{{$section.FocusContent.ImageURL}}" style="width: 100%; height: auto; border: 0;" alt="" border="0" width="100%" height="auto" />
                                 </a>
@@ -133,6 +126,7 @@
                                 <p style="line-height: 1.5; font-size: 16px; font-weight: normal; margin: 0; margin-bottom: 15px;">
                                     {{$section.FocusContent.Description}}
                                 </p>
+                                {{ end }}
                                 {{ if $section.OtherLinks }}
                                 <hr style="border: 2px solid #D3D3D3;" />
                                 {{ if $section.OtherLinksTitle }}

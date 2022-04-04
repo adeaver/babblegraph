@@ -4,6 +4,8 @@ import (
 	"babblegraph/model/content"
 	"babblegraph/model/documents"
 	"babblegraph/model/email"
+	"babblegraph/model/podcasts"
+	"babblegraph/model/routes"
 	"babblegraph/model/useraccounts"
 	"babblegraph/model/users"
 	"babblegraph/util/ctx"
@@ -160,14 +162,65 @@ func CreateNewsletterVersion2(c ctx.LogContext, dateOfSendMidnightUTC time.Time,
 		}
 	case *userSubscriptionLevel == useraccounts.SubscriptionLevelBetaPremium,
 		*userSubscriptionLevel == useraccounts.SubscriptionLevelPremium:
-		// TODO: put podcasts here
+		podcastSection, err := getPodcastSectionForUser(c, getPodcastSectionForUserInput{
+			emailRecordID:   emailRecordID,
+			userAccessor:    input.UserAccessor,
+			podcastAccessor: input.PodcastAccessor,
+			contentAccessor: input.ContentAccessor,
+		})
+		switch {
+		case err != nil:
+			return nil, err
+		case podcastSection == nil:
+			// no-op
+		default:
+			out = append(out, *podcastSection)
+		}
 	default:
 		return nil, fmt.Errorf("Unrecognized subscription level: %s", *userSubscriptionLevel)
 	}
 	for _, section := range documentSections {
 		out = append(out, section)
 	}
-	// TODO: put account links here
+	var accountLinks []SectionLink
+	// TODO: make dynamic
+	var reinforcementLink, setTopicsLink, preferencesLink *string
+	if input.UserAccessor.getDoesUserHaveAccount() {
+		reinforcementLink = ptr.String(routes.MakeLoginLinkWithReinforcementRedirect())
+		setTopicsLink = ptr.String(routes.MakeLoginLinkWithContentTopicsRedirect())
+		preferencesLink = ptr.String(routes.MakeLoginLinkWithNewsletterPreferencesRedirect())
+	} else {
+		reinforcementLink, err = routes.MakeWordReinforcementLink(input.UserAccessor.getUserID())
+		if err != nil {
+			return nil, err
+		}
+		setTopicsLink, err = routes.MakeSetTopicsLink(input.UserAccessor.getUserID())
+		if err != nil {
+			return nil, err
+		}
+		preferencesLink, err = routes.MakeNewsletterPreferencesLink(input.UserAccessor.getUserID())
+		if err != nil {
+			return nil, err
+		}
+	}
+	accountLinks = append(accountLinks, SectionLink{
+		Title: "¿Has aprendido una palabra nueva? Haz clic aquí para añadirla a tu lista de vocabulario",
+		URL:   *reinforcementLink,
+	})
+	if len(input.UserAccessor.getUserTopics()) == 0 {
+		accountLinks = append(accountLinks, SectionLink{
+			Title: "Puedes escoger temas interesantes para personalizar el próximo boletín",
+			URL:   *setTopicsLink,
+		})
+	}
+	accountLinks = append(accountLinks, SectionLink{
+		Title: "¿Estás recibiendo demasiados emails? ¿Los emails tienen demasiadas historias? Puedes cambiar eso aquí.",
+		URL:   *preferencesLink,
+	})
+	out = append(out, Section{
+		Title:      "Enlaces para gestionar tu suscripción",
+		OtherLinks: accountLinks,
+	})
 	return &NewsletterVersion2{
 		UserID:        input.UserAccessor.getUserID(),
 		EmailRecordID: emailRecordID,
@@ -186,6 +239,8 @@ const (
 	minimumNumberOfDocumentsInMainSection int = 2
 
 	maximumNumberOfSections int = 3
+
+	maximumNumberOfPodcastsPerEmail int = 3
 )
 
 type getDocumentSectionsInput struct {
@@ -224,7 +279,9 @@ func getDocumentSections(c ctx.LogContext, numberOfDocumentsInNewsletter int, in
 				isDocumentFocusContentEligible := isDocumentFocusContentEligible(document.Document)
 				hasEligibleFocusDocument = hasEligibleFocusDocument || isDocumentFocusContentEligible
 			}
-			mainSectionEligibleTopics[t] = hasEligibleFocusDocument
+			if hasEligibleFocusDocument {
+				mainSectionEligibleTopics[t] = hasEligibleFocusDocument
+			}
 		}
 		documentsByTopic[t] = append(documentsForTopic.RecentDocuments, documentsForTopic.NonRecentDocuments...)
 		if len(mainSectionEligibleTopics) >= 1 && len(documentsByTopic) >= maximumNumberOfSections {
@@ -253,7 +310,7 @@ func getDocumentSections(c ctx.LogContext, numberOfDocumentsInNewsletter int, in
 	documentIDsHashSet := make(map[documents.DocumentID]bool)
 	numberOfDocumentsRemainingInNewsletter := numberOfDocumentsInNewsletter
 	var out []Section
-	for i := 0; i <= maximumNumberOfSections; i++ {
+	for i := 0; i < maximumNumberOfSections; i++ {
 		documentsWithScore := documentsByTopic[topicIDs[i]]
 		numberOfDocumentsInSection := int2.MustMinInt(numberOfDocumentsRemainingInNewsletter, maximumNumberOfDocumentsInSection)
 		if numberOfDocumentsInSection == 0 {
@@ -333,6 +390,75 @@ func getDocumentSections(c ctx.LogContext, numberOfDocumentsInNewsletter int, in
 		})
 	}
 	return out, documentIDs, nil
+}
+
+type getPodcastSectionForUserInput struct {
+	emailRecordID   email.ID
+	userAccessor    userPreferencesAccessor
+	podcastAccessor podcastAccessor
+	contentAccessor contentAccessor
+}
+
+func getPodcastSectionForUser(c ctx.LogContext, input getPodcastSectionForUserInput) (*Section, error) {
+	allUserTopics := input.userAccessor.getUserTopics()
+	rand.Seed(time.Now().UnixNano())
+	rand.Shuffle(len(allUserTopics), func(i, j int) { allUserTopics[i], allUserTopics[j] = allUserTopics[j], allUserTopics[i] })
+	podcastsByTopic, err := input.podcastAccessor.LookupPodcastEpisodesForTopics(allUserTopics)
+	if err != nil {
+		return nil, err
+	}
+	var numberOfPodcasts int
+	var otherLinks []SectionLink
+	var focusContent *SectionFocusContent
+	for numberOfPodcasts < maximumNumberOfPodcastsPerEmail && len(podcastsByTopic) > 0 {
+		for topicID, episodes := range podcastsByTopic {
+			episode := episodes[0]
+			podcastMetadata, err := input.podcastAccessor.GetPodcastMetadataForSourceID(episode.SourceID)
+			switch {
+			case err != nil:
+				c.Errorf("Error getting podcast metadata for podcast %s: %s", episode.SourceID, err.Error())
+			case focusContent == nil && podcastMetadata.ImageURL != nil:
+				podcastLink, err := makeLinkFromPodcast(c, input.podcastAccessor, input.contentAccessor, episode, input.emailRecordID)
+				if err != nil {
+					return nil, err
+				}
+				focusContent = &SectionFocusContent{
+					Title:       podcastLink.EpisodeTitle,
+					ImageURL:    *podcastLink.PodcastImageURL,
+					Description: podcastLink.EpisodeDescription,
+					URL:         podcastLink.ListenURL,
+				}
+				numberOfPodcasts++
+			case len(otherLinks) < maximumNumberOfPodcastsPerEmail-1:
+				podcastLink, err := makeLinkFromPodcast(c, input.podcastAccessor, input.contentAccessor, episode, input.emailRecordID)
+				if err != nil {
+					return nil, err
+				}
+				otherLinks = append(otherLinks, SectionLink{
+					Title: podcastLink.EpisodeTitle,
+					URL:   podcastLink.ListenURL,
+				})
+				numberOfPodcasts++
+			default:
+				// no-op
+			}
+			nextEpisodes := append([]podcasts.Episode{}, episodes[1:]...)
+			podcastsByTopic[topicID] = nextEpisodes
+			if len(nextEpisodes) == 0 {
+				delete(podcastsByTopic, topicID)
+			}
+		}
+	}
+	if len(otherLinks) == 0 && focusContent == nil {
+		return nil, nil
+	}
+	// TODO: make this dynamic
+	return &Section{
+		Title:           "Podcasts para ti",
+		FocusContent:    focusContent,
+		OtherLinks:      otherLinks,
+		OtherLinksTitle: ptr.String("Otros episodios"),
+	}, nil
 }
 
 func isDocumentFocusContentEligible(doc documents.Document) bool {
