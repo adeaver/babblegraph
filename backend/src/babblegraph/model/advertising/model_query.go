@@ -224,7 +224,7 @@ type UpdateCampaignInput struct {
 }
 
 func UpdateCampaign(tx *sqlx.Tx, id CampaignID, input UpdateCampaignInput) error {
-	if err := experiment.SetCurrentStepForExperiment(tx, getExperimentNameForCampaignID(id), decimal.FromInt64(input.RolloutPercentage)); err != nil {
+	if err := experiment.SetCurrentStepForExperiment(tx, getExperimentNameForCampaignID(id), decimal.FromInt64(input.RolloutPercentage), false); err != nil {
 		return err
 	}
 	if _, err := tx.Exec(editCampaignByIDQuery, input.VendorID, input.SourceID, input.URL.URL, input.IsActive, input.ShouldApplyToAllUsers, input.Name, input.ExpiresAt, id); err != nil {

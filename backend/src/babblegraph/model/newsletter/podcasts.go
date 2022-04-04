@@ -78,7 +78,7 @@ func (d *DefaultPodcastAccessor) LookupPodcastEpisodesForTopics(topicIDs []conte
 			ValidSourceIDs:          d.validSourceIDs,
 			TopicID:                 t,
 			IncludeExplicitPodcasts: d.userNewsletterPreferences.PodcastPreferences.IncludeExplicitPodcasts,
-			MinDurationNanoseconds:  d.userNewsletterPreferences.PodcastPreferences.MaximumDurationNanoseconds,
+			MinDurationNanoseconds:  d.userNewsletterPreferences.PodcastPreferences.MinimumDurationNanoseconds,
 			MaxDurationNanoseconds:  d.userNewsletterPreferences.PodcastPreferences.MaximumDurationNanoseconds,
 		})
 		if err != nil {

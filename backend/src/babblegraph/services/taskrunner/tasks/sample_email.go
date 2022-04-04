@@ -58,7 +58,7 @@ func SendSampleNewsletter(cl *ses.Client, emailAddress string) error {
 	}
 }
 
-func createNewsletter(c ctx.LogContext, tx *sqlx.Tx, userID users.UserID, emailRecordID email.ID) (*newsletter.Newsletter, error) {
+func createNewsletter(c ctx.LogContext, tx *sqlx.Tx, userID users.UserID, emailRecordID email.ID) (*newsletter.NewsletterVersion2, error) {
 	emailAccessor := newsletter.GetDefaultEmailAccessor(tx)
 	documentAccessor := newsletter.GetDefaultDocumentsAccessor()
 	utcMidnight := timeutils.ConvertToMidnight(time.Now().UTC())
@@ -88,8 +88,7 @@ func createNewsletter(c ctx.LogContext, tx *sqlx.Tx, userID users.UserID, emailR
 	if err != nil {
 		return nil, err
 	}
-	return newsletter.CreateNewsletter(c, newsletter.CreateNewsletterInput{
-		DateOfSendMidnightUTC: utcMidnight,
+	return newsletter.CreateNewsletterVersion2(c, utcMidnight, newsletter.CreateNewsletterVersion2Input{
 		WordsmithAccessor:     newsletter.GetDefaultWordsmithAccessor(),
 		EmailAccessor:         emailAccessor,
 		UserAccessor:          userAccessor,
@@ -100,12 +99,12 @@ func createNewsletter(c ctx.LogContext, tx *sqlx.Tx, userID users.UserID, emailR
 	})
 }
 
-func createNewsletterHTMLAndSend(emailClient *ses.Client, tx *sqlx.Tx, emailAddress string, userID users.UserID, emailRecordID email.ID, newsletterBody newsletter.NewsletterBody) error {
+func createNewsletterHTMLAndSend(emailClient *ses.Client, tx *sqlx.Tx, emailAddress string, userID users.UserID, emailRecordID email.ID, newsletterBody newsletter.NewsletterVersion2Body) error {
 	userAccessor, err := emailtemplates.GetDefaultUserAccessor(tx, userID)
 	if err != nil {
 		return err
 	}
-	newsletterHTML, err := emailtemplates.MakeNewsletterHTML(emailtemplates.MakeNewsletterHTMLInput{
+	newsletterHTML, err := emailtemplates.MakeNewsletterVersion2HTML(emailtemplates.MakeNewsletterVersion2HTMLInput{
 		EmailRecordID: emailRecordID,
 		UserAccessor:  userAccessor,
 		Body:          newsletterBody,
