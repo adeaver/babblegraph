@@ -31,7 +31,7 @@ const (
         experiments_user_variations (
             experiment_id, user_id, in_variation, in_experiment, accessed_at_step
         ) VALUES (
-            $1, $2, $3, $4
+            $1, $2, $3, $4, $5
         ) ON CONFLICT (experiment_id, user_id) DO UPDATE SET
             in_variation = $3,
             in_experiment = $4,

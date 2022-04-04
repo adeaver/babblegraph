@@ -2,6 +2,7 @@ package main
 
 import (
 	"babblegraph/model/documents"
+	"babblegraph/model/newsletter"
 	"babblegraph/model/podcasts"
 	"babblegraph/services/worker/contentingestion"
 	"babblegraph/services/worker/newsletterprocessing"
@@ -39,13 +40,16 @@ func main() {
 		bglog.Fatalf("Error initializing sentry: %s", err.Error())
 	}
 	defer sentry.Flush(2 * time.Second)
+	if err := newsletter.InitializeNewsletterExperiments(); err != nil {
+		bglog.Fatalf("Error initializing newsletter experiments: %s", err.Error())
+	}
 	ingestErrs := make(chan error, 1)
+	schedulerErrs := make(chan error, 1)
 	if currentEnvironmentName != env.EnvironmentLocalTestEmail {
 		async.WithContext(ingestErrs, "link-processor", contentingestion.StartIngestion()).Start()
-	}
-	schedulerErrs := make(chan error, 1)
-	if err := scheduler.StartScheduler(schedulerErrs); err != nil {
-		bglog.Fatalf("Error initializing scheduler: %s", err.Error())
+		if err := scheduler.StartScheduler(schedulerErrs); err != nil {
+			bglog.Fatalf("Error initializing scheduler: %s", err.Error())
+		}
 	}
 	newsletterProcessor, err := newsletterprocessing.CreateNewsletterProcessor(ctx.GetDefaultLogContext())
 	if err != nil {
