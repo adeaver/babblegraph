@@ -5,6 +5,7 @@ import (
 	"babblegraph/util/math/decimal"
 	"fmt"
 	"math/rand"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -127,6 +128,7 @@ func IsUserInVariation(tx *sqlx.Tx, experimentName string, userID users.UserID, 
 			return false, fmt.Errorf("Expected at most one user variation entry for ID %s, but got %d", userID, len(matches))
 		case len(matches) == 0 && experiment.IsActive:
 			var inExperiment, inVariation bool
+			rand.Seed(time.Now().UnixNano())
 			experimentRoll := rand.Int63n(100)
 			inExperiment = experimentRoll < experiment.CurrentStep*2
 			if inExperiment {
@@ -141,6 +143,7 @@ func IsUserInVariation(tx *sqlx.Tx, experimentName string, userID users.UserID, 
 			isUserInVariation := matches[0].InVariation && (experiment.IsActive || overrideInactiveExperiment)
 			if !isUserInVariation && experiment.IsActive && matches[0].AccessedAtStep != experiment.CurrentStep {
 				var isUserInExperiment bool
+				rand.Seed(time.Now().UnixNano())
 				experimentProbability := decimal.FromInt64(experiment.CurrentStep * 2).Divide(decimal.FromInt64(100 - experiment.PreviousStep*2))
 				experimentRoll := rand.Int63n(100)
 				isUserInExperiment = experimentRoll < experimentProbability.ToInt64Rounded()
