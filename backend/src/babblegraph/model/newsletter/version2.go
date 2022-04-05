@@ -463,7 +463,10 @@ func getPodcastSectionForUser(c ctx.LogContext, input getPodcastSectionForUserIn
 
 func isDocumentFocusContentEligible(doc documents.Document) bool {
 	documentMetadata := doc.Metadata
-	return documentMetadata.Image != nil && documentMetadata.Title != nil && documentMetadata.Description != nil
+	hasImage := documentMetadata.Image != nil && len(*documentMetadata.Image) > 0
+	hasTitle := documentMetadata.Title != nil && len(*documentMetadata.Title) > 0
+	hasDescription := documentMetadata.Description != nil && len(*documentMetadata.Description) > 0
+	return hasImage && hasTitle && hasDescription
 }
 
 func getSectionTopicsForUser(accessor userPreferencesAccessor, contentAccessor contentAccessor) []content.TopicID {
