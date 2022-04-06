@@ -1,3 +1,4 @@
+import json
 from typing import NamedTuple
 
 from reader import Reader
@@ -8,42 +9,79 @@ from util import (
     make_part_of_speech_id
 )
 
-START_TOKEN = StartToken()
-MINIMUM_WORD_COUNT = 2
-MINIMUM_BIGRAM_COUNT = 10
-
 TOKEN_AL = SpecialToken(
-    "al",
-    "espos1sps00",
-    "espos1s-eslm1a"
+     "al",
+     "espos1sps00",
+     "espos1s-eslm1a"
 )
 TOKEN_DEL = SpecialToken(
-    "del",
-    "espos1sps00",
-    "espos1s-eslm1de"
+     "del",
+     "espos1sps00",
+     "espos1s-eslm1de"
 )
 
-observed_parts_of_speech = {
-    START_TOKEN.get_token(): START_TOKEN.get_part_of_speech_id()
-}
-observed_lemmas = {
-    START_TOKEN.get_lemma_key(): START_TOKEN.get_lemma_id(),
-    TOKEN_DEL.get_lemma_key(): TOKEN_DEL.get_lemma_id(),
-    TOKEN_AL.get_lemma_key(): TOKEN_AL.get_lemma_id(),
-}
-observed_words = {
-    START_TOKEN.get_word_key(): START_TOKEN.get_word_key_value(),
-    TOKEN_DEL.get_word_key(): TOKEN_DEL.get_word_key_value(),
-    TOKEN_AL.get_word_key(): TOKEN_AL.get_word_key_value(),
+START_TOKEN = StartToken()
+MINIMUM_WORD_COUNT = 4
+MINIMUM_BIGRAM_COUNT = 10
 
-}
+observed_parts_of_speech = {}
+observed_lemmas = {}
+observed_words = {}
 bigram_counts = {}
-current_bigram = [START_TOKEN.get_word_key(), START_TOKEN.get_word_key()]
-lemma_counts = {
-    START_TOKEN.get_lemma_key(): MINIMUM_WORD_COUNT + 1,
-    TOKEN_DEL.get_lemma_key(): MINIMUM_WORD_COUNT + 1,
-    TOKEN_AL.get_lemma_key(): MINIMUM_WORD_COUNT + 1,
-}
+current_bigram = []
+lemma_counts = {}
+current_doc_count = 0
+max_doc_count = 5
+
+
+def _reset():
+    global observed_parts_of_speech
+    global observed_lemmas
+    global observed_words
+    global bigram_counts
+    global current_bigram
+    global lemma_counts
+    observed_parts_of_speech = {
+        START_TOKEN.get_token(): START_TOKEN.get_part_of_speech_id()
+    }
+    observed_lemmas = {
+        START_TOKEN.get_lemma_key(): START_TOKEN.get_lemma_id(),
+        TOKEN_DEL.get_lemma_key(): TOKEN_DEL.get_lemma_id(),
+        TOKEN_AL.get_lemma_key(): TOKEN_AL.get_lemma_id(),
+    }
+    observed_words = {
+        START_TOKEN.get_word_key(): START_TOKEN.get_word_key_value(),
+        TOKEN_DEL.get_word_key(): TOKEN_DEL.get_word_key_value(),
+        TOKEN_AL.get_word_key(): TOKEN_AL.get_word_key_value(),
+    }
+    bigram_counts = {}
+    current_bigram = [START_TOKEN.get_word_key(), START_TOKEN.get_word_key()]
+    lemma_counts = {
+        START_TOKEN.get_lemma_key(): MINIMUM_WORD_COUNT + 1,
+        TOKEN_DEL.get_lemma_key(): MINIMUM_WORD_COUNT + 1,
+        TOKEN_AL.get_lemma_key(): MINIMUM_WORD_COUNT + 1,
+    }
+
+
+def handle_end_of_doc():
+    global current_doc_count
+    current_doc_count += 1
+    print(f"Current count {current_doc_count}")
+    if current_doc_count % max_doc_count == 0:
+        # Dump and reset
+        dump_file_number = current_doc_count // max_doc_count
+        with open(f"/out/observed_lemmas_{dump_file_number}.json", "w") as f:
+            json.dump(observed_lemmas, f)
+        with open(f"/out/lemma_counts_{dump_file_number}.json", "w") as f:
+            json.dump(lemma_counts, f)
+        with open(f"/out/observed_words_{dump_file_number}.json", "w") as f:
+            json.dump(observed_words, f)
+        with open(f"/out/observed_parts_of_speech_{dump_file_number}.json", "w") as f:
+            json.dump(observed_parts_of_speech, f)
+        with open(f"/out/bigram_counts_{dump_file_number}.json", "w") as f:
+            json.dump(bigram_counts, f)
+        _reset()
+
 
 def get_data_from_read():
     filtered_lemmas, filtered_words, filtered_bigrams  = _filter_data(lemma_counts, observed_lemmas, observed_words, bigram_counts)
@@ -199,6 +237,7 @@ def _filter_data(lemma_counts, observed_lemmas, observed_words, observed_bigrams
     filtered_bigrams = { bigram_key: value for bigram_key, value in observed_bigrams.items() if value >= MINIMUM_BIGRAM_COUNT and not _should_filter_bigram(bigram_key, filtered_words) }
     return filtered_lemmas, filtered_words, filtered_bigrams
 
+_reset()
 corpus_reader = Reader(
     text_fn=process_text_line,
     get_data_fn=get_data_from_read,

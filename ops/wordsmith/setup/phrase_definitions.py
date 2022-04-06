@@ -1,4 +1,4 @@
-import uuid
+import uuid, json
 from corpus_read_defs import corpus_reader, TOKEN_AL, TOKEN_DEL
 
 import re
@@ -34,23 +34,45 @@ def _get_words_from_xml(file_name):
             definition=defn,
         )
 
-
-def _get_words_data(observed_lemmas, observed_words):
+def _get_lemmas_by_lemma_id():
+    with open("/out/observed_lemmas__chunked_0.json", "r") as f:
+        observed_lemmas = json.loads(f.read())
+    with open("/out/lemma_counts__chunked_0.json", "r") as f:
+        lemma_counts = json.loads(f.read())
     lemmas_by_lemma_id = {}
+    new_lemmas, filtered_lemmas = {}, {}
     for lemma_key, lemma_id in observed_lemmas.items():
+        count_for_lemma = lemma_counts.get(lemma_key, 0)
+        if count_for_lemma < 4:
+            continue
+        elif count_for_lemma >= 4 or count_for_lemma < 10:
+            new_lemmas[lemma_key] = lemma_id
+        filtered_lemmas[lemma_key] = lemma_id
         lemma, _ = lemma_key.split(",")
         lemmas = lemmas_by_lemma_id.get(lemma_id, [])
         lemmas.append(lemma)
         lemmas_by_lemma_id[lemma_id] = lemmas
+    return lemmas_by_lemma_id, filtered_lemmas, new_lemmas
+
+def _get_words_to_lemma_id(filtered_lemmas):
+    with open("/out/observed_words__chunked_0.json", "r") as f:
+        observed_words = json.loads(f.read())
     words_to_lemma_id = {}
     for word_key, word_value in observed_words.items():
         word_text, _ = word_key.split(",")
         value_parts = word_value.split(",")
         lemma_key = ",".join(value_parts[1:])
+        if filtered_lemmas.get(lemma_key, None) is None:
+            continue
         lemma_ids = words_to_lemma_id.get(word_text, [])
-        lemma_ids.append(observed_lemmas[lemma_key])
+        lemma_ids.append(filtered_lemmas[lemma_key])
         words_to_lemma_id[word_text] = lemma_ids
-    return words_to_lemma_id, lemmas_by_lemma_id
+    return words_to_lemma_id
+
+def _get_words_data():
+    lemmas_by_lemma_id, filtered_lemmas, new_lemmas = _get_lemmas_by_lemma_id()
+    words_to_lemma_id = _get_words_to_lemma_id(filtered_lemmas)
+    return lemmas_by_lemma_id, words_to_lemma_id, new_lemmas
 
 def _make_lemma_phrases(start, lemmas):
     if len(lemmas) == 0:
@@ -133,15 +155,27 @@ for w in _get_words_from_xml("./data-defs/es-en.xml"):
         continue
     phrases.append(w)
 
-for data in corpus_reader.read_data_yielding():
-    observed_lemmas, observed_words, _, _ = data
-    words_to_lemma_id, lemmas_by_lemma_id = _get_words_data(observed_lemmas, observed_words)
-    new_phrases = []
-    for phrase in phrases:
-        file_number = inserted_lines // MAX_CHUNK
-        p, added_lines = _process_phrase(file_number, words_to_lemma_id, lemmas_by_lemma_id, phrase)
-        if p is not None:
-            new_phrases.append(p)
-        inserted_lines += added_lines
-    print(f"Completed {len(phrases) - len(new_phrases)}, remaining {len(new_phrases)}")
-    phrases = new_phrases[:]
+lemmas_by_lemma_id, words_to_lemma_id, new_lemmas = _get_words_data()
+with open("/out/observed_parts_of_speech__chunked_0.json", "r") as f:
+    observed_parts_of_speech = json.loads(f.read())
+with open("/out/phrase-definitions-0.sql", "a") as f:
+    for lemma_key, _id in new_lemmas.items():
+        lemma_text, part_of_speech = lemma_key.split(",")
+        print(f"New lemma {lemma_text} with part of speech {part_of_speech}")
+        if observed_parts_of_speech.get(part_of_speech, None) is None:
+            continue
+        part_of_speech_id = observed_parts_of_speech[part_of_speech]
+        f.write(f"""INSERT INTO
+            \"public\".lemmas (
+                _id, corpus_id, language, lemma_text, part_of_speech_id
+            ) VALUES (
+                {_id}, {CORPUS[1]}, {LANGUAGE}, {lemma_text}, {part_of_speech_id})
+            )\n\n""")
+
+new_phrases = []
+for phrase in phrases:
+    file_number = inserted_lines // MAX_CHUNK
+    p, added_lines = _process_phrase(file_number, words_to_lemma_id, lemmas_by_lemma_id, phrase)
+    if p is not None:
+        new_phrases.append(p)
+    inserted_lines += added_lines
