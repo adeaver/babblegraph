@@ -60,10 +60,11 @@ def _get_lemmas_by_lemma_id():
         lemmas_by_lemma_id[lemma_id] = lemmas
     return lemmas_by_lemma_id, filtered_lemmas, new_lemmas
 
-def _get_words_to_lemma_id(filtered_lemmas, new_lemmas):
+def _get_words_to_lemma_id(observed_parts_of_speech, filtered_lemmas, new_lemmas):
     with open("/out/observed_words__chunked_0.json", "r") as f:
         observed_words = json.loads(f.read())
     words_to_lemma_id = {}
+    new_words = {}
     for word_key, word_value in observed_words.items():
         word_text, _ = word_key.split(",")
         value_parts = word_value.split(",")
@@ -71,15 +72,33 @@ def _get_words_to_lemma_id(filtered_lemmas, new_lemmas):
         if filtered_lemmas.get(lemma_key, None) is None:
             continue
         if new_lemmas.get(lemma_key, None) is not None:
-            print(f"Adding word {word_text}")
+            new_words[word_key] = word_value
         lemma_ids = words_to_lemma_id.get(word_text, [])
         lemma_ids.append(filtered_lemmas[lemma_key])
         words_to_lemma_id[word_text] = lemma_ids
+    with open("/out/phrase-definitions-0.sql", "a") as f:
+        for word_key, word_value in new_words.items():
+            external_key = observed_words.get(word_key, None)
+            if external_key is None:
+                continue
+            word_text, part_of_speech = word_key.split(",")
+            external_key_parts = external_key.split(",")
+            lemma_key = ",".join(external_key_parts[1:])
+            word_id = external_key_parts[0]
+            lemma_id = filtered_lemmas[lemma_key]
+            if part_of_speech not in observed_parts_of_speech:
+                continue
+            part_of_speech_id = observed_parts_of_speech[part_of_speech]
+            f.write(f"""INSERT INTO \"public\".words (
+                _id, language, corpus_id, part_of_speech_id, lemma_id, word_text
+            ) VALUES (
+                {word_id}, {LANGUAGE}, {CORPUS[1]}, {part_of_speech_id}, {lemma_id}, {word_text}
+            )\n\n""")
     return words_to_lemma_id
 
-def _get_words_data():
+def _get_words_data(observed_parts_of_speech):
     lemmas_by_lemma_id, filtered_lemmas, new_lemmas = _get_lemmas_by_lemma_id()
-    words_to_lemma_id = _get_words_to_lemma_id(filtered_lemmas, new_lemmas)
+    words_to_lemma_id = _get_words_to_lemma_id(observed_parts_of_speech, filtered_lemmas, new_lemmas)
     return lemmas_by_lemma_id, words_to_lemma_id, new_lemmas
 
 def _make_lemma_phrases(start, lemmas):
@@ -170,13 +189,12 @@ for w in _get_words_from_xml("./data-defs/es-en.xml"):
         part_of_speech=w.part_of_speech,
     ))
 
-lemmas_by_lemma_id, words_to_lemma_id, new_lemmas = _get_words_data()
 with open("/out/observed_parts_of_speech__chunked_0.json", "r") as f:
     observed_parts_of_speech = json.loads(f.read())
+lemmas_by_lemma_id, words_to_lemma_id, new_lemmas = _get_words_data(observed_parts_of_speech)
 with open("/out/phrase-definitions-0.sql", "a") as f:
     for lemma_key, _id in new_lemmas.items():
         lemma_text, part_of_speech = lemma_key.split(",")
-        print(f"New lemma {lemma_text} with part of speech {part_of_speech}")
         if observed_parts_of_speech.get(part_of_speech, None) is None:
             continue
         part_of_speech_id = observed_parts_of_speech[part_of_speech]
