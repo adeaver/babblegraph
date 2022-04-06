@@ -1,4 +1,5 @@
 import uuid, json
+from phrase_definitions_filters import DEFINITIONS_TO_FILTER
 from corpus_read_defs import corpus_reader, TOKEN_AL, TOKEN_DEL
 
 import re
@@ -34,6 +35,9 @@ def _get_words_from_xml(file_name):
             definition=defn,
         )
 
+MINIMUM_COUNT = 7
+FORMER_MINIMUM_COUNT = 10
+
 def _get_lemmas_by_lemma_id():
     with open("/out/observed_lemmas__chunked_0.json", "r") as f:
         observed_lemmas = json.loads(f.read())
@@ -43,18 +47,20 @@ def _get_lemmas_by_lemma_id():
     new_lemmas, filtered_lemmas = {}, {}
     for lemma_key, lemma_id in observed_lemmas.items():
         count_for_lemma = lemma_counts.get(lemma_key, 0)
-        if count_for_lemma < 4:
+        if count_for_lemma < MINIMUM_COUNT:
             continue
-        elif count_for_lemma >= 4 or count_for_lemma < 10:
+        elif count_for_lemma >= MINIMUM_COUNT or count_for_lemma < FORMER_MINIMUM_COUNT:
             new_lemmas[lemma_key] = lemma_id
         filtered_lemmas[lemma_key] = lemma_id
         lemma, _ = lemma_key.split(",")
+        if lemma == "<<START>>":
+            continue
         lemmas = lemmas_by_lemma_id.get(lemma_id, [])
         lemmas.append(lemma)
         lemmas_by_lemma_id[lemma_id] = lemmas
     return lemmas_by_lemma_id, filtered_lemmas, new_lemmas
 
-def _get_words_to_lemma_id(filtered_lemmas):
+def _get_words_to_lemma_id(filtered_lemmas, new_lemmas):
     with open("/out/observed_words__chunked_0.json", "r") as f:
         observed_words = json.loads(f.read())
     words_to_lemma_id = {}
@@ -64,6 +70,8 @@ def _get_words_to_lemma_id(filtered_lemmas):
         lemma_key = ",".join(value_parts[1:])
         if filtered_lemmas.get(lemma_key, None) is None:
             continue
+        if new_lemmas.get(lemma_key, None) is not None:
+            print(f"Adding word {word_text}")
         lemma_ids = words_to_lemma_id.get(word_text, [])
         lemma_ids.append(filtered_lemmas[lemma_key])
         words_to_lemma_id[word_text] = lemma_ids
@@ -71,7 +79,7 @@ def _get_words_to_lemma_id(filtered_lemmas):
 
 def _get_words_data():
     lemmas_by_lemma_id, filtered_lemmas, new_lemmas = _get_lemmas_by_lemma_id()
-    words_to_lemma_id = _get_words_to_lemma_id(filtered_lemmas)
+    words_to_lemma_id = _get_words_to_lemma_id(filtered_lemmas, new_lemmas)
     return lemmas_by_lemma_id, words_to_lemma_id, new_lemmas
 
 def _make_lemma_phrases(start, lemmas):
@@ -153,7 +161,14 @@ phrases = []
 for w in _get_words_from_xml("./data-defs/es-en.xml"):
     if " " not in w.word_text:
         continue
-    phrases.append(w)
+    text, definition = DEFINITIONS_TO_FILTER.get(w.word_text, (w.word_text, w.definition))
+    if text is None:
+        continue
+    phrases.append(WordDefinition(
+        word_text=text,
+        definition=definition,
+        part_of_speech=w.part_of_speech,
+    ))
 
 lemmas_by_lemma_id, words_to_lemma_id, new_lemmas = _get_words_data()
 with open("/out/observed_parts_of_speech__chunked_0.json", "r") as f:

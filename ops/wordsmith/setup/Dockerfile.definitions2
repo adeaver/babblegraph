@@ -18,5 +18,6 @@ COPY special_tokens.py .
 # COPY definitions_process.py .
 # COPY definitions_part_of_speech.py .
 COPY phrase_definitions.py .
+COPY phrase_definitions_filters.py .
 
 CMD [ "python", "-u", "phrase_definitions.py" ]
