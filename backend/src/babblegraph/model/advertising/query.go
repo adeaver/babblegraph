@@ -183,28 +183,15 @@ func joinPossibleAdvertisements(c ctx.LogContext, userAdvertisements []dbUserAdv
 	if len(advertisementMatches) == 0 {
 		return nil, nil
 	}
+	weightsByCampaign := calculateWeightsForSeenAds(userAdvertisements)
 	adsByCampaignID := make(map[CampaignID][]dbAdvertisement)
-	weightsByCampaign := make(map[CampaignID]int)
-	for _, userAdvertisement := range userAdvertisements {
-		weight, ok := weightsByCampaign[userAdvertisement.CampaignID]
-		if !ok {
-			weight = defaultWeight
-		}
-		weeksSinceAdAppeared := int(time.Now().Sub(userAdvertisement.CreatedAt) / (7 * 24 * time.Hour))
-		weightsByCampaign[userAdvertisement.CampaignID] = int2.MustMinInt(weight, int2.MustMaxInt(0, weeksSinceAdAppeared-4))
-	}
 	for _, match := range advertisementMatches {
 		adsByCampaignID[match.CampaignID] = append(adsByCampaignID[match.CampaignID], match)
 		if _, ok := weightsByCampaign[match.CampaignID]; !ok {
 			weightsByCampaign[match.CampaignID] = defaultWeight
 		}
 	}
-	var weightedCampaignIDs []CampaignID
-	for campaignID, weight := range weightsByCampaign {
-		for i := 0; i < weight; i++ {
-			weightedCampaignIDs = append(weightedCampaignIDs, campaignID)
-		}
-	}
+	weightedCampaignIDs := getWeightedCampaignIDs(weightsByCampaign)
 	rand.Seed(time.Now().UnixNano())
 	idx := rand.Intn(len(weightedCampaignIDs))
 	campaignID := weightedCampaignIDs[idx]
@@ -216,6 +203,29 @@ func joinPossibleAdvertisements(c ctx.LogContext, userAdvertisements []dbUserAdv
 	adIdx := rand.Intn(len(advertisements))
 	ad := advertisements[adIdx].ToNonDB()
 	return &ad, nil
+}
+
+func calculateWeightsForSeenAds(userAdvertisements []dbUserAdvertisement) map[CampaignID]int {
+	weightsByCampaign := make(map[CampaignID]int)
+	for _, userAdvertisement := range userAdvertisements {
+		weight, ok := weightsByCampaign[userAdvertisement.CampaignID]
+		if !ok {
+			weight = defaultWeight
+		}
+		weeksSinceAdAppeared := int(time.Now().Sub(userAdvertisement.CreatedAt) / (7 * 24 * time.Hour))
+		weightsByCampaign[userAdvertisement.CampaignID] = int2.MustMinInt(weight, int2.MustMaxInt(0, weeksSinceAdAppeared-4))
+	}
+	return weightsByCampaign
+}
+
+func getWeightedCampaignIDs(weightsByCampaign map[CampaignID]int) []CampaignID {
+	var weightedCampaignIDs []CampaignID
+	for campaignID, weight := range weightsByCampaign {
+		for i := 0; i < weight; i++ {
+			weightedCampaignIDs = append(weightedCampaignIDs, campaignID)
+		}
+	}
+	return weightedCampaignIDs
 }
 
 func getFullListOfIneligibleCampaignIDs(c ctx.LogContext, tx *sqlx.Tx, topic *content.TopicID, ineligibleCampaignIDs []CampaignID) (map[CampaignID]bool, error) {
