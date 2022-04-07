@@ -34,7 +34,7 @@ func LookupPremiumNewsletterSubscriptionForUser(c ctx.LogContext, tx *sqlx.Tx, u
 	case err != nil:
 		return nil, err
 	case billingInformation == nil:
-		return nil, fmt.Errorf("Expected there to be a billing information for user %s, but none exists", userID)
+		return nil, nil
 	}
 	return lookupActivePremiumNewsletterSubscriptionForUser(c, tx, *billingInformation)
 }
