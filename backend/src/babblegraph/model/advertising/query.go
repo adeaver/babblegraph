@@ -159,7 +159,7 @@ func QueryAdvertisementsForUser(c ctx.LogContext, tx *sqlx.Tx, userID users.User
 		return nil, nil
 	}
 	var userAdvertisements []dbUserAdvertisement
-	if err := tx.Select(&matches, getUserAdvertisementsByDateQuery, userID); err != nil {
+	if err := tx.Select(&userAdvertisements, getUserAdvertisementsByDateQuery, userID); err != nil {
 		return nil, err
 	}
 	query, args, err := sqlx.In(lookupAdvertisementQuery, validCampaignIDs)
