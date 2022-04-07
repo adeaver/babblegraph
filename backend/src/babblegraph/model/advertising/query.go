@@ -3,21 +3,22 @@ package advertising
 import (
 	"babblegraph/model/content"
 	"babblegraph/model/email"
-	"babblegraph/model/experiment"
 	"babblegraph/model/users"
 	"babblegraph/util/ctx"
+	"babblegraph/util/math/int2"
 	"babblegraph/wordsmith"
+	"math/rand"
 	"time"
 
 	"github.com/jmoiron/sqlx"
 )
 
 const (
-	// Roughly one week between ads
-	minimumTimeBetweenAds = 7*24*time.Hour - 3*time.Hour
+	// Roughly three days between ads
+	minimumTimeBetweenAds = 3*24*time.Hour - 3*time.Hour
 
-	// Roughly three months
-	minimumTimeBetweenAdsSameCampaign = 90 * 24 * time.Hour
+	// Roughly one month
+	minimumTimeBetweenAdsSameCampaign = 30 * 24 * time.Hour
 
 	getUserAdvertisementsByDateQuery = "SELECT * FROM advertising_user_advertisements WHERE user_id = $1 ORDER BY created_at DESC"
 	insertUserAdvertisementQuery     = "INSERT INTO advertising_user_advertisements (user_id, advertisement_id, campaign_id, email_record_id) VALUES ($1, $2, $3, $4) RETURNING _id"
@@ -151,19 +152,15 @@ func QueryAdvertisementsForUser(c ctx.LogContext, tx *sqlx.Tx, userID users.User
 			c.Debugf("Campaign ID %s is ineligible for user %s", m.CampaignID, userID)
 			continue
 		}
-		isUserInVariation, err := experiment.IsUserInVariation(tx, getExperimentNameForCampaignID(m.CampaignID), userID, false)
-		switch {
-		case err != nil:
-			return nil, err
-		case !isUserInVariation:
-			c.Debugf("User %s is not in variation for campaign id %s", userID, m.CampaignID)
-			continue
-		}
 		validCampaignIDs = append(validCampaignIDs, m.CampaignID)
 	}
 	if len(validCampaignIDs) == 0 {
 		c.Debugf("Filtered all valid advertisements")
 		return nil, nil
+	}
+	var userAdvertisements []dbUserAdvertisement
+	if err := tx.Select(&userAdvertisements, getUserAdvertisementsByDateQuery, userID); err != nil {
+		return nil, err
 	}
 	query, args, err := sqlx.In(lookupAdvertisementQuery, validCampaignIDs)
 	if err != nil {
@@ -174,13 +171,61 @@ func QueryAdvertisementsForUser(c ctx.LogContext, tx *sqlx.Tx, userID users.User
 	if err := tx.Select(&advertisementMatches, sql, args...); err != nil {
 		return nil, err
 	}
-	for _, m := range advertisementMatches {
-		if m.LanguageCode == languageCode {
-			out := m.ToNonDB()
-			return &out, nil
+	return joinPossibleAdvertisements(c, userAdvertisements, advertisementMatches)
+}
+
+const defaultWeight int = 10
+
+func joinPossibleAdvertisements(c ctx.LogContext, userAdvertisements []dbUserAdvertisement, advertisementMatches []dbAdvertisement) (*Advertisement, error) {
+	// Current idea of heuristic:
+	// All campaigns that don't have an advertisement get a weight of 10
+	// Campaigns are then weighted as follows: min(10, weeks since ad last ran - 4)
+	if len(advertisementMatches) == 0 {
+		return nil, nil
+	}
+	weightsByCampaign := calculateWeightsForSeenAds(userAdvertisements)
+	adsByCampaignID := make(map[CampaignID][]dbAdvertisement)
+	for _, match := range advertisementMatches {
+		adsByCampaignID[match.CampaignID] = append(adsByCampaignID[match.CampaignID], match)
+		if _, ok := weightsByCampaign[match.CampaignID]; !ok {
+			weightsByCampaign[match.CampaignID] = defaultWeight
 		}
 	}
-	return nil, nil
+	weightedCampaignIDs := getWeightedCampaignIDs(weightsByCampaign)
+	rand.Seed(time.Now().UnixNano())
+	idx := rand.Intn(len(weightedCampaignIDs))
+	campaignID := weightedCampaignIDs[idx]
+	advertisements, ok := adsByCampaignID[campaignID]
+	if !ok {
+		c.Warnf("Campaign ID %s selected, but there were no matching ads", campaignID)
+		return nil, nil
+	}
+	adIdx := rand.Intn(len(advertisements))
+	ad := advertisements[adIdx].ToNonDB()
+	return &ad, nil
+}
+
+func calculateWeightsForSeenAds(userAdvertisements []dbUserAdvertisement) map[CampaignID]int {
+	weightsByCampaign := make(map[CampaignID]int)
+	for _, userAdvertisement := range userAdvertisements {
+		weight, ok := weightsByCampaign[userAdvertisement.CampaignID]
+		if !ok {
+			weight = defaultWeight
+		}
+		weeksSinceAdAppeared := int(time.Now().Sub(userAdvertisement.CreatedAt) / (7 * 24 * time.Hour))
+		weightsByCampaign[userAdvertisement.CampaignID] = int2.MustMinInt(weight, int2.MustMaxInt(0, weeksSinceAdAppeared-4))
+	}
+	return weightsByCampaign
+}
+
+func getWeightedCampaignIDs(weightsByCampaign map[CampaignID]int) []CampaignID {
+	var weightedCampaignIDs []CampaignID
+	for campaignID, weight := range weightsByCampaign {
+		for i := 0; i < weight; i++ {
+			weightedCampaignIDs = append(weightedCampaignIDs, campaignID)
+		}
+	}
+	return weightedCampaignIDs
 }
 
 func getFullListOfIneligibleCampaignIDs(c ctx.LogContext, tx *sqlx.Tx, topic *content.TopicID, ineligibleCampaignIDs []CampaignID) (map[CampaignID]bool, error) {
