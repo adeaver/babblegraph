@@ -10,6 +10,7 @@ import RadioGroup from '@material-ui/core/RadioGroup';
 import Snackbar from '@material-ui/core/Snackbar';
 
 import Alert from 'common/components/Alert/Alert';
+import Color from 'common/styles/colors';
 import CenteredComponent from 'common/components/CenteredComponent/CenteredComponent';
 import DisplayCard from 'common/components/DisplayCard/DisplayCard';
 import DisplayCardHeader from 'common/components/DisplayCard/DisplayCardHeader';
@@ -22,6 +23,7 @@ import Form from 'common/components/Form/Form';
 import { PrimaryTextField } from 'common/components/TextField/TextField';
 import { PrimaryButton } from 'common/components/Button/Button';
 import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
+import Link from 'common/components/Link/Link';
 
 import { ClientError } from 'ConsumerWeb/api/clienterror';
 import { WordsmithLanguageCode } from 'common/model/language/language';
@@ -75,6 +77,12 @@ const errorMessages = {
 }
 
 const styleClasses = makeStyles({
+    premiumSubscriptionBox: {
+        border: `solid 2px ${Color.Primary}`,
+        margin: '10px 0',
+        padding: '10px',
+        borderRadius: '5px',
+    },
     toggleContainer: {
         display: 'flex',
         flexDirection: 'column',
@@ -341,76 +349,86 @@ const UserNewsletterPreferencesDisplay = asBaseComponent<GetUserNewsletterPrefer
                                 onClick={() => {setIsLemmaSpotlightActive(!isLemmaSpotlightActive)}}
                                 disabled={isLoading} />
                         </Grid>
-                        {
-                            !!props.userProfile.subscriptionLevel && (
-                                <Grid item xs={12}>
-                                    <Heading2
-                                        align={Alignment.Left}>
-                                        Podcast Settings
-                                    </Heading2>
-                                    <Grid container>
-                                        <Grid item xs={10} xl={11}>
-                                            <Heading4 align={Alignment.Left} color={TypographyColor.Primary}>
-                                                Would you like to include podcasts in your newsletter?
-                                            </Heading4>
-                                            <Paragraph align={Alignment.Left}>
-                                                With your premium subscription, Babblegraph will send you podcasts. But if you don’t want podcasts in your newsletter, you can disable it here.
+                        <Grid item xs={12}>
+                            <Heading2
+                                align={Alignment.Left}>
+                                Podcast Settings
+                            </Heading2>
+                            <Grid container>
+                                {
+                                    !props.userProfile.subscriptionLevel && (
+                                        <Grid className={classes.premiumSubscriptionBox} item xs={12}>
+                                            <Paragraph color={TypographyColor.Primary}>
+                                                I hear that Babblegraph Premium subscribers get to practice their listening with podcasts.
                                             </Paragraph>
-                                        </Grid>
-                                        <Grid item
-                                            className={classes.toggleContainer}
-                                            xs={2}
-                                            xl={1}>
-                                            <PrimarySwitch
-                                                checked={arePodcastsEnabled}
-                                                onClick={() => {setArePodcastsEnabled(!arePodcastsEnabled)}}
-                                                disabled={isLoading} />
-                                        </Grid>
-                                        <Grid item xs={10} xl={11}>
-                                            <Heading4 align={Alignment.Left} color={TypographyColor.Primary}>
-                                                Include potentially explicit podcasts in your newsletter?
-                                            </Heading4>
-                                            <Paragraph align={Alignment.Left}>
-                                                You can disable sending podcasts that deal with explicit subjects or use explicit language in your newsletter.
+                                            <Paragraph>
+                                                With Babblegraph Premium, you’ll get podcasts about all your favorite topics in your newsletter.
                                             </Paragraph>
+                                            <Link href={`/manage/${props.subscriptionManagementToken}/premium`}>
+                                                Learn more about Babblegraph Premium here.
+                                            </Link>
                                         </Grid>
-                                        <Grid item
-                                            className={classes.toggleContainer}
-                                            xs={2}
-                                            xl={1}>
-                                            <PrimarySwitch
-                                                checked={includeExplicitPodcasts && arePodcastsEnabled}
-                                                onClick={() => {setIncludeExplicitPodcasts(!includeExplicitPodcasts)}}
-                                                disabled={!arePodcastsEnabled || isLoading} />
-
-                                        </Grid>
-                                    </Grid>
-                                    <Grid item xs={12}>
-                                        <Heading4 align={Alignment.Left} color={TypographyColor.Primary}>
-                                            What length of podcasts would you like to receive?
-                                        </Heading4>
-                                        <Paragraph align={Alignment.Left}>
-                                            Maybe you don’t have all day to listen to podcasts, or maybe you have a lot of time to fill.
-                                        </Paragraph>
-                                    </Grid>
-                                    <Grid item xs={12}>
-                                        <FormControl component="fieldset">
-                                            <RadioGroup aria-label="add-list-type" name="add-list-type1" value={podcastDuration} onChange={handleRadioFormChange}>
-                                                <Grid container>
-                                                    {
-                                                        Object.keys(PodcastDurationPreference).map((p: PodcastDurationPreference) => ((
-                                                            <Grid key={`podcast-option-${p}`} item xs={12}>
-                                                                <FormControlLabel value={PodcastDurationPreference[p]} control={<PrimaryRadio disabled={isLoading} />} label={PodcastDurationPreference[p]} />
-                                                            </Grid>
-                                                        )))
-                                                    }
-                                                </Grid>
-                                            </RadioGroup>
-                                        </FormControl>
-                                    </Grid>
+                                    )
+                                }
+                                <Grid item xs={10} xl={11}>
+                                    <Heading4 align={Alignment.Left} color={TypographyColor.Primary}>
+                                        Would you like to include podcasts in your newsletter?
+                                    </Heading4>
+                                    <Paragraph align={Alignment.Left}>
+                                        With your premium subscription, Babblegraph will send you podcasts. But if you don’t want podcasts in your newsletter, you can disable it here.
+                                    </Paragraph>
                                 </Grid>
-                            )
-                        }
+                                <Grid item
+                                    className={classes.toggleContainer}
+                                    xs={2}
+                                    xl={1}>
+                                    <PrimarySwitch
+                                        checked={arePodcastsEnabled}
+                                        onClick={() => {setArePodcastsEnabled(!arePodcastsEnabled)}}
+                                        disabled={isLoading || !props.userProfile.subscriptionLevel} />
+                                </Grid>
+                                <Grid item xs={10} xl={11}>
+                                    <Heading4 align={Alignment.Left} color={TypographyColor.Primary}>
+                                        Include potentially explicit podcasts in your newsletter?
+                                    </Heading4>
+                                    <Paragraph align={Alignment.Left}>
+                                        You can disable sending podcasts that deal with explicit subjects or use explicit language in your newsletter.
+                                    </Paragraph>
+                                </Grid>
+                                <Grid item
+                                    className={classes.toggleContainer}
+                                    xs={2}
+                                    xl={1}>
+                                    <PrimarySwitch
+                                        checked={includeExplicitPodcasts && arePodcastsEnabled}
+                                        onClick={() => {setIncludeExplicitPodcasts(!includeExplicitPodcasts)}}
+                                        disabled={!arePodcastsEnabled || isLoading || !props.userProfile.subscriptionLevel} />
+                                </Grid>
+                            </Grid>
+                            <Grid item xs={12}>
+                                <Heading4 align={Alignment.Left} color={TypographyColor.Primary}>
+                                    What length of podcasts would you like to receive?
+                                </Heading4>
+                                <Paragraph align={Alignment.Left}>
+                                    Maybe you don’t have all day to listen to podcasts, or maybe you have a lot of time to fill.
+                                </Paragraph>
+                            </Grid>
+                            <Grid item xs={12}>
+                                <FormControl component="fieldset">
+                                    <RadioGroup aria-label="add-list-type" name="add-list-type1" value={podcastDuration} onChange={handleRadioFormChange}>
+                                        <Grid container>
+                                            {
+                                                Object.keys(PodcastDurationPreference).map((p: PodcastDurationPreference) => ((
+                                                    <Grid key={`podcast-option-${p}`} item xs={12}>
+                                                        <FormControlLabel value={PodcastDurationPreference[p]} control={<PrimaryRadio disabled={isLoading || !props.userProfile.subscriptionLevel} />} label={PodcastDurationPreference[p]} />
+                                                    </Grid>
+                                                )))
+                                            }
+                                        </Grid>
+                                    </RadioGroup>
+                                </FormControl>
+                            </Grid>
+                        </Grid>
                         <Divider />
                         <Form className={classes.confirmationForm} handleSubmit={handleSubmit}>
                             <Grid container>
