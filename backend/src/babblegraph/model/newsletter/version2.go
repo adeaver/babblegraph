@@ -95,12 +95,13 @@ func CreateNewsletterVersion2(c ctx.LogContext, dateOfSendMidnightUTC time.Time,
 		return nil, err
 	}
 	spotlightRecord, err := getSpotlightLemmaForNewsletter(c, getSpotlightLemmaForNewsletterInput{
-		emailRecordID:           emailRecordID,
-		documentIDsInNewsletter: documentIDs,
-		userAccessor:            input.UserAccessor,
-		docsAccessor:            input.DocsAccessor,
-		contentAccessor:         input.ContentAccessor,
-		wordsmithAccessor:       input.WordsmithAccessor,
+		emailRecordID:                 emailRecordID,
+		documentIDsInNewsletter:       documentIDs,
+		userAccessor:                  input.UserAccessor,
+		docsAccessor:                  input.DocsAccessor,
+		contentAccessor:               input.ContentAccessor,
+		wordsmithAccessor:             input.WordsmithAccessor,
+		excludeFocusContentIneligible: true,
 	})
 	if err != nil {
 		return nil, err
