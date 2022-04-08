@@ -26,6 +26,7 @@ func RegisterClientRouter(r *mux.Router) error {
 		billing.Routes,
 		user.Routes,
 		podcasts.Routes,
+		language.Routes,
 	}); err != nil {
 		return err
 	}

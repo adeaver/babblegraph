@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { RouteComponentProps } from 'react-router-dom';
 
 import { makeStyles } from '@material-ui/core/styles';
@@ -24,6 +24,8 @@ import { TypographyColor } from 'common/typography/common';
 import Paragraph from 'common/typography/Paragraph';
 import Link from 'common/components/Link/Link';
 import Form from 'common/components/Form/Form';
+import { withCaptchaToken, loadCaptchaScript } from 'common/util/grecaptcha/grecaptcha';
+import { WordsmithLanguageCode } from 'common/model/language/language';
 
 import {
     RouteEncryptionKey,
@@ -38,8 +40,12 @@ import {
     BaseComponentProps,
 } from 'common/base/BaseComponent';
 import {
-    GetLemmasMatchingTextResponse,
-    getLemmasMatchingText
+    PartOfSpeech,
+    LanguageLookupID,
+    SearchResult,
+    SearchTextResult,
+    SearchTextResponse,
+    searchText
 } from 'ConsumerWeb/api/language/search';
 import {
     LemmaMapping,
@@ -89,6 +95,17 @@ const WordReinforcementPage = withUserProfileInformation<WordReinforcementPagePr
     (props: WordReinforcementPageProps & UserProfileComponentProps) => {
         const { token } = props.match.params;
         const [ subscriptionManagementToken ] = props.userProfile.nextTokens;
+
+        const [ hasLoadedCaptcha, setHasLoadedCaptcha ] = useState<boolean>(false);
+
+        useEffect(() => {
+            loadCaptchaScript();
+            setHasLoadedCaptcha(true);
+        }, []);
+
+        if (!hasLoadedCaptcha) {
+            return <LoadingSpinner />;
+        }
 
         return (
             <CenteredComponent>
@@ -168,6 +185,8 @@ const WordSearchForm = (props: WordSearchFormProps) => {
     const [ isLoading, setIsLoading ] = useState<boolean>(false);
     const [ errorMessage, setErrorMessage ] = useState<string>(null);
 
+    const [ searchResults, setSearchResults ] = useState<SearchResult[]>([]);
+
     const handleSubmit = () => {
         setIsLoading(true);
         const terms = searchTerm.trim().split(/ +/g);
@@ -177,7 +196,28 @@ const WordSearchForm = (props: WordSearchFormProps) => {
         } else if (terms.length == 0) {
             setIsLoading(false);
         } else {
-
+            withCaptchaToken("searchtext", (token: string) => {
+                searchText({
+                    wordReinforcementToken: props.wordReinforcementToken,
+                    languageCode: WordsmithLanguageCode.Spanish,
+                    text: terms,
+                    captchaToken: token,
+                },
+                (resp: SearchTextResponse) => {
+                    setIsLoading(false);
+                    if (!!resp.error) {
+                        setErrorMessage(wordSearchErrorMessages["default"]);
+                        setSearchResults([]);
+                        return;
+                    }
+                    setErrorMessage(null);
+                    setSearchResults(resp.result.results);
+                },
+                (err: Error) => {
+                    setIsLoading(false);
+                    setErrorMessage(wordSearchErrorMessages["default"]);
+                });
+            });
         }
     }
 
