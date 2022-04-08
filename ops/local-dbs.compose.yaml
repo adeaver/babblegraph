@@ -19,6 +19,10 @@ services:
     volumes:
       - ../deploy/wordsmith/data:/var/lib/postgresql/data
       - ./wordsmith/setup/out:/home/postgres/wordsmith-data
+      - ../deploy/wordsmith/migrations:/home/postgres/migrations
+      - ../deploy/wordsmith/scripts:/home/postgres/scripts
+    environment:
+      - MIGRATIONS_HOME=/home/postgres/migrations
     ports:
       - 5433:5432
   es01:

@@ -20,7 +20,7 @@ import {
     ConfirmationButton,
 } from 'common/components/Button/Button';
 import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
-import { TypographyColor } from 'common/typography/common';
+import { Alignment, TypographyColor } from 'common/typography/common';
 import Paragraph from 'common/typography/Paragraph';
 import Link from 'common/components/Link/Link';
 import Form from 'common/components/Form/Form';
@@ -64,6 +64,9 @@ import {
 } from 'ConsumerWeb/api/user/userlemma';
 
 const styleClasses = makeStyles({
+    container: {
+        margin: '10px 0',
+    },
     premiumSubscriptionBox: {
         border: `solid 2px ${Color.Primary}`,
         margin: '10px 0',
@@ -185,7 +188,7 @@ const WordSearchForm = (props: WordSearchFormProps) => {
     const [ isLoading, setIsLoading ] = useState<boolean>(false);
     const [ errorMessage, setErrorMessage ] = useState<string>(null);
 
-    const [ searchResults, setSearchResults ] = useState<SearchResult[]>([]);
+    const [ searchResults, setSearchResults ] = useState<SearchResult[]>(null);
 
     const handleSubmit = () => {
         setIsLoading(true);
@@ -207,11 +210,11 @@ const WordSearchForm = (props: WordSearchFormProps) => {
                     setIsLoading(false);
                     if (!!resp.error) {
                         setErrorMessage(wordSearchErrorMessages["default"]);
-                        setSearchResults([]);
+                        setSearchResults(null);
                         return;
                     }
                     setErrorMessage(null);
-                    setSearchResults(resp.result.results);
+                    setSearchResults(resp.result.results || []);
                 },
                 (err: Error) => {
                     setIsLoading(false);
@@ -219,6 +222,39 @@ const WordSearchForm = (props: WordSearchFormProps) => {
                 });
             });
         }
+    }
+
+    let body;
+    if (isLoading) {
+        body = (
+            <LoadingSpinner />
+        );
+    } else if (searchResults != null && !!searchResults.length) {
+        body = (
+            <Grid item xs={12}>
+                <Grid container>
+                {
+                    searchResults.map((r: SearchResult) => {
+                        const key = r.lookupId.id.length ? `${r.lookupId.idType}-${r.lookupId.id.join("-")}` : `${r.lookupId.idType}-${r.displayText.replace(/ +/g, "-")}`;
+                        return (
+                            <SearchResultDisplay
+                                key={key}
+                                searchResult={r}
+                                isOnlyDefinition={searchResults.length <= 1}/>
+                        )
+                    })
+                }
+                </Grid>
+            </Grid>
+        )
+    } else if (searchResults != null && !searchResults.length) {
+        body = (
+            <Grid item xs={12}>
+                <Heading3 align={Alignment.Left}>
+                    No results found
+                </Heading3>
+            </Grid>
+        )
     }
 
     const classes = styleClasses();
@@ -244,7 +280,7 @@ const WordSearchForm = (props: WordSearchFormProps) => {
                     <PrimaryTextField
                         className={classes.searchTextInput}
                         id="searchTerm"
-                        label={`Search for a word${props.hasSubscription ? " or phrase" : "."}`}
+                        label={`Search for a word${props.hasSubscription ? " or phrase" : ""}`}
                         defaultValue={searchTerm}
                         variant="outlined"
                         onChange={handleSearchTermChange} />
@@ -257,14 +293,58 @@ const WordSearchForm = (props: WordSearchFormProps) => {
                         Search
                     </PrimaryButton>
                 </Grid>
-                {
-                    isLoading && <LoadingSpinner />
-                }
+                {body}
             </Grid>
             <Snackbar open={!!errorMessage} autoHideDuration={6000} onClose={() => setErrorMessage(null)}>
                 <Alert severity="error">{errorMessage}</Alert>
             </Snackbar>
         </Form>
+    );
+}
+
+type SearchResultDisplayProps = {
+    searchResult: SearchResult;
+    isOnlyDefinition: boolean;
+}
+
+const SearchResultDisplay = (props: SearchResultDisplayProps) => {
+    const handleSubmit = () => {
+        // TODO: this
+    }
+
+    const classes = styleClasses();
+    return (
+        <Grid className={classes.container} item xs={12}>
+            <DisplayCard>
+                <Grid container>
+                    <Grid item xs={12}>
+                        <Heading3 align={Alignment.Left} color={TypographyColor.Primary}>
+                            {props.searchResult.displayText}
+                        </Heading3>
+                        <Paragraph align={Alignment.Left}>
+                            {
+                                !!props.searchResult.definitions ? (
+                                    props.searchResult.definitions.join("; ")
+                                ) : (
+                                    props.isOnlyDefinition ? (
+                                        "We couldn’t find a definition for the phrase, but you can add a study note and keep it on your vocabulary list."
+                                    ) : (
+                                        "Don’t see what you’re looking for here? You can add this as a study note and keep it on your vocabulary list."
+                                    )
+                                )
+                            }
+                        </Paragraph>
+                    </Grid>
+                    <Grid item xs={12} md={4}>
+                        <PrimaryButton
+                            className={classes.submitButton}
+                            onClick={handleSubmit}>
+                            Add to your vocabulary list
+                        </PrimaryButton>
+                    </Grid>
+                </Grid>
+            </DisplayCard>
+        </Grid>
     );
 }
 

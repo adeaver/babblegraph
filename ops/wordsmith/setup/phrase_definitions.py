@@ -92,8 +92,8 @@ def _get_words_to_lemma_id(observed_parts_of_speech, filtered_lemmas, new_lemmas
             f.write(f"""INSERT INTO \"public\".words (
                 _id, language, corpus_id, part_of_speech_id, lemma_id, word_text
             ) VALUES (
-                {word_id}, {LANGUAGE}, {CORPUS[1]}, {part_of_speech_id}, {lemma_id}, {word_text}
-            )\n\n""")
+                '{word_id}', '{LANGUAGE}', '{CORPUS[1]}', '{part_of_speech_id}', '{lemma_id}', '{word_text}'
+            );\n\n""")
     return words_to_lemma_id
 
 def _get_words_data(observed_parts_of_speech):
@@ -121,7 +121,7 @@ with open("/out/phrase-definitions-0.sql", "w") as f:
                 '{special_token.get_word_id()}', '{LANGUAGE}', '{CORPUS[1]}',
                 '{special_token.get_part_of_speech_id()}', '{special_token.get_lemma_id()}',
                 '{special_token.get_token()}'
-            )\n""")
+            );\n""")
 
 definition_ids = {}
 
@@ -159,7 +159,7 @@ def _process_phrase(file_number, words_to_lemma_id, lemmas_by_lemma_id, phrase):
                 _id, language, corpus_id, phrase, definition
             ) VALUES (
                 '{definition_id}', '{LANGUAGE}', '{DEFINITION_CORPUS[0]}', '{escaped_phrase}', '{escaped_definition}'
-            )\n\n""")
+            );\n\n""")
         inserted_lines = 0
         for lemma_phrase in lemma_phrases:
             escaped_lemma_phrase = re.sub(r"\'", "\\'", lemma_phrase.strip())
@@ -169,7 +169,7 @@ def _process_phrase(file_number, words_to_lemma_id, lemmas_by_lemma_id, phrase):
                     language, corpus_id, lemma_phrase, phrase_definition_id
                 ) VALUES (
                     '{LANGUAGE}', '{CORPUS[1]}', '{escaped_lemma_phrase}', '{definition_id}'
-                )\n\n""")
+                );\n\n""")
         return None, inserted_lines
 
 inserted_lines = 0
@@ -202,8 +202,8 @@ with open("/out/phrase-definitions-0.sql", "a") as f:
             \"public\".lemmas (
                 _id, corpus_id, language, lemma_text, part_of_speech_id
             ) VALUES (
-                {_id}, {CORPUS[1]}, {LANGUAGE}, {lemma_text}, {part_of_speech_id})
-            )\n\n""")
+                '{_id}', '{CORPUS[1]}', '{LANGUAGE}', '{lemma_text}', '{part_of_speech_id}')
+            );\n\n""")
 
 new_phrases = []
 for phrase in phrases:

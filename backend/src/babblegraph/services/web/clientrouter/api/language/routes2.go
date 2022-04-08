@@ -13,6 +13,7 @@ import (
 	"babblegraph/wordsmith"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -161,10 +162,97 @@ func searchText(userAuth *routermiddleware.UserAuthentication, r *router.Request
 			},
 		}, nil
 	case len(req.Text) > 1:
-		return nil, fmt.Errorf("Unimplemented")
+		var phraseDefinitions []wordsmith.PhraseDefinition
+		foundAll := true
+		if err := wordsmith.WithWordsmithTx(func(tx *sqlx.Tx) error {
+			words, err := wordsmith.GetWordsByText(tx, wordsmith.SpanishUPCWikiCorpus, req.Text)
+			if err != nil {
+				return err
+			}
+			lemmaIDsByText := make(map[string][]wordsmith.LemmaID)
+			var lemmaIDs []wordsmith.LemmaID
+			for _, w := range words {
+				lemmaIDs = append(lemmaIDs, w.LemmaID)
+				lemmaIDsByText[strings.ToLower(w.WordText)] = append(lemmaIDsByText[strings.ToLower(w.WordText)], w.LemmaID)
+			}
+			lemmas, err := wordsmith.GetLemmasByIDs(tx, lemmaIDs)
+			if err != nil {
+				return err
+			}
+			lemmaTextByID := make(map[wordsmith.LemmaID]string)
+			for _, lemma := range lemmas {
+				lemmaTextByID[lemma.ID] = lemma.LemmaText
+			}
+			var lemmaTexts [][]string
+			for idx, w := range req.Text {
+				lemmaTexts = append(lemmaTexts, make([]string, 0))
+				lemmaIDs, _ := lemmaIDsByText[strings.ToLower(w)]
+				for _, lemmaID := range lemmaIDs {
+					lemmaText, ok := lemmaTextByID[lemmaID]
+					if !ok {
+						continue
+					}
+					lemmaTexts[idx] = append(lemmaTexts[idx], lemmaText)
+				}
+				if len(lemmaTexts[idx]) == 0 {
+					foundAll = false
+					return nil
+				}
+			}
+			r.Debugf("Got lemmas %+v", lemmaTexts)
+			lemmaPhrases := makeLemmaPhrases(lemmaTexts, "")
+			r.Debugf("Got phrases %+v (length %d)", lemmaPhrases, len(lemmaPhrases))
+			phraseDefinitions, err = wordsmith.GetPhraseDefinitionsForLemmaPhrases(tx, wordsmith.SpanishUPCWikiCorpus, lemmaPhrases)
+			return err
+		}); err != nil {
+			return nil, err
+		}
+		if !foundAll {
+			return searchTextResponse{
+				Result: &searchResult{
+					Results:      []textSearchResult{},
+					LanguageCode: *languageCode,
+				},
+			}, nil
+		}
+		var result []textSearchResult
+		for _, p := range phraseDefinitions {
+			result = append(result, textSearchResult{
+				DisplayText: p.Phrase,
+				Definitions: []string{p.Definition},
+				LookupID: textSearchLookupID{
+					IDType: textSearchLookupIDTypePhrase,
+					ID:     []string{string(p.ID)},
+				},
+			})
+		}
+		result = append(result, textSearchResult{
+			DisplayText: strings.Join(req.Text, " "),
+			LookupID: textSearchLookupID{
+				IDType: textSearchLookupIDTypePhrase,
+				ID:     req.Text,
+			},
+		})
+		return searchTextResponse{
+			Result: &searchResult{
+				Results:      result,
+				LanguageCode: *languageCode,
+			},
+		}, nil
 	default:
 		return searchTextResponse{
 			Error: errorInvalidSearchLength.Ptr(),
 		}, nil
 	}
+}
+
+func makeLemmaPhrases(lemmaTexts [][]string, currentPhrase string) []string {
+	if len(lemmaTexts) == 0 {
+		return []string{strings.Trim(currentPhrase, " ")}
+	}
+	var out []string
+	for _, lemma := range lemmaTexts[0] {
+		out = append(out, makeLemmaPhrases(lemmaTexts[1:], fmt.Sprintf("%s %s", currentPhrase, lemma))...)
+	}
+	return out
 }
