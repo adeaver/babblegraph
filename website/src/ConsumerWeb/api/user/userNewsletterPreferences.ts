@@ -2,6 +2,13 @@ import { makePostRequestWithStandardEncoding } from 'util/bgfetch/bgfetch';
 import { ClientError } from 'ConsumerWeb/api/clienterror';
 import { WordsmithLanguageCode } from 'common/model/language/language';
 
+export type Schedule = {
+    ianaTimezone: string;
+    hourIndex: number;
+    quarterHourIndex: number;
+    isActiveForDays: Array<boolean>;
+}
+
 export type UserNewsletterPreferences = {
     languageCode: WordsmithLanguageCode;
     isLemmaReinforcementSpotlightActive: boolean;
@@ -9,6 +16,8 @@ export type UserNewsletterPreferences = {
     includeExplicitPodcasts: boolean;
     minimumPodcastDurationSeconds: number | undefined;
     maximumPodcastDurationSeconds: number | undefined;
+    numberOfArticlesPerEmail: number;
+    schedule: Schedule;
 }
 
 export type GetUserNewsletterPreferencesRequest = {
@@ -34,6 +43,15 @@ export function getUserNewsletterPreferences(
     );
 }
 
+enum UserPreferencesClientError {
+    EmptyEmailAddress = 'no-email-address',
+    InvalidTimezone = 'invalid-timezone',
+    NoActiveDay = 'no-active-day',
+};
+
+export const UserPreferencesError = { ...UserPreferencesClientError, ...ClientError };
+export type  UserPreferencesError = typeof UserPreferencesError;
+
 export type UpdateUserNewsletterPreferencesRequest = {
     emailAddress: string | undefined;
     subscriptionManagementToken: string;
@@ -42,7 +60,7 @@ export type UpdateUserNewsletterPreferencesRequest = {
 
 export type UpdateUserNewsletterPreferencesResponse = {
     success: boolean;
-    error: ClientError | undefined;
+    error: UserPreferencesError | undefined;
 }
 
 export function updateUserNewsletterPreferences(

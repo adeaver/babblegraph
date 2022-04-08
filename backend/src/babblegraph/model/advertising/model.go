@@ -14,7 +14,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-const MinimumUserAccountAge = 60 * 24 * time.Hour
+const MinimumUserAccountAge = 30 * 24 * time.Hour
 
 type VendorID string
 

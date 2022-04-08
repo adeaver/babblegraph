@@ -7,6 +7,7 @@ import (
 	"babblegraph/model/usernewsletterpreferences"
 	"babblegraph/model/userpodcasts"
 	"babblegraph/model/users"
+	"babblegraph/util/ctx"
 	"babblegraph/wordsmith"
 
 	"github.com/jmoiron/sqlx"
@@ -38,12 +39,12 @@ type DefaultPodcastAccessor struct {
 	validSourceIDs            []content.SourceID
 }
 
-func GetDefaultPodcastAccessor(tx *sqlx.Tx, languageCode wordsmith.LanguageCode, userID users.UserID) (*DefaultPodcastAccessor, error) {
+func GetDefaultPodcastAccessor(c ctx.LogContext, tx *sqlx.Tx, languageCode wordsmith.LanguageCode, userID users.UserID) (*DefaultPodcastAccessor, error) {
 	validSourceIDs, err := content.LookupActiveSourceIDsByType(tx, content.SourceTypePodcast)
 	if err != nil {
 		return nil, err
 	}
-	userNewsletterPreferences, err := usernewsletterpreferences.GetUserNewsletterPrefrencesForLanguage(tx, userID, languageCode)
+	userNewsletterPreferences, err := usernewsletterpreferences.GetUserNewsletterPrefrencesForLanguage(c, tx, userID, languageCode, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +78,7 @@ func (d *DefaultPodcastAccessor) LookupPodcastEpisodesForTopics(topicIDs []conte
 			ValidSourceIDs:          d.validSourceIDs,
 			TopicID:                 t,
 			IncludeExplicitPodcasts: d.userNewsletterPreferences.PodcastPreferences.IncludeExplicitPodcasts,
-			MinDurationNanoseconds:  d.userNewsletterPreferences.PodcastPreferences.MaximumDurationNanoseconds,
+			MinDurationNanoseconds:  d.userNewsletterPreferences.PodcastPreferences.MinimumDurationNanoseconds,
 			MaxDurationNanoseconds:  d.userNewsletterPreferences.PodcastPreferences.MaximumDurationNanoseconds,
 		})
 		if err != nil {

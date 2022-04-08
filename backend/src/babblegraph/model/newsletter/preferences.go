@@ -10,9 +10,9 @@ import (
 	"babblegraph/model/userlemma"
 	"babblegraph/model/userlinks"
 	"babblegraph/model/usernewsletterpreferences"
-	"babblegraph/model/usernewsletterschedule"
 	"babblegraph/model/users"
 	"babblegraph/util/ctx"
+	"babblegraph/util/ptr"
 	"babblegraph/wordsmith"
 	"time"
 
@@ -33,7 +33,7 @@ type userPreferencesAccessor interface {
 
 	getUserSubscriptionLevel() *useraccounts.SubscriptionLevel
 	getUserNewsletterPreferences() *usernewsletterpreferences.UserNewsletterPreferences
-	getUserNewsletterSchedule() usernewsletterschedule.UserNewsletterSchedule
+	getUserNewsletterSchedule() usernewsletterpreferences.Schedule
 	getReadingLevel() *userReadingLevel
 	getSentDocumentIDs() []documents.DocumentID
 	getUserTopics() []content.TopicID
@@ -54,7 +54,7 @@ type DefaultUserPreferencesAccessor struct {
 	userCreatedDate           time.Time
 	userSubscriptionLevel     *useraccounts.SubscriptionLevel
 	userNewsletterPreferences *usernewsletterpreferences.UserNewsletterPreferences
-	userNewsletterSchedule    usernewsletterschedule.UserNewsletterSchedule
+	userNewsletterSchedule    usernewsletterpreferences.Schedule
 	userReadingLevel          *userReadingLevel
 	sentDocumentIDs           []documents.DocumentID
 	userTopics                []content.TopicID
@@ -76,15 +76,7 @@ func GetDefaultUserPreferencesAccessor(c ctx.LogContext, tx *sqlx.Tx, userID use
 	if err != nil {
 		return nil, err
 	}
-	userNewsletterPreferences, err := usernewsletterpreferences.GetUserNewsletterPrefrencesForLanguage(tx, userID, languageCode)
-	if err != nil {
-		return nil, err
-	}
-	userNewsletterSchedule, err := usernewsletterschedule.GetUserNewsletterScheduleForUTCMidnight(c, tx, usernewsletterschedule.GetUserNewsletterScheduleForUTCMidnightInput{
-		UserID:           userID,
-		LanguageCode:     languageCode,
-		DayAtUTCMidnight: dateOfSendUTCMidnight,
-	})
+	userNewsletterPreferences, err := usernewsletterpreferences.GetUserNewsletterPrefrencesForLanguage(c, tx, userID, languageCode, ptr.Time(dateOfSendUTCMidnight))
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +114,7 @@ func GetDefaultUserPreferencesAccessor(c ctx.LogContext, tx *sqlx.Tx, userID use
 		userCreatedDate:           user.CreatedDate,
 		userSubscriptionLevel:     userSubscriptionLevel,
 		userNewsletterPreferences: userNewsletterPreferences,
-		userNewsletterSchedule:    userNewsletterSchedule,
+		userNewsletterSchedule:    userNewsletterPreferences.Schedule,
 		// The current scoring system is pretty broken. So we just set everyone to use the middle.
 		// TODO: create a better scoring system
 		userReadingLevel: &userReadingLevel{
@@ -161,7 +153,7 @@ func (d *DefaultUserPreferencesAccessor) getUserNewsletterPreferences() *usernew
 	return d.userNewsletterPreferences
 }
 
-func (d *DefaultUserPreferencesAccessor) getUserNewsletterSchedule() usernewsletterschedule.UserNewsletterSchedule {
+func (d *DefaultUserPreferencesAccessor) getUserNewsletterSchedule() usernewsletterpreferences.Schedule {
 	return d.userNewsletterSchedule
 }
 

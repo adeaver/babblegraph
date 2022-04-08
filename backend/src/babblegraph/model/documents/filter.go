@@ -10,6 +10,8 @@ var filteredWordsForLanguageCode = map[wordsmith.LanguageCode][]string{
 		"asesinado",
 		"asesinadas",
 		"asesinada",
+		"asesinaron",
+		"asesinó",
 		"homicidio",
 		"homicidios",
 		"asesinato",

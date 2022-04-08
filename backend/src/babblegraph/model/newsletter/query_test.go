@@ -8,7 +8,7 @@ import (
 	"babblegraph/model/podcasts"
 	"babblegraph/model/routes"
 	"babblegraph/model/useraccounts"
-	"babblegraph/model/usernewsletterschedule"
+	"babblegraph/model/usernewsletterpreferences"
 	"babblegraph/util/ctx"
 	"babblegraph/util/ptr"
 	"babblegraph/util/testutils"
@@ -25,6 +25,10 @@ func TestUserHasAccount(t *testing.T) {
 	userAccessor := &testUserAccessor{
 		languageCode:        wordsmith.LanguageCodeSpanish,
 		doesUserHaveAccount: true,
+		userNewsletterSchedule: usernewsletterpreferences.TestNewsletterSchedule{
+			SendRequested:     true,
+			NumberOfDocuments: 4,
+		},
 		readingLevel: &userReadingLevel{
 			LowerBound: 30,
 			UpperBound: 80,
@@ -62,6 +66,10 @@ func TestUserDoesNotHaveAccount(t *testing.T) {
 			LowerBound: 30,
 			UpperBound: 80,
 		},
+		userNewsletterSchedule: usernewsletterpreferences.TestNewsletterSchedule{
+			SendRequested:     true,
+			NumberOfDocuments: 4,
+		},
 	}
 	docsAccessor := &testDocsAccessor{}
 	testNewsletter, err := CreateNewsletter(c, CreateNewsletterInput{
@@ -98,6 +106,10 @@ func TestNoSetTopicsLink(t *testing.T) {
 			LowerBound: 30,
 			UpperBound: 80,
 		},
+		userNewsletterSchedule: usernewsletterpreferences.TestNewsletterSchedule{
+			SendRequested:     true,
+			NumberOfDocuments: 4,
+		},
 	}
 	docsAccessor := &testDocsAccessor{}
 	testNewsletter, err := CreateNewsletter(c, CreateNewsletterInput{
@@ -132,7 +144,7 @@ func TestUserScheduleDay(t *testing.T) {
 			content.TopicID("topicid-art"),
 		},
 		userSubscriptionLevel: useraccounts.SubscriptionLevelPremium.Ptr(),
-		userNewsletterSchedule: usernewsletterschedule.TestNewsletterSchedule{
+		userNewsletterSchedule: usernewsletterpreferences.TestNewsletterSchedule{
 			SendRequested: false,
 		},
 		readingLevel: &userReadingLevel{
@@ -168,7 +180,7 @@ func TestUserScheduleDayNoSubscription(t *testing.T) {
 		userTopics: []content.TopicID{
 			content.TopicID("topicid-art"),
 		},
-		userNewsletterSchedule: usernewsletterschedule.TestNewsletterSchedule{
+		userNewsletterSchedule: usernewsletterpreferences.TestNewsletterSchedule{
 			SendRequested: false,
 		},
 		readingLevel: &userReadingLevel{
@@ -189,8 +201,8 @@ func TestUserScheduleDayNoSubscription(t *testing.T) {
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
-	if testNewsletter == nil {
-		t.Errorf("Expected non-null newsletter, but it was not")
+	if testNewsletter != nil {
+		t.Errorf("Expected null newsletter, but it was not")
 	}
 }
 
@@ -216,14 +228,8 @@ func TestWholeNewsletterHasPodcasts(t *testing.T) {
 		},
 		doesUserHaveAccount:   true,
 		userSubscriptionLevel: useraccounts.SubscriptionLevelPremium.Ptr(),
-		userNewsletterSchedule: &usernewsletterschedule.TestNewsletterSchedule{
-			SendRequested: true,
-			TopicIDs: []content.TopicID{
-				content.TopicID("test-art"),
-				content.TopicID("test-astronomy"),
-				content.TopicID("test-architecture"),
-				content.TopicID("test-automotive"),
-			},
+		userNewsletterSchedule: usernewsletterpreferences.TestNewsletterSchedule{
+			SendRequested:     true,
 			NumberOfDocuments: 4,
 		},
 	}
@@ -292,6 +298,10 @@ func TestUserShouldShowAdvertisement(t *testing.T) {
 			UpperBound: 80,
 		},
 		userCreatedDate: time.Now().Add(-180 * 24 * time.Hour),
+		userNewsletterSchedule: usernewsletterpreferences.TestNewsletterSchedule{
+			SendRequested:     true,
+			NumberOfDocuments: 4,
+		},
 	}
 	docsAccessor := &testDocsAccessor{}
 	testNewsletter, err := CreateNewsletter(c, CreateNewsletterInput{
@@ -342,6 +352,10 @@ func TestNoAdvertisementUserAccountAge(t *testing.T) {
 			UpperBound: 80,
 		},
 		userCreatedDate: time.Now().Add(-7 * 24 * time.Hour),
+		userNewsletterSchedule: usernewsletterpreferences.TestNewsletterSchedule{
+			SendRequested:     true,
+			NumberOfDocuments: 4,
+		},
 	}
 	docsAccessor := &testDocsAccessor{}
 	testNewsletter, err := CreateNewsletter(c, CreateNewsletterInput{
@@ -391,8 +405,9 @@ func TestUserAdvertisementIneligible(t *testing.T) {
 			LowerBound: 30,
 			UpperBound: 80,
 		},
-		userNewsletterSchedule: usernewsletterschedule.TestNewsletterSchedule{
-			SendRequested: true,
+		userNewsletterSchedule: usernewsletterpreferences.TestNewsletterSchedule{
+			SendRequested:     true,
+			NumberOfDocuments: 4,
 		},
 		userCreatedDate: time.Now().Add(-180 * 24 * time.Hour),
 	}
@@ -445,8 +460,9 @@ func TestUserSubscriptionHasNoAdvertisement(t *testing.T) {
 			LowerBound: 30,
 			UpperBound: 80,
 		},
-		userNewsletterSchedule: usernewsletterschedule.TestNewsletterSchedule{
-			SendRequested: true,
+		userNewsletterSchedule: usernewsletterpreferences.TestNewsletterSchedule{
+			SendRequested:     true,
+			NumberOfDocuments: 4,
 		},
 		userCreatedDate: time.Now().Add(-180 * 24 * time.Hour),
 	}
@@ -498,8 +514,9 @@ func TestNoAdvertisementIsOkay(t *testing.T) {
 			LowerBound: 30,
 			UpperBound: 80,
 		},
-		userNewsletterSchedule: usernewsletterschedule.TestNewsletterSchedule{
-			SendRequested: true,
+		userNewsletterSchedule: usernewsletterpreferences.TestNewsletterSchedule{
+			SendRequested:     true,
+			NumberOfDocuments: 4,
 		},
 		userCreatedDate: time.Now().Add(-180 * 24 * time.Hour),
 	}

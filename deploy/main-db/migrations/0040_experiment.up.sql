@@ -28,3 +28,4 @@ CREATE TABLE IF NOT EXISTS experiments_user_variations(
 
 CREATE UNIQUE INDEX IF NOT EXISTS experiments_user_variations_user_for_experiment_idx ON experiments_user_variations(experiment_id, user_id);
 
+ALTER TABLE experiments_user_variations ADD COLUMN IF NOT EXISTS in_experiment BOOLEAN NOT NULL DEFAULT TRUE;

@@ -5,13 +5,13 @@ import (
 	"babblegraph/model/emailtemplates"
 	"babblegraph/model/newsletter"
 	"babblegraph/model/newslettersendrequests"
-	"babblegraph/model/useraccounts"
-	"babblegraph/model/usernewsletterschedule"
+	"babblegraph/model/usernewsletterpreferences"
 	"babblegraph/model/users"
 	"babblegraph/services/worker/newsletterprocessing"
 	"babblegraph/util/async"
 	"babblegraph/util/database"
 	"babblegraph/util/env"
+	"babblegraph/util/ptr"
 	"babblegraph/util/ses"
 	"babblegraph/util/storage"
 	"babblegraph/util/timeutils"
@@ -44,25 +44,12 @@ func StartNewsletterPreloadWorkerThread(newsletterProcessor *newsletterprocessin
 			c.Infof("Got send request with ID %s", sendRequest.ID)
 			dateOfSendUTCMidnight := timeutils.ConvertToMidnight(sendRequest.DateOfSend.UTC())
 			if err := database.WithTx(func(tx *sqlx.Tx) error {
-				subscriptionLevel, err := useraccounts.LookupSubscriptionLevelForUser(tx, sendRequest.UserID)
-				switch {
-				case err != nil:
+				userNewsletterPreferences, err := usernewsletterpreferences.GetUserNewsletterPrefrencesForLanguage(c, tx, sendRequest.UserID, sendRequest.LanguageCode, ptr.Time(dateOfSendUTCMidnight))
+				if err != nil {
 					return err
-				case subscriptionLevel == nil:
-					// no-op
-				case *subscriptionLevel == useraccounts.SubscriptionLevelBetaPremium,
-					*subscriptionLevel == useraccounts.SubscriptionLevelPremium:
-					userNewsletterSchedule, err := usernewsletterschedule.GetUserNewsletterScheduleForUTCMidnight(c, tx, usernewsletterschedule.GetUserNewsletterScheduleForUTCMidnightInput{
-						UserID:           sendRequest.UserID,
-						LanguageCode:     sendRequest.LanguageCode,
-						DayAtUTCMidnight: dateOfSendUTCMidnight,
-					})
-					if err != nil {
-						return err
-					}
-					if !userNewsletterSchedule.IsSendRequested() {
-						return newslettersendrequests.UpdateSendRequestStatus(tx, sendRequest.ID, newslettersendrequests.PayloadStatusNoSendRequested)
-					}
+				}
+				if !userNewsletterPreferences.Schedule.IsSendRequested(dateOfSendUTCMidnight.Weekday()) {
+					return newslettersendrequests.UpdateSendRequestStatus(tx, sendRequest.ID, newslettersendrequests.PayloadStatusNoSendRequested)
 				}
 				if err := newslettersendrequests.UpdateSendRequestStatus(tx, sendRequest.ID, newslettersendrequests.PayloadStatusPayloadReady); err != nil {
 					return err
@@ -78,7 +65,7 @@ func StartNewsletterPreloadWorkerThread(newsletterProcessor *newsletterprocessin
 				if err != nil {
 					return err
 				}
-				podcastAccessor, err := newsletter.GetDefaultPodcastAccessor(tx, sendRequest.LanguageCode, sendRequest.UserID)
+				podcastAccessor, err := newsletter.GetDefaultPodcastAccessor(c, tx, sendRequest.LanguageCode, sendRequest.UserID)
 				if err != nil {
 					return err
 				}
@@ -86,38 +73,72 @@ func StartNewsletterPreloadWorkerThread(newsletterProcessor *newsletterprocessin
 				if err != nil {
 					return err
 				}
+				shouldUseVersion2, err := newsletter.IsUserInVersion2Experiment(tx, sendRequest.UserID)
+				if err != nil {
+					c.Warnf("Error getting whether or not user %s is in version 2 experiment: %s", sendRequest.UserID, err.Error())
+					shouldUseVersion2 = false
+				}
 				c.Infof("Creating newsletter for send request with ID %s", sendRequest.ID)
-				newsletter, err := newsletter.CreateNewsletter(c, newsletter.CreateNewsletterInput{
-					WordsmithAccessor:     wordsmithAccessor,
-					EmailAccessor:         emailAccessor,
-					UserAccessor:          userAccessor,
-					DocsAccessor:          docsAccessor,
-					ContentAccessor:       contentAccessor,
-					PodcastAccessor:       podcastAccessor,
-					AdvertisementAccessor: advertisementAccessor,
-				})
-				switch {
-				case err != nil:
-					return err
-				case newsletter == nil:
-					return fmt.Errorf("No send requested, but attempted to create newsletter")
-				case newsletter != nil:
-					// no-op
+				if shouldUseVersion2 {
+					newsletter, err := newsletter.CreateNewsletterVersion2(c, dateOfSendUTCMidnight, newsletter.CreateNewsletterVersion2Input{
+						WordsmithAccessor:     wordsmithAccessor,
+						EmailAccessor:         emailAccessor,
+						UserAccessor:          userAccessor,
+						DocsAccessor:          docsAccessor,
+						ContentAccessor:       contentAccessor,
+						PodcastAccessor:       podcastAccessor,
+						AdvertisementAccessor: advertisementAccessor,
+					})
+					switch {
+					case err != nil:
+						return err
+					case newsletter == nil:
+						return fmt.Errorf("No send requested, but attempted to create newsletter")
+					case newsletter != nil:
+						// no-op
+					}
+					newsletterBytes, err := json.Marshal(newsletter)
+					if err != nil {
+						return err
+					}
+					c.Infof("Storing newsletter data for send request with ID %s", sendRequest.ID)
+					return s3Storage.UploadData(storage.UploadDataInput{
+						ContentType: storage.ContentTypeApplicationJSON,
+						BucketName:  "prod-spaces-1",
+						FileName:    sendRequest.GetFileKey(),
+						Data:        string(newsletterBytes),
+					})
+				} else {
+					newsletter, err := newsletter.CreateNewsletter(c, newsletter.CreateNewsletterInput{
+						DateOfSendMidnightUTC: dateOfSendUTCMidnight,
+						WordsmithAccessor:     wordsmithAccessor,
+						EmailAccessor:         emailAccessor,
+						UserAccessor:          userAccessor,
+						DocsAccessor:          docsAccessor,
+						ContentAccessor:       contentAccessor,
+						PodcastAccessor:       podcastAccessor,
+						AdvertisementAccessor: advertisementAccessor,
+					})
+					switch {
+					case err != nil:
+						return err
+					case newsletter == nil:
+						return fmt.Errorf("No send requested, but attempted to create newsletter")
+					case newsletter != nil:
+						// no-op
+					}
+					newsletterBytes, err := json.Marshal(newsletter)
+					if err != nil {
+						return err
+					}
+					c.Infof("Storing newsletter data for send request with ID %s", sendRequest.ID)
+					return s3Storage.UploadData(storage.UploadDataInput{
+						ContentType: storage.ContentTypeApplicationJSON,
+						BucketName:  "prod-spaces-1",
+						FileName:    sendRequest.GetFileKey(),
+						Data:        string(newsletterBytes),
+					})
 				}
-				if err != nil {
-					return err
-				}
-				newsletterBytes, err := json.Marshal(newsletter)
-				if err != nil {
-					return err
-				}
-				c.Infof("Storing newsletter data for send request with ID %s", sendRequest.ID)
-				return s3Storage.UploadData(storage.UploadDataInput{
-					ContentType: storage.ContentTypeApplicationJSON,
-					BucketName:  "prod-spaces-1",
-					FileName:    sendRequest.GetFileKey(),
-					Data:        string(newsletterBytes),
-				})
 			}); err != nil {
 				c.Errorf("Got error processing send request with ID %s: %s", sendRequest.ID, err.Error())
 				continue
@@ -161,11 +182,7 @@ func StartNewsletterFulfillmentWorkerThread(newsletterProcessor *newsletterproce
 				if err := newslettersendrequests.UpdateSendRequestStatus(tx, sendRequest.ID, newslettersendrequests.PayloadStatusSent); err != nil {
 					return err
 				}
-				userNewsletterSchedule, err := usernewsletterschedule.GetUserNewsletterScheduleForUTCMidnight(c, tx, usernewsletterschedule.GetUserNewsletterScheduleForUTCMidnightInput{
-					UserID:           sendRequest.UserID,
-					LanguageCode:     sendRequest.LanguageCode,
-					DayAtUTCMidnight: dateOfSendUTCMidnight,
-				})
+				userNewsletterPreferences, err := usernewsletterpreferences.GetUserNewsletterPrefrencesForLanguage(c, tx, sendRequest.UserID, sendRequest.LanguageCode, ptr.Time(dateOfSendUTCMidnight))
 				if err != nil {
 					return err
 				}
@@ -174,28 +191,54 @@ func StartNewsletterFulfillmentWorkerThread(newsletterProcessor *newsletterproce
 					return err
 				}
 				c.Debugf("Found data %s", *data)
-				var newsletter newsletter.Newsletter
-				if err := json.Unmarshal([]byte(*data), &newsletter); err != nil {
-					return err
-				}
-				c.Debugf("Unmarshalled %+v", newsletter)
 				userAccessor, err := emailtemplates.GetDefaultUserAccessor(tx, sendRequest.UserID)
 				if err != nil {
 					return err
 				}
-				newsletterHTML, err := emailtemplates.MakeNewsletterHTML(emailtemplates.MakeNewsletterHTMLInput{
-					EmailRecordID: newsletter.EmailRecordID,
-					UserAccessor:  userAccessor,
-					Body:          newsletter.Body,
-				})
+				var newsletterHTML *string
+				var edition newsletter.Newsletter
+				var emailRecordID email.ID
+				// First we try to unmarshal newsletter
+				if err := json.Unmarshal([]byte(*data), &edition); err != nil {
+					return err
+				}
+				switch {
+				case len(edition.Body.ReinforcementLink) == 0:
+					var newsletterVersion2 newsletter.NewsletterVersion2
+					if err := json.Unmarshal([]byte(*data), &newsletterVersion2); err != nil {
+						return err
+					}
+					c.Debugf("ID %s was version 2", sendRequest.ID)
+					c.Debugf("Unmarshalled %+v", newsletterVersion2)
+					emailRecordID = newsletterVersion2.EmailRecordID
+					newsletterHTML, err = emailtemplates.MakeNewsletterVersion2HTML(emailtemplates.MakeNewsletterVersion2HTMLInput{
+						EmailRecordID: newsletterVersion2.EmailRecordID,
+						UserAccessor:  userAccessor,
+						Body:          newsletterVersion2.Body,
+					})
+					if err != nil {
+						return err
+					}
+				default:
+					c.Debugf("Unmarshalled %+v", edition)
+					emailRecordID = edition.EmailRecordID
+					newsletterHTML, err = emailtemplates.MakeNewsletterHTML(emailtemplates.MakeNewsletterHTMLInput{
+						EmailRecordID: edition.EmailRecordID,
+						UserAccessor:  userAccessor,
+						Body:          edition.Body,
+					})
+					if err != nil {
+						return err
+					}
+				}
+				c.Debugf("Created HTML %s", *newsletterHTML)
+				today, err := userNewsletterPreferences.Schedule.ConvertUTCTimeToUserDate(c, dateOfSendUTCMidnight)
 				if err != nil {
 					return err
 				}
-				c.Debugf("Created HTML %s", *newsletterHTML)
-				today := userNewsletterSchedule.GetSendTimeInUserTimezone()
 				subject := fmt.Sprintf("Babblegraph Newsletter - %s %d, %d", today.Month().String(), today.Day(), today.Year())
 				return email.SendEmailWithHTMLBody(tx, emailClient, email.SendEmailWithHTMLBodyInput{
-					ID:           newsletter.EmailRecordID,
+					ID:           emailRecordID,
 					EmailAddress: user.EmailAddress,
 					Body:         *newsletterHTML,
 					Subject:      subject,

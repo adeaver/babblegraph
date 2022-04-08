@@ -14,7 +14,8 @@ const (
 	getByIDQuery     = "SELECT * FROM user_podcasts WHERE _id = $1"
 	getByUserIDQuery = "SELECT * FROM user_podcasts WHERE user_id = $1"
 
-	insertUserPodcastsQuery = "INSERT INTO user_podcasts (user_id, episode_id, source_id, email_record_id) VALUES ($1, $2, $3, $4) RETURNING _id"
+	insertUserPodcastsQuery    = "INSERT INTO user_podcasts (user_id, episode_id, source_id, email_record_id) VALUES ($1, $2, $3, $4) RETURNING _id"
+	registerOpenedPodcastQuery = "UPDATE user_podcasts SET first_opened_at = timezone('utc', now()) WHERE _id = $1 And first_opened_at IS NULL"
 )
 
 func GetByID(tx *sqlx.Tx, id ID) (*UserPodcast, error) {
@@ -60,5 +61,8 @@ func InsertUserPodcastAndReturnID(tx *sqlx.Tx, episodeID podcasts.EpisodeID, use
 }
 
 func RegisterOpenedPodcast(tx *sqlx.Tx, id ID) error {
+	if _, err := tx.Exec(registerOpenedPodcastQuery, id); err != nil {
+		return err
+	}
 	return nil
 }

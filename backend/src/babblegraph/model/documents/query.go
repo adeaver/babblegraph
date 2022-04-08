@@ -111,7 +111,7 @@ func ExecuteDocumentQuery(c ctx.LogContext, query executableQuery, input Execute
 	orderedSort := esquery.NewOrderedSort(scoreSort, timestampSortBuilder.AsSort())
 	var docs []DocumentWithScore
 	if err := esquery.ExecuteSearch(documentIndex{}, queryBuilder.BuildBoolQuery(), orderedSort, func(source []byte, score decimal.Number) error {
-		c.Infof("Document search got body %s", string(source))
+		// c.Infof("Document search got body %s", string(source))
 		var doc Document
 		if err := json.Unmarshal(source, &doc); err != nil {
 			return err

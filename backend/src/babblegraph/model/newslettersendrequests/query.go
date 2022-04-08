@@ -1,9 +1,10 @@
 package newslettersendrequests
 
 import (
-	"babblegraph/model/usernewsletterschedule"
+	"babblegraph/model/usernewsletterpreferences"
 	"babblegraph/model/users"
 	"babblegraph/util/ctx"
+	"babblegraph/util/ptr"
 	"babblegraph/util/timeutils"
 	"babblegraph/wordsmith"
 	"fmt"
@@ -63,25 +64,25 @@ func GetOrCreateSendRequestsForUsersForDay(c ctx.LogContext, tx *sqlx.Tx, userID
 	}
 	for _, u := range userIDs {
 		if _, ok := usersWithSendRequests[u]; !ok {
-			userNewsletterSchedule, err := usernewsletterschedule.GetUserNewsletterScheduleForUTCMidnight(c, tx, usernewsletterschedule.GetUserNewsletterScheduleForUTCMidnightInput{
-				UserID:           u,
-				LanguageCode:     languageCode,
-				DayAtUTCMidnight: utcMidnightForRequestDay,
-			})
+			userNewsletterPreferences, err := usernewsletterpreferences.GetUserNewsletterPrefrencesForLanguage(c, tx, u, languageCode, ptr.Time(utcMidnightForRequestDay))
 			if err != nil {
 				c.Errorf("Error getting user newsletter schedule for user %s: %s", u, err.Error())
 				continue
 			}
-			dateOfSend := userNewsletterSchedule.GetUTCSendTime()
+			dateOfSend, err := userNewsletterPreferences.Schedule.ConvertUTCTimeToUserDate(c, utcMidnightForRequestDay)
+			if err != nil {
+				c.Errorf("Error getting user newsletter schedule for user %s: %s", u, err.Error())
+				continue
+			}
 			id := makeSendRequestID(u, languageCode, dateOfSendString)
-			if _, err := tx.Exec(insertSendRequestForUserQuery, id, u, languageCode, dateOfSendString, PayloadStatusNeedsPreload, dateOfSend.Hour(), dateOfSend.Minute()/15); err != nil {
+			if _, err := tx.Exec(insertSendRequestForUserQuery, id, u, languageCode, dateOfSendString, PayloadStatusNeedsPreload, dateOfSend.UTC().Hour(), dateOfSend.UTC().Minute()/15); err != nil {
 				return nil, err
 			}
 			out = append(out, NewsletterSendRequest{
 				ID:            id,
 				UserID:        u,
 				LanguageCode:  languageCode,
-				DateOfSend:    dateOfSend,
+				DateOfSend:    *dateOfSend,
 				PayloadStatus: PayloadStatusNeedsPreload,
 			})
 		}

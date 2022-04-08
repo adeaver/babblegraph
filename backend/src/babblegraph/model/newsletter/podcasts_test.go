@@ -31,9 +31,9 @@ func (t *testPodcastAccessor) LookupPodcastEpisodesForTopics(topics []content.To
 		switch {
 		case !podcastPreferences.IncludeExplicitPodcasts && ep.IsExplicit:
 			c.Debugf("Filtering out podcast because of explicit tag")
-		case podcastPreferences.MinimumDurationNanoseconds != nil && ep.DurationNanoseconds < *podcastPreferences.MinimumDurationNanoseconds:
+		case podcastPreferences.MinimumDurationNanoseconds != nil && *ep.DurationNanoseconds < *podcastPreferences.MinimumDurationNanoseconds:
 			c.Debugf("Filtering out podcast because of it's too short")
-		case podcastPreferences.MaximumDurationNanoseconds != nil && ep.DurationNanoseconds > *podcastPreferences.MaximumDurationNanoseconds:
+		case podcastPreferences.MaximumDurationNanoseconds != nil && *ep.DurationNanoseconds > *podcastPreferences.MaximumDurationNanoseconds:
 			c.Debugf("Filtering out podcast because of it's too long")
 		case !isSourceValid(ep.SourceID.Ptr(), t.validSourceIDs):
 			c.Debugf("Filtering out podcast because the source is not valid")
@@ -64,7 +64,7 @@ func getDefaultPodcast(topic content.TopicID) podcasts.Episode {
 	return podcasts.Episode{
 		ID:                  podcasts.EpisodeID(fmt.Sprintf("test-podcast-%s", random.MustMakeRandomString(5))),
 		Title:               "Test Podcast",
-		DurationNanoseconds: time.Hour,
+		DurationNanoseconds: ptr.Duration(time.Hour),
 		IsExplicit:          true,
 		LanguageCode:        wordsmith.LanguageCodeSpanish,
 		TopicIDs:            []content.TopicID{topic},

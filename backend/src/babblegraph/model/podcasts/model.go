@@ -48,14 +48,14 @@ func (e EpisodeID) Str() string {
 }
 
 type Episode struct {
-	ID                  EpisodeID     `json:"id"`
-	Title               string        `json:"title"`
-	Description         string        `json:"description"`
-	PublicationDate     time.Time     `json:"publication_date"`
-	EpisodeType         string        `json:"episode_type"`
-	DurationNanoseconds time.Duration `json:"duration_nanoseconds"`
-	IsExplicit          bool          `json:"is_explicit"`
-	AudioFile           AudioFile     `json:"audio_file"`
+	ID                  EpisodeID      `json:"id"`
+	Title               string         `json:"title"`
+	Description         string         `json:"description"`
+	PublicationDate     time.Time      `json:"publication_date"`
+	EpisodeType         string         `json:"episode_type"`
+	DurationNanoseconds *time.Duration `json:"duration_nanoseconds,omitempty"`
+	IsExplicit          bool           `json:"is_explicit"`
+	AudioFile           AudioFile      `json:"audio_file"`
 
 	// This is only guaranteed to be unique across
 	// episodes of the same podcasts, not universally across

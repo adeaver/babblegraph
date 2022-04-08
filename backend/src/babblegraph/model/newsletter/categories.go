@@ -6,7 +6,6 @@ import (
 	"babblegraph/model/documents"
 	"babblegraph/model/email"
 	"babblegraph/model/podcasts"
-	"babblegraph/model/useraccounts"
 	"babblegraph/util/ctx"
 	"babblegraph/util/deref"
 	"babblegraph/util/ptr"
@@ -149,6 +148,9 @@ func joinDocumentsIntoCategories(c ctx.LogContext, input joinDocumentsIntoCatego
 				// no-op
 			default:
 				for _, episode := range input.podcastEpisodesByTopic[documentGroup.topic] {
+					if len(podcastLinks) >= maxPodcastsPerTopic {
+						break
+					}
 					if _, ok := podcastsInEmailByID[episode.ID]; ok {
 						continue
 					}
@@ -158,11 +160,9 @@ func joinDocumentsIntoCategories(c ctx.LogContext, input joinDocumentsIntoCatego
 						return nil, err
 					case podcastLink == nil:
 						// no-op
-					}
-					podcastsInEmailByID[episode.ID] = true
-					podcastLinks = append(podcastLinks, *podcastLink)
-					if len(podcastLinks) >= maxPodcastsPerTopic {
-						break
+					default:
+						podcastsInEmailByID[episode.ID] = true
+						podcastLinks = append(podcastLinks, *podcastLink)
 					}
 				}
 			}
@@ -217,6 +217,9 @@ func joinDocumentsIntoCategories(c ctx.LogContext, input joinDocumentsIntoCatego
 				// no-op
 			default:
 				for _, episode := range podcasts {
+					if len(podcastLinks) >= maxPodcastsPerTopic {
+						break
+					}
 					if _, ok := podcastsInEmailByID[episode.ID]; ok {
 						continue
 					}
@@ -226,11 +229,9 @@ func joinDocumentsIntoCategories(c ctx.LogContext, input joinDocumentsIntoCatego
 						return nil, err
 					case podcastLink == nil:
 						// no-op
-					}
-					podcastsInEmailByID[episode.ID] = true
-					podcastLinks = append(podcastLinks, *podcastLink)
-					if len(podcastLinks) >= maxPodcastsPerTopic {
-						break
+					default:
+						podcastsInEmailByID[episode.ID] = true
+						podcastLinks = append(podcastLinks, *podcastLink)
 					}
 				}
 			}
@@ -254,25 +255,10 @@ func joinDocumentsIntoCategories(c ctx.LogContext, input joinDocumentsIntoCatego
 }
 
 func getTopicsForNewsletter(accessor userPreferencesAccessor) []content.TopicID {
-	userSubscriptionLevel := accessor.getUserSubscriptionLevel()
 	allUserTopics := accessor.getUserTopics()
 	var topics []content.TopicID
 	for _, idx := range pickUpToNRandomIndices(int(len(allUserTopics)), defaultNumberOfTopicsPerEmail) {
 		topics = append(topics, allUserTopics[idx])
 	}
-	switch {
-	case userSubscriptionLevel == nil:
-		return topics
-	case *userSubscriptionLevel == useraccounts.SubscriptionLevelBetaPremium,
-		*userSubscriptionLevel == useraccounts.SubscriptionLevelPremium:
-		topics := accessor.getUserNewsletterSchedule().GetContentTopicsForDay()
-		if len(topics) < defaultNumberOfTopicsPerEmail {
-			for _, idx := range pickUpToNRandomIndices(int(len(allUserTopics)), defaultNumberOfTopicsPerEmail-len(topics)) {
-				topics = append(topics, allUserTopics[idx])
-			}
-		}
-		return topics
-	default:
-		panic("Unreachable")
-	}
+	return topics
 }

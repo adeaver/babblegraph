@@ -24,7 +24,9 @@ var testSource = content.Source{
 	MonthlyAccessLimit:    nil,
 }
 
-type testContentAccessor struct{}
+type testContentAccessor struct {
+	topicIDsNotInList []content.TopicID
+}
 
 func (t *testContentAccessor) GetSourceByID(sourceID content.SourceID) (*content.Source, error) {
 	if sourceID == testSourceID {
@@ -36,4 +38,8 @@ func (t *testContentAccessor) GetSourceByID(sourceID content.SourceID) (*content
 func (t *testContentAccessor) GetDisplayNameByTopicID(topicID content.TopicID) (*string, error) {
 	parts := strings.Split(topicID.Str(), "-")
 	return ptr.String(parts[len(parts)-1]), nil
+}
+
+func (t *testContentAccessor) GetAllTopicsNotInList(topicIDs []content.TopicID) []content.TopicID {
+	return t.topicIDsNotInList
 }
