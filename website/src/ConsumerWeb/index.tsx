@@ -19,8 +19,7 @@ import BlogPostPage from 'ConsumerWeb/components/BlogPostPage/BlogPostPage';
 import SubscriptionManagementHomePage from 'ConsumerWeb/components/SubscriptionManagement/SubscriptionManagementHomePage';
 import InterestSelectionPage from 'ConsumerWeb/components/SubscriptionManagement/InterestSelectionPage';
 import UnsubscribePage from 'ConsumerWeb/components/UnsubscribePage/UnsubscribePage';
-import WordReinforcementPage from 'ConsumerWeb/components/SubscriptionManagement/WordReinforcementPage';
-import SchedulePage from 'ConsumerWeb/components/SchedulePage/SchedulePage';
+import WordReinforcementPage from 'ConsumerWeb/components/WordReinforcementPage/WordReinforcementPage';
 import UserNewsletterPreferencesPage from 'ConsumerWeb/components/UserNewsletterPreferencesPage/UserNewsletterPreferencesPage';
 
 import LoginPage from 'ConsumerWeb/components/UserAccounts/LoginPage';
@@ -45,7 +44,6 @@ class App extends React.Component{
                     <Route path="/manage/:token/unsubscribe" component={UnsubscribePage} />
                     <Route path="/manage/:token/interests" component={InterestSelectionPage} />
                     <Route path="/manage/:token/vocabulary" component={WordReinforcementPage} />
-                    <Route path="/manage/:token/schedule" component={SchedulePage} />
                     <Route path="/manage/:token/preferences" component={UserNewsletterPreferencesPage} />
                     <Route exact path="/manage/:token/premium" component={PremiumInformationPage} />
                     <Route path="/manage/:token/payment-settings" component={PremiumNewsletterSubscriptionManagementPage} />
