@@ -40,7 +40,7 @@ import {
     BaseComponentProps,
 } from 'common/base/BaseComponent';
 import {
-    PartOfSpeech,
+    IDType,
     LanguageLookupID,
     SearchResult,
     SearchTextResult,
@@ -50,18 +50,17 @@ import {
 import {
     LemmaMapping,
 
-    AddUserLemmasForTokenResponse,
-    addUserLemmasForToken,
-
     GetUserLemmasForTokenResponse,
     getUserLemmasForToken,
-
-    updateUserLemmaActiveStateForToken,
-    UpdateUserLemmaActiveStateForTokenResponse,
 
     removeUserLemmaForToken,
     RemoveUserLemmaForTokenResponse,
 } from 'ConsumerWeb/api/user/userlemma';
+import {
+    UserVocabularyType,
+    UpsertUserVocabularyResponse,
+    upsertUserVocabulary,
+} from 'ConsumerWeb/api/user/userVocabulary';
 
 const styleClasses = makeStyles({
     container: {
@@ -240,7 +239,9 @@ const WordSearchForm = (props: WordSearchFormProps) => {
                             <SearchResultDisplay
                                 key={key}
                                 searchResult={r}
-                                isOnlyDefinition={searchResults.length <= 1}/>
+                                isOnlyDefinition={searchResults.length <= 1}
+                                hasSubscription={props.hasSubscription}
+                                subscriptionManagementToken={props.subscriptionManagementToken} />
                         )
                     })
                 }
@@ -303,13 +304,62 @@ const WordSearchForm = (props: WordSearchFormProps) => {
 }
 
 type SearchResultDisplayProps = {
+    subscriptionManagementToken: string;
     searchResult: SearchResult;
     isOnlyDefinition: boolean;
+    hasSubscription: boolean;
 }
 
 const SearchResultDisplay = (props: SearchResultDisplayProps) => {
+    const [ studyNote, setStudyNote ] = useState<string>(null);
+    const handleStudyNoteChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setStudyNote((event.target as HTMLInputElement).value);
+    };
+
+    const [ isLoading, setIsLoading ] = useState<boolean>(false);
+    const [ errorMessage, setErrorMessage ] = useState<string>(null);
+
     const handleSubmit = () => {
-        // TODO: this
+        setIsLoading(true);
+        if (!!studyNote && studyNote.length > 250) {
+            setErrorMessage("The study note must be less than 250 characters");
+            setIsLoading(false);
+            return;
+        }
+        const {
+            idType,
+            id,
+        } = props.searchResult.lookupId
+        let vocabularyType = UserVocabularyType.Lemma;
+        if (idType === IDType.Phrase) {
+             vocabularyType = UserVocabularyType.Phrase;
+        } else if (idType !== IDType.Lemma) {
+            throw new Error("Invalid ID Type")
+        }
+        upsertUserVocabulary({
+            subscriptionManagementToken: props.subscriptionManagementToken,
+            languageCode: WordsmithLanguageCode.Spanish,
+            vocabularyEntry: {
+                displayText: props.searchResult.displayText,
+                definitionId: id.length === 1 ? id[0] : undefined,
+                entryType: vocabularyType,
+                studyNote: studyNote,
+                isVisible: true,
+                isActive: true,
+            },
+        },
+        (resp: UpsertUserVocabularyResponse) => {
+            setIsLoading(false);
+            if (!!resp.error) {
+                setErrorMessage("There was an error processing your request. Try again later.");
+                return;
+            }
+            // TODO: add new vocabulary entry
+        },
+        (err: Error) => {
+            setIsLoading(false);
+            setErrorMessage("There was an error processing your request. Try again later.");
+        });
     }
 
     const classes = styleClasses();
@@ -327,7 +377,7 @@ const SearchResultDisplay = (props: SearchResultDisplayProps) => {
                                     props.searchResult.definitions.join("; ")
                                 ) : (
                                     props.isOnlyDefinition ? (
-                                        "We couldn’t find a definition for the phrase, but you can add a study note and keep it on your vocabulary list."
+                                        "We couldn’t find a definition for the phrase, but you can still add a study note and keep it on your vocabulary list."
                                     ) : (
                                         "Don’t see what you’re looking for here? You can add this as a study note and keep it on your vocabulary list."
                                     )
@@ -335,15 +385,42 @@ const SearchResultDisplay = (props: SearchResultDisplayProps) => {
                             }
                         </Paragraph>
                     </Grid>
-                    <Grid item xs={12} md={4}>
-                        <PrimaryButton
-                            className={classes.submitButton}
-                            onClick={handleSubmit}>
-                            Add to your vocabulary list
-                        </PrimaryButton>
-                    </Grid>
+                    {
+                        props.hasSubscription && (
+                            <Grid item xs={12}>
+                                <PrimaryTextField
+                                    className={classes.searchTextInput}
+                                    id="searchTerm"
+                                    label="Add a study note"
+                                    defaultValue={studyNote}
+                                    disabled={isLoading}
+                                    error={!!studyNote && studyNote.length > 250 ? "Must be 250 characters or fewer" : null}
+                                    variant="outlined"
+                                    onChange={handleStudyNoteChange} />
+                            </Grid>
+                        )
+                    }
+                    {
+                        isLoading ? (
+                            <Grid item xs={12}>
+                                <LoadingSpinner />
+                            </Grid>
+                        ) : (
+                            <Grid item xs={12} md={6}>
+                                <PrimaryButton
+                                    className={classes.submitButton}
+                                    disabled={isLoading}
+                                    onClick={handleSubmit}>
+                                    Add to your vocabulary list
+                                </PrimaryButton>
+                            </Grid>
+                        )
+                    }
                 </Grid>
             </DisplayCard>
+            <Snackbar open={!!errorMessage} autoHideDuration={6000} onClose={() => setErrorMessage(null)}>
+                <Alert severity="error">{errorMessage}</Alert>
+            </Snackbar>
         </Grid>
     );
 }
