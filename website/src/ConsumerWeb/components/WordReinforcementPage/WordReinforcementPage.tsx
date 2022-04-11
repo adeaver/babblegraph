@@ -49,10 +49,6 @@ import {
     searchText
 } from 'ConsumerWeb/api/language/search';
 import {
-    removeUserLemmaForToken,
-    RemoveUserLemmaForTokenResponse,
-} from 'ConsumerWeb/api/user/userlemma';
-import {
     UserVocabularyEntry,
     UserVocabularyType,
 
@@ -158,10 +154,13 @@ const UserVocabularyDisplay = asBaseComponent(
             setUserVocabularyEntries(userVocabularyEntries.filter((e: UserVocabularyEntry) => e.uniqueHash !== deletedEntry.uniqueHash));
         }
 
+        const uniqueHashes = userVocabularyEntries.map((e: UserVocabularyEntry) => e.uniqueHash);
+
         return (
             <Grid container>
                 <Grid item xs={12}>
                     <WordSearchForm
+                        uniqueHashes={uniqueHashes}
                         hasSubscription={props.hasSubscription}
                         wordReinforcementToken={props.wordReinforcementToken}
                         subscriptionManagementToken={props.subscriptionManagementToken}
@@ -354,6 +353,7 @@ const UserVocabularyEntryDisplay = (props: UserVocabularyEntryDisplayProps) => {
 
 
 type WordSearchFormProps = {
+    uniqueHashes: Array<string>;
     wordReinforcementToken: string;
     subscriptionManagementToken: string;
     hasSubscription: boolean;
@@ -426,6 +426,7 @@ const WordSearchForm = (props: WordSearchFormProps) => {
                             <SearchResultDisplay
                                 key={key}
                                 searchResult={r}
+                                isAdded={props.uniqueHashes.indexOf(r.uniqueHash) !== -1}
                                 isOnlyDefinition={searchResults.length <= 1}
                                 hasSubscription={props.hasSubscription}
                                 subscriptionManagementToken={props.subscriptionManagementToken}
@@ -495,6 +496,7 @@ type SearchResultDisplayProps = {
     subscriptionManagementToken: string;
     searchResult: SearchResult;
     isOnlyDefinition: boolean;
+    isAdded: boolean;
     hasSubscription: boolean;
 
     handleAddNewUserVocabularyEntry: (newEntry: UserVocabularyEntry) => void;
@@ -591,7 +593,7 @@ const SearchResultDisplay = (props: SearchResultDisplayProps) => {
                                     id="searchTerm"
                                     label="Add a study note"
                                     defaultValue={studyNote}
-                                    disabled={isLoading}
+                                    disabled={isLoading || props.isAdded}
                                     error={!!studyNote && studyNote.length > 250 ? "Must be 250 characters or fewer" : null}
                                     variant="outlined"
                                     onChange={handleStudyNoteChange} />
@@ -607,9 +609,9 @@ const SearchResultDisplay = (props: SearchResultDisplayProps) => {
                             <Grid item xs={12} md={6}>
                                 <PrimaryButton
                                     className={classes.submitButton}
-                                    disabled={isLoading}
+                                    disabled={isLoading || props.isAdded}
                                     onClick={handleSubmit}>
-                                    Add to your vocabulary list
+                                    { !props.isAdded ? "Add to your vocabulary list" : "Already added" }
                                 </PrimaryButton>
                             </Grid>
                         )
