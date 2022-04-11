@@ -3,6 +3,7 @@ import { RouteComponentProps } from 'react-router-dom';
 
 import { makeStyles } from '@material-ui/core/styles';
 import Divider from '@material-ui/core/Divider';
+import CircularProgress from '@material-ui/core/CircularProgress';
 import Grid from '@material-ui/core/Grid';
 import Snackbar from '@material-ui/core/Snackbar';
 
@@ -21,7 +22,7 @@ import {
 } from 'common/components/Button/Button';
 import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
 import { Alignment, TypographyColor } from 'common/typography/common';
-import Paragraph from 'common/typography/Paragraph';
+import Paragraph, { Size } from 'common/typography/Paragraph';
 import Link from 'common/components/Link/Link';
 import Form from 'common/components/Form/Form';
 import { withCaptchaToken, loadCaptchaScript } from 'common/util/grecaptcha/grecaptcha';
@@ -48,21 +49,24 @@ import {
     searchText
 } from 'ConsumerWeb/api/language/search';
 import {
-    LemmaMapping,
-
-    GetUserLemmasForTokenResponse,
-    getUserLemmasForToken,
-
     removeUserLemmaForToken,
     RemoveUserLemmaForTokenResponse,
 } from 'ConsumerWeb/api/user/userlemma';
 import {
+    UserVocabularyEntry,
     UserVocabularyType,
+
     UpsertUserVocabularyResponse,
     upsertUserVocabulary,
+
+    GetUserVocabularyResponse,
+    getUserVocabulary,
 } from 'ConsumerWeb/api/user/userVocabulary';
 
 const styleClasses = makeStyles({
+    paddedButtonContainer: {
+        padding: '5px',
+    },
     container: {
         margin: '10px 0',
     },
@@ -78,6 +82,18 @@ const styleClasses = makeStyles({
     submitButton: {
         margin: '5px 0',
         width: '100%',
+    },
+    buttonContainer: {
+        alignSelf: 'center',
+    },
+    button: {
+        display: 'block',
+        margin: 'auto',
+    },
+    loadingSpinner: {
+        color: Color.Primary,
+        display: 'block',
+        margin: 'auto',
     },
 });
 
@@ -115,7 +131,7 @@ const WordReinforcementPage = withUserProfileInformation<WordReinforcementPagePr
                     <DisplayCardHeader
                         title="Add vocabulary words"
                         backArrowDestination={`/manage/${subscriptionManagementToken}`} />
-                    <LemmaMappingDisplay
+                    <UserVocabularyDisplay
                         wordReinforcementToken={token}
                         subscriptionManagementToken={subscriptionManagementToken}
                         hasSubscription={!!props.userProfile.subscriptionLevel} />
@@ -125,18 +141,21 @@ const WordReinforcementPage = withUserProfileInformation<WordReinforcementPagePr
     }
 );
 
-type LemmaMappingDisplayProps = {
+type UserVocabularyDisplayProps = {
     wordReinforcementToken: string;
     subscriptionManagementToken: string;
 
     hasSubscription: boolean;
 }
 
-const LemmaMappingDisplay = asBaseComponent(
-    (props: LemmaMappingDisplayProps & GetUserLemmasForTokenResponse & BaseComponentProps) => {
-        const [ lemmaMappings, setLemmaMappings ] = useState<Array<LemmaMapping>>(props.lemmaMappings);
-        const handleAddNewLemma = (newLemma: LemmaMapping) => {
-            setLemmaMappings(lemmaMappings.concat(newLemma));
+const UserVocabularyDisplay = asBaseComponent(
+    (props: UserVocabularyDisplayProps & GetUserVocabularyResponse & BaseComponentProps) => {
+        const [ userVocabularyEntries, setUserVocabularyEntries ] = useState<Array<UserVocabularyEntry>>(props.entries || []);
+        const handleAddNewVocabularyEntry = (newEntry: UserVocabularyEntry) => {
+            setUserVocabularyEntries(userVocabularyEntries.concat(newEntry));
+        }
+        const handleRemoveVocabularyEntry = (deletedEntry: UserVocabularyEntry) => {
+            setUserVocabularyEntries(userVocabularyEntries.filter((e: UserVocabularyEntry) => e.uniqueHash !== deletedEntry.uniqueHash));
         }
 
         return (
@@ -146,24 +165,192 @@ const LemmaMappingDisplay = asBaseComponent(
                         hasSubscription={props.hasSubscription}
                         wordReinforcementToken={props.wordReinforcementToken}
                         subscriptionManagementToken={props.subscriptionManagementToken}
-                        handleAddNewLemma={handleAddNewLemma} />
+                        handleAddNewUserVocabularyEntry={handleAddNewVocabularyEntry} />
                     <Divider />
                     <Heading3 color={TypographyColor.Primary}>
                         Your vocabulary list
                     </Heading3>
+                    {
+                        userVocabularyEntries.map((e: UserVocabularyEntry) => (
+                            <UserVocabularyEntryDisplay key={e.uniqueHash}
+                                subscriptionManagementToken={props.subscriptionManagementToken}
+                                entry={e}
+                                handleRemoveVocabularyEntry={handleRemoveVocabularyEntry} />
+                        ))
+                    }
                 </Grid>
             </Grid>
         )
     },
     (
-        ownProps: LemmaMappingDisplayProps,
-        onSuccess: (resp: GetUserLemmasForTokenResponse) => void,
+        ownProps: UserVocabularyDisplayProps,
+        onSuccess: (resp: GetUserVocabularyResponse) => void,
         onError: (err: Error) => void,
-    ) => getUserLemmasForToken({
-            token: ownProps.wordReinforcementToken,
+    ) => getUserVocabulary({
+            subscriptionManagementToken: ownProps.subscriptionManagementToken,
+            languageCode: WordsmithLanguageCode.Spanish,
         }, onSuccess, onError),
     false,
 );
+
+type UserVocabularyEntryDisplayProps = {
+    subscriptionManagementToken: string;
+    entry: UserVocabularyEntry;
+    handleRemoveVocabularyEntry: (e: UserVocabularyEntry) => void;
+}
+
+const UserVocabularyEntryDisplay = (props: UserVocabularyEntryDisplayProps) => {
+    const [ errorMessage, setErrorMessage ] = useState<string>(null);
+
+    const [ isLoading, setIsLoading ] = useState<boolean>(false);
+
+    const [ isActive, setIsActive ] = useState<boolean>(props.entry.isActive);
+
+    const [ studyNote, setStudyNote ] = useState<string>(props.entry.studyNote);
+    const handleStudyNoteChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setStudyNote((event.target as HTMLInputElement).value);
+    };
+
+    const handleUpdateUserVocabularyEntry = () => {
+        setIsLoading(true);
+        upsertUserVocabulary({
+            subscriptionManagementToken: props.subscriptionManagementToken,
+            languageCode: WordsmithLanguageCode.Spanish,
+            displayText: props.entry.vocabularyDisplay,
+            definitionId: props.entry.vocabularyId,
+            entryType: props.entry.vocabularyType,
+            studyNote: studyNote,
+            isVisible: true,
+            isActive: isActive,
+        },
+        (resp: UpsertUserVocabularyResponse) => {
+            setIsLoading(false);
+            if (!!resp.error) {
+                setErrorMessage("There was an error processing your request. Try again later.");
+                return;
+            }
+        },
+        (err: Error) => {
+            setIsLoading(false);
+            setErrorMessage("There was an error processing your request. Try again later.");
+        });
+    }
+
+    const [ shouldShowDeleteConfirmation, setShouldShowDeleteConfirmation ] = useState<boolean>(false);
+    const handleDelete = () => {
+        setIsLoading(true);
+        upsertUserVocabulary({
+            subscriptionManagementToken: props.subscriptionManagementToken,
+            languageCode: WordsmithLanguageCode.Spanish,
+            displayText: props.entry.vocabularyDisplay,
+            definitionId: props.entry.vocabularyId,
+            entryType: props.entry.vocabularyType,
+            studyNote: null,
+            isVisible: false,
+            isActive: true,
+        },
+        (resp: UpsertUserVocabularyResponse) => {
+            setIsLoading(false);
+            if (!!resp.error) {
+                setErrorMessage("There was an error processing your request. Try again later.");
+                return;
+            }
+            props.handleRemoveVocabularyEntry(props.entry);
+        },
+        (err: Error) => {
+            setIsLoading(false);
+            setErrorMessage("There was an error processing your request. Try again later.");
+        });
+    }
+
+    const classes = styleClasses();
+    return (
+        <Grid item xs={12}>
+            <DisplayCard>
+                <Form handleSubmit={handleUpdateUserVocabularyEntry}>
+                    <Grid container>
+                        <Grid item xs={8} md={9}>
+                            <Heading3 color={TypographyColor.Primary} align={Alignment.Left}>
+                                {props.entry.vocabularyDisplay}
+                            </Heading3>
+                        </Grid>
+                        <Grid item xs={4} md={3}>
+                            <PrimarySwitch
+                                className={classes.button}
+                                checked={isActive} onClick={() => { setIsActive(!isActive) }}
+                                disabled={isLoading} />
+                        </Grid>
+                        <Divider />
+                        {
+                            !!props.entry.definition && (
+                                <div>
+                                    <Paragraph align={Alignment.Left}>
+                                        {props.entry.definition}
+                                    </Paragraph>
+                                </div>
+                            )
+                        }
+                        <Grid item xs={12}>
+                            <PrimaryTextField
+                                className={classes.searchTextInput}
+                                id="searchTerm"
+                                label="Your study note"
+                                defaultValue={studyNote}
+                                disabled={isLoading}
+                                error={!!studyNote && studyNote.length > 250 ? "Must be 250 characters or fewer" : null}
+                                variant="outlined"
+                                onChange={handleStudyNoteChange} />
+                        </Grid>
+                        <Grid item className={classes.paddedButtonContainer} xs={12} md={4}>
+                            <PrimaryButton
+                                className={classes.submitButton}
+                                disabled={isLoading}
+                                type="submit">
+                                Update
+                            </PrimaryButton>
+                        </Grid>
+                        {
+                            !shouldShowDeleteConfirmation && (
+                                <Grid item className={classes.paddedButtonContainer} xs={12} md={4}>
+                                    <WarningButton
+                                        className={classes.submitButton}
+                                        disabled={isLoading}
+                                        onClick={() => {setShouldShowDeleteConfirmation(true)}}>
+                                        Remove from List
+                                    </WarningButton>
+                                </Grid>
+                            )
+                        }
+                        {
+                            shouldShowDeleteConfirmation && (
+                                <Grid item className={classes.paddedButtonContainer} xs={12} md={4}>
+                                    <ConfirmationButton
+                                        className={classes.submitButton}
+                                        disabled={isLoading}
+                                        onClick={handleDelete}>
+                                        Delete from List
+                                    </ConfirmationButton>
+                                </Grid>
+                            )
+                        }
+                        {
+                            shouldShowDeleteConfirmation && (
+                                <Grid item className={classes.paddedButtonContainer} xs={12} md={4}>
+                                    <WarningButton
+                                        className={classes.submitButton}
+                                        onClick={() => {setShouldShowDeleteConfirmation(false)}}
+                                        disabled={isLoading}>
+                                        Cancel
+                                    </WarningButton>
+                                </Grid>
+                            )
+                    }
+                    </Grid>
+                </Form>
+            </DisplayCard>
+        </Grid>
+    );
+}
 
 
 type WordSearchFormProps = {
@@ -171,7 +358,7 @@ type WordSearchFormProps = {
     subscriptionManagementToken: string;
     hasSubscription: boolean;
 
-    handleAddNewLemma: (newLemma: LemmaMapping) => void;
+    handleAddNewUserVocabularyEntry: (newEntry: UserVocabularyEntry) => void;
 }
 
 const wordSearchErrorMessages = {
@@ -339,14 +526,12 @@ const SearchResultDisplay = (props: SearchResultDisplayProps) => {
         upsertUserVocabulary({
             subscriptionManagementToken: props.subscriptionManagementToken,
             languageCode: WordsmithLanguageCode.Spanish,
-            vocabularyEntry: {
-                displayText: props.searchResult.displayText,
-                definitionId: id.length === 1 ? id[0] : undefined,
-                entryType: vocabularyType,
-                studyNote: studyNote,
-                isVisible: true,
-                isActive: true,
-            },
+            displayText: props.searchResult.displayText,
+            definitionId: id.length === 1 ? id[0] : undefined,
+            entryType: vocabularyType,
+            studyNote: studyNote,
+            isVisible: true,
+            isActive: true,
         },
         (resp: UpsertUserVocabularyResponse) => {
             setIsLoading(false);

@@ -58,3 +58,22 @@ func GetPhraseDefinitionsForLemmaPhrases(tx *sqlx.Tx, corpusID CorpusID, lemmaPh
 	}
 	return out, nil
 }
+
+const getPhraseDefintionsQuery = "SELECT * FROM phrase_definitions WHERE  _id IN (?)"
+
+func GetPhraseDefintions(tx *sqlx.Tx, definitionIDs []PhraseDefinitionID) ([]PhraseDefinition, error) {
+	query, args, err := sqlx.In(getPhraseDefintionsQuery, definitionIDs)
+	if err != nil {
+		return nil, nil
+	}
+	sql := tx.Rebind(query)
+	var matches []dbPhraseDefinition
+	if err := tx.Select(&matches, sql, args...); err != nil {
+		return nil, nil
+	}
+	var out []PhraseDefinition
+	for _, m := range matches {
+		out = append(out, m.ToNonDB())
+	}
+	return out, nil
+}

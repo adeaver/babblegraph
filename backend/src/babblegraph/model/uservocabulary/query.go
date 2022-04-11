@@ -2,13 +2,16 @@ package uservocabulary
 
 import (
 	"babblegraph/model/users"
+	"babblegraph/util/ptr"
 	"babblegraph/wordsmith"
+	"strings"
 
 	"github.com/jmoiron/sqlx"
 )
 
 const (
-	upsertVocabularyEntryQuery = `INSERT INTO
+	selectVocabularyEntryForUserQuery = "SELECT * FROM user_vocabulary_entries WHERE is_visible = TRUE AND user_id = $1 AND language_code = $2"
+	upsertVocabularyEntryQuery        = `INSERT INTO
         user_vocabulary_entries (
             user_id, language_code, vocabulary_id, vocabulary_type, vocabulary_display, study_note, is_active, is_visible, unique_hash
         ) VALUES (
@@ -19,6 +22,69 @@ const (
             is_visible = $8
         RETURNING _id`
 )
+
+func GetUserVocabularyEntries(tx *sqlx.Tx, userID users.UserID, languageCode wordsmith.LanguageCode, includeDefinitions bool) ([]UserVocabularyEntry, error) {
+	var matches []dbUserVocabularyEntry
+	if err := tx.Select(&matches, selectVocabularyEntryForUserQuery, userID, languageCode); err != nil {
+		return nil, err
+	}
+	var phraseDefinitionIDs []wordsmith.PhraseDefinitionID
+	var lemmaIDs []wordsmith.LemmaID
+	var out []UserVocabularyEntry
+	for _, m := range matches {
+		out = append(out, m.ToNonDB())
+		switch {
+		case m.VocabularyID == nil:
+			// no-op
+		case m.VocabularyType == VocabularyTypePhrase:
+			phraseDefinitionIDs = append(phraseDefinitionIDs, wordsmith.PhraseDefinitionID(*m.VocabularyID))
+		case m.VocabularyType == VocabularyTypeLemma:
+			lemmaIDs = append(lemmaIDs, wordsmith.LemmaID(*m.VocabularyID))
+		}
+	}
+	if includeDefinitions {
+		phraseDefinitions := make(map[wordsmith.PhraseDefinitionID]wordsmith.PhraseDefinition)
+		lemmaDefinitions := make(map[wordsmith.LemmaID][]wordsmith.DefinitionMapping)
+		if err := wordsmith.WithWordsmithTx(func(tx *sqlx.Tx) error {
+			pDefinitions, err := wordsmith.GetPhraseDefintions(tx, phraseDefinitionIDs)
+			if err != nil {
+				return err
+			}
+			for _, d := range pDefinitions {
+				phraseDefinitions[d.ID] = d
+			}
+			lDefinitions, err := wordsmith.GetDefinitionMappingsForLemmaIDs(tx, wordsmith.SpanishOpenDefinitions, lemmaIDs)
+			if err != nil {
+				return err
+			}
+			for _, d := range lDefinitions {
+				lemmaDefinitions[d.LemmaID] = append(lemmaDefinitions[d.LemmaID], d)
+			}
+			return nil
+		}); err != nil {
+			return nil, err
+		}
+		for idx, e := range out {
+			switch {
+			case e.VocabularyID == nil:
+				// no-op
+			case e.VocabularyType == VocabularyTypePhrase:
+				if definition, ok := phraseDefinitions[wordsmith.PhraseDefinitionID(*e.VocabularyID)]; ok {
+					out[idx].Definition = ptr.String(definition.Definition)
+				}
+			case e.VocabularyType == VocabularyTypeLemma:
+				if definitions, ok := lemmaDefinitions[wordsmith.LemmaID(*e.VocabularyID)]; ok {
+					var definition []string
+					for _, d := range definitions {
+						definition = append(definition, strings.ToLower(d.EnglishDefinition))
+					}
+					out[idx].Definition = ptr.String(strings.Join(definition, "; "))
+				}
+			}
+		}
+	}
+	return out, nil
+}
 
 type UpsertVocabularyEntryInput struct {
 	UserID       users.UserID

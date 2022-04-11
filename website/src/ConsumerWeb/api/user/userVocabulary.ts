@@ -5,10 +5,6 @@ import { WordsmithLanguageCode } from 'common/model/language/language';
 export type UpsertUserVocabularyRequest = {
     subscriptionManagementToken: string;
     languageCode: WordsmithLanguageCode;
-    vocabularyEntry: VocabularyEntry;
-}
-
-export type VocabularyEntry = {
     displayText: string;
     definitionId: string | undefined;
     entryType: UserVocabularyType;
@@ -41,3 +37,37 @@ export function upsertUserVocabulary(
     );
 }
 
+export type UserVocabularyEntry = {
+    id: string;
+    vocabularyId: string | undefined;
+    vocabularyType: UserVocabularyType;
+    vocabularyDisplay: string;
+    definition: string | undefined;
+    studyNote: string | undefined;
+    isActive: boolean;
+    isVisible: boolean;
+    uniqueHash: string
+}
+
+export type GetUserVocabularyRequest = {
+    subscriptionManagementToken: string;
+    languageCode: WordsmithLanguageCode;
+}
+
+export type GetUserVocabularyResponse = {
+    entries: Array<UserVocabularyEntry>;
+    error: ClientError | undefined;
+}
+
+export function getUserVocabulary(
+    req: GetUserVocabularyRequest,
+    onSuccess: (resp: GetUserVocabularyResponse) => void,
+    onError: (e: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<GetUserVocabularyRequest, GetUserVocabularyResponse>(
+        '/api/user/get_user_vocabulary_entry_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}

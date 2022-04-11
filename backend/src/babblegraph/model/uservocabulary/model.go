@@ -39,6 +39,7 @@ func (d dbUserVocabularyEntry) ToNonDB() UserVocabularyEntry {
 		StudyNote:         d.StudyNote,
 		IsActive:          d.IsActive,
 		IsVisible:         d.IsVisible,
+		UniqueHash:        d.UniqueHash,
 	}
 }
 
@@ -74,6 +75,7 @@ type UserVocabularyEntry struct {
 	VocabularyID      *string        `json:"vocabulary_id,omitempty"`
 	VocabularyType    VocabularyType `json:"vocabulary_type"`
 	VocabularyDisplay string         `json:"vocabulary_display"`
+	Definition        *string        `json:"definition,omitempty"`
 	StudyNote         *string        `json:"study_note,omitempty"`
 	IsActive          bool           `json:"is_active"`
 	IsVisible         bool           `json:"is_visible"`

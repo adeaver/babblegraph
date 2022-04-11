@@ -15,18 +15,14 @@ import (
 )
 
 type upsertUserVocabularyRequest struct {
-	SubscriptionManagementToken string          `json:"subscription_management_token"`
-	LanguageCode                string          `json:"language_code"`
-	VocabularyEntry             vocabularyEntry `json:"vocabulary_entry"`
-}
-
-type vocabularyEntry struct {
-	DisplayText  string  `json:"display_text"`
-	DefinitionID *string `json:"definition_id,omitempty"`
-	EntryType    string  `json:"entry_type"`
-	StudyNote    *string `json:"study_note,omitempty"`
-	IsVisible    bool    `json:"is_visible"`
-	IsActive     bool    `json:"is_active"`
+	SubscriptionManagementToken string  `json:"subscription_management_token"`
+	LanguageCode                string  `json:"language_code"`
+	DisplayText                 string  `json:"display_text"`
+	DefinitionID                *string `json:"definition_id,omitempty"`
+	EntryType                   string  `json:"entry_type"`
+	StudyNote                   *string `json:"study_note,omitempty"`
+	IsVisible                   bool    `json:"is_visible"`
+	IsActive                    bool    `json:"is_active"`
 }
 
 const (
@@ -56,7 +52,7 @@ func upsertUserVocabulary(userAuth *routermiddleware.UserAuthentication, r *rout
 			Error: clienterror.ErrorInvalidLanguageCode.Ptr(),
 		}, nil
 	}
-	entryType, err := uservocabulary.GetVocabularyTypeFromString(req.VocabularyEntry.EntryType)
+	entryType, err := uservocabulary.GetVocabularyTypeFromString(req.EntryType)
 	if err != nil {
 		return upsertUserVocabularyResponse{
 			Error: errorInvalidEntryType.Ptr(),
@@ -87,28 +83,28 @@ func upsertUserVocabulary(userAuth *routermiddleware.UserAuthentication, r *rout
 	input := uservocabulary.UpsertVocabularyEntryInput{
 		UserID:       *userID,
 		LanguageCode: *languageCode,
-		IsActive:     req.VocabularyEntry.IsActive,
-		IsVisible:    req.VocabularyEntry.IsVisible,
+		IsActive:     req.IsActive,
+		IsVisible:    req.IsVisible,
 	}
 	switch *entryType {
 	case uservocabulary.VocabularyTypePhrase:
 		hashablePhrase := &uservocabulary.HashablePhrase{
-			DisplayText: req.VocabularyEntry.DisplayText,
+			DisplayText: req.DisplayText,
 		}
-		if req.VocabularyEntry.DefinitionID != nil {
-			phraseDefinitionID := wordsmith.PhraseDefinitionID(*req.VocabularyEntry.DefinitionID)
+		if req.DefinitionID != nil {
+			phraseDefinitionID := wordsmith.PhraseDefinitionID(*req.DefinitionID)
 			hashablePhrase.DefinitionID = &phraseDefinitionID
 		}
 		input.Hashable = hashablePhrase
 	case uservocabulary.VocabularyTypeLemma:
-		if req.VocabularyEntry.DefinitionID == nil {
+		if req.DefinitionID == nil {
 			return upsertUserVocabularyResponse{
 				Error: errorInvalidInput.Ptr(),
 			}, nil
 		}
 		input.Hashable = &uservocabulary.HashableLemma{
-			LemmaID:   wordsmith.LemmaID(*req.VocabularyEntry.DefinitionID),
-			LemmaText: req.VocabularyEntry.DisplayText,
+			LemmaID:   wordsmith.LemmaID(*req.DefinitionID),
+			LemmaText: req.DisplayText,
 		}
 	default:
 		return upsertUserVocabularyResponse{
@@ -116,7 +112,7 @@ func upsertUserVocabulary(userAuth *routermiddleware.UserAuthentication, r *rout
 		}, nil
 	}
 	if userAuth != nil {
-		input.StudyNote = req.VocabularyEntry.StudyNote
+		input.StudyNote = req.StudyNote
 	}
 	var userVocabularyID *uservocabulary.UserVocabularyEntryID
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
@@ -128,5 +124,63 @@ func upsertUserVocabulary(userAuth *routermiddleware.UserAuthentication, r *rout
 	}
 	return upsertUserVocabularyResponse{
 		ID: userVocabularyID,
+	}, nil
+}
+
+type getUserVocabularyRequest struct {
+	SubscriptionManagementToken string `json:"subscription_management_token"`
+	LanguageCode                string `json:"language_code"`
+}
+
+type getUserVocabularyResponse struct {
+	Entries []uservocabulary.UserVocabularyEntry `json:"entries,omitempty"`
+	Error   *clienterror.Error                   `json:"error,omitempty"`
+}
+
+func getUserVocabulary(userAuth *routermiddleware.UserAuthentication, r *router.Request) (interface{}, error) {
+	var req getUserVocabularyRequest
+	if err := r.GetJSONBody(&req); err != nil {
+		return nil, err
+	}
+	userID, err := routetoken.ValidateTokenAndGetUserID(req.SubscriptionManagementToken, routes.SubscriptionManagementRouteEncryptionKey)
+	if err != nil {
+		return getUserVocabularyResponse{
+			Error: clienterror.ErrorInvalidToken.Ptr(),
+		}, nil
+	}
+	languageCode, err := wordsmith.GetLanguageCodeFromString(req.LanguageCode)
+	if err != nil {
+		return getUserVocabularyResponse{
+			Error: clienterror.ErrorInvalidLanguageCode.Ptr(),
+		}, nil
+	}
+	var doesUserHaveAccount bool
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		var err error
+		doesUserHaveAccount, err = useraccounts.DoesUserAlreadyHaveAccount(tx, *userID)
+		return err
+	}); err != nil {
+		return nil, err
+	}
+	switch {
+	case userAuth != nil && userAuth.UserID != *userID:
+		return getUserVocabularyResponse{
+			Error: clienterror.ErrorIncorrectKey.Ptr(),
+		}, nil
+	case userAuth == nil && doesUserHaveAccount:
+		return getUserVocabularyResponse{
+			Error: clienterror.ErrorNoAuth.Ptr(),
+		}, nil
+	}
+	var entries []uservocabulary.UserVocabularyEntry
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		var err error
+		entries, err = uservocabulary.GetUserVocabularyEntries(tx, *userID, *languageCode, true)
+		return err
+	}); err != nil {
+		return nil, err
+	}
+	return getUserVocabularyResponse{
+		Entries: entries,
 	}, nil
 }
