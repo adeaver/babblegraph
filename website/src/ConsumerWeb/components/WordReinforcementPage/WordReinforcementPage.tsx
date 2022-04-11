@@ -585,21 +585,17 @@ const SearchResultDisplay = (props: SearchResultDisplayProps) => {
                             }
                         </Paragraph>
                     </Grid>
-                    {
-                        props.hasSubscription && (
-                            <Grid item xs={12}>
-                                <PrimaryTextField
-                                    className={classes.searchTextInput}
-                                    id="searchTerm"
-                                    label="Add a study note"
-                                    defaultValue={studyNote}
-                                    disabled={isLoading || props.isAdded}
-                                    error={!!studyNote && studyNote.length > 250 ? "Must be 250 characters or fewer" : null}
-                                    variant="outlined"
-                                    onChange={handleStudyNoteChange} />
-                            </Grid>
-                        )
-                    }
+                    <Grid item xs={12}>
+                        <PrimaryTextField
+                            className={classes.searchTextInput}
+                            id="searchTerm"
+                            label="Add a study note"
+                            defaultValue={studyNote}
+                            disabled={isLoading || props.isAdded}
+                            error={!!studyNote && studyNote.length > 250 ? "Must be 250 characters or fewer" : null}
+                            variant="outlined"
+                            onChange={handleStudyNoteChange} />
+                    </Grid>
                     {
                         isLoading ? (
                             <Grid item xs={12}>

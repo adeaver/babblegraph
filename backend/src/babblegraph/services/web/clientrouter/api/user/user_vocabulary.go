@@ -85,6 +85,7 @@ func upsertUserVocabulary(userAuth *routermiddleware.UserAuthentication, r *rout
 		LanguageCode: *languageCode,
 		IsActive:     req.IsActive,
 		IsVisible:    req.IsVisible,
+		StudyNote:    req.StudyNote,
 	}
 	switch *entryType {
 	case uservocabulary.VocabularyTypePhrase:
@@ -110,9 +111,6 @@ func upsertUserVocabulary(userAuth *routermiddleware.UserAuthentication, r *rout
 		return upsertUserVocabularyResponse{
 			Error: errorInvalidInput.Ptr(),
 		}, nil
-	}
-	if userAuth != nil {
-		input.StudyNote = req.StudyNote
 	}
 	var userVocabularyID *uservocabulary.UserVocabularyEntryID
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
