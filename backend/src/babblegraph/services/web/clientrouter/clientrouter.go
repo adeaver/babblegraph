@@ -47,9 +47,6 @@ func registerAPI(r *mux.Router) error {
 	if err := utm.RegisterRouteGroups(); err != nil {
 		return err
 	}
-	if err := language.RegisterRouteGroups(); err != nil {
-		return err
-	}
 	if err := token.RegisterRouteGroups(); err != nil {
 		return err
 	}
