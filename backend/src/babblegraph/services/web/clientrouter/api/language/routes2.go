@@ -3,6 +3,7 @@ package language
 import (
 	"babblegraph/model/routes"
 	"babblegraph/model/useraccounts"
+	"babblegraph/model/uservocabulary"
 	"babblegraph/services/web/clientrouter/clienterror"
 	language_model "babblegraph/services/web/clientrouter/model/language"
 	"babblegraph/services/web/clientrouter/routermiddleware"
@@ -47,12 +48,12 @@ type searchResult struct {
 	LanguageCode wordsmith.LanguageCode `json:"language_code"`
 }
 
-// TODO: move this
 type textSearchResult struct {
 	DisplayText  string                       `json:"display_text"`
 	Definitions  []string                     `json:"definitions,omitempty"`
 	PartOfSpeech *language_model.PartOfSpeech `json:"part_of_speech,omitempty"`
 	LookupID     textSearchLookupID           `json:"lookup_id"`
+	UniqueHash   string                       `json:"unique_hash"`
 }
 
 type textSearchDefinition struct {
@@ -145,6 +146,10 @@ func searchText(userAuth *routermiddleware.UserAuthentication, r *router.Request
 			for _, d := range l.Definitions {
 				definitions = append(definitions, d.Text)
 			}
+			uniqueHash := uservocabulary.GetUniqueHash(&uservocabulary.HashableLemma{
+				LemmaID:   l.ID,
+				LemmaText: l.Text,
+			})
 			result = append(result, textSearchResult{
 				DisplayText:  l.Text,
 				Definitions:  definitions,
@@ -153,6 +158,7 @@ func searchText(userAuth *routermiddleware.UserAuthentication, r *router.Request
 					IDType: textSearchLookupIDTypeLemma,
 					ID:     []string{l.ID.Str()},
 				},
+				UniqueHash: uniqueHash.Str(),
 			})
 		}
 		return searchTextResponse{
@@ -217,6 +223,11 @@ func searchText(userAuth *routermiddleware.UserAuthentication, r *router.Request
 		}
 		var result []textSearchResult
 		for _, p := range phraseDefinitions {
+			p := p
+			uniqueHash := uservocabulary.GetUniqueHash(&uservocabulary.HashablePhrase{
+				DisplayText:  p.Phrase,
+				DefinitionID: &p.ID,
+			})
 			result = append(result, textSearchResult{
 				DisplayText: p.Phrase,
 				Definitions: []string{p.Definition},
@@ -224,14 +235,19 @@ func searchText(userAuth *routermiddleware.UserAuthentication, r *router.Request
 					IDType: textSearchLookupIDTypePhrase,
 					ID:     []string{string(p.ID)},
 				},
+				UniqueHash: uniqueHash.Str(),
 			})
 		}
+		uniqueHash := uservocabulary.GetUniqueHash(&uservocabulary.HashablePhrase{
+			DisplayText: strings.Join(req.Text, " "),
+		})
 		result = append(result, textSearchResult{
 			DisplayText: strings.Join(req.Text, " "),
 			LookupID: textSearchLookupID{
 				IDType: textSearchLookupIDTypePhrase,
 				ID:     req.Text,
 			},
+			UniqueHash: uniqueHash.Str(),
 		})
 		return searchTextResponse{
 			Result: &searchResult{

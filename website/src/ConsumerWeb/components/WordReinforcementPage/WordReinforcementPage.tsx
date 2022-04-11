@@ -274,7 +274,7 @@ const UserVocabularyEntryDisplay = (props: UserVocabularyEntryDisplayProps) => {
                                 {props.entry.vocabularyDisplay}
                             </Heading3>
                         </Grid>
-                        <Grid item xs={4} md={3}>
+                        <Grid item className={classes.buttonContainer} xs={4} md={3}>
                             <PrimarySwitch
                                 className={classes.button}
                                 checked={isActive} onClick={() => { setIsActive(!isActive) }}
@@ -428,7 +428,8 @@ const WordSearchForm = (props: WordSearchFormProps) => {
                                 searchResult={r}
                                 isOnlyDefinition={searchResults.length <= 1}
                                 hasSubscription={props.hasSubscription}
-                                subscriptionManagementToken={props.subscriptionManagementToken} />
+                                subscriptionManagementToken={props.subscriptionManagementToken}
+                                handleAddNewUserVocabularyEntry={props.handleAddNewUserVocabularyEntry} />
                         )
                     })
                 }
@@ -495,6 +496,8 @@ type SearchResultDisplayProps = {
     searchResult: SearchResult;
     isOnlyDefinition: boolean;
     hasSubscription: boolean;
+
+    handleAddNewUserVocabularyEntry: (newEntry: UserVocabularyEntry) => void;
 }
 
 const SearchResultDisplay = (props: SearchResultDisplayProps) => {
@@ -539,7 +542,17 @@ const SearchResultDisplay = (props: SearchResultDisplayProps) => {
                 setErrorMessage("There was an error processing your request. Try again later.");
                 return;
             }
-            // TODO: add new vocabulary entry
+            props.handleAddNewUserVocabularyEntry({
+                id: resp.id,
+                vocabularyId: id.length === 1 ? id[0] : undefined,
+                vocabularyType: vocabularyType,
+                vocabularyDisplay: props.searchResult.displayText,
+                definition: props.searchResult.definitions.join("; "),
+                studyNote: studyNote,
+                isActive: true,
+                isVisible: true,
+                uniqueHash: props.searchResult.uniqueHash,
+            });
         },
         (err: Error) => {
             setIsLoading(false);

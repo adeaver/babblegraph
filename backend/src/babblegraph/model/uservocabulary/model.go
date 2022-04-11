@@ -30,6 +30,10 @@ type dbUserVocabularyEntry struct {
 
 type UniqueHash string
 
+func (u UniqueHash) Str() string {
+	return string(u)
+}
+
 func (d dbUserVocabularyEntry) ToNonDB() UserVocabularyEntry {
 	return UserVocabularyEntry{
 		ID:                d.ID,

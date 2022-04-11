@@ -55,6 +55,7 @@ export type SearchResult = {
     definitions: string[];
     partOfSpeech: PartOfSpeech | undefined;
     lookupId: LanguageLookupID;
+    uniqueHash: string;
 }
 
 export type LanguageLookupID = {
