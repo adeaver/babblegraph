@@ -46,7 +46,7 @@ func GetDefaultDocumentsAccessor() *DefaultDocumentsAccessor {
 
 func (d *DefaultDocumentsAccessor) GetDocumentsForUser(c ctx.LogContext, input getDocumentsForUserInput) (*documentsOutput, error) {
 	dailyEmailDocQueryBuilder := documents.NewDailyEmailDocumentsQueryBuilder()
-	dailyEmailDocQueryBuilder.ContainingLemmas(input.Lemmas)
+	dailyEmailDocQueryBuilder.ContainingLemmaPhrases(input.LemmaIDPhrases)
 	dailyEmailDocQueryBuilder.ForTopic(input.Topic)
 	dailyEmailDocQueryBuilder.WithRecencyBias(documents.RecencyBiasMostRecent)
 	recentDocuments, err := documents.ExecuteDocumentQuery(c, dailyEmailDocQueryBuilder, documents.ExecuteDocumentQueryInput{
@@ -77,7 +77,7 @@ func (d *DefaultDocumentsAccessor) GetDocumentsForUser(c ctx.LogContext, input g
 }
 
 func (d *DefaultDocumentsAccessor) GetDocumentsForUserForLemma(c ctx.LogContext, input getDocumentsForUserForLemmaInput) ([]documents.DocumentWithScore, error) {
-	spotlightQueryBuilder := documents.NewLemmaSpotlightQueryBuilder(input.Lemma)
+	spotlightQueryBuilder := documents.NewLemmaSpotlightQueryBuilder(input.LemmaIDPhrase)
 	spotlightQueryBuilder.AddTopics(input.Topics)
 	recencyBias := documents.RecencyBiasMostRecent
 	if input.SearchNonRecent {

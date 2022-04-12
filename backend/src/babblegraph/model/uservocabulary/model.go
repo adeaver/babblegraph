@@ -85,3 +85,12 @@ type UserVocabularyEntry struct {
 	IsVisible         bool           `json:"is_visible"`
 	UniqueHash        UniqueHash     `json:"unique_hash"`
 }
+
+func (u UserVocabularyEntry) AsLemmaIDPhrase() ([]wordsmith.LemmaID, error) {
+	switch u.VocabularyType {
+	case VocabularyTypeLemma:
+		return []wordsmith.LemmaID{wordsmith.LemmaID(*u.VocabularyID)}, nil
+	case VocabularyTypePhrase:
+
+	}
+}

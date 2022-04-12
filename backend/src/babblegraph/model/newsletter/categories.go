@@ -29,6 +29,10 @@ func getDocumentCategories(c ctx.LogContext, input getDocumentCategoriesInput) (
 	topics := getTopicsForNewsletter(input.userAccessor)
 	c.Debugf("Topics %+v", topics)
 	allowableSourceIDs := input.userAccessor.getAllowableSources()
+	var lemmaIDPhrases [][]wordsmith.LemmaID
+	for _, vocabularyEntry := range input.userAccessor.getUserVocabularyEntries() {
+		// TODO: vocabularyEntry.AsLemmaIDPhrase()
+	}
 	genericDocuments, err := input.docsAccessor.GetDocumentsForUser(c, getDocumentsForUserInput{
 		getDocumentsBaseInput: getDocumentsBaseInput{
 			LanguageCode:        input.languageCode,
@@ -37,7 +41,7 @@ func getDocumentCategories(c ctx.LogContext, input getDocumentCategoriesInput) (
 			MinimumReadingLevel: ptr.Int64(input.userAccessor.getReadingLevel().LowerBound),
 			MaximumReadingLevel: ptr.Int64(input.userAccessor.getReadingLevel().UpperBound),
 		},
-		Lemmas: input.userAccessor.getTrackingLemmas(),
+		LemmaIDPhrases: lemmaIDPhrases,
 	})
 	if err != nil {
 		return nil, err
