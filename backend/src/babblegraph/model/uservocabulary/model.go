@@ -86,11 +86,13 @@ type UserVocabularyEntry struct {
 	UniqueHash        UniqueHash     `json:"unique_hash"`
 }
 
-func (u UserVocabularyEntry) AsLemmaIDPhrase() ([]wordsmith.LemmaID, error) {
+func (u UserVocabularyEntry) AsLemmaIDPhrases() ([][]wordsmith.LemmaID, error) {
 	switch u.VocabularyType {
 	case VocabularyTypeLemma:
-		return []wordsmith.LemmaID{wordsmith.LemmaID(*u.VocabularyID)}, nil
+		return [][]wordsmith.LemmaID{{wordsmith.LemmaID(*u.VocabularyID)}}, nil
 	case VocabularyTypePhrase:
-
+		return GetLemmaIDPhrasesForPhrase(u.VocabularyDisplay)
+	default:
+		return nil, fmt.Errorf("Unrecognized vocabulary type: %s", u.VocabularyType)
 	}
 }

@@ -254,6 +254,7 @@ type getDocumentSectionsInput struct {
 func getDocumentSections(c ctx.LogContext, numberOfDocumentsInNewsletter int, input getDocumentSectionsInput) ([]Section, []documents.DocumentID, error) {
 	topics := getSectionTopicsForUser(input.userAccessor, input.contentAccessor)
 	allowableSourceIDs := input.userAccessor.getAllowableSources()
+	lemmaIDPhrases := getLemmaIDPhrases(c, input.userAccessor)
 	numberOfArticlesInMainSection := int2.MustMinInt(numberOfDocumentsInNewsletter/2, maximumNumberOfDocumentsInSection)
 	mainSectionEligibleTopics := make(map[content.TopicID]bool)
 	documentsByTopic := make(map[content.TopicID][]documents.DocumentWithScore)
@@ -266,8 +267,8 @@ func getDocumentSections(c ctx.LogContext, numberOfDocumentsInNewsletter int, in
 				MinimumReadingLevel: ptr.Int64(input.userAccessor.getReadingLevel().LowerBound),
 				MaximumReadingLevel: ptr.Int64(input.userAccessor.getReadingLevel().UpperBound),
 			},
-			Lemmas: input.userAccessor.getTrackingLemmas(),
-			Topic:  t.Ptr(),
+			LemmaIDPhrases: lemmaIDPhrases,
+			Topic:          t.Ptr(),
 		})
 		switch {
 		case err != nil:

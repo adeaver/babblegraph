@@ -12,8 +12,12 @@ import (
 	"babblegraph/util/text"
 	"babblegraph/util/urlparser"
 	"babblegraph/wordsmith"
+	"math/rand"
 	"sort"
+	"time"
 )
+
+const maxLemmasPerQuery = 5
 
 type getDocumentCategoriesInput struct {
 	emailRecordID                 email.ID
@@ -29,10 +33,7 @@ func getDocumentCategories(c ctx.LogContext, input getDocumentCategoriesInput) (
 	topics := getTopicsForNewsletter(input.userAccessor)
 	c.Debugf("Topics %+v", topics)
 	allowableSourceIDs := input.userAccessor.getAllowableSources()
-	var lemmaIDPhrases [][]wordsmith.LemmaID
-	for _, vocabularyEntry := range input.userAccessor.getUserVocabularyEntries() {
-		// TODO: vocabularyEntry.AsLemmaIDPhrase()
-	}
+	lemmaIDPhrases := getLemmaIDPhrases(c, input.userAccessor)
 	genericDocuments, err := input.docsAccessor.GetDocumentsForUser(c, getDocumentsForUserInput{
 		getDocumentsBaseInput: getDocumentsBaseInput{
 			LanguageCode:        input.languageCode,
@@ -56,8 +57,8 @@ func getDocumentCategories(c ctx.LogContext, input getDocumentCategoriesInput) (
 				MinimumReadingLevel: ptr.Int64(input.userAccessor.getReadingLevel().LowerBound),
 				MaximumReadingLevel: ptr.Int64(input.userAccessor.getReadingLevel().UpperBound),
 			},
-			Lemmas: input.userAccessor.getTrackingLemmas(),
-			Topic:  t.Ptr(),
+			LemmaIDPhrases: lemmaIDPhrases,
+			Topic:          t.Ptr(),
 		})
 		switch {
 		case err != nil:
@@ -265,4 +266,30 @@ func getTopicsForNewsletter(accessor userPreferencesAccessor) []content.TopicID 
 		topics = append(topics, allUserTopics[idx])
 	}
 	return topics
+}
+
+func getLemmaIDPhrases(c ctx.LogContext, accessor userPreferencesAccessor) [][]wordsmith.LemmaID {
+	vocabularyEntries := accessor.getUserVocabularyEntries()
+	rand.Seed(time.Now().UnixNano())
+	rand.Shuffle(len(vocabularyEntries), func(i, j int) {
+		vocabularyEntries[i], vocabularyEntries[j] = vocabularyEntries[j], vocabularyEntries[i]
+	})
+	count := 0
+	var lemmaIDPhrases [][]wordsmith.LemmaID
+	for _, vocabularyEntry := range vocabularyEntries {
+		asLemmaPhrases, err := vocabularyEntry.AsLemmaIDPhrases()
+		switch {
+		case err != nil:
+			c.Infof("Error getting lemma ID phrases for entry %s: %s", vocabularyEntry.ID, err.Error())
+		case asLemmaPhrases == nil || len(asLemmaPhrases) == 0:
+			// no-op
+		default:
+			lemmaIDPhrases = append(lemmaIDPhrases, asLemmaPhrases...)
+			count++
+		}
+		if count >= maxLemmasPerQuery {
+			break
+		}
+	}
+	return lemmaIDPhrases
 }
