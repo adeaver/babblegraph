@@ -137,6 +137,6 @@ func (s *SampleNewsletterUserAccessor) insertDocumentForUserAndReturnID(emailRec
 	return userdocuments.UserDocumentID(uuid.New().String()).Ptr(), nil
 }
 
-func (s *SampleNewsletterUserAccessor) insertSpotlightReinforcementRecord(lemmaID wordsmith.LemmaID) error {
+func (s *SampleNewsletterUserAccessor) insertSpotlightReinforcementRecord(userVocabularyEntryID uservocabulary.UserVocabularyEntryID) error {
 	return nil
 }
