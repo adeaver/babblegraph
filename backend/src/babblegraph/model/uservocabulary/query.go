@@ -21,6 +21,17 @@ const (
             is_active = $7,
             is_visible = $8
         RETURNING _id`
+
+	selectVocabularySpotlightRecordForUserQuery = "SELECT * FROM user_vocabulary_spotlight_records WHERE user_id = $1 AND language_code = $2 ORDER BY last_sent_on ASC"
+	upsertVocabularySpotlightRecordQuery        = `INSERT INTO
+        user_vocabulary_spotlight_records (
+            user_id, language_code, vocabulary_entry_id, last_sent_on, number_of_times_sent
+        ) VALUES (
+            $1, $2, $3, timezone('utc', now()), 1
+        ) ON CONFLICT (user_id, language_code, vocabulary_entry_id) DO UPDATE
+        SET
+        last_sent_on=timezone('utc', now()),
+        number_of_times_sent=user_vocabulary_spotlight_records.number_of_times_sent+1`
 )
 
 func GetUserVocabularyEntries(tx *sqlx.Tx, userID users.UserID, languageCode wordsmith.LanguageCode, includeDefinitions bool) ([]UserVocabularyEntry, error) {
@@ -113,4 +124,23 @@ func UpsertVocabularyEntry(tx *sqlx.Tx, input UpsertVocabularyEntryInput) (*User
 		}
 	}
 	return &userVocabularyID, nil
+}
+
+func GetUserVocabularySpotlightRecords(tx *sqlx.Tx, userID users.UserID, languageCode wordsmith.LanguageCode) ([]UserVocabularySpotlightRecord, error) {
+	var matches []dbUserVocabularySpotlightRecord
+	if err := tx.Select(&matches, selectVocabularySpotlightRecordForUserQuery, userID, languageCode); err != nil {
+		return nil, err
+	}
+	var out []UserVocabularySpotlightRecord
+	for _, m := range matches {
+		out = append(out, m.ToNonDB())
+	}
+	return out, nil
+}
+
+func UpsertUserVocabularySpotlightRecord(tx *sqlx.Tx, userID users.UserID, languageCode wordsmith.LanguageCode, id UserVocabularyEntryID) error {
+	if _, err := tx.Exec(upsertVocabularySpotlightRecordQuery, userID, languageCode, id); err != nil {
+		return err
+	}
+	return nil
 }

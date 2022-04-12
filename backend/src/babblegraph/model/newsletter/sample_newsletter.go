@@ -6,7 +6,6 @@ import (
 	"babblegraph/model/email"
 	"babblegraph/model/useraccounts"
 	"babblegraph/model/userdocuments"
-	"babblegraph/model/userlemma"
 	"babblegraph/model/usernewsletterpreferences"
 	"babblegraph/model/users"
 	"babblegraph/model/uservocabulary"
@@ -34,7 +33,7 @@ type GetSampleNewsletterUserAccessorInput struct {
 	UserTopics                []content.TopicID
 	UserVocabularyEntries     []uservocabulary.UserVocabularyEntry
 	AllowableSourceIDs        []content.SourceID
-	SpotlightRecords          []userlemma.UserLemmaReinforcementSpotlightRecord
+	SpotlightRecords          []uservocabulary.UserVocabularySpotlightRecord
 }
 
 func GetSampleNewsletterUserAccessor(c ctx.LogContext, tx *sqlx.Tx, input GetSampleNewsletterUserAccessorInput) (*SampleNewsletterUserAccessor, error) {
@@ -130,7 +129,7 @@ func (s *SampleNewsletterUserAccessor) getAllowableSources() []content.SourceID 
 	return s.defaultUserPreferencesAccessor.getAllowableSources()
 }
 
-func (s *SampleNewsletterUserAccessor) getSpotlightRecordsOrderedBySentOn() []userlemma.UserLemmaReinforcementSpotlightRecord {
+func (s *SampleNewsletterUserAccessor) getSpotlightRecordsOrderedBySentOn() []uservocabulary.UserVocabularySpotlightRecord {
 	return s.defaultUserPreferencesAccessor.getSpotlightRecordsOrderedBySentOn()
 }
 

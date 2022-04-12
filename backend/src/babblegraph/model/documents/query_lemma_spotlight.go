@@ -9,14 +9,14 @@ import (
 )
 
 type lemmaSpotlightQueryBuilder struct {
-	lemmaIDPhrase []wordsmith.LemmaID
-	topics        []content.TopicID
-	recencyBias   *RecencyBias
+	lemmaIDPhrases [][]wordsmith.LemmaID
+	topics         []content.TopicID
+	recencyBias    *RecencyBias
 }
 
-func NewLemmaSpotlightQueryBuilder(lemmaIDPhrase []wordsmith.LemmaID) *lemmaSpotlightQueryBuilder {
+func NewLemmaSpotlightQueryBuilder(lemmaIDPhrases [][]wordsmith.LemmaID) *lemmaSpotlightQueryBuilder {
 	return &lemmaSpotlightQueryBuilder{
-		lemmaIDPhrase: lemmaIDPhrase,
+		lemmaIDPhrases: lemmaIDPhrases,
 	}
 }
 
@@ -32,11 +32,13 @@ func (l *lemmaSpotlightQueryBuilder) ExtendBaseQuery(queryBuilder *esquery.BoolQ
 	// Note, this is a bit of a hack. We're using match phrase because
 	// of a bug with how ElasticSearch is setup. Currently, the analyzer
 	// splits hyphens, so match phrase will guarantee that our lemma is matched exactly.
-	var phraseAsStrings []string
-	for _, lemmaID := range l.lemmaIDPhrase {
-		phraseAsStrings = append(phraseAsStrings, lemmaID.Str())
+	for _, phrase := range l.lemmaIDPhrases {
+		var phraseAsStrings []string
+		for _, lemmaID := range phrase {
+			phraseAsStrings = append(phraseAsStrings, lemmaID.Str())
+		}
+		queryBuilder.AddFilter(esquery.MatchPhrase("lemmatized_description", strings.Join(phraseAsStrings, " ")))
 	}
-	queryBuilder.AddFilter(esquery.MatchPhrase("lemmatized_description", strings.Join(phraseAsStrings, " ")))
 	if l.recencyBias != nil {
 		seedJobIngestTimestampRangeQuery := esquery.NewRangeQueryBuilderForFieldName("seed_job_ingest_timestamp")
 		recencyBoundary := time.Now().Add(RecencyBiasBoundary).Unix()

@@ -10,6 +10,10 @@ import (
 
 type UserVocabularyEntryID string
 
+func (u UserVocabularyEntryID) Str() string {
+	return string(u)
+}
+
 type dbUserVocabularyEntry struct {
 	CreatedAt         time.Time              `db:"created_at"`
 	LastModifiedAt    time.Time              `db:"last_modified_at"`
@@ -94,5 +98,34 @@ func (u UserVocabularyEntry) AsLemmaIDPhrases() ([][]wordsmith.LemmaID, error) {
 		return GetLemmaIDPhrasesForPhrase(u.VocabularyDisplay)
 	default:
 		return nil, fmt.Errorf("Unrecognized vocabulary type: %s", u.VocabularyType)
+	}
+}
+
+type userVocabularySpotlightRecordID string
+
+type dbUserVocabularySpotlightRecord struct {
+	ID                userVocabularySpotlightRecordID `db:"_id"`
+	LanguageCode      wordsmith.LanguageCode          `db:"language_code"`
+	UserID            users.UserID                    `db:"user_id"`
+	VocabularyEntryID UserVocabularyEntryID           `db:"vocabulary_entry_id"`
+	LastSentOn        time.Time                       `db:"last_sent_on"`
+	NumberOfTimesSent int64                           `db:"number_of_times_sent"`
+}
+
+type UserVocabularySpotlightRecord struct {
+	UserID            users.UserID
+	LanguageCode      wordsmith.LanguageCode
+	VocabularyEntryID UserVocabularyEntryID
+	LastSentOn        time.Time
+	NumberOfTimesSent int64
+}
+
+func (d dbUserVocabularySpotlightRecord) ToNonDB() UserVocabularySpotlightRecord {
+	return UserVocabularySpotlightRecord{
+		UserID:            d.UserID,
+		LanguageCode:      d.LanguageCode,
+		VocabularyEntryID: d.VocabularyEntryID,
+		LastSentOn:        d.LastSentOn,
+		NumberOfTimesSent: d.NumberOfTimesSent,
 	}
 }

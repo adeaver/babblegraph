@@ -5,10 +5,10 @@ import (
 	"babblegraph/model/documents"
 	"babblegraph/model/email"
 	"babblegraph/model/routes"
+	"babblegraph/model/uservocabulary"
 	"babblegraph/util/ctx"
 	"babblegraph/util/deref"
 	"babblegraph/util/ptr"
-	"babblegraph/wordsmith"
 	"sort"
 	"strings"
 	"time"
@@ -41,7 +41,7 @@ func getSpotlightLemmaForNewsletter(c ctx.LogContext, input getSpotlightLemmaFor
 		documentIDsToExclude = append(documentIDsToExclude, documentID)
 	}
 	allowableSourceIDs := input.userAccessor.getAllowableSources()
-	orderedListOfSpotlightRecords := getOrderedListOfPotentialSpotlightLemmas(input.userAccessor)
+	orderedListOfSpotlightRecords := getOrderedListOfPotentialSpotlights(input.userAccessor)
 	c.Debugf("Ordered spotlight records %+v", orderedListOfSpotlightRecords)
 	var preferencesLink string
 	if input.userAccessor.getDoesUserHaveAccount() {
@@ -83,7 +83,7 @@ func getSpotlightLemmaForNewsletter(c ctx.LogContext, input getSpotlightLemmaFor
 type lookupSpotlightForAllPotentialSpotlightsInput struct {
 	getSpotlightLemmaForNewsletterInput
 	documentIDsToExclude           []documents.DocumentID
-	potentialSpotlights            []wordsmith.LemmaID
+	potentialSpotlights            []uservocabulary.UserVocabularyEntryID
 	shouldSearchNonRecentDocuments bool
 	preferencesLink                string
 	allowableSourceIDs             []content.SourceID
@@ -91,7 +91,20 @@ type lookupSpotlightForAllPotentialSpotlightsInput struct {
 }
 
 func lookupSpotlightForAllPotentialSpotlights(c ctx.LogContext, input lookupSpotlightForAllPotentialSpotlightsInput) (*LemmaReinforcementSpotlight, error) {
+	userEntriesByID := make(map[uservocabulary.UserVocabularyEntryID]uservocabulary.UserVocabularyEntry)
+	for _, entry := range input.userAccessor.getUserVocabularyEntries() {
+		userEntriesByID[entry.ID] = entry
+	}
 	for _, potentialSpotlight := range input.potentialSpotlights {
+		entry, ok := userEntriesByID[potentialSpotlight]
+		if !ok {
+			continue
+		}
+		lemmaIDPhrases, err := entry.AsLemmaIDPhrases()
+		if err != nil {
+			c.Infof("Error generating lemma ID phrases for entry %s: %s", entry.ID, err.Error())
+			continue
+		}
 		documents, err := input.docsAccessor.GetDocumentsForUserForLemma(c, getDocumentsForUserForLemmaInput{
 			getDocumentsBaseInput: getDocumentsBaseInput{
 				LanguageCode:        input.userAccessor.getLanguageCode(),
@@ -100,7 +113,7 @@ func lookupSpotlightForAllPotentialSpotlights(c ctx.LogContext, input lookupSpot
 				MinimumReadingLevel: ptr.Int64(input.userAccessor.getReadingLevel().LowerBound),
 				MaximumReadingLevel: ptr.Int64(input.userAccessor.getReadingLevel().UpperBound),
 			},
-			Lemma:           potentialSpotlight,
+			LemmaIDPhrases:  lemmaIDPhrases,
 			Topics:          input.userAccessor.getUserTopics(),
 			SearchNonRecent: input.shouldSearchNonRecentDocuments,
 		})
@@ -129,15 +142,11 @@ func lookupSpotlightForAllPotentialSpotlights(c ctx.LogContext, input lookupSpot
 					if err := input.userAccessor.insertSpotlightReinforcementRecord(potentialSpotlight); err != nil {
 						return nil, err
 					}
-					lemma, err := input.wordsmithAccessor.GetLemmaByID(potentialSpotlight)
-					if err != nil {
-						return nil, err
-					}
 					if err := input.userAccessor.insertSpotlightReinforcementRecord(potentialSpotlight); err != nil {
 						return nil, err
 					}
 					return &LemmaReinforcementSpotlight{
-						LemmaText:       lemma.LemmaText,
+						LemmaText:       entry.VocabularyDisplay,
 						Document:        *link,
 						PreferencesLink: input.preferencesLink,
 					}, nil
@@ -148,28 +157,28 @@ func lookupSpotlightForAllPotentialSpotlights(c ctx.LogContext, input lookupSpot
 	return nil, nil
 }
 
-func getOrderedListOfPotentialSpotlightLemmas(userAccessor userPreferencesAccessor) []wordsmith.LemmaID {
-	lemmaReinforcementSpotlightRecords := userAccessor.getSpotlightRecordsOrderedBySentOn()
-	lemmaSpotlightRecordSentOnTimeByID := make(map[wordsmith.LemmaID]time.Time)
-	for _, spotlightRecord := range lemmaReinforcementSpotlightRecords {
-		lemmaSpotlightRecordSentOnTimeByID[spotlightRecord.LemmaID] = spotlightRecord.LastSentOn
+func getOrderedListOfPotentialSpotlights(userAccessor userPreferencesAccessor) []uservocabulary.UserVocabularyEntryID {
+	userVocabularyReinforcementSpotlightRecords := userAccessor.getSpotlightRecordsOrderedBySentOn()
+	userVocabularySpotlightRecordSentOnTimeByID := make(map[uservocabulary.UserVocabularyEntryID]time.Time)
+	for _, spotlightRecord := range userVocabularyReinforcementSpotlightRecords {
+		userVocabularySpotlightRecordSentOnTimeByID[spotlightRecord.VocabularyEntryID] = spotlightRecord.LastSentOn
 	}
 	now := time.Now()
-	var lemmasNotSent, sentLemmas []wordsmith.LemmaID
-	for _, lemmaID := range userAccessor.getTrackingLemmas() {
-		lastSent, ok := lemmaSpotlightRecordSentOnTimeByID[lemmaID]
+	var entriesNotSent, sentEntries []uservocabulary.UserVocabularyEntryID
+	for _, entry := range userAccessor.getUserVocabularyEntries() {
+		lastSent, ok := userVocabularySpotlightRecordSentOnTimeByID[entry.ID]
 		if !ok {
-			lemmasNotSent = append(lemmasNotSent, lemmaID)
+			entriesNotSent = append(entriesNotSent, entry.ID)
 		} else {
 			if lastSent.Add(minimumDaysSinceLastSpotlight * 24 * time.Hour).Before(now) {
-				sentLemmas = append(sentLemmas, lemmaID)
+				sentEntries = append(sentEntries, entry.ID)
 			}
 		}
 	}
-	sort.Slice(sentLemmas, func(i, j int) bool {
-		iSentOn, _ := lemmaSpotlightRecordSentOnTimeByID[sentLemmas[i]]
-		jSentOn, _ := lemmaSpotlightRecordSentOnTimeByID[sentLemmas[j]]
+	sort.Slice(sentEntries, func(i, j int) bool {
+		iSentOn, _ := userVocabularySpotlightRecordSentOnTimeByID[sentEntries[i]]
+		jSentOn, _ := userVocabularySpotlightRecordSentOnTimeByID[sentEntries[j]]
 		return iSentOn.Before(jSentOn)
 	})
-	return append(lemmasNotSent, sentLemmas...)
+	return append(entriesNotSent, sentEntries...)
 }

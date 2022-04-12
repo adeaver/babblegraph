@@ -23,7 +23,7 @@ type getDocumentsForUserInput struct {
 
 type getDocumentsForUserForLemmaInput struct {
 	getDocumentsBaseInput
-	LemmaIDPhrase   []wordsmith.LemmaID
+	LemmaIDPhrases  [][]wordsmith.LemmaID
 	Topics          []content.TopicID
 	SearchNonRecent bool
 }
@@ -77,7 +77,7 @@ func (d *DefaultDocumentsAccessor) GetDocumentsForUser(c ctx.LogContext, input g
 }
 
 func (d *DefaultDocumentsAccessor) GetDocumentsForUserForLemma(c ctx.LogContext, input getDocumentsForUserForLemmaInput) ([]documents.DocumentWithScore, error) {
-	spotlightQueryBuilder := documents.NewLemmaSpotlightQueryBuilder(input.LemmaIDPhrase)
+	spotlightQueryBuilder := documents.NewLemmaSpotlightQueryBuilder(input.LemmaIDPhrases)
 	spotlightQueryBuilder.AddTopics(input.Topics)
 	recencyBias := documents.RecencyBiasMostRecent
 	if input.SearchNonRecent {
