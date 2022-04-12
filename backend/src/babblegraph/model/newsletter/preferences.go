@@ -92,7 +92,7 @@ func GetDefaultUserPreferencesAccessor(c ctx.LogContext, tx *sqlx.Tx, userID use
 	if err != nil {
 		return nil, err
 	}
-	var filteredVocabularyEntries []uservoabulary.UserVocabularyEntry
+	var filteredVocabularyEntries []uservocabulary.UserVocabularyEntry
 	for _, e := range vocabularyEntries {
 		if userSubscriptionLevel == nil && e.VocabularyType == uservocabulary.VocabularyTypePhrase {
 			continue
