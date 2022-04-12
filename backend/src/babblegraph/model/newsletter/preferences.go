@@ -92,6 +92,13 @@ func GetDefaultUserPreferencesAccessor(c ctx.LogContext, tx *sqlx.Tx, userID use
 	if err != nil {
 		return nil, err
 	}
+	var filteredVocabularyEntries []uservoabulary.UserVocabularyEntry
+	for _, e := range vocabularyEntries {
+		if userSubscriptionLevel == nil && e.VocabularyType == uservocabulary.VocabularyTypePhrase {
+			continue
+		}
+		filteredVocabularyEntries = append(filteredVocabularyEntries, e)
+	}
 	allowableSourceIDs, err := getAllowableSourceIDsForUser(tx, userID)
 	if err != nil {
 		return nil, err
@@ -117,7 +124,7 @@ func GetDefaultUserPreferencesAccessor(c ctx.LogContext, tx *sqlx.Tx, userID use
 		},
 		sentDocumentIDs:       sentDocumentIDs,
 		userTopics:            userTopics,
-		userVocabularyEntries: vocabularyEntries,
+		userVocabularyEntries: filteredVocabularyEntries,
 		allowableSourceIDs:    allowableSourceIDs,
 		userSpotlightRecords:  userSpotlightRecords,
 	}, nil

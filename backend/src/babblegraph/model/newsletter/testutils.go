@@ -52,7 +52,7 @@ func containsLemma(lemma [][]wordsmith.LemmaID, description string) bool {
 			phraseAsString = append(phraseAsString, lemma.Str())
 		}
 		phraseStr := strings.Join(phraseAsString, " ")
-		for idx := 0; idx < len(tokens)-len(phrase); idx++ {
+		for idx := 0; idx <= len(tokens)-len(phrase); idx++ {
 			if strings.Join(tokens[idx:idx+len(phrase)], " ") == phraseStr {
 				return true
 			}
