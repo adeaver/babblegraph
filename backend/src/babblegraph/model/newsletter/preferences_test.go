@@ -9,6 +9,7 @@ import (
 	"babblegraph/model/userlemma"
 	"babblegraph/model/usernewsletterpreferences"
 	"babblegraph/model/users"
+	"babblegraph/model/uservocabulary"
 	"babblegraph/wordsmith"
 	"time"
 )
@@ -24,7 +25,7 @@ type testUserAccessor struct {
 	readingLevel              *userReadingLevel
 	sentDocumentIDs           []documents.DocumentID
 	userTopics                []content.TopicID
-	trackingLemmas            []wordsmith.LemmaID
+	vocabularyEntries         []uservocabulary.UserVocabularyEntry
 	allowableSourceIDs        []content.SourceID
 	spotlightRecords          []userlemma.UserLemmaReinforcementSpotlightRecord
 
@@ -68,8 +69,8 @@ func (t *testUserAccessor) getUserTopics() []content.TopicID {
 	return t.userTopics
 }
 
-func (t *testUserAccessor) getTrackingLemmas() []wordsmith.LemmaID {
-	return t.trackingLemmas
+func (t *testUserAccessor) getUserVocabularyEntries() []uservocabulary.UserVocabularyEntry {
+	return t.vocabularyEntries
 }
 
 func (t *testUserAccessor) getAllowableSources() []content.SourceID {

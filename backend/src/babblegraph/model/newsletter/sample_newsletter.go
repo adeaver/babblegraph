@@ -9,6 +9,7 @@ import (
 	"babblegraph/model/userlemma"
 	"babblegraph/model/usernewsletterpreferences"
 	"babblegraph/model/users"
+	"babblegraph/model/uservocabulary"
 	"babblegraph/util/ctx"
 	"babblegraph/util/timeutils"
 	"babblegraph/wordsmith"
@@ -31,7 +32,7 @@ type GetSampleNewsletterUserAccessorInput struct {
 	UserNewsletterSchedule    *usernewsletterpreferences.Schedule
 	SentDocumentIDs           []documents.DocumentID
 	UserTopics                []content.TopicID
-	TrackingLemmas            []wordsmith.LemmaID
+	UserVocabularyEntries     []uservocabulary.UserVocabularyEntry
 	AllowableSourceIDs        []content.SourceID
 	SpotlightRecords          []userlemma.UserLemmaReinforcementSpotlightRecord
 }
@@ -60,8 +61,8 @@ func GetSampleNewsletterUserAccessor(c ctx.LogContext, tx *sqlx.Tx, input GetSam
 	if input.UserTopics != nil {
 		defaultUserPreferencesAccessor.userTopics = input.UserTopics
 	}
-	if input.TrackingLemmas != nil {
-		defaultUserPreferencesAccessor.trackingLemmas = input.TrackingLemmas
+	if input.UserVocabularyEntries != nil {
+		defaultUserPreferencesAccessor.userVocabularyEntries = input.UserVocabularyEntries
 	}
 	if input.AllowableSourceIDs != nil {
 		defaultUserPreferencesAccessor.allowableSourceIDs = input.AllowableSourceIDs
@@ -121,8 +122,8 @@ func (s *SampleNewsletterUserAccessor) getUserTopics() []content.TopicID {
 	return s.defaultUserPreferencesAccessor.getUserTopics()
 }
 
-func (s *SampleNewsletterUserAccessor) getTrackingLemmas() []wordsmith.LemmaID {
-	return s.defaultUserPreferencesAccessor.getTrackingLemmas()
+func (s *SampleNewsletterUserAccessor) getUserVocabularyEntries() []uservocabulary.UserVocabularyEntry {
+	return s.defaultUserPreferencesAccessor.getUserVocabularyEntries()
 }
 
 func (s *SampleNewsletterUserAccessor) getAllowableSources() []content.SourceID {

@@ -12,9 +12,9 @@ import (
 // to make sure that the documents returned are most
 // relevant for that topic - not the union of the two
 type dailyEmailDocumentsQueryBuilder struct {
-	recencyBias *RecencyBias
-	topic       *content.TopicID
-	lemmas      []string
+	recencyBias    *RecencyBias
+	topic          *content.TopicID
+	lemmaIDPhrases [][]string
 }
 
 func NewDailyEmailDocumentsQueryBuilder() *dailyEmailDocumentsQueryBuilder {
@@ -29,9 +29,13 @@ func (d *dailyEmailDocumentsQueryBuilder) ForTopic(topic *content.TopicID) {
 	d.topic = topic
 }
 
-func (d *dailyEmailDocumentsQueryBuilder) ContainingLemmas(lemmaIDs []wordsmith.LemmaID) {
-	for _, l := range lemmaIDs {
-		d.lemmas = append(d.lemmas, l.Str())
+func (d *dailyEmailDocumentsQueryBuilder) ContainingLemmaPhrases(phrases [][]wordsmith.LemmaID) {
+	for _, phrase := range phrases {
+		var phraseAsStrings []string
+		for _, l := range phrase {
+			phraseAsStrings = append(phraseAsStrings, l.Str())
+		}
+		d.lemmaIDPhrases = append(d.lemmaIDPhrases, phraseAsStrings)
 	}
 }
 
@@ -60,8 +64,10 @@ func (d *dailyEmailDocumentsQueryBuilder) ExtendBaseQuery(queryBuilder *esquery.
 			queryBuilder.AddMustNot(seedJobIngestTimestampRangeQuery.BuildRangeQuery())
 		}
 	}
-	if len(d.lemmas) > 0 {
-		queryBuilder.AddShould(esquery.Match("lemmatized_description", strings.Join(d.lemmas, " ")))
+	if len(d.lemmaIDPhrases) > 0 {
+		for _, phrase := range d.lemmaIDPhrases {
+			queryBuilder.AddShould(esquery.MatchPhrase("lemmatized_description", strings.Join(phrase, " ")))
+		}
 	}
 	return nil
 }

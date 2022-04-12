@@ -17,13 +17,13 @@ type getDocumentsBaseInput struct {
 
 type getDocumentsForUserInput struct {
 	getDocumentsBaseInput
-	Topic  *content.TopicID
-	Lemmas []wordsmith.LemmaID
+	Topic          *content.TopicID
+	LemmaIDPhrases [][]wordsmith.LemmaID
 }
 
 type getDocumentsForUserForLemmaInput struct {
 	getDocumentsBaseInput
-	Lemma           wordsmith.LemmaID
+	LemmaIDPhrase   []wordsmith.LemmaID
 	Topics          []content.TopicID
 	SearchNonRecent bool
 }

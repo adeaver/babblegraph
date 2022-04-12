@@ -4,18 +4,19 @@ import (
 	"babblegraph/model/content"
 	"babblegraph/util/elastic/esquery"
 	"babblegraph/wordsmith"
+	"strings"
 	"time"
 )
 
 type lemmaSpotlightQueryBuilder struct {
-	lemmaID     wordsmith.LemmaID
-	topics      []content.TopicID
-	recencyBias *RecencyBias
+	lemmaIDPhrase []wordsmith.LemmaID
+	topics        []content.TopicID
+	recencyBias   *RecencyBias
 }
 
-func NewLemmaSpotlightQueryBuilder(lemmaID wordsmith.LemmaID) *lemmaSpotlightQueryBuilder {
+func NewLemmaSpotlightQueryBuilder(lemmaIDPhrase []wordsmith.LemmaID) *lemmaSpotlightQueryBuilder {
 	return &lemmaSpotlightQueryBuilder{
-		lemmaID: lemmaID,
+		lemmaIDPhrase: lemmaIDPhrase,
 	}
 }
 
@@ -31,7 +32,11 @@ func (l *lemmaSpotlightQueryBuilder) ExtendBaseQuery(queryBuilder *esquery.BoolQ
 	// Note, this is a bit of a hack. We're using match phrase because
 	// of a bug with how ElasticSearch is setup. Currently, the analyzer
 	// splits hyphens, so match phrase will guarantee that our lemma is matched exactly.
-	queryBuilder.AddFilter(esquery.MatchPhrase("lemmatized_description", string(l.lemmaID)))
+	var phraseAsStrings []string
+	for _, lemmaID := range l.lemmaIDPhrase {
+		phraseAsStrings = append(phraseAsStrings, lemmaID.Str())
+	}
+	queryBuilder.AddFilter(esquery.MatchPhrase("lemmatized_description", strings.Join(phraseAsStrings, " ")))
 	if l.recencyBias != nil {
 		seedJobIngestTimestampRangeQuery := esquery.NewRangeQueryBuilderForFieldName("seed_job_ingest_timestamp")
 		recencyBoundary := time.Now().Add(RecencyBiasBoundary).Unix()

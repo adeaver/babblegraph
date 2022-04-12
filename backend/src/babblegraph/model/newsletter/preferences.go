@@ -11,6 +11,7 @@ import (
 	"babblegraph/model/userlinks"
 	"babblegraph/model/usernewsletterpreferences"
 	"babblegraph/model/users"
+	"babblegraph/model/uservocabulary"
 	"babblegraph/util/ctx"
 	"babblegraph/util/ptr"
 	"babblegraph/wordsmith"
@@ -37,7 +38,7 @@ type userPreferencesAccessor interface {
 	getReadingLevel() *userReadingLevel
 	getSentDocumentIDs() []documents.DocumentID
 	getUserTopics() []content.TopicID
-	getTrackingLemmas() []wordsmith.LemmaID
+	getUserVocabularyEntries() []uservocabulary.UserVocabularyEntry
 	getAllowableSources() []content.SourceID
 	getSpotlightRecordsOrderedBySentOn() []userlemma.UserLemmaReinforcementSpotlightRecord
 	insertDocumentForUserAndReturnID(emailRecordID email.ID, doc documents.Document) (*userdocuments.UserDocumentID, error)
@@ -58,7 +59,7 @@ type DefaultUserPreferencesAccessor struct {
 	userReadingLevel          *userReadingLevel
 	sentDocumentIDs           []documents.DocumentID
 	userTopics                []content.TopicID
-	trackingLemmas            []wordsmith.LemmaID
+	userVocabularyEntries     []uservocabulary.UserVocabularyEntry
 	allowableSourceIDs        []content.SourceID
 	userSpotlightRecords      []userlemma.UserLemmaReinforcementSpotlightRecord
 }
@@ -88,15 +89,9 @@ func GetDefaultUserPreferencesAccessor(c ctx.LogContext, tx *sqlx.Tx, userID use
 	if err != nil {
 		return nil, err
 	}
-	lemmaMappings, err := userlemma.GetVisibleMappingsForUser(tx, userID)
+	vocabularyEntries, err := uservocabulary.GetUserVocabularyEntries(tx, userID, languageCode)
 	if err != nil {
 		return nil, err
-	}
-	var trackingLemmas []wordsmith.LemmaID
-	for _, m := range lemmaMappings {
-		if m.IsActive && m.LanguageCode == languageCode {
-			trackingLemmas = append(trackingLemmas, m.LemmaID)
-		}
 	}
 	allowableSourceIDs, err := getAllowableSourceIDsForUser(tx, userID)
 	if err != nil {
@@ -121,11 +116,11 @@ func GetDefaultUserPreferencesAccessor(c ctx.LogContext, tx *sqlx.Tx, userID use
 			LowerBound: 30,
 			UpperBound: 80,
 		},
-		sentDocumentIDs:      sentDocumentIDs,
-		userTopics:           userTopics,
-		trackingLemmas:       trackingLemmas,
-		allowableSourceIDs:   allowableSourceIDs,
-		userSpotlightRecords: userSpotlightRecords,
+		sentDocumentIDs:       sentDocumentIDs,
+		userTopics:            userTopics,
+		userVocabularyEntries: vocabularyEntries,
+		allowableSourceIDs:    allowableSourceIDs,
+		userSpotlightRecords:  userSpotlightRecords,
 	}, nil
 }
 
@@ -169,8 +164,8 @@ func (d *DefaultUserPreferencesAccessor) getUserTopics() []content.TopicID {
 	return d.userTopics
 }
 
-func (d *DefaultUserPreferencesAccessor) getTrackingLemmas() []wordsmith.LemmaID {
-	return d.trackingLemmas
+func (d *DefaultUserPreferencesAccessor) getUserVocabularyEntries() []uservocabulary.UserVocabularyEntry {
+	return d.userVocabularyEntries
 }
 
 func (d *DefaultUserPreferencesAccessor) getAllowableSources() []content.SourceID {
