@@ -44,11 +44,18 @@ func containsTopic(topic content.TopicID, topics []content.TopicID) bool {
 	return false
 }
 
-func containsLemma(lemma wordsmith.LemmaID, description string) bool {
+func containsLemma(lemma [][]wordsmith.LemmaID, description string) bool {
 	tokens := text.TokenizeUnique(description)
-	for _, t := range tokens {
-		if t == lemma.Str() {
-			return true
+	for _, phrase := range lemma {
+		var phraseAsString []string
+		for _, lemma := range phrase {
+			phraseAsString = append(phraseAsString, lemma.Str())
+		}
+		phraseStr := strings.Join(phraseAsString)
+		for idx := 0; idx < len(tokens)-len(phrase); idx++ {
+			if strings.Join(tokens[idx:idx+len(phrase)], " ") == phraseStr {
+				return true
+			}
 		}
 	}
 	return false

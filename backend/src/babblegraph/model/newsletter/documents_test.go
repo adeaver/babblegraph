@@ -54,7 +54,7 @@ func (t *testDocsAccessor) GetDocumentsForUserForLemma(c ctx.LogContext, input g
 			c.Debugf("Reading score too high: %+v", doc.ReadabilityScore)
 		case input.MaximumReadingLevel != nil && *input.MaximumReadingLevel < doc.ReadabilityScore:
 			c.Debugf("Reading score too low: %+v", doc.ReadabilityScore)
-		case doc.LemmatizedDescription == nil || !containsLemma(input.Lemma, *doc.LemmatizedDescription):
+		case doc.LemmatizedDescription == nil || !containsLemma(input.LemmaIDPhrases, *doc.LemmatizedDescription):
 			c.Debugf("No description: %+v", doc.LemmatizedDescription)
 		default:
 			docs = append(docs, docWithScore)
