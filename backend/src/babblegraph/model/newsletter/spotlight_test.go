@@ -58,17 +58,20 @@ func TestSpotlightRecordsForUserWithAccount(t *testing.T) {
 		},
 		vocabularyEntries: []uservocabulary.UserVocabularyEntry{
 			{
-				ID:             "word1",
-				VocabularyID:   ptr.String("word1"),
-				VocabularyType: uservocabulary.VocabularyTypeLemma,
+				ID:                "word1",
+				VocabularyID:      ptr.String("word1"),
+				VocabularyType:    uservocabulary.VocabularyTypeLemma,
+				VocabularyDisplay: "word1",
 			}, {
-				ID:             "word2",
-				VocabularyID:   ptr.String("word2"),
-				VocabularyType: uservocabulary.VocabularyTypeLemma,
+				ID:                "word2",
+				VocabularyID:      ptr.String("word2"),
+				VocabularyType:    uservocabulary.VocabularyTypeLemma,
+				VocabularyDisplay: "word2",
 			}, {
-				VocabularyID:   ptr.String(string(expectedEntryID)),
-				VocabularyType: uservocabulary.VocabularyTypeLemma,
-				ID:             expectedEntryID,
+				VocabularyID:      ptr.String(string(expectedEntryID)),
+				VocabularyType:    uservocabulary.VocabularyTypeLemma,
+				ID:                expectedEntryID,
+				VocabularyDisplay: string(expectedEntryID),
 			},
 		},
 	}
@@ -171,17 +174,20 @@ func TestSpotlightRecordsForUserWithoutAccount(t *testing.T) {
 		},
 		vocabularyEntries: []uservocabulary.UserVocabularyEntry{
 			{
-				ID:             "word1",
-				VocabularyID:   ptr.String("word1"),
-				VocabularyType: uservocabulary.VocabularyTypeLemma,
+				ID:                "word1",
+				VocabularyID:      ptr.String("word1"),
+				VocabularyType:    uservocabulary.VocabularyTypeLemma,
+				VocabularyDisplay: "word1",
 			}, {
-				ID:             "word2",
-				VocabularyID:   ptr.String("word2"),
-				VocabularyType: uservocabulary.VocabularyTypeLemma,
+				ID:                "word2",
+				VocabularyID:      ptr.String("word2"),
+				VocabularyType:    uservocabulary.VocabularyTypeLemma,
+				VocabularyDisplay: "word2",
 			}, {
-				VocabularyID:   ptr.String(string(expectedEntryID)),
-				VocabularyType: uservocabulary.VocabularyTypeLemma,
-				ID:             expectedEntryID,
+				VocabularyID:      ptr.String(string(expectedEntryID)),
+				VocabularyType:    uservocabulary.VocabularyTypeLemma,
+				ID:                expectedEntryID,
+				VocabularyDisplay: string(expectedEntryID),
 			},
 		},
 	}
@@ -287,17 +293,20 @@ func TestSpotlightRecordsForTrackedLemmaWithoutSpotlight(t *testing.T) {
 		},
 		vocabularyEntries: []uservocabulary.UserVocabularyEntry{
 			{
-				ID:             "word1",
-				VocabularyID:   ptr.String("word1"),
-				VocabularyType: uservocabulary.VocabularyTypeLemma,
+				ID:                "word1",
+				VocabularyID:      ptr.String("word1"),
+				VocabularyType:    uservocabulary.VocabularyTypeLemma,
+				VocabularyDisplay: "word1",
 			}, {
-				ID:             "word2",
-				VocabularyID:   ptr.String("word2"),
-				VocabularyType: uservocabulary.VocabularyTypeLemma,
+				ID:                "word2",
+				VocabularyID:      ptr.String("word2"),
+				VocabularyType:    uservocabulary.VocabularyTypeLemma,
+				VocabularyDisplay: "word2",
 			}, {
-				VocabularyID:   ptr.String(string(expectedEntryID)),
-				VocabularyType: uservocabulary.VocabularyTypeLemma,
-				ID:             expectedEntryID,
+				VocabularyID:      ptr.String(string(expectedEntryID)),
+				VocabularyType:    uservocabulary.VocabularyTypeLemma,
+				ID:                expectedEntryID,
+				VocabularyDisplay: string(expectedEntryID),
 			},
 		},
 	}
