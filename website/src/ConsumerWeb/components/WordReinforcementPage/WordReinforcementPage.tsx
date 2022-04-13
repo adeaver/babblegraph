@@ -549,7 +549,7 @@ const SearchResultDisplay = (props: SearchResultDisplayProps) => {
                 vocabularyId: id.length === 1 ? id[0] : undefined,
                 vocabularyType: vocabularyType,
                 vocabularyDisplay: props.searchResult.displayText,
-                definition: props.searchResult.definitions.join("; "),
+                definition: (props.searchResult.definitions || []).join("; "),
                 studyNote: studyNote,
                 isActive: true,
                 isVisible: true,

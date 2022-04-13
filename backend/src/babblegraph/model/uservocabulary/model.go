@@ -104,6 +104,8 @@ func (u UserVocabularyEntry) AsLemmaIDPhrases() ([][]wordsmith.LemmaID, error) {
 type userVocabularySpotlightRecordID string
 
 type dbUserVocabularySpotlightRecord struct {
+	CreatedAt         time.Time                       `db:"created_at"`
+	LastModifiedAt    time.Time                       `db:"last_modified_at"`
 	ID                userVocabularySpotlightRecordID `db:"_id"`
 	LanguageCode      wordsmith.LanguageCode          `db:"language_code"`
 	UserID            users.UserID                    `db:"user_id"`
