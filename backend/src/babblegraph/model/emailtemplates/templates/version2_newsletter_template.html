@@ -116,6 +116,22 @@
                                 <img src="{{.BaseEmailTemplate.HeroImageURL}}" alt="Babblegraph Newsletter" width="100%" height="auto" />
                             </a>
                         </h1>
+                        {{ if .Body.PremiumLink }}
+                        <table border="0" cellpadding="0" cellspacing="0" style="border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt; width: 100%; box-sizing: border-box; border: solid 2px #A663CC; border-radius: 5px; margin: 10px 0;">
+                          <tbody>
+                            <tr>
+                              <td align="center" style="text-align: center; font-family: Arial, sans-serif; font-size: 14px; vertical-align: top; padding: 15px 20px;">
+                                <h2 style="color: #A663CC; cursor: pointer; text-decoration: none; font-size: 14px; font-weight: bold; margin: 0; padding: 12px 0;">
+                                    {{ .Body.PremiumLink.PreText }}
+                                </h2>
+                                <a href="{{.Body.PremiumLink.Link.URL}}" target="_blank" style="display: inline-block; color: #20A4F3; cursor: pointer; text-decoration: none; font-size: 14px; font-weight: bold; margin: 0; padding: 12px 0;">
+                                    {{.Body.PremiumLink.Link.Text}}
+                                </a>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                        {{end}}
                         {{range $section := .Body.Sections}}
                         <table border="0" cellpadding="0" cellspacing="0" style="border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt; width: 100%; box-sizing: border-box; border: solid 2px #D3D3D3; border-radius: 5px; margin: 10px 0;">
                           <tbody>

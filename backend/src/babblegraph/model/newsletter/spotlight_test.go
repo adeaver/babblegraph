@@ -4,9 +4,9 @@ import (
 	"babblegraph/model/content"
 	"babblegraph/model/documents"
 	"babblegraph/model/email"
-	"babblegraph/model/userlemma"
 	"babblegraph/model/usernewsletterpreferences"
 	"babblegraph/model/users"
+	"babblegraph/model/uservocabulary"
 	"babblegraph/util/ctx"
 	"babblegraph/util/ptr"
 	"babblegraph/wordsmith"
@@ -18,7 +18,7 @@ import (
 
 func TestSpotlightRecordsForUserWithAccount(t *testing.T) {
 	c := ctx.GetDefaultLogContext()
-	expectedLemma := wordsmith.LemmaID("word3")
+	expectedEntryID := uservocabulary.UserVocabularyEntryID("word3")
 	emailAccessor := getTestEmailAccessor()
 	userAccessor := &testUserAccessor{
 		languageCode:        wordsmith.LanguageCodeSpanish,
@@ -41,37 +41,46 @@ func TestSpotlightRecordsForUserWithAccount(t *testing.T) {
 		allowableSourceIDs: []content.SourceID{
 			content.SourceID("test-source"),
 		},
-		spotlightRecords: []userlemma.UserLemmaReinforcementSpotlightRecord{
+		spotlightRecords: []uservocabulary.UserVocabularySpotlightRecord{
 			{
-				LanguageCode: wordsmith.LanguageCodeSpanish,
-				LemmaID:      "word1",
-				LastSentOn:   time.Now(),
+				LanguageCode:      wordsmith.LanguageCodeSpanish,
+				VocabularyEntryID: "word1",
+				LastSentOn:        time.Now(),
 			}, {
-				LanguageCode: wordsmith.LanguageCodeSpanish,
-				LemmaID:      "word2",
-				LastSentOn:   time.Now(),
+				LanguageCode:      wordsmith.LanguageCodeSpanish,
+				VocabularyEntryID: "word2",
+				LastSentOn:        time.Now(),
 			}, {
-				LanguageCode: wordsmith.LanguageCodeSpanish,
-				LemmaID:      expectedLemma,
-				LastSentOn:   time.Now().Add(-8 * 24 * time.Hour),
+				LanguageCode:      wordsmith.LanguageCodeSpanish,
+				VocabularyEntryID: expectedEntryID,
+				LastSentOn:        time.Now().Add(-8 * 24 * time.Hour),
 			},
 		},
-		trackingLemmas: []wordsmith.LemmaID{
-			"word1", "word2", expectedLemma,
+		vocabularyEntries: []uservocabulary.UserVocabularyEntry{
+			{
+				ID:                "word1",
+				VocabularyID:      ptr.String("word1"),
+				VocabularyType:    uservocabulary.VocabularyTypeLemma,
+				VocabularyDisplay: "word1",
+			}, {
+				ID:                "word2",
+				VocabularyID:      ptr.String("word2"),
+				VocabularyType:    uservocabulary.VocabularyTypeLemma,
+				VocabularyDisplay: "word2",
+			}, {
+				VocabularyID:      ptr.String(string(expectedEntryID)),
+				VocabularyType:    uservocabulary.VocabularyTypeLemma,
+				ID:                expectedEntryID,
+				VocabularyDisplay: string(expectedEntryID),
+			},
 		},
 	}
 	var correctLink *Link
 	emailRecordID := email.NewEmailRecordID()
-	lemmasByID := make(map[wordsmith.LemmaID]wordsmith.Lemma)
 	contentAccessor := &testContentAccessor{}
 	var docs []documents.DocumentWithScore
 	for i := 15; i >= 0; i-- {
 		lemma := wordsmith.LemmaID(fmt.Sprintf("word%d", i))
-		lemmasByID[lemma] = wordsmith.Lemma{
-			ID:        lemma,
-			Language:  wordsmith.LanguageCodeSpanish,
-			LemmaText: lemma.Str(),
-		}
 		doc, link, err := getDefaultDocumentWithLink(c, i, emailRecordID, contentAccessor, userAccessor, getDefaultDocumentInput{
 			Topics: []content.TopicID{
 				content.TopicID("topicid-art"),
@@ -83,13 +92,11 @@ func TestSpotlightRecordsForUserWithAccount(t *testing.T) {
 			t.Fatalf("Error setting up test: %s", err.Error())
 		}
 		docs = append(docs, *doc)
-		if lemma.Str() == expectedLemma.Str() {
+		if lemma.Str() == expectedEntryID.Str() {
 			correctLink = link
 		}
 	}
-	wordsmithAccessor := &testWordsmithAccessor{
-		lemmasByID: lemmasByID,
-	}
+	wordsmithAccessor := &testWordsmithAccessor{}
 	docsAccessor := &testDocsAccessor{documents: docs}
 	testNewsletter, err := CreateNewsletter(c, CreateNewsletterInput{
 		WordsmithAccessor:     wordsmithAccessor,
@@ -108,8 +115,8 @@ func TestSpotlightRecordsForUserWithAccount(t *testing.T) {
 	case testNewsletter.Body.LemmaReinforcementSpotlight == nil:
 		t.Errorf("Expected non-null newsletter lemma reinforcement, but it was not")
 	default:
-		if testNewsletter.Body.LemmaReinforcementSpotlight.LemmaText != expectedLemma.Str() {
-			t.Errorf("Expected lemma to be %s, but got %s", expectedLemma.Str(), testNewsletter.Body.LemmaReinforcementSpotlight.LemmaText)
+		if testNewsletter.Body.LemmaReinforcementSpotlight.LemmaText != expectedEntryID.Str() {
+			t.Errorf("Expected lemma to be %s, but got %s", expectedEntryID.Str(), testNewsletter.Body.LemmaReinforcementSpotlight.LemmaText)
 		}
 		correctDocument, err := testLink(testNewsletter.Body.LemmaReinforcementSpotlight.Document, *correctLink)
 		if !correctDocument {
@@ -126,7 +133,7 @@ func TestSpotlightRecordsForUserWithAccount(t *testing.T) {
 
 func TestSpotlightRecordsForUserWithoutAccount(t *testing.T) {
 	c := ctx.GetDefaultLogContext()
-	expectedLemma := wordsmith.LemmaID("word3")
+	expectedEntryID := uservocabulary.UserVocabularyEntryID("word3")
 	emailAccessor := getTestEmailAccessor()
 	userAccessor := &testUserAccessor{
 		userID:              users.UserID("abc123"),
@@ -150,37 +157,46 @@ func TestSpotlightRecordsForUserWithoutAccount(t *testing.T) {
 			SendRequested:     true,
 			NumberOfDocuments: 4,
 		},
-		spotlightRecords: []userlemma.UserLemmaReinforcementSpotlightRecord{
+		spotlightRecords: []uservocabulary.UserVocabularySpotlightRecord{
 			{
-				LanguageCode: wordsmith.LanguageCodeSpanish,
-				LemmaID:      "word1",
-				LastSentOn:   time.Now(),
+				LanguageCode:      wordsmith.LanguageCodeSpanish,
+				VocabularyEntryID: "word1",
+				LastSentOn:        time.Now(),
 			}, {
-				LanguageCode: wordsmith.LanguageCodeSpanish,
-				LemmaID:      "word2",
-				LastSentOn:   time.Now(),
+				LanguageCode:      wordsmith.LanguageCodeSpanish,
+				VocabularyEntryID: "word2",
+				LastSentOn:        time.Now(),
 			}, {
-				LanguageCode: wordsmith.LanguageCodeSpanish,
-				LemmaID:      expectedLemma,
-				LastSentOn:   time.Now().Add(-8 * 24 * time.Hour),
+				LanguageCode:      wordsmith.LanguageCodeSpanish,
+				VocabularyEntryID: expectedEntryID,
+				LastSentOn:        time.Now().Add(-8 * 24 * time.Hour),
 			},
 		},
-		trackingLemmas: []wordsmith.LemmaID{
-			"word1", "word2", expectedLemma,
+		vocabularyEntries: []uservocabulary.UserVocabularyEntry{
+			{
+				ID:                "word1",
+				VocabularyID:      ptr.String("word1"),
+				VocabularyType:    uservocabulary.VocabularyTypeLemma,
+				VocabularyDisplay: "word1",
+			}, {
+				ID:                "word2",
+				VocabularyID:      ptr.String("word2"),
+				VocabularyType:    uservocabulary.VocabularyTypeLemma,
+				VocabularyDisplay: "word2",
+			}, {
+				VocabularyID:      ptr.String(string(expectedEntryID)),
+				VocabularyType:    uservocabulary.VocabularyTypeLemma,
+				ID:                expectedEntryID,
+				VocabularyDisplay: string(expectedEntryID),
+			},
 		},
 	}
 	var correctLink *Link
 	emailRecordID := email.NewEmailRecordID()
-	lemmasByID := make(map[wordsmith.LemmaID]wordsmith.Lemma)
 	contentAccessor := &testContentAccessor{}
 	var docs []documents.DocumentWithScore
 	for i := 15; i >= 0; i-- {
 		lemma := wordsmith.LemmaID(fmt.Sprintf("word%d", i))
-		lemmasByID[lemma] = wordsmith.Lemma{
-			ID:        lemma,
-			Language:  wordsmith.LanguageCodeSpanish,
-			LemmaText: lemma.Str(),
-		}
 		doc, link, err := getDefaultDocumentWithLink(c, i, emailRecordID, contentAccessor, userAccessor, getDefaultDocumentInput{
 			Topics: []content.TopicID{
 				content.TopicID("topicid-art"),
@@ -192,13 +208,11 @@ func TestSpotlightRecordsForUserWithoutAccount(t *testing.T) {
 			t.Fatalf("Error setting up test: %s", err.Error())
 		}
 		docs = append(docs, *doc)
-		if lemma.Str() == expectedLemma.Str() {
+		if lemma.Str() == expectedEntryID.Str() {
 			correctLink = link
 		}
 	}
-	wordsmithAccessor := &testWordsmithAccessor{
-		lemmasByID: lemmasByID,
-	}
+	wordsmithAccessor := &testWordsmithAccessor{}
 	docsAccessor := &testDocsAccessor{documents: docs}
 	testNewsletter, err := CreateNewsletter(c, CreateNewsletterInput{
 		WordsmithAccessor:     wordsmithAccessor,
@@ -217,8 +231,8 @@ func TestSpotlightRecordsForUserWithoutAccount(t *testing.T) {
 	case testNewsletter.Body.LemmaReinforcementSpotlight == nil:
 		t.Errorf("Expected non-null newsletter lemma reinforcement, but it was not")
 	default:
-		if testNewsletter.Body.LemmaReinforcementSpotlight.LemmaText != expectedLemma.Str() {
-			t.Errorf("Expected lemma to be %s, but got %s", expectedLemma.Str(), testNewsletter.Body.LemmaReinforcementSpotlight.LemmaText)
+		if testNewsletter.Body.LemmaReinforcementSpotlight.LemmaText != expectedEntryID.Str() {
+			t.Errorf("Expected lemma to be %s, but got %s", expectedEntryID.Str(), testNewsletter.Body.LemmaReinforcementSpotlight.LemmaText)
 		}
 		correctDocument, err := testLink(testNewsletter.Body.LemmaReinforcementSpotlight.Document, *correctLink)
 		if !correctDocument {
@@ -238,7 +252,7 @@ func TestSpotlightRecordsForUserWithoutAccount(t *testing.T) {
 
 func TestSpotlightRecordsForTrackedLemmaWithoutSpotlight(t *testing.T) {
 	c := ctx.GetDefaultLogContext()
-	expectedLemma := wordsmith.LemmaID("word4")
+	expectedEntryID := uservocabulary.UserVocabularyEntryID("word4")
 	emailAccessor := getTestEmailAccessor()
 	userAccessor := &testUserAccessor{
 		userID:              users.UserID("abc123"),
@@ -262,37 +276,46 @@ func TestSpotlightRecordsForTrackedLemmaWithoutSpotlight(t *testing.T) {
 		allowableSourceIDs: []content.SourceID{
 			content.SourceID("test-source"),
 		},
-		spotlightRecords: []userlemma.UserLemmaReinforcementSpotlightRecord{
+		spotlightRecords: []uservocabulary.UserVocabularySpotlightRecord{
 			{
-				LanguageCode: wordsmith.LanguageCodeSpanish,
-				LemmaID:      "word1",
-				LastSentOn:   time.Now(),
+				LanguageCode:      wordsmith.LanguageCodeSpanish,
+				VocabularyEntryID: "word1",
+				LastSentOn:        time.Now(),
 			}, {
-				LanguageCode: wordsmith.LanguageCodeSpanish,
-				LemmaID:      "word2",
-				LastSentOn:   time.Now(),
+				LanguageCode:      wordsmith.LanguageCodeSpanish,
+				VocabularyEntryID: "word2",
+				LastSentOn:        time.Now(),
 			}, {
-				LanguageCode: wordsmith.LanguageCodeSpanish,
-				LemmaID:      "word3",
-				LastSentOn:   time.Now().Add(-8 * 24 * time.Hour),
+				LanguageCode:      wordsmith.LanguageCodeSpanish,
+				VocabularyEntryID: "word3",
+				LastSentOn:        time.Now().Add(-8 * 24 * time.Hour),
 			},
 		},
-		trackingLemmas: []wordsmith.LemmaID{
-			"word1", "word2", "word3", expectedLemma,
+		vocabularyEntries: []uservocabulary.UserVocabularyEntry{
+			{
+				ID:                "word1",
+				VocabularyID:      ptr.String("word1"),
+				VocabularyType:    uservocabulary.VocabularyTypeLemma,
+				VocabularyDisplay: "word1",
+			}, {
+				ID:                "word2",
+				VocabularyID:      ptr.String("word2"),
+				VocabularyType:    uservocabulary.VocabularyTypeLemma,
+				VocabularyDisplay: "word2",
+			}, {
+				VocabularyID:      ptr.String(string(expectedEntryID)),
+				VocabularyType:    uservocabulary.VocabularyTypeLemma,
+				ID:                expectedEntryID,
+				VocabularyDisplay: string(expectedEntryID),
+			},
 		},
 	}
 	var correctLink *Link
 	emailRecordID := email.NewEmailRecordID()
-	lemmasByID := make(map[wordsmith.LemmaID]wordsmith.Lemma)
 	contentAccessor := &testContentAccessor{}
 	var docs []documents.DocumentWithScore
 	for i := 16; i >= 0; i-- {
 		lemma := wordsmith.LemmaID(fmt.Sprintf("word%d", i))
-		lemmasByID[lemma] = wordsmith.Lemma{
-			ID:        lemma,
-			Language:  wordsmith.LanguageCodeSpanish,
-			LemmaText: lemma.Str(),
-		}
 		doc, link, err := getDefaultDocumentWithLink(c, i, emailRecordID, contentAccessor, userAccessor, getDefaultDocumentInput{
 			Topics: []content.TopicID{
 				content.TopicID("topicid-art"),
@@ -304,13 +327,11 @@ func TestSpotlightRecordsForTrackedLemmaWithoutSpotlight(t *testing.T) {
 			t.Fatalf("Error setting up test: %s", err.Error())
 		}
 		docs = append(docs, *doc)
-		if lemma.Str() == expectedLemma.Str() {
+		if lemma.Str() == expectedEntryID.Str() {
 			correctLink = link
 		}
 	}
-	wordsmithAccessor := &testWordsmithAccessor{
-		lemmasByID: lemmasByID,
-	}
+	wordsmithAccessor := &testWordsmithAccessor{}
 	docsAccessor := &testDocsAccessor{documents: docs}
 	testNewsletter, err := CreateNewsletter(c, CreateNewsletterInput{
 		WordsmithAccessor:     wordsmithAccessor,
@@ -329,8 +350,8 @@ func TestSpotlightRecordsForTrackedLemmaWithoutSpotlight(t *testing.T) {
 	case testNewsletter.Body.LemmaReinforcementSpotlight == nil:
 		t.Errorf("Expected non-null newsletter lemma reinforcement, but it was not")
 	default:
-		if testNewsletter.Body.LemmaReinforcementSpotlight.LemmaText != expectedLemma.Str() {
-			t.Errorf("Expected lemma to be %s, but got %s", expectedLemma.Str(), testNewsletter.Body.LemmaReinforcementSpotlight.LemmaText)
+		if testNewsletter.Body.LemmaReinforcementSpotlight.LemmaText != expectedEntryID.Str() {
+			t.Errorf("Expected lemma to be %s, but got %s", expectedEntryID.Str(), testNewsletter.Body.LemmaReinforcementSpotlight.LemmaText)
 		}
 		correctDocument, err := testLink(testNewsletter.Body.LemmaReinforcementSpotlight.Document, *correctLink)
 		if !correctDocument {

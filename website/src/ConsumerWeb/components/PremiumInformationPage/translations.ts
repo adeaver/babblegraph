@@ -3,6 +3,9 @@ import { DisplayLanguage } from 'common/model/language/language';
 export enum TextBlock {
     Subheading = 'subheading',
 
+    PhrasesTitle = 'phrases',
+    PhrasesDescription = 'phrases-description',
+
     PodcastsTitle = 'podcasts',
     PodcastsDescription = 'podcasts-description',
 
@@ -25,6 +28,8 @@ export enum TextBlock {
 const translations = {
     [DisplayLanguage.English]: {
         [TextBlock.Subheading]: "Get access to new features that improve your learning and give you more control over how Babblegraph fits into your journey!",
+        [TextBlock.PhrasesTitle]: "Add phrases like “tener calor” to your vocabulary list",
+        [TextBlock.PhrasesDescription]: "Go beyond simple vocabulary words and start reinforcing entire phrases with your newsletter.",
         [TextBlock.PodcastsTitle]: "Podcasts",
         [TextBlock.PodcastsDescription]: "Receive podcasts in your newsletter in addition to news articles",
         [TextBlock.AdvertisementsTitle]: "No advertisements in your newsletter",
@@ -40,6 +45,8 @@ const translations = {
     },
     [DisplayLanguage.Spanish]: {
         [TextBlock.Subheading]: "¡Obtén acceso a nuevas herramientas para mejorar tu aprendizaje y tener más control de la manera en que Babblegraph es parte de tu aprendizaje!",
+        [TextBlock.PhrasesTitle]: "Agrega frases, como “tener calor” a tu lista de vocabulario",
+        [TextBlock.PhrasesDescription]: "Vaya más allá de las simples palabras de vocabulario y comienza a reforzar frases completas con tu boletín informativo.",
         [TextBlock.AdvertisementsTitle]: "No habrá anuncios en su boletín",
         [TextBlock.AdvertisementsDescription]: "Como suscriptor Premium de Babblegraph, no recibirás ningún anuncio en tu boletines. ",
         [TextBlock.PodcastsTitle]: "Podcasts",

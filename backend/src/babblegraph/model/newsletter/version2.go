@@ -30,16 +30,22 @@ type NewsletterVersion2 struct {
 }
 
 type NewsletterVersion2Body struct {
+	PremiumLink           *PremiumAdvertisement  `json:"premium_link"`
 	Sections              []Section              `json:"sections"`
 	AdvertisingDisclaimer *AdvertisingDisclaimer `json:"advertising_disclaimer,omitempty"`
 }
 
-type AdvertisingDisclaimer struct {
-	Text                  string                `json:"text"`
-	AdvertisingPolicyLink AdvertisingPolicyLink `json:"advertising_policy_link"`
+type PremiumAdvertisement struct {
+	PreText string         `json:"pre_text"`
+	Link    NewsletterLink `json:"link"`
 }
 
-type AdvertisingPolicyLink struct {
+type AdvertisingDisclaimer struct {
+	Text                  string         `json:"text"`
+	AdvertisingPolicyLink NewsletterLink `json:"advertising_policy_link"`
+}
+
+type NewsletterLink struct {
 	Text string `json:"text"`
 	URL  string `json:"url"`
 }
@@ -122,9 +128,26 @@ func CreateNewsletterVersion2(c ctx.LogContext, dateOfSendMidnightUTC time.Time,
 			},
 		})
 	}
+	var premiumLink *PremiumAdvertisement
 	userSubscriptionLevel := input.UserAccessor.getUserSubscriptionLevel()
 	switch {
 	case userSubscriptionLevel == nil:
+		premiumLinkURL, err := routes.MakePremiumInformationLink(input.UserAccessor.getUserID())
+		switch {
+		case err != nil:
+			c.Infof("Error making premium link %s", err.Error())
+		case premiumLinkURL == nil:
+			c.Infof("No premium link, skipping")
+		default:
+			// TODO: make this dynamic
+			premiumLink = &PremiumAdvertisement{
+				PreText: "¿Quieres añadir frases completas a tu lista de vocabulario o practicar escuchar con podcasts en Español?",
+				Link: NewsletterLink{
+					URL:  *premiumLinkURL,
+					Text: "Haz clic aquí para aprender sobre Babblegraph Premium",
+				},
+			}
+		}
 		advertisement, err := lookupAdvertisement(c, emailRecordID, input.UserAccessor, input.AdvertisementAccessor)
 		if err != nil {
 			return nil, err
@@ -155,7 +178,7 @@ func CreateNewsletterVersion2(c ctx.LogContext, dateOfSendMidnightUTC time.Time,
 			})
 			advertisingDisclaimer = &AdvertisingDisclaimer{
 				Text: "* Asociarnos con excelentes productos y marcas permite que Babblegraph siga funcionando. Podemos ganar una comisión si compra algo a través de uno de estos enlaces.",
-				AdvertisingPolicyLink: AdvertisingPolicyLink{
+				AdvertisingPolicyLink: NewsletterLink{
 					Text: "Puedes obtener más información sobre anuncios como estos aquí",
 					URL:  advertisement.AdvertisementPolicyLink,
 				},
@@ -227,6 +250,7 @@ func CreateNewsletterVersion2(c ctx.LogContext, dateOfSendMidnightUTC time.Time,
 		EmailRecordID: emailRecordID,
 		LanguageCode:  input.UserAccessor.getLanguageCode(),
 		Body: NewsletterVersion2Body{
+			PremiumLink:           premiumLink,
 			Sections:              out,
 			AdvertisingDisclaimer: advertisingDisclaimer,
 		},
@@ -254,6 +278,7 @@ type getDocumentSectionsInput struct {
 func getDocumentSections(c ctx.LogContext, numberOfDocumentsInNewsletter int, input getDocumentSectionsInput) ([]Section, []documents.DocumentID, error) {
 	topics := getSectionTopicsForUser(input.userAccessor, input.contentAccessor)
 	allowableSourceIDs := input.userAccessor.getAllowableSources()
+	lemmaIDPhrases := getLemmaIDPhrases(c, input.userAccessor)
 	numberOfArticlesInMainSection := int2.MustMinInt(numberOfDocumentsInNewsletter/2, maximumNumberOfDocumentsInSection)
 	mainSectionEligibleTopics := make(map[content.TopicID]bool)
 	documentsByTopic := make(map[content.TopicID][]documents.DocumentWithScore)
@@ -266,8 +291,8 @@ func getDocumentSections(c ctx.LogContext, numberOfDocumentsInNewsletter int, in
 				MinimumReadingLevel: ptr.Int64(input.userAccessor.getReadingLevel().LowerBound),
 				MaximumReadingLevel: ptr.Int64(input.userAccessor.getReadingLevel().UpperBound),
 			},
-			Lemmas: input.userAccessor.getTrackingLemmas(),
-			Topic:  t.Ptr(),
+			LemmaIDPhrases: lemmaIDPhrases,
+			Topic:          t.Ptr(),
 		})
 		switch {
 		case err != nil:

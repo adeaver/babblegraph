@@ -19,7 +19,7 @@ import BlogPostPage from 'ConsumerWeb/components/BlogPostPage/BlogPostPage';
 import SubscriptionManagementHomePage from 'ConsumerWeb/components/SubscriptionManagement/SubscriptionManagementHomePage';
 import InterestSelectionPage from 'ConsumerWeb/components/SubscriptionManagement/InterestSelectionPage';
 import UnsubscribePage from 'ConsumerWeb/components/UnsubscribePage/UnsubscribePage';
-import WordReinforcementPage from 'ConsumerWeb/components/SubscriptionManagement/WordReinforcementPage';
+import WordReinforcementPage from 'ConsumerWeb/components/WordReinforcementPage/WordReinforcementPage';
 import UserNewsletterPreferencesPage from 'ConsumerWeb/components/UserNewsletterPreferencesPage/UserNewsletterPreferencesPage';
 
 import LoginPage from 'ConsumerWeb/components/UserAccounts/LoginPage';

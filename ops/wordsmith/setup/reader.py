@@ -15,6 +15,7 @@ class Reader:
         empty_line_fn=None,
         end_article_fn=None,
         end_doc_fn=None,
+        end_corpus_doc_fn=None,
     ):
         self.text_fn = text_fn
         self.start_doc_fn = start_doc_fn
@@ -22,6 +23,7 @@ class Reader:
         self.end_article_fn = end_article_fn
         self.end_doc_fn = end_doc_fn
         self.get_data_fn = get_data_fn
+        self.end_corpus_doc_fn = end_corpus_doc_fn
 
     def read_data(self):
         files = os.listdir("./data")
@@ -29,7 +31,17 @@ class Reader:
             print("Currently on document {} of {}".format(idx+1, len(files)))
             file_name = files[idx]
             self._read_lines_in_file(file_name)
+            if self.end_corpus_doc_fn is not None:
+                self.end_corpus_doc_fn()
         return self.get_data_fn()
+
+    def read_data_yielding(self):
+        files = os.listdir("./data")
+        for idx in range(len(files)):
+            print("Currently on document {} of {}".format(idx+1, len(files)))
+            file_name = files[idx]
+            self._read_lines_in_file(file_name)
+            yield self.get_data_fn()
 
     def _read_lines_in_file(self, file_name):
         with io.open("./data/{}".format(file_name), 'r', encoding='latin1') as tagged_file:
@@ -47,8 +59,11 @@ class Reader:
         elif line_type == _EMPTY_LINE and self.empty_line_fn is not None:
             self.empty_line_fn()
         elif line_type == _TEXT_LINE:
-            word, lemma, pos, _ = line.split(" ")
-            self.text_fn(word.lower(), lemma.lower(), pos)
+            try:
+                word, lemma, pos, _ = line.split(" ")
+                self.text_fn(word.lower(), lemma.lower(), pos)
+            except Exception as e:
+                print(f"Error on line {line}: {repr(e)}")
 
     def _classify_line(self, line):
         if line.startswith("ENDOFARTICLE"):

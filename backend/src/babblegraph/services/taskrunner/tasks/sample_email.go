@@ -5,9 +5,9 @@ import (
 	"babblegraph/model/email"
 	"babblegraph/model/emailtemplates"
 	"babblegraph/model/newsletter"
-	"babblegraph/model/userlemma"
 	"babblegraph/model/usernewsletterpreferences"
 	"babblegraph/model/users"
+	"babblegraph/model/uservocabulary"
 	"babblegraph/util/ctx"
 	"babblegraph/util/database"
 	"babblegraph/util/env"
@@ -70,7 +70,7 @@ func createNewsletter(c ctx.LogContext, tx *sqlx.Tx, userID users.UserID, emailR
 		UserID:                    userID,
 		LanguageCode:              wordsmith.LanguageCodeSpanish,
 		SentDocumentIDs:           []documents.DocumentID{},
-		SpotlightRecords:          []userlemma.UserLemmaReinforcementSpotlightRecord{},
+		SpotlightRecords:          []uservocabulary.UserVocabularySpotlightRecord{},
 		UserNewsletterPreferences: userNewsletterPreferences,
 	})
 	if err != nil {

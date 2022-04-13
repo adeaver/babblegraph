@@ -4,12 +4,12 @@ from util import (
     make_part_of_speech_id
 )
 
-class StartToken:
-    def __init__(self):
-        self._token_text = "<<START>>"
-        self._part_of_speech_id = make_part_of_speech_id("<<START>>")
-        self._lemma_id = make_lemma_id("<<START>>", self._part_of_speech_id)
-        self._word_id = make_word_id("<<START>>", self._lemma_id, self._part_of_speech_id)
+class SpecialToken:
+    def __init__(self, token_text, part_of_speech_id, lemma_id):
+        self._token_text = token_text
+        self._part_of_speech_id = part_of_speech_id
+        self._lemma_id = lemma_id
+        self._word_id = make_word_id(self._token_text, self._lemma_id, self._part_of_speech_id)
 
     def get_token(self):
         return self._token_text
@@ -35,3 +35,15 @@ class StartToken:
 
     def get_part_of_speech_id(self):
         return self._part_of_speech_id
+
+    def get_word_id(self):
+        return self._word_id
+
+class StartToken(SpecialToken):
+    def __init__(self):
+        part_of_speech_id = make_part_of_speech_id("<<START>>")
+        super().__init__(
+            "<<START>>",
+            part_of_speech_id,
+            make_lemma_id("<<START>>", part_of_speech_id)
+        )

@@ -37,6 +37,16 @@ var Routes = router.RouteGroup{
 			Handler: routermiddleware.WithNoBodyRequestLogger(
 				routermiddleware.MaybeWithAuthentication(updateUserNewsletterPreferences),
 			),
+		}, {
+			Path: "upsert_user_vocabulary_entry_1",
+			Handler: routermiddleware.WithNoBodyRequestLogger(
+				routermiddleware.MaybeWithAuthentication(upsertUserVocabulary),
+			),
+		}, {
+			Path: "get_user_vocabulary_entry_1",
+			Handler: routermiddleware.WithNoBodyRequestLogger(
+				routermiddleware.MaybeWithAuthentication(getUserVocabulary),
+			),
 		},
 	},
 }

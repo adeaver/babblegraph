@@ -13,6 +13,7 @@ import FindInPageIcon from '@material-ui/icons/FindInPage';
 import FavoriteIcon from '@material-ui/icons/Favorite';
 import GraphicEqIcon from '@material-ui/icons/GraphicEq';
 import HelpOutlineIcon from '@material-ui/icons/HelpOutline';
+import DynamicFeedIcon from '@material-ui/icons/DynamicFeed';
 
 import Color from 'common/styles/colors';
 import DisplayCard from 'common/components/DisplayCard/DisplayCard';
@@ -115,6 +116,10 @@ const PremiumInformationPage = withUserProfileInformation<PremiumInformationPage
                                 title={translations[TextBlock.AdvertisementsTitle]}
                                 description={translations[TextBlock.AdvertisementsDescription]}
                                 icon={<NotificationsOffIcon className={classes.featureIcon} />} />
+                            <PremiumFeatureListItem
+                                title={translations[TextBlock.PhrasesTitle]}
+                                description={translations[TextBlock.PhrasesDescription]}
+                                icon={<DynamicFeedIcon className={classes.featureIcon} />} />
                             <PremiumFeatureListItem
                                 title={translations[TextBlock.PodcastsTitle]}
                                 description={translations[TextBlock.PodcastsDescription]}

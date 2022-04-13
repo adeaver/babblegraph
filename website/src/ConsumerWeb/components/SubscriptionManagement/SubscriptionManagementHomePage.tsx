@@ -61,8 +61,8 @@ const SubscriptionManagementHomePage = withUserProfileInformation<SubscriptionMa
                         description="Select some topics you’re interested in reading more about or deselect some topics you’d like to read about less. This is a great way to make sure that the content you get is fun and engaging." />
                     <NavigationCard
                         location={`/manage/${reinforcementToken}/vocabulary`}
-                        title="Track words to reinforce"
-                        description="Learn a new word recently and want to make sure it sticks? You can track it, which will send you articles containing these words. Seeing a word frequently is a great way to make sure you remember it." />
+                        title="Add words to your vocabulary list"
+                        description="Learn a new word recently and want to make sure it sticks? You can add it to your vocabulary list, which will send you articles containing these words. Seeing a word frequently is a great way to make sure you remember it." />
                     {
                         props.userProfile.hasAccount && (
                             <NavigationCard

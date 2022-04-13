@@ -7,10 +7,10 @@ import (
 	"babblegraph/model/useraccounts"
 	"babblegraph/model/usercontenttopics"
 	"babblegraph/model/userdocuments"
-	"babblegraph/model/userlemma"
 	"babblegraph/model/userlinks"
 	"babblegraph/model/usernewsletterpreferences"
 	"babblegraph/model/users"
+	"babblegraph/model/uservocabulary"
 	"babblegraph/util/ctx"
 	"babblegraph/util/ptr"
 	"babblegraph/wordsmith"
@@ -37,11 +37,11 @@ type userPreferencesAccessor interface {
 	getReadingLevel() *userReadingLevel
 	getSentDocumentIDs() []documents.DocumentID
 	getUserTopics() []content.TopicID
-	getTrackingLemmas() []wordsmith.LemmaID
+	getUserVocabularyEntries() []uservocabulary.UserVocabularyEntry
 	getAllowableSources() []content.SourceID
-	getSpotlightRecordsOrderedBySentOn() []userlemma.UserLemmaReinforcementSpotlightRecord
+	getSpotlightRecordsOrderedBySentOn() []uservocabulary.UserVocabularySpotlightRecord
 	insertDocumentForUserAndReturnID(emailRecordID email.ID, doc documents.Document) (*userdocuments.UserDocumentID, error)
-	insertSpotlightReinforcementRecord(lemmaID wordsmith.LemmaID) error
+	insertSpotlightReinforcementRecord(entry uservocabulary.UserVocabularyEntryID) error
 }
 
 type DefaultUserPreferencesAccessor struct {
@@ -58,9 +58,9 @@ type DefaultUserPreferencesAccessor struct {
 	userReadingLevel          *userReadingLevel
 	sentDocumentIDs           []documents.DocumentID
 	userTopics                []content.TopicID
-	trackingLemmas            []wordsmith.LemmaID
+	userVocabularyEntries     []uservocabulary.UserVocabularyEntry
 	allowableSourceIDs        []content.SourceID
-	userSpotlightRecords      []userlemma.UserLemmaReinforcementSpotlightRecord
+	userSpotlightRecords      []uservocabulary.UserVocabularySpotlightRecord
 }
 
 func GetDefaultUserPreferencesAccessor(c ctx.LogContext, tx *sqlx.Tx, userID users.UserID, languageCode wordsmith.LanguageCode, dateOfSendUTCMidnight time.Time) (*DefaultUserPreferencesAccessor, error) {
@@ -88,21 +88,22 @@ func GetDefaultUserPreferencesAccessor(c ctx.LogContext, tx *sqlx.Tx, userID use
 	if err != nil {
 		return nil, err
 	}
-	lemmaMappings, err := userlemma.GetVisibleMappingsForUser(tx, userID)
+	vocabularyEntries, err := uservocabulary.GetUserVocabularyEntries(tx, userID, languageCode, false)
 	if err != nil {
 		return nil, err
 	}
-	var trackingLemmas []wordsmith.LemmaID
-	for _, m := range lemmaMappings {
-		if m.IsActive && m.LanguageCode == languageCode {
-			trackingLemmas = append(trackingLemmas, m.LemmaID)
+	var filteredVocabularyEntries []uservocabulary.UserVocabularyEntry
+	for _, e := range vocabularyEntries {
+		if userSubscriptionLevel == nil && e.VocabularyType == uservocabulary.VocabularyTypePhrase {
+			continue
 		}
+		filteredVocabularyEntries = append(filteredVocabularyEntries, e)
 	}
 	allowableSourceIDs, err := getAllowableSourceIDsForUser(tx, userID)
 	if err != nil {
 		return nil, err
 	}
-	userSpotlightRecords, err := userlemma.GetLemmaReinforcementRecordsForUserOrderedBySentOn(tx, userID)
+	userSpotlightRecords, err := uservocabulary.GetUserVocabularySpotlightRecords(tx, userID, languageCode)
 	if err != nil {
 		return nil, err
 	}
@@ -121,11 +122,11 @@ func GetDefaultUserPreferencesAccessor(c ctx.LogContext, tx *sqlx.Tx, userID use
 			LowerBound: 30,
 			UpperBound: 80,
 		},
-		sentDocumentIDs:      sentDocumentIDs,
-		userTopics:           userTopics,
-		trackingLemmas:       trackingLemmas,
-		allowableSourceIDs:   allowableSourceIDs,
-		userSpotlightRecords: userSpotlightRecords,
+		sentDocumentIDs:       sentDocumentIDs,
+		userTopics:            userTopics,
+		userVocabularyEntries: filteredVocabularyEntries,
+		allowableSourceIDs:    allowableSourceIDs,
+		userSpotlightRecords:  userSpotlightRecords,
 	}, nil
 }
 
@@ -169,15 +170,15 @@ func (d *DefaultUserPreferencesAccessor) getUserTopics() []content.TopicID {
 	return d.userTopics
 }
 
-func (d *DefaultUserPreferencesAccessor) getTrackingLemmas() []wordsmith.LemmaID {
-	return d.trackingLemmas
+func (d *DefaultUserPreferencesAccessor) getUserVocabularyEntries() []uservocabulary.UserVocabularyEntry {
+	return d.userVocabularyEntries
 }
 
 func (d *DefaultUserPreferencesAccessor) getAllowableSources() []content.SourceID {
 	return d.allowableSourceIDs
 }
 
-func (d *DefaultUserPreferencesAccessor) getSpotlightRecordsOrderedBySentOn() []userlemma.UserLemmaReinforcementSpotlightRecord {
+func (d *DefaultUserPreferencesAccessor) getSpotlightRecordsOrderedBySentOn() []uservocabulary.UserVocabularySpotlightRecord {
 	return d.userSpotlightRecords
 }
 
@@ -185,12 +186,8 @@ func (d *DefaultUserPreferencesAccessor) insertDocumentForUserAndReturnID(emailR
 	return userdocuments.InsertDocumentForUserAndReturnID(d.tx, d.userID, emailRecordID, doc)
 }
 
-func (d *DefaultUserPreferencesAccessor) insertSpotlightReinforcementRecord(lemmaID wordsmith.LemmaID) error {
-	return userlemma.UpsertLemmaReinforcementSpotlightRecord(d.tx, userlemma.UpsertLemmaReinforcementSpotlightRecordInput{
-		UserID:       d.userID,
-		LanguageCode: d.languageCode,
-		LemmaID:      lemmaID,
-	})
+func (d *DefaultUserPreferencesAccessor) insertSpotlightReinforcementRecord(userVocabularyEntryID uservocabulary.UserVocabularyEntryID) error {
+	return uservocabulary.UpsertUserVocabularySpotlightRecord(d.tx, d.userID, d.languageCode, userVocabularyEntryID)
 }
 
 func getAllowableSourceIDsForUser(tx *sqlx.Tx, userID users.UserID) ([]content.SourceID, error) {

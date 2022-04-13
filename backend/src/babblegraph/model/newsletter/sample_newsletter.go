@@ -6,9 +6,9 @@ import (
 	"babblegraph/model/email"
 	"babblegraph/model/useraccounts"
 	"babblegraph/model/userdocuments"
-	"babblegraph/model/userlemma"
 	"babblegraph/model/usernewsletterpreferences"
 	"babblegraph/model/users"
+	"babblegraph/model/uservocabulary"
 	"babblegraph/util/ctx"
 	"babblegraph/util/timeutils"
 	"babblegraph/wordsmith"
@@ -31,9 +31,9 @@ type GetSampleNewsletterUserAccessorInput struct {
 	UserNewsletterSchedule    *usernewsletterpreferences.Schedule
 	SentDocumentIDs           []documents.DocumentID
 	UserTopics                []content.TopicID
-	TrackingLemmas            []wordsmith.LemmaID
+	UserVocabularyEntries     []uservocabulary.UserVocabularyEntry
 	AllowableSourceIDs        []content.SourceID
-	SpotlightRecords          []userlemma.UserLemmaReinforcementSpotlightRecord
+	SpotlightRecords          []uservocabulary.UserVocabularySpotlightRecord
 }
 
 func GetSampleNewsletterUserAccessor(c ctx.LogContext, tx *sqlx.Tx, input GetSampleNewsletterUserAccessorInput) (*SampleNewsletterUserAccessor, error) {
@@ -60,8 +60,8 @@ func GetSampleNewsletterUserAccessor(c ctx.LogContext, tx *sqlx.Tx, input GetSam
 	if input.UserTopics != nil {
 		defaultUserPreferencesAccessor.userTopics = input.UserTopics
 	}
-	if input.TrackingLemmas != nil {
-		defaultUserPreferencesAccessor.trackingLemmas = input.TrackingLemmas
+	if input.UserVocabularyEntries != nil {
+		defaultUserPreferencesAccessor.userVocabularyEntries = input.UserVocabularyEntries
 	}
 	if input.AllowableSourceIDs != nil {
 		defaultUserPreferencesAccessor.allowableSourceIDs = input.AllowableSourceIDs
@@ -121,15 +121,15 @@ func (s *SampleNewsletterUserAccessor) getUserTopics() []content.TopicID {
 	return s.defaultUserPreferencesAccessor.getUserTopics()
 }
 
-func (s *SampleNewsletterUserAccessor) getTrackingLemmas() []wordsmith.LemmaID {
-	return s.defaultUserPreferencesAccessor.getTrackingLemmas()
+func (s *SampleNewsletterUserAccessor) getUserVocabularyEntries() []uservocabulary.UserVocabularyEntry {
+	return s.defaultUserPreferencesAccessor.getUserVocabularyEntries()
 }
 
 func (s *SampleNewsletterUserAccessor) getAllowableSources() []content.SourceID {
 	return s.defaultUserPreferencesAccessor.getAllowableSources()
 }
 
-func (s *SampleNewsletterUserAccessor) getSpotlightRecordsOrderedBySentOn() []userlemma.UserLemmaReinforcementSpotlightRecord {
+func (s *SampleNewsletterUserAccessor) getSpotlightRecordsOrderedBySentOn() []uservocabulary.UserVocabularySpotlightRecord {
 	return s.defaultUserPreferencesAccessor.getSpotlightRecordsOrderedBySentOn()
 }
 
@@ -137,6 +137,6 @@ func (s *SampleNewsletterUserAccessor) insertDocumentForUserAndReturnID(emailRec
 	return userdocuments.UserDocumentID(uuid.New().String()).Ptr(), nil
 }
 
-func (s *SampleNewsletterUserAccessor) insertSpotlightReinforcementRecord(lemmaID wordsmith.LemmaID) error {
+func (s *SampleNewsletterUserAccessor) insertSpotlightReinforcementRecord(userVocabularyEntryID uservocabulary.UserVocabularyEntryID) error {
 	return nil
 }

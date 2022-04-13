@@ -4,9 +4,11 @@ type Error string
 
 const (
 	// General Errors
-	ErrorInvalidToken Error = "invalid-token"
-	ErrorNoAuth       Error = "no-auth"
-	ErrorIncorrectKey Error = "incorrect-key"
+	ErrorInvalidToken    Error = "invalid-token"
+	ErrorNoAuth          Error = "no-auth"
+	ErrorIncorrectKey    Error = "incorrect-key"
+	ErrorLowCaptchaScore Error = "low-score"
+	ErrorRequiresUpgrade Error = "requires-upgrade"
 
 	// Common Error Types
 	ErrorInvalidLanguageCode Error = "invalid-language"
