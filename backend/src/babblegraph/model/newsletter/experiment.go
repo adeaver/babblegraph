@@ -11,7 +11,7 @@ import (
 
 const (
 	version2ExperimentName       = "use_version_2_newsletter"
-	version2ExperimentPercentage = 20
+	version2ExperimentPercentage = 40
 )
 
 func InitializeNewsletterExperiments() error {
