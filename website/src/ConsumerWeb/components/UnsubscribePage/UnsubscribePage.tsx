@@ -53,7 +53,6 @@ const styleClasses = makeStyles({
         padding: '10px 0',
     },
     submitButton: {
-        marginTop: '5px',
         width: '100%',
     },
     closeModalIconContainer: {
@@ -323,21 +322,23 @@ const UnsubscribeModal = (props: UnsubscribeModalProps) => {
                     <Paragraph align={Alignment.Left}>
                         Babblegraph now allows users to select which days they receive emails, what time they receive them, and how many articles they receive with each email.
                     </Paragraph>
-                    <CenteredComponent>
-                        <PrimaryButton
-                            className={classes.submitButton}
-                            onClick={handleGoToSettings}>
-                            Take me to settings
-                        </PrimaryButton>
-                    </CenteredComponent>
-                    <CenteredComponent>
-                        <WarningButton
-                            className={classes.submitButton}
-                            onClick={props.handleConfirmUnsubscribe}
-                            type='submit'>
-                            Continue to Unsubscribe
-                        </WarningButton>
-                    </CenteredComponent>
+                    <Grid container>
+                        <Grid item className={classes.submitButtonContainer} xs={12} md={6}>
+                            <PrimaryButton
+                                className={classes.submitButton}
+                                onClick={handleGoToSettings}>
+                                Take me to settings
+                            </PrimaryButton>
+                        </Grid>
+                        <Grid item className={classes.submitButtonContainer} xs={12} md={6}>
+                            <WarningButton
+                                className={classes.submitButton}
+                                onClick={props.handleConfirmUnsubscribe}
+                                type='submit'>
+                                Continue to Unsubscribe
+                            </WarningButton>
+                        </Grid>
+                    </Grid>
                 </DisplayCard>
             </CenteredComponent>
         </Modal>
