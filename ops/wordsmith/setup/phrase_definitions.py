@@ -93,7 +93,7 @@ def _get_words_to_lemma_id(observed_parts_of_speech, filtered_lemmas, new_lemmas
                 _id, language, corpus_id, part_of_speech_id, lemma_id, word_text
             ) VALUES (
                 '{word_id}', '{LANGUAGE}', '{CORPUS[1]}', '{part_of_speech_id}', '{lemma_id}', '{word_text}'
-            );\n\n""")
+            ) ON CONFLICT DO NOTHING;\n\n""")
     return words_to_lemma_id
 
 def _get_words_data(observed_parts_of_speech):
@@ -121,7 +121,7 @@ with open("/out/phrase-definitions-0.sql", "w") as f:
                 '{special_token.get_word_id()}', '{LANGUAGE}', '{CORPUS[1]}',
                 '{special_token.get_part_of_speech_id()}', '{special_token.get_lemma_id()}',
                 '{special_token.get_token()}'
-            );\n""")
+            ) ON CONFLICT DO NOTHING;\n""")
 
 definition_ids = {}
 
@@ -145,8 +145,8 @@ def _process_phrase(file_number, words_to_lemma_id, lemmas_by_lemma_id, phrase):
     with open(f"/out/phrase-definitions-{file_number}.sql", "a") as f:
         phrase_definition = phrase.definition
         try:
-            escaped_definition = re.sub(r"\'", "\\'",  phrase_definition)
-            escaped_phrase = re.sub(r"\'", "\\'", phrase.word_text)
+            escaped_definition = re.sub("\n", "", re.sub(r"\'", "’",  phrase_definition))
+            escaped_phrase = re.sub("\n", "", re.sub(r"\'", "’", phrase.word_text))
         except:
             print(f"Error on {phrase_definition} or {phrase.word_text}")
             return phrase, 0
@@ -202,8 +202,8 @@ with open("/out/phrase-definitions-0.sql", "a") as f:
             \"public\".lemmas (
                 _id, corpus_id, language, lemma_text, part_of_speech_id
             ) VALUES (
-                '{_id}', '{CORPUS[1]}', '{LANGUAGE}', '{lemma_text}', '{part_of_speech_id}')
-            );\n\n""")
+                '{_id}', '{CORPUS[1]}', '{LANGUAGE}', '{lemma_text}', '{part_of_speech_id}'
+            ) ON CONFLICT DO NOTHING;\n\n""")
 
 new_phrases = []
 for phrase in phrases:
