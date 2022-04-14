@@ -30,7 +30,7 @@ type NewsletterVersion2 struct {
 }
 
 type NewsletterVersion2Body struct {
-	PremiumLink           *PremiumAdvertisement  `json:"premium_link"`
+	PremiumLink           *PremiumAdvertisement  `json:"premium_link,omitempty"`
 	Sections              []Section              `json:"sections"`
 	AdvertisingDisclaimer *AdvertisingDisclaimer `json:"advertising_disclaimer,omitempty"`
 }
