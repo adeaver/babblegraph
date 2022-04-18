@@ -17,6 +17,7 @@ export type Source = {
 export enum PhotoKey {
     Seville = 'seville',
     Cartagena = 'cartagena',
+    MachuPicchu = 'machu-picchu',
 }
 
 const AvailablePhotos: { [key: string]: Photo } = {
@@ -40,6 +41,17 @@ const AvailablePhotos: { [key: string]: Photo } = {
         source: {
             name: 'Unsplash',
             url: 'https://unsplash.com/s/photos/colombia?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText',
+        },
+    },
+    [PhotoKey.MachuPicchu]: {
+        url: 'https://static.babblegraph.com/assets/machupicchu.jpg',
+        photographer: {
+            name: 'Willian Justen de Vasconcellos',
+            url: 'https://unsplash.com/@willianjusten?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText'
+        },
+        source: {
+            name: 'Unsplash',
+            url: 'https://unsplash.com/s/photos/peru?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText',
         },
     },
 }

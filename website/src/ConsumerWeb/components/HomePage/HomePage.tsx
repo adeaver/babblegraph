@@ -88,7 +88,7 @@ const HomePage = () => {
     const classes = styleClasses();
     return (
         <Page withNavbar withBackground={PhotoKey.Seville}>
-            <CenteredComponent>
+            <CenteredComponent useLargeVersion>
                 <DisplayCard>
                     <Heading1 color={TypographyColor.Primary}>
                         {
