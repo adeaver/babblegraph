@@ -41,7 +41,6 @@ const styleClasses = makeStyles({
         height: '100%',
     },
     menuContainer: {
-        display: 'flex',
         alignContent: 'center',
         justifyContent: 'center',
     },
@@ -153,7 +152,7 @@ const Navbar = () => {
                     item
                     sm={4}
                     md={false}
-                    display={{ md: "none", lg: "none", xl: "none" }}>
+                    display={{ xs: "flex", sm: "flex", md: "none", lg: "none", xl: "none" }}>
                     <MenuIcon onClick={handleOpenModal} className={classes.menuIcon} />
                 </Box>
             </Grid>

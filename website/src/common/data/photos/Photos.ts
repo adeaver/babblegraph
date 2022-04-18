@@ -16,6 +16,7 @@ export type Source = {
 
 export enum PhotoKey {
     Seville = 'seville',
+    Cartagena = 'cartagena',
 }
 
 const AvailablePhotos: { [key: string]: Photo } = {
@@ -29,7 +30,18 @@ const AvailablePhotos: { [key: string]: Photo } = {
             name: 'Unsplash',
             url: 'https://unsplash.com/s/photos/spain?utm_source=unsplash&amp;utm_medium=referral&amp;utm_content=creditCopyText',
         },
-    }
+    },
+    [PhotoKey.Cartagena]: {
+        url: 'https://static.babblegraph.com/assets/cartagena.jpg',
+        photographer: {
+            name: 'Leandro Loureiro',
+            url: 'https://unsplash.com/@lealoureiro?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText'
+        },
+        source: {
+            name: 'Unsplash',
+            url: 'https://unsplash.com/s/photos/colombia?utm_source=unsplash&utm_medium=referral&utm_content=creditCopyText',
+        },
+    },
 }
 
 export const getAvailablePhotoForKey = (key: PhotoKey) => {

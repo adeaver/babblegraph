@@ -106,7 +106,7 @@ const ForgotPasswordPage = (props: ForgotPasswordPageProps) => {
                             Reset your password
                         </Heading1>
                         <Paragraph>
-                            If you have a Babblegraph Premium Account, you can use the form below to request a link to reset your password. If you don’t have a premium account and would like one, check out Babblegraph’s BuyMeACoffee page.
+                            If you’ve forgotten the password to your Babblegraph account, you can use the form below to request a link to reset your password.
                         </Paragraph>
                         { resultBody }
                         {

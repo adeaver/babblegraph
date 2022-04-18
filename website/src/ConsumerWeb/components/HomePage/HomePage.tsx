@@ -1,10 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
 import { makeStyles } from '@material-ui/core/styles';
-import Card from '@material-ui/core/Card';
-import CheckCircleOutlineIcon from '@material-ui/icons/CheckCircleOutline';
 import Divider from '@material-ui/core/Divider';
-import ErrorOutlineIcon from '@material-ui/icons/ErrorOutline';
 import Grid from '@material-ui/core/Grid';
 
 import MailOutlineIcon from '@material-ui/icons/MailOutline';
@@ -12,20 +9,15 @@ import LibraryAddCheckIcon from '@material-ui/icons/LibraryAddCheck';
 import AutorenewIcon from '@material-ui/icons/Autorenew';
 
 import Color from 'common/styles/colors';
+import CenteredComponent from 'common/components/CenteredComponent/CenteredComponent';
+import DisplayCard from 'common/components/DisplayCard/DisplayCard';
 import Page from 'common/components/Page/Page';
 import Paragraph, { Size } from 'common/typography/Paragraph';
 import { TypographyColor } from 'common/typography/common';
 import { Heading1, Heading3 } from 'common/typography/Heading';
-import { PrimaryButton } from 'common/components/Button/Button';
-import { PrimaryTextField } from 'common/components/TextField/TextField';
-import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
 import { PhotoKey } from 'common/data/photos/Photos';
-import Link, { LinkTarget } from 'common/components/Link/Link';
+import Link from 'common/components/Link/Link';
 import { withCaptchaToken, loadCaptchaScript } from 'common/util/grecaptcha/grecaptcha';
-import Form from 'common/components/Form/Form';
-
-import CenteredComponent from 'common/components/CenteredComponent/CenteredComponent';
-import DisplayCard from 'common/components/DisplayCard/DisplayCard';
 
 import SignupForm from 'ConsumerWeb/components/common/SignupForm/SignupForm';
 
@@ -103,7 +95,7 @@ const HomePage = () => {
                             hadSuccess ? (
                                 'Success! You’re one step closer to receiving interesting Spanish language content'
                             ) : (
-                                'You didn’t spend all that time learning Spanish just to forget it'
+                                'Effortlessly work Spanish practice into your weekly routine'
                             )
                         }
                     </Heading1>
@@ -160,7 +152,7 @@ const PostInitialContent = () => {
                 </Grid>
                 <Grid item xs={9} md={10}>
                     <Paragraph>
-                        Sign up to receive a newsletter containing articles from trusted Spanish-language news sources and podcasts
+                        Sign up to receive a newsletter containing articles from trusted Spanish-language news sources and podcasts on your schedule, as frequently as every day or as a little as every week.
                     </Paragraph>
                 </Grid>
             </Grid>
