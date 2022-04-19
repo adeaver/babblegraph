@@ -181,7 +181,7 @@ func updateUserNewsletterPreferences(userAuth *routermiddleware.UserAuthenticati
 			}, nil
 		}
 		var podcastPreferences *usernewsletterpreferences.PodcastPreferencesInput
-		if userAuth.SubscriptionLevel == nil || *userAuth.SubscriptionLevel != useraccounts.SubscriptionLevelLegacy {
+		if userAuth.SubscriptionLevel != nil {
 			podcastPreferences = &usernewsletterpreferences.PodcastPreferencesInput{
 				ArePodcastsEnabled:      deref.Bool(req.Preferences.ArePodcastsEnabled, true),
 				IncludeExplicitPodcasts: deref.Bool(req.Preferences.IncludeExplicitPodcasts, true),
@@ -225,7 +225,15 @@ func updateUserNewsletterPreferences(userAuth *routermiddleware.UserAuthenticati
 				cErr = clienterror.ErrorInvalidEmailAddress.Ptr()
 				return nil
 			}
-			return usernewsletterpreferences.UpdateUserNewsletterPreferences(r, tx, usernewsletterpreferences.UpdateUserNewsletterPreferencesInput{
+			doesUserHaveAccount, err := useraccounts.DoesUserAlreadyHaveAccount(tx, *userID)
+			switch {
+			case err != nil:
+				return err
+			case doesUserHaveAccount:
+				cErr = clienterror.ErrorNoAuth.Ptr()
+				return nil
+			}
+			input := usernewsletterpreferences.UpdateUserNewsletterPreferencesInput{
 				UserID:                              *userID,
 				LanguageCode:                        *languageCode,
 				IsLemmaReinforcementSpotlightActive: req.Preferences.IsLemmaReinforcementSpotlightActive,
@@ -234,7 +242,25 @@ func updateUserNewsletterPreferences(userAuth *routermiddleware.UserAuthenticati
 				QuarterHourIndex:                    req.Preferences.Schedule.QuarterHourIndex,
 				IsActiveForDays:                     req.Preferences.Schedule.IsActiveForDays,
 				NumberOfArticlesPerEmail:            req.Preferences.NumberOfArticlesPerEmail,
-			})
+			}
+			userSubscription, err := useraccounts.LookupSubscriptionLevelForUser(tx, *userID)
+			switch {
+			case err != nil:
+				return err
+			case userSubscription == nil,
+				*userSubscription != useraccounts.SubscriptionLevelLegacy:
+				input.PodcastPreferences = &usernewsletterpreferences.PodcastPreferencesInput{
+					ArePodcastsEnabled:      deref.Bool(req.Preferences.ArePodcastsEnabled, true),
+					IncludeExplicitPodcasts: deref.Bool(req.Preferences.IncludeExplicitPodcasts, true),
+				}
+				if req.Preferences.MinimumPodcastDurationSeconds != nil {
+					input.PodcastPreferences.MinimumDurationNanoseconds = ptr.Duration(time.Duration(*req.Preferences.MinimumPodcastDurationSeconds) * time.Second)
+				}
+				if req.Preferences.MaximumPodcastDurationSeconds != nil {
+					input.PodcastPreferences.MaximumDurationNanoseconds = ptr.Duration(time.Duration(*req.Preferences.MaximumPodcastDurationSeconds) * time.Second)
+				}
+			}
+			return usernewsletterpreferences.UpdateUserNewsletterPreferences(r, tx, input)
 		})
 		switch {
 		case err != nil:
