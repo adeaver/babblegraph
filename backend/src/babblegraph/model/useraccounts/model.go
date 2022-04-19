@@ -29,6 +29,7 @@ type dbUserSubscription struct {
 type SubscriptionLevel string
 
 const (
+	SubscriptionLevelLegacy      SubscriptionLevel = "Legacy"
 	SubscriptionLevelBetaPremium SubscriptionLevel = "Beta-Premium"
 	SubscriptionLevelPremium     SubscriptionLevel = "Premium"
 )

@@ -2,6 +2,7 @@ package billing
 
 import (
 	"babblegraph/config"
+	"babblegraph/model/useraccounts"
 	"babblegraph/model/users"
 	"babblegraph/util/ctx"
 	"babblegraph/util/env"
@@ -25,6 +26,9 @@ const (
 
 	insertPremiumNewsletterSubscriptionDebounceRecordQuery = "INSERT INTO billing_premium_newsletter_subscription_debounce_record (billing_information_id) VALUES ($1)"
 	deletePremiumNewsletterSubscriptionDebounceRecordQuery = "DELETE FROM billing_premium_newsletter_subscription_debounce_record WHERE billing_information_id = $1"
+
+	lookupNewsletterTrialForEmailAddressQuery = "SELECT * FROM billing_newsletter_subscription_trials WHERE email_address = $1 AND created_at > current_date - interval '2 years'"
+	insertTrialRecordForUserQuery             = "INSERT INTO billing_newsletter_subscription_trials (email_address) VALUES ($1)"
 )
 
 func LookupPremiumNewsletterSubscriptionForUser(c ctx.LogContext, tx *sqlx.Tx, userID users.UserID) (*PremiumNewsletterSubscription, error) {
@@ -83,6 +87,9 @@ func CreatePremiumNewsletterSubscriptionForUserWithID(c ctx.LogContext, tx *sqlx
 	}
 	if trialEligibilityDays != nil && *trialEligibilityDays > 0 {
 		subscriptionParams.TrialPeriodDays = trialEligibilityDays
+		if err := insertTrialRecordForUser(tx, userID); err != nil {
+			return nil, err
+		}
 	}
 	stripeSubscription, err := sub.New(subscriptionParams)
 	if err != nil {
@@ -277,38 +284,50 @@ func insertActivePremiumNewsletterSubscriptionForUser(tx *sqlx.Tx, premiumNewsle
 	return nil
 }
 
+func insertTrialRecordForUser(tx *sqlx.Tx, userID users.UserID) error {
+	user, err := users.GetUser(tx, userID)
+	if err != nil {
+		return err
+	}
+	_, err = tx.Exec(insertTrialRecordForUserQuery, user.EmailAddress)
+	return err
+}
+
 func GetPremiumNewsletterSubscriptionTrialEligibilityForUser(tx *sqlx.Tx, userID users.UserID) (*int64, error) {
-	billingInformation, err := lookupBillingInformationForUserID(tx, userID)
+	subscriptionLevel, err := useraccounts.LookupSubscriptionLevelForUser(tx, userID)
 	switch {
 	case err != nil:
 		return nil, err
-	case billingInformation == nil:
-		return ptr.Int64(config.PremiumNewsletterSubscriptionTrialLengthDays), nil
-	default:
-		var matches []dbPremiumNewsletterSubscription
-		err := tx.Select(&matches, lookupPremiumNewsletterSubscriptionQuery, billingInformation.ID)
-		switch {
-		case err != nil:
+	case subscriptionLevel == nil:
+		user, err := users.GetUser(tx, userID)
+		if err != nil {
 			return nil, err
-		case len(matches) == 0:
-			return ptr.Int64(config.PremiumNewsletterSubscriptionTrialLengthDays), nil
-		default:
-			var oldestMatch *time.Time
-			for _, m := range matches {
-				m := m
-				if oldestMatch == nil || oldestMatch.After(m.CreatedAt) {
-					oldestMatch = &m.CreatedAt
-				}
-			}
-			hoursSinceOldestTrialStarted := decimal.FromInt64(int64(time.Now().Sub(*oldestMatch) / time.Hour))
-			roundedDaysSinceOldestTrialStarted := hoursSinceOldestTrialStarted.Divide(decimal.FromInt64(24)).ToInt64Rounded()
-			trialEligibilityDays := config.PremiumNewsletterSubscriptionTrialLengthDays - roundedDaysSinceOldestTrialStarted
-			if trialEligibilityDays < 0 {
-				trialEligibilityDays = 0
-			}
-			return ptr.Int64(trialEligibilityDays), nil
 		}
+		return getNewsletterSubscriptionTrialEligibility(tx, user.EmailAddress)
+	case *subscriptionLevel == useraccounts.SubscriptionLevelLegacy,
+		*subscriptionLevel == useraccounts.SubscriptionLevelPremium,
+		*subscriptionLevel == useraccounts.SubscriptionLevelBetaPremium:
+		return ptr.Int64(0), nil
+	default:
+		return nil, fmt.Errorf("Unreachable")
 	}
+}
+
+func getNewsletterSubscriptionTrialEligibility(tx *sqlx.Tx, emailAddress string) (*int64, error) {
+	var matches []dbNewsletterSubscriptionTrial
+	if err := tx.Select(&matches, lookupNewsletterTrialForEmailAddressQuery, emailAddress); err != nil {
+		return nil, err
+	}
+	trialEligibilityDays := config.PremiumNewsletterSubscriptionTrialLengthDays
+	for _, m := range matches {
+		lengthOfPreviousTrialInHours := decimal.FromInt64(int64(time.Now().Sub(m.CreatedAt) / time.Hour))
+		lengthOfPreviousTrialsInDaysRounded := lengthOfPreviousTrialInHours.Divide(decimal.FromInt64(24)).ToInt64Rounded()
+		trialEligibilityDays -= lengthOfPreviousTrialsInDaysRounded
+	}
+	if trialEligibilityDays < 0 {
+		trialEligibilityDays = 0
+	}
+	return ptr.Int64(trialEligibilityDays), nil
 }
 
 // Webhook functions

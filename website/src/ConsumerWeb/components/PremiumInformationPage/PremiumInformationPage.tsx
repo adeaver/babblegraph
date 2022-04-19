@@ -136,14 +136,6 @@ const PremiumInformationPage = withUserProfileInformation<PremiumInformationPage
                         <Heading3 color={TypographyColor.Primary}>
                             {translations[TextBlock.Price]}
                         </Heading3>
-                        {
-                            /* TODO(i18n): fix this */
-                            !!props.userProfile.trialEligibilityDays && (
-                                <Heading3>
-                                    The best part is that you can try it for free for {props.userProfile.trialEligibilityDays} days!
-                                </Heading3>
-                            )
-                        }
                         <Grid container>
                             <Grid item xs={2}>
                                 &nbsp;

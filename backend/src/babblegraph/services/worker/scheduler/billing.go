@@ -94,7 +94,7 @@ func handleSyncBilling(c async.Context) {
 				if err != nil {
 					return err
 				}
-				if err := useraccounts.SyncUserAccountWithPremiumNewsletterSubscription(tx, *userID, premiumNewsletterSubscription); err != nil {
+				if err := billing.SyncUserAccountWithPremiumNewsletterSubscription(tx, *userID, premiumNewsletterSubscription); err != nil {
 					return err
 				}
 				return billing.MarkPremiumNewsletterSyncRequestDone(tx, premiumSubscriptionID)
