@@ -27,6 +27,7 @@ import Link from 'common/components/Link/Link';
 import Form from 'common/components/Form/Form';
 import { withCaptchaToken, loadCaptchaScript } from 'common/util/grecaptcha/grecaptcha';
 import { WordsmithLanguageCode } from 'common/model/language/language';
+import { SubscriptionLevel } from 'common/api/useraccounts/useraccounts';
 
 import {
     RouteEncryptionKey,
@@ -130,7 +131,7 @@ const WordReinforcementPage = withUserProfileInformation<WordReinforcementPagePr
                     <UserVocabularyDisplay
                         wordReinforcementToken={token}
                         subscriptionManagementToken={subscriptionManagementToken}
-                        hasSubscription={!!props.userProfile.subscriptionLevel} />
+                        hasSubscription={props.userProfile.subscriptionLevel !== SubscriptionLevel.Legacy} />
                 </DisplayCard>
             </CenteredComponent>
         );

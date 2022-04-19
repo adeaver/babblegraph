@@ -66,7 +66,8 @@ func SyncUserAccountWithPremiumNewsletterSubscription(tx *sqlx.Tx, userID users.
 		switch {
 		case err != nil:
 			return err
-		case subscriptionLevel == nil:
+		case subscriptionLevel == nil,
+			*subscriptionLevel == useraccounts.SubscriptionLevelLegacy:
 			return useraccounts.AddSubscriptionLevelForUser(tx, useraccounts.AddSubscriptionLevelForUserInput{
 				UserID:            userID,
 				SubscriptionLevel: useraccounts.SubscriptionLevelPremium,

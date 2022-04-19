@@ -29,9 +29,10 @@ type dbUserSubscription struct {
 type SubscriptionLevel string
 
 const (
-	SubscriptionLevelLegacy      SubscriptionLevel = "Legacy"
-	SubscriptionLevelBetaPremium SubscriptionLevel = "Beta-Premium"
-	SubscriptionLevelPremium     SubscriptionLevel = "Premium"
+	SubscriptionLevelLegacy                 SubscriptionLevel = "Legacy"
+	SubscriptionLevelLegacyFriendsAndFamily SubscriptionLevel = "Legacy-Friends-And-Family"
+	SubscriptionLevelBetaPremium            SubscriptionLevel = "Beta-Premium"
+	SubscriptionLevelPremium                SubscriptionLevel = "Premium"
 )
 
 func (s SubscriptionLevel) Ptr() *SubscriptionLevel {

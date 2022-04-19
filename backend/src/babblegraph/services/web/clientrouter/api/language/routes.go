@@ -111,7 +111,7 @@ func searchText(userAuth *routermiddleware.UserAuthentication, r *router.Request
 		return searchTextResponse{
 			Error: clienterror.ErrorNoAuth.Ptr(),
 		}, nil
-	case userAuth.SubscriptionLevel == nil && len(req.Text) > 1:
+	case userAuth.SubscriptionLevel != nil && userAuth.SubscriptionLevel == useraccounts.SubscriptionLevelLegacy && len(req.Text) > 1:
 		return searchTextResponse{
 			Error: clienterror.ErrorRequiresUpgrade.Ptr(),
 		}, nil

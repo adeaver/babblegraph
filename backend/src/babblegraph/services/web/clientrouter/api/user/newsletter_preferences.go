@@ -101,7 +101,7 @@ func getUserNewsletterPreferences(userAuth *routermiddleware.UserAuthentication,
 				Error: clienterror.ErrorIncorrectKey.Ptr(),
 			}, nil
 		}
-		if userAuth.SubscriptionLevel != nil {
+		if userAuth.SubscriptionLevel == nil || *userAuth.SubscriptionLevel != useraccounts.SubscriptionLevelLegacy {
 			userPreferences.ArePodcastsEnabled = ptr.Bool(prefs.PodcastPreferences.ArePodcastsEnabled)
 			userPreferences.IncludeExplicitPodcasts = ptr.Bool(prefs.PodcastPreferences.IncludeExplicitPodcasts)
 			if prefs.PodcastPreferences.MinimumDurationNanoseconds != nil {
@@ -181,7 +181,7 @@ func updateUserNewsletterPreferences(userAuth *routermiddleware.UserAuthenticati
 			}, nil
 		}
 		var podcastPreferences *usernewsletterpreferences.PodcastPreferencesInput
-		if userAuth.SubscriptionLevel != nil {
+		if userAuth.SubscriptionLevel == nil || *userAuth.SubscriptionLevel != useraccounts.SubscriptionLevelLegacy {
 			podcastPreferences = &usernewsletterpreferences.PodcastPreferencesInput{
 				ArePodcastsEnabled:      deref.Bool(req.Preferences.ArePodcastsEnabled, true),
 				IncludeExplicitPodcasts: deref.Bool(req.Preferences.IncludeExplicitPodcasts, true),

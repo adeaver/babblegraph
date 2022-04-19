@@ -131,7 +131,8 @@ func CreateNewsletterVersion2(c ctx.LogContext, dateOfSendMidnightUTC time.Time,
 	var premiumLink *PremiumAdvertisement
 	userSubscriptionLevel := input.UserAccessor.getUserSubscriptionLevel()
 	switch {
-	case userSubscriptionLevel == nil:
+	case userSubscriptionLevel == nil,
+		*userSubscriptionLevel == useraccounts.SubscriptionLevelLegacy:
 		premiumLinkURL, err := routes.MakePremiumInformationLink(input.UserAccessor.getUserID())
 		switch {
 		case err != nil:
@@ -185,6 +186,7 @@ func CreateNewsletterVersion2(c ctx.LogContext, dateOfSendMidnightUTC time.Time,
 			}
 		}
 	case *userSubscriptionLevel == useraccounts.SubscriptionLevelBetaPremium,
+		*userSubscriptionLevel == useraccounts.SubscriptionLevelLegacyFriendsAndFamily,
 		*userSubscriptionLevel == useraccounts.SubscriptionLevelPremium:
 		podcastSection, err := getPodcastSectionForUser(c, getPodcastSectionForUserInput{
 			emailRecordID:   emailRecordID,
