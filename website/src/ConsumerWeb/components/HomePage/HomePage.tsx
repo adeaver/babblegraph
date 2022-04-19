@@ -104,7 +104,7 @@ const HomePage = () => {
                         !hadSuccess && (
                             <div>
                                 <Paragraph>
-                                    Living outside of a Spanish speaking country makes it hard to use Spanish regularly. Without realizing it, weeks or months can go by without using it, and your Spanish can easily begin to get worse. That’s where Babblegraph comes in.
+                                    Living outside of a Spanish speaking country makes it hard to use Spanish regularly. Without realizing it, weeks or months can go by without using it, and your Spanish can easily begin to fade. That’s where Babblegraph comes in.
                                 </Paragraph>
                                 <Paragraph>
                                     Babblegraph is an email newsletter with Spanish language news and podcasts to help you maintain and expand your reading and listening comprehension without having to move to a Spanish speaking country.

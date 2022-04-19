@@ -8,7 +8,7 @@ import ClearIcon from '@material-ui/icons/Clear';
 import Modal from '@material-ui/core/Modal';
 
 import Color from 'common/styles/colors';
-import { Heading2 } from 'common/typography/Heading';
+import { Heading2, Heading3 } from 'common/typography/Heading';
 import Paragraph from 'common/typography/Paragraph';
 import {
     TypographyColor,
@@ -180,29 +180,27 @@ const NavigationModal = (props: NavigationModalProps) => {
                 <DisplayCard>
                     <Grid container>
                         <Grid item xs={10}>
-                            <Heading2 color={TypographyColor.Primary} align={Alignment.Left}>
-                                &nbsp;
-                            </Heading2>
+                            &nbsp;
                         </Grid>
                         <Grid item className={classes.closeModalIconContainer} xs={2}>
                             <ClearIcon className={classes.closeModalIcon} onClick={props.handleCloseModal} />
                         </Grid>
                     </Grid>
-                    <Paragraph color={TypographyColor.Primary}>
+                    <Heading3 color={TypographyColor.Primary}>
                         <a className={classes.headerAnchor} href="/about" target="_blank">
                             About
                         </a>
-                    </Paragraph>
-                    <Paragraph color={TypographyColor.Primary}>
+                    </Heading3>
+                    <Heading3 color={TypographyColor.Primary}>
                         <a className={classes.headerAnchor} href="/pricing" target="_blank">
                             Pricing
                         </a>
-                    </Paragraph>
-                    <Paragraph color={TypographyColor.Primary}>
+                    </Heading3>
+                    <Heading3 color={TypographyColor.Primary}>
                         <a className={classes.headerAnchor} href="/login" target="_blank">
                             Login
                         </a>
-                    </Paragraph>
+                    </Heading3>
                 </DisplayCard>
             </CenteredComponent>
         </Modal>

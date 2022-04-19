@@ -26,9 +26,6 @@ const styleClasses = makeStyles({
     featureIcon: {
         color: Color.Primary,
     },
-    featureListItemRoot: {
-
-    },
 });
 
 const PricingPage = () => {
@@ -44,10 +41,16 @@ const PricingPage = () => {
                         But you can try it before you buy it with a 30-day, no credit card required free trial.
                     </Paragraph>
                     <Heading3 color={TypographyColor.Primary}>
+                        Why is there no free option?
+                    </Heading3>
+                    <Paragraph>
+                        Babblegraph is built a team of one. My name is Andrew, and I’m a software engineer from the United States. Making Babblegraph a paid service means that my primary incentive is to spend my time building out a great product instead of trying to get you to click on ads.
+                    </Paragraph>
+                    <Heading3 color={TypographyColor.Primary}>
                         Why is there no monthly option?
                     </Heading3>
                     <Paragraph>
-                        Basically anytime you use your credit card, the company, website or person who charges you has to pay a fee. These fees really add up for small purchases. Taking into account these fees, the cost to you would be much higher if it were monthly.
+                        Basically anytime you use your credit card, the company, website or person who charges you has to pay a fee. These fees really add up for small purchases. Taking into account these fees, the cost to you would be much higher if it were monthly. Babblegraph may offer a monthly plan in the future, though.
                     </Paragraph>
                     <Heading3 color={TypographyColor.Primary}>
                         What does $29/year get you with your subscription?
