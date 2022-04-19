@@ -67,6 +67,7 @@ func getUserNewsletterPreferences(userAuth *routermiddleware.UserAuthentication,
 		}, nil
 	}
 	var doesUserHaveAccount bool
+	var isLegacySubscriber bool
 	var prefs *usernewsletterpreferences.UserNewsletterPreferences
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		var err error
@@ -75,6 +76,14 @@ func getUserNewsletterPreferences(userAuth *routermiddleware.UserAuthentication,
 			return err
 		}
 		doesUserHaveAccount, err = useraccounts.DoesUserAlreadyHaveAccount(tx, *userID)
+		if err != nil {
+			return err
+		}
+		userSubscription, err := useraccounts.LookupSubscriptionLevelForUser(tx, *userID)
+		if err != nil {
+			return err
+		}
+		isLegacySubscriber = userSubscription != nil && *userSubscription == useraccounts.SubscriptionLevelLegacy
 		return err
 	}); err != nil {
 		return nil, err
@@ -101,7 +110,7 @@ func getUserNewsletterPreferences(userAuth *routermiddleware.UserAuthentication,
 				Error: clienterror.ErrorIncorrectKey.Ptr(),
 			}, nil
 		}
-		if userAuth.SubscriptionLevel == nil || *userAuth.SubscriptionLevel != useraccounts.SubscriptionLevelLegacy {
+		if userAuth.SubscriptionLevel != nil {
 			userPreferences.ArePodcastsEnabled = ptr.Bool(prefs.PodcastPreferences.ArePodcastsEnabled)
 			userPreferences.IncludeExplicitPodcasts = ptr.Bool(prefs.PodcastPreferences.IncludeExplicitPodcasts)
 			if prefs.PodcastPreferences.MinimumDurationNanoseconds != nil {
@@ -117,6 +126,15 @@ func getUserNewsletterPreferences(userAuth *routermiddleware.UserAuthentication,
 		return getUserNewsletterPreferencesResponse{
 			Error: clienterror.ErrorNoAuth.Ptr(),
 		}, nil
+	case !isLegacySubscriber:
+		userPreferences.ArePodcastsEnabled = ptr.Bool(prefs.PodcastPreferences.ArePodcastsEnabled)
+		userPreferences.IncludeExplicitPodcasts = ptr.Bool(prefs.PodcastPreferences.IncludeExplicitPodcasts)
+		if prefs.PodcastPreferences.MinimumDurationNanoseconds != nil {
+			userPreferences.MinimumPodcastDurationSeconds = ptr.Int64(int64(*prefs.PodcastPreferences.MinimumDurationNanoseconds / time.Second))
+		}
+		if prefs.PodcastPreferences.MaximumDurationNanoseconds != nil {
+			userPreferences.MaximumPodcastDurationSeconds = ptr.Int64(int64(*prefs.PodcastPreferences.MaximumDurationNanoseconds / time.Second))
+		}
 	default:
 		// no-op
 	}
