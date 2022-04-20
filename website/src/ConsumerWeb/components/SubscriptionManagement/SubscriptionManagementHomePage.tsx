@@ -39,18 +39,29 @@ type SubscriptionManagementHomePageProps = RouteComponentProps<Params>;
 
 const SubscriptionManagementHomePage = withUserProfileInformation<SubscriptionManagementHomePageProps>(
     RouteEncryptionKey.SubscriptionManagement,
-    [RouteEncryptionKey.WordReinforcement],
+    [RouteEncryptionKey.WordReinforcement, RouteEncryptionKey.PremiumSubscriptionCheckout],
     (ownProps: SubscriptionManagementHomePageProps) => {
         return ownProps.match.params.token;
     },
     LoginRedirectKey.SubscriptionManagement,
     (props: SubscriptionManagementHomePageProps & UserProfileComponentProps) => {
         const { token } = props.match.params;
-        const [ reinforcementToken ] = props.userProfile.nextTokens;
+        const [ reinforcementToken, checkoutToken ] = props.userProfile.nextTokens;
 
+        const classes = styleClasses();
         return (
             <div>
                 <Grid container spacing={2}>
+                    {
+                        !props.userProfile.hasPaymentMethod && (
+                            <Grid className={classes.addPaymentMethodBanner} xs={12}>
+                                <Paragraph color={TypographyColor.Primary}>
+                                    Want to keep using Babblegraph after your trial? You’ll need to add a payment method first.
+                                </Paragraph>
+                                <Link href={`/checkout/${checkoutToken}`} target={LinkTarget.Self}>Click here to get started</Link>
+                            </Grid>
+                        )
+                    }
                     <NavigationCard
                         location={`/manage/${token}/preferences`}
                         title="Schedule and newsletter settings"

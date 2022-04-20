@@ -50,6 +50,7 @@ type userProfileInformation struct {
 	IsLoggedIn           bool                            `json:"is_logged_in"`
 	SubscriptionLevel    *useraccounts.SubscriptionLevel `json:"subscription_level,omitempty"`
 	TrialEligibilityDays *int64                          `json:"trial_eligibility_days,omitempty"`
+	HasPaymentMethod     bool                            `json:"has_payment_method"`
 	NextTokens           []string                        `json:"next_tokens,omitempty"`
 }
 
@@ -89,14 +90,26 @@ func getUserProfileInformation(userAuth *routermiddleware.UserAuthentication, r 
 	if userAuth != nil {
 		if userAuth.UserID == *userID {
 			var subscriptionLevel *useraccounts.SubscriptionLevel
+			var hasPaymentMethod bool
 			var trialEligibilityDays *int64
 			if err := database.WithTx(func(tx *sqlx.Tx) error {
 				var err error
 				subscriptionLevel, err = useraccounts.LookupSubscriptionLevelForUser(tx, *userID)
+				if err != nil {
+					return err
+				}
 				if subscriptionLevel == nil {
 					trialEligibilityDays, err = billing.GetPremiumNewsletterSubscriptionTrialEligibilityForUser(tx, *userID)
+					if err != nil {
+						return err
+					}
 				}
-				return err
+				premiumSubscription, err := billing.LookupPremiumNewsletterSubscriptionForUser(r, tx, *userID)
+				if err != nil {
+					return err
+				}
+				hasPaymentMethod = premiumSubscription != nil && premiumSubscription.PaymentState != billing.PaymentStateTrialNoPaymentMethod
+				return nil
 			}); err != nil {
 				return nil, err
 			}
@@ -104,6 +117,7 @@ func getUserProfileInformation(userAuth *routermiddleware.UserAuthentication, r 
 				UserProfile: &userProfileInformation{
 					HasAccount:           true,
 					IsLoggedIn:           true,
+					HasPaymentMethod:     hasPaymentMethod,
 					SubscriptionLevel:    subscriptionLevel,
 					TrialEligibilityDays: trialEligibilityDays,
 					NextTokens:           nextTokens,
@@ -119,19 +133,38 @@ func getUserProfileInformation(userAuth *routermiddleware.UserAuthentication, r 
 			Expires:  time.Now().Add(-5 * 60 * time.Second),
 		})
 	}
+	var hasPaymentMethod bool
 	var doesUserHaveAccount bool
 	var trialEligibilityDays *int64
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		var err error
 		doesUserHaveAccount, err = useraccounts.DoesUserAlreadyHaveAccount(tx, *userID)
+		if err != nil {
+			return err
+		}
 		trialEligibilityDays, err = billing.GetPremiumNewsletterSubscriptionTrialEligibilityForUser(tx, *userID)
-		return err
+		if err != nil {
+			return err
+		}
+		premiumSubscription, err := billing.LookupPremiumNewsletterSubscriptionForUser(r, tx, *userID)
+		if err != nil {
+			return err
+		}
+		subscriptionLevel, err := useraccounts.LookupSubscriptionLevelForUser(tx, *userID)
+		if err != nil {
+			return err
+		}
+		if subscriptionLevel != nil && *subscriptionLevel == useraccounts.SubscriptionLevelPremium {
+			hasPaymentMethod = premiumSubscription != nil && premiumSubscription.PaymentState != billing.PaymentStateTrialNoPaymentMethod
+		}
+		return nil
 	}); err != nil {
 		return nil, err
 	}
 	userProfile := &userProfileInformation{
 		HasAccount:           doesUserHaveAccount,
 		TrialEligibilityDays: trialEligibilityDays,
+		HasPaymentMethod:     hasPaymentMethod,
 	}
 	if !doesUserHaveAccount {
 		userProfile.NextTokens = nextTokens

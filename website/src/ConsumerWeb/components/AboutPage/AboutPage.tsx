@@ -12,7 +12,7 @@ import { PhotoKey } from 'common/data/photos/Photos';
 import Page from 'common/components/Page/Page';
 import { Heading1, Heading2, Heading3 } from 'common/typography/Heading';
 import { Alignment, TypographyColor } from 'common/typography/common';
-import Paragraph from 'common/typography/Paragraph';
+import Paragraph, { Size } from 'common/typography/Paragraph';
 import Link, { LinkTarget } from 'common/components/Link/Link';
 
 const styleClasses = makeStyles({
@@ -51,7 +51,10 @@ const AboutPage = () => {
                         Try it free for 30 days.
                     </Heading3>
                     <Paragraph>
-                        And then $29 for a whole year.
+                        And then $29 for a whole year*.
+                    </Paragraph>
+                    <Paragraph size={Size.Small}>
+                        * plus tax where applicable
                     </Paragraph>
                     <Link href="/" target={LinkTarget.Self}>
                         Return to home page
