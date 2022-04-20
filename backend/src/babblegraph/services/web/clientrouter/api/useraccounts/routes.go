@@ -134,6 +134,7 @@ func getUserProfileInformation(userAuth *routermiddleware.UserAuthentication, r 
 	var hasPaymentMethod bool
 	var doesUserHaveAccount bool
 	var trialEligibilityDays *int64
+	var subscriptionLevel *useraccounts.SubscriptionLevel
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		var err error
 		doesUserHaveAccount, err = useraccounts.DoesUserAlreadyHaveAccount(tx, *userID)
@@ -148,11 +149,17 @@ func getUserProfileInformation(userAuth *routermiddleware.UserAuthentication, r 
 		if err != nil {
 			return err
 		}
-		subscriptionLevel, err := useraccounts.LookupSubscriptionLevelForUser(tx, *userID)
+		subscriptionLevel, err = useraccounts.LookupSubscriptionLevelForUser(tx, *userID)
 		if err != nil {
 			return err
 		}
-		if subscriptionLevel != nil && *subscriptionLevel == useraccounts.SubscriptionLevelPremium {
+		switch {
+		case subscriptionLevel == nil,
+			*subscriptionLevel == useraccounts.SubscriptionLevelLegacy,
+			*subscriptionLevel == useraccounts.SubscriptionLevelLegacyFriendsAndFamily,
+			*subscriptionLevel == useraccounts.SubscriptionLevelBetaPremium:
+			hasPaymentMethod = true
+		case *subscriptionLevel == useraccounts.SubscriptionLevelPremium:
 			hasPaymentMethod = premiumSubscription != nil && premiumSubscription.PaymentState != billing.PaymentStateTrialNoPaymentMethod
 		}
 		return nil
@@ -163,6 +170,7 @@ func getUserProfileInformation(userAuth *routermiddleware.UserAuthentication, r 
 		HasAccount:           doesUserHaveAccount,
 		TrialEligibilityDays: trialEligibilityDays,
 		HasPaymentMethod:     hasPaymentMethod,
+		SubscriptionLevel:    subscriptionLevel,
 	}
 	if !doesUserHaveAccount {
 		userProfile.NextTokens = nextTokens
