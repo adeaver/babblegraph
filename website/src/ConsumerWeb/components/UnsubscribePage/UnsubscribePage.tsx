@@ -257,7 +257,7 @@ const UnsubscribePage = withUserProfileInformation<UnsubscribePageOwnProps>(
                                         !!props.userProfile.subscriptionLevel && (
                                             <div>
                                                 <Paragraph>
-                                                    This will also cancel your subscription to Babblegraph Premium.
+                                                    This will also cancel all future payments.
                                                 </Paragraph>
                                             </div>
                                         )
