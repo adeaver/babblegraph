@@ -20,7 +20,7 @@ const (
 	setSubscriptionAsActiveQuery     = "UPDATE user_account_subscription_levels SET is_active = TRUE WHERE user_id = $1"
 	expireSubscriptionForUserQuery   = "UPDATE user_account_subscription_levels SET is_active = FALSE WHERE user_id = $1"
 
-	getUserIDForExpiringSubscriptionQuery = "SELECT * FROM  user_account_subscription_levels WHERE subscription_level = (?) AND is_active = TRUE AND expires_at < CURRENT_TIMESTAMP + interval '%d days'"
+	getUserIDForExpiringSubscriptionQuery = "SELECT * FROM  user_account_subscription_levels WHERE subscription_level IN (?) AND is_active = TRUE AND expires_at < CURRENT_TIMESTAMP + interval '%d days'"
 
 	forgotPasswordExpirationTime   = 15 * 60 * time.Second
 	maxDailyForgotPasswordRequests = 5
