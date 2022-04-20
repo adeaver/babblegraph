@@ -61,6 +61,9 @@ func handlePendingUserAccountNotificationRequests(c async.Context) {
 				useraccountsnotifications.NotificationTypeNeedPaymentMethodWarningVeryUrgent:
 				subject = ptr.String("Attention! Add a payment method to keep using Babblegraph")
 				emailHTML, emailType, err = handleNeedPaymentMethodWarningNotification(c, tx, emailRecordID, user)
+			case useraccountsnotifications.NotificationTypePaymentError:
+				subject = ptr.String("Attention! There was an error processing your payment")
+				emailHTML, emailType, err = handlePaymentErrorNotification(c, tx, emailRecordID, user)
 			default:
 				return fmt.Errorf("Unknown notification type %s", req.Type)
 			}
@@ -235,6 +238,58 @@ func handleNeedPaymentMethodWarningNotification(c ctx.LogContext, tx *sqlx.Tx, e
 			billing.PaymentStateActive,
 			billing.PaymentStateTrialPaymentMethodAdded:
 			return nil, nil, nil
+		}
+	}
+	return nil, nil, nil
+}
+
+func handlePaymentErrorNotification(c ctx.LogContext, tx *sqlx.Tx, emailRecordID email.ID, user *users.User) (*string, *email.EmailType, error) {
+	premiumSubscription, err := billing.LookupPremiumNewsletterSubscriptionForUser(c, tx, user.ID)
+	switch {
+	case err != nil:
+		return nil, nil, err
+	case premiumSubscription == nil:
+		c.Warnf("Need to send payment method warning email, but there is no subscription for user %s", user.ID)
+		return nil, nil, nil
+	default:
+		userAccessor, err := emailtemplates.GetDefaultUserAccessor(tx, user.ID)
+		if err != nil {
+			return nil, nil, err
+		}
+		switch premiumSubscription.PaymentState {
+		case billing.PaymentStateTrialNoPaymentMethod,
+			billing.PaymentStateActive,
+			billing.PaymentStateTerminated,
+			billing.PaymentStateTrialPaymentMethodAdded:
+			return nil, nil, nil
+		case billing.PaymentStateErrored:
+			paymentSettingsRoute, err := routes.MakePaymentSettingsRouteForUserID(user.ID)
+			if err != nil {
+				return nil, nil, err
+			}
+			emailHTML, err := emailtemplates.MakeGenericUserEmailHTML(emailtemplates.MakeGenericUserEmailHTMLInput{
+				EmailRecordID: emailRecordID,
+				UserAccessor:  userAccessor,
+				EmailTitle:    "There was an error processing your payment",
+				PreheaderText: "Your subscription is about to end and there was an error processing your payment.",
+				BeforeParagraphs: []string{
+					"Hello!",
+					"This email is to let you know that there has been an error processing the payment method that we have on file.",
+					"If you would like to continue to use Babblegraph, you’ll need to add a valid payment method. You can do that at the link below.",
+				},
+				GenericEmailAction: &emailtemplates.GenericEmailAction{
+					Link:       *paymentSettingsRoute,
+					ButtonText: "Edit the payment method on your account",
+				},
+				AfterParagraphs: []string{
+					"If you have any questions or believe there is an error in this email, just respond to this email.",
+					"Thanks again so much for trying out Babblegraph!",
+				},
+			})
+			if err != nil {
+				return nil, nil, err
+			}
+			return emailHTML, email.EmailTypePaymentFailureNotification.Ptr(), nil
 		}
 	}
 	return nil, nil, nil

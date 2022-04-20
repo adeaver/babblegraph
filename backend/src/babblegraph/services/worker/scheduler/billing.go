@@ -111,17 +111,20 @@ func handleSyncBilling(c async.Context) {
 					// We think the subscription should be expired.
 					switch {
 					case premiumNewsletterSubscription == nil:
-						// Stripe also thinks that the subscription is expired.
-						if err := useraccounts.ExpireSubscriptionForUser(tx, sub.UserID); err != nil {
-							return err
-						}
-						_, err := useraccountsnotifications.EnqueueNotificationRequest(tx, sub.UserID, useraccountsnotifications.NotificationTypePremiumSubscriptionCanceled, time.Now())
-						return err
+						// Stripe also thinks that the subscription is expired, no-op
 					case time.Now().Before(premiumNewsletterSubscription.CurrentPeriodEnd):
 						// Stripe does not think that the subscription is over, we update
 						c.Infof("User ID has an active subscription. Updating...")
 						return useraccounts.UpdateSubscriptionExpirationTime(tx, sub.UserID, premiumNewsletterSubscription.CurrentPeriodEnd)
-
+					case premiumNewsletterSubscription.PaymentState == billing.PaymentStateActive,
+						premiumNewsletterSubscription.PaymentState == billing.PaymentStateTrialPaymentMethodAdded:
+						c.Warnf("Subscription %s is in state %d, and has expired", *premiumNewsletterSubscription.ID, premiumNewsletterSubscription.PaymentState)
+					}
+					if err := useraccounts.ExpireSubscriptionForUser(tx, sub.UserID); err != nil {
+						return err
+					}
+					if _, err := useraccountsnotifications.EnqueueNotificationRequest(tx, sub.UserID, useraccountsnotifications.NotificationTypePremiumSubscriptionCanceled, time.Now()); err != nil {
+						return err
 					}
 					return billing.CancelPremiumNewsletterSubscriptionForUser(c, tx, sub.UserID)
 				default:
@@ -138,8 +141,19 @@ func handleSyncBilling(c async.Context) {
 							return err
 						}
 					case 3:
-						_, err := useraccountsnotifications.EnqueueNotificationRequest(tx, sub.UserID, useraccountsnotifications.NotificationTypeTrialEndingSoon, time.Now())
-						return err
+						switch premiumNewsletterSubscription.PaymentState {
+						case billing.PaymentStateTrialNoPaymentMethod,
+							billing.PaymentStateTrialPaymentMethodAdded:
+							_, err := useraccountsnotifications.EnqueueNotificationRequest(tx, sub.UserID, useraccountsnotifications.NotificationTypeTrialEndingSoon, time.Now())
+							return err
+						case billing.PaymentStateActive,
+							billing.PaymentStateTerminated,
+							billing.PaymentStateCreatedUnpaid,
+							billing.PaymentStateErrored:
+							// no-op
+						default:
+							c.Warnf("Unrecognized payment state for subscription %s: %d", *premiumNewsletterSubscription.ID, premiumNewsletterSubscription.PaymentState)
+						}
 					case 2:
 						if premiumNewsletterSubscription.PaymentState == billing.PaymentStateTrialNoPaymentMethod {
 							_, err := useraccountsnotifications.EnqueueNotificationRequest(tx, sub.UserID, useraccountsnotifications.NotificationTypeNeedPaymentMethodWarningUrgent, time.Now())
@@ -149,6 +163,21 @@ func handleSyncBilling(c async.Context) {
 						if premiumNewsletterSubscription.PaymentState == billing.PaymentStateTrialNoPaymentMethod {
 							_, err := useraccountsnotifications.EnqueueNotificationRequest(tx, sub.UserID, useraccountsnotifications.NotificationTypeNeedPaymentMethodWarningVeryUrgent, time.Now())
 							return err
+						}
+					case -1:
+						// This happens when we've entered the buffer phase
+						switch premiumNewsletterSubscription.PaymentState {
+						case billing.PaymentStateTrialNoPaymentMethod,
+							billing.PaymentStateTrialPaymentMethodAdded,
+							billing.PaymentStateActive,
+							billing.PaymentStateTerminated,
+							billing.PaymentStateCreatedUnpaid:
+							// no-op
+						case billing.PaymentStateErrored:
+							_, err := useraccountsnotifications.EnqueueNotificationRequest(tx, sub.UserID, useraccountsnotifications.NotificationTypePaymentError, time.Now())
+							return err
+						default:
+							c.Warnf("Unrecognized payment state for subscription %s: %d", *premiumNewsletterSubscription.ID, premiumNewsletterSubscription.PaymentState)
 						}
 					}
 				}

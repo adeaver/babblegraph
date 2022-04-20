@@ -62,8 +62,10 @@ func convertStripeSubscriptionToPremiumNewsletterSubscription(tx *sqlx.Tx, strip
 		CurrentPeriodEnd:      time.Unix(stripeSubscription.CurrentPeriodEnd, 0),
 		IsAutoRenewEnabled:    !stripeSubscription.CancelAtPeriodEnd,
 	}
+	var billingInformation *dbBillingInformation
 	if dbNewsletterSubscription != nil {
-		billingInformation, err := getBillingInformation(tx, dbNewsletterSubscription.BillingInformationID)
+		var err error
+		billingInformation, err = getBillingInformation(tx, dbNewsletterSubscription.BillingInformationID)
 		if err != nil {
 			return nil, err
 		}
@@ -73,8 +75,14 @@ func convertStripeSubscriptionToPremiumNewsletterSubscription(tx *sqlx.Tx, strip
 	switch stripeSubscription.Status {
 	case stripe.SubscriptionStatusTrialing:
 		premiumNewsletterSubscription.PaymentState = PaymentStateTrialNoPaymentMethod
-		if stripeSubscription.DefaultPaymentMethod != nil {
-			premiumNewsletterSubscription.PaymentState = PaymentStateTrialPaymentMethodAdded
+		if billingInformation != nil && billingInformation.UserID != nil {
+			paymentMethods, err := GetPaymentMethodsForUser(tx, *billingInformation.UserID)
+			if err != nil {
+				return nil, err
+			}
+			if len(paymentMethods) > 0 {
+				premiumNewsletterSubscription.PaymentState = PaymentStateTrialPaymentMethodAdded
+			}
 		}
 	case stripe.SubscriptionStatusIncomplete:
 		premiumNewsletterSubscription.PaymentState = PaymentStateCreatedUnpaid
