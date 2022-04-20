@@ -17,7 +17,7 @@ import {
 import CenteredComponent from 'common/components/CenteredComponent/CenteredComponent';
 import DisplayCard from 'common/components/DisplayCard/DisplayCard';
 
-import { openLocationAsNewTab } from 'util/window/Location';
+import { setLocation } from 'util/window/Location';
 
 const styleClasses = makeStyles({
     headerRoot: {
@@ -107,13 +107,27 @@ const Navbar = () => {
                 <Box
                     className={classes.menuOption}
                     component={Grid}
-                    onClick={() => {openLocationAsNewTab("/about")}}
+                    onClick={() => {setLocation("/")}}
                     item
                     sm={false}
                     md={2}
                     display={{ sm: "none", xs: "none", md: "block" }}>
                     <Paragraph color={TypographyColor.Primary}>
-                        <a className={classes.headerAnchor} href="/about" target="_blank">
+                        <a className={classes.headerAnchor} href="/">
+                            Home
+                        </a>
+                    </Paragraph>
+                </Box>
+                <Box
+                    className={classes.menuOption}
+                    component={Grid}
+                    onClick={() => {setLocation("/about")}}
+                    item
+                    sm={false}
+                    md={2}
+                    display={{ sm: "none", xs: "none", md: "block" }}>
+                    <Paragraph color={TypographyColor.Primary}>
+                        <a className={classes.headerAnchor} href="/about">
                             About
                         </a>
                     </Paragraph>
@@ -121,13 +135,13 @@ const Navbar = () => {
                 <Box
                     className={classes.menuOption}
                     component={Grid}
-                    onClick={() => {openLocationAsNewTab("/pricing")}}
+                    onClick={() => {setLocation("/pricing")}}
                     item
                     sm={false}
                     md={2}
                     display={{ sm: "none", xs: "none", md: "block" }}>
                     <Paragraph color={TypographyColor.Primary}>
-                        <a className={classes.headerAnchor} href="/pricing" target="_blank">
+                        <a className={classes.headerAnchor} href="/pricing">
                             Pricing
                         </a>
                     </Paragraph>
@@ -135,13 +149,13 @@ const Navbar = () => {
                 <Box
                     className={classes.menuOption}
                     component={Grid}
-                    onClick={() => {openLocationAsNewTab("/login")}}
+                    onClick={() => {setLocation("/login")}}
                     item
                     sm={false}
                     md={2}
                     display={{ sm: "none", xs: "none", md: "block" }}>
                     <Paragraph color={TypographyColor.Primary}>
-                        <a className={classes.headerAnchor} href="/login" target="_blank">
+                        <a className={classes.headerAnchor} href="/login">
                             Login
                         </a>
                     </Paragraph>

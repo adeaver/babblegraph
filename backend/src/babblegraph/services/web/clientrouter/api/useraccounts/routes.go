@@ -4,7 +4,6 @@ import (
 	"babblegraph/model/billing"
 	"babblegraph/model/routes"
 	"babblegraph/model/useraccounts"
-	"babblegraph/model/useraccountsnotifications"
 	"babblegraph/model/users"
 	"babblegraph/services/web/clientrouter/routermiddleware"
 	"babblegraph/services/web/clientrouter/util/auth"
@@ -211,10 +210,6 @@ func createUser(userAuth *routermiddleware.UserAuthentication, r *router.Request
 		case alreadyHasAccount:
 			cErr = createUserErrorAlreadyExists.Ptr()
 			return nil
-		}
-		holdUntilTime := time.Now().Add(30 * time.Minute)
-		if _, err := useraccountsnotifications.EnqueueNotificationRequest(tx, *userID, useraccountsnotifications.NotificationTypeAccountCreated, holdUntilTime); err != nil {
-			return err
 		}
 		return useraccounts.CreateUserPasswordForUser(tx, *userID, req.Password)
 	})
