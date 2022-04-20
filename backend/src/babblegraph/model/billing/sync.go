@@ -1,6 +1,12 @@
 package billing
 
-import "github.com/jmoiron/sqlx"
+import (
+	"babblegraph/model/useraccounts"
+	"babblegraph/model/users"
+	"fmt"
+
+	"github.com/jmoiron/sqlx"
+)
 
 const (
 
@@ -44,4 +50,38 @@ func MarkPremiumNewsletterSyncRequestForRetry(tx *sqlx.Tx, id PremiumNewsletterS
 		return err
 	}
 	return nil
+}
+
+func SyncUserAccountWithPremiumNewsletterSubscription(tx *sqlx.Tx, userID users.UserID, premiumNewsletterSubscription *PremiumNewsletterSubscription) error {
+	if premiumNewsletterSubscription == nil {
+		return useraccounts.ExpireSubscriptionForUser(tx, userID)
+	}
+	switch premiumNewsletterSubscription.PaymentState {
+	case PaymentStateCreatedUnpaid:
+		return nil
+	case PaymentStateTrialNoPaymentMethod,
+		PaymentStateTrialPaymentMethodAdded,
+		PaymentStateActive:
+		subscriptionLevel, err := useraccounts.LookupSubscriptionLevelForUser(tx, userID)
+		switch {
+		case err != nil:
+			return err
+		case subscriptionLevel == nil,
+			*subscriptionLevel == useraccounts.SubscriptionLevelLegacy:
+			return useraccounts.AddSubscriptionLevelForUser(tx, useraccounts.AddSubscriptionLevelForUserInput{
+				UserID:            userID,
+				SubscriptionLevel: useraccounts.SubscriptionLevelPremium,
+				ShouldStartActive: true,
+				ExpirationTime:    premiumNewsletterSubscription.CurrentPeriodEnd,
+			})
+		case subscriptionLevel != nil:
+			return useraccounts.UpdateSubscriptionExpirationTime(tx, userID, premiumNewsletterSubscription.CurrentPeriodEnd)
+		}
+	case PaymentStateErrored,
+		PaymentStateTerminated:
+		return useraccounts.ExpireSubscriptionForUser(tx, userID)
+	default:
+		return fmt.Errorf("Unsupported Payment State %d", premiumNewsletterSubscription.PaymentState)
+	}
+	panic("Unreachable")
 }

@@ -146,13 +146,13 @@ const LoginForm = (props: LoginFormProps) => {
     return (
         <div>
             <Heading1 color={TypographyColor.Primary}>
-                Login to Babblegraph Premium
+                Login to Babblegraph
             </Heading1>
             <Paragraph>
-                If you have a Babblegraph Premium Account, you can sign in here.
+                You can login to your Babblegraph account here.
             </Paragraph>
             <Paragraph>
-                If you don’t have a premium account and you’re trying to add new words or change your interest settings, you can do that by clicking the “Manage your subscription” link at the bottom of your most recent daily email.
+                If you’re on a trial, it’s possible that you don’t have an account yet. You can make changes to your account through the links at the bottom of your newsletter.
             </Paragraph>
             {
                 !!props.errorMessage && (
@@ -202,9 +202,6 @@ const LoginForm = (props: LoginFormProps) => {
             <Link href="/forgot-password" target={LinkTarget.Self}>
                 Forgot your password?
             </Link>
-            <Paragraph>
-                If you don’t have a premium account and would like one, check out the manage your subscription link on the bottom of your daily newsletter.
-            </Paragraph>
         </div>
     );
 }

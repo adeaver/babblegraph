@@ -5,6 +5,10 @@ import (
 	"time"
 )
 
+const (
+	DefaultSubscriptionBufferInDays = 3
+)
+
 type userPasswordID string
 
 type dbUserPassword struct {
@@ -29,8 +33,10 @@ type dbUserSubscription struct {
 type SubscriptionLevel string
 
 const (
-	SubscriptionLevelBetaPremium SubscriptionLevel = "Beta-Premium"
-	SubscriptionLevelPremium     SubscriptionLevel = "Premium"
+	SubscriptionLevelLegacy                 SubscriptionLevel = "Legacy"
+	SubscriptionLevelLegacyFriendsAndFamily SubscriptionLevel = "Legacy-Friends-And-Family"
+	SubscriptionLevelBetaPremium            SubscriptionLevel = "Beta-Premium"
+	SubscriptionLevelPremium                SubscriptionLevel = "Premium"
 )
 
 func (s SubscriptionLevel) Ptr() *SubscriptionLevel {

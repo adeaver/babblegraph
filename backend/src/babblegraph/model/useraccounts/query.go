@@ -20,7 +20,7 @@ const (
 	setSubscriptionAsActiveQuery     = "UPDATE user_account_subscription_levels SET is_active = TRUE WHERE user_id = $1"
 	expireSubscriptionForUserQuery   = "UPDATE user_account_subscription_levels SET is_active = FALSE WHERE user_id = $1"
 
-	getUserIDForExpiredSubscriptionQuery = "SELECT * FROM  user_account_subscription_levels WHERE subscription_level = $1 AND is_active = TRUE AND expires_at < CURRENT_TIMESTAMP"
+	getUserIDForExpiringSubscriptionQuery = "SELECT * FROM  user_account_subscription_levels WHERE subscription_level IN (?) AND is_active = TRUE AND expires_at < CURRENT_TIMESTAMP + interval '%d days'"
 
 	forgotPasswordExpirationTime   = 15 * 60 * time.Second
 	maxDailyForgotPasswordRequests = 5
@@ -102,7 +102,7 @@ type AddSubscriptionLevelForUserInput struct {
 
 func AddSubscriptionLevelForUser(tx *sqlx.Tx, input AddSubscriptionLevelForUserInput) error {
 	// Add three days to account for invoice
-	expirationTimeWithBuffer := input.ExpirationTime.Add(3 * 24 * time.Hour)
+	expirationTimeWithBuffer := input.ExpirationTime.Add(DefaultSubscriptionBufferInDays * 24 * time.Hour)
 	if _, err := tx.Exec(addSubscriptionLevelForUserQuery, input.UserID, input.SubscriptionLevel, expirationTimeWithBuffer, input.ShouldStartActive); err != nil {
 		return err
 	}
@@ -114,7 +114,7 @@ func UpdateSubscriptionExpirationTime(tx *sqlx.Tx, userID users.UserID, newExpir
 	if !now.Before(newExpirationTime) {
 		return fmt.Errorf("Cannot update expiration time to be in the past: %+v", newExpirationTime)
 	}
-	expirationTimeWithBuffer := newExpirationTime.Add(3 * 24 * time.Hour)
+	expirationTimeWithBuffer := newExpirationTime.Add(DefaultSubscriptionBufferInDays * 24 * time.Hour)
 	if _, err := tx.Exec(updateExpirationTimeForUserQuery, userID, expirationTimeWithBuffer, true); err != nil {
 		return err
 	}
@@ -135,14 +135,32 @@ func ExpireSubscriptionForUser(tx *sqlx.Tx, userID users.UserID) error {
 	return nil
 }
 
-func GetUserIDsForExpiredSubscriptionQuery(tx *sqlx.Tx) ([]users.UserID, error) {
-	var matches []dbUserSubscription
-	if err := tx.Select(&matches, getUserIDForExpiredSubscriptionQuery, SubscriptionLevelPremium); err != nil {
+type ExpiringSubscriptionInfo struct {
+	UserID            users.UserID
+	SubscriptionLevel SubscriptionLevel
+	ExpiringAt        time.Time
+}
+
+func GetExpiringSubscriptions(tx *sqlx.Tx) ([]ExpiringSubscriptionInfo, error) {
+	query, args, err := sqlx.In(fmt.Sprintf(getUserIDForExpiringSubscriptionQuery, DefaultSubscriptionBufferInDays+7), []SubscriptionLevel{
+		SubscriptionLevelPremium,
+		SubscriptionLevelLegacy,
+	})
+	if err != nil {
 		return nil, err
 	}
-	var out []users.UserID
+	sql := tx.Rebind(query)
+	var matches []dbUserSubscription
+	if err := tx.Select(&matches, sql, args...); err != nil {
+		return nil, err
+	}
+	var out []ExpiringSubscriptionInfo
 	for _, m := range matches {
-		out = append(out, m.UserID)
+		out = append(out, ExpiringSubscriptionInfo{
+			UserID:            m.UserID,
+			SubscriptionLevel: m.SubscriptionLevel,
+			ExpiringAt:        m.ExpiresAt,
+		})
 	}
 	return out, nil
 }

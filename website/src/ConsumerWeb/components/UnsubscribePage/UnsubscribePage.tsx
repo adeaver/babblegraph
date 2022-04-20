@@ -22,6 +22,7 @@ import { PrimaryTextField } from 'common/components/TextField/TextField';
 import { Alignment, TypographyColor } from 'common/typography/common';
 import Form from 'common/components/Form/Form';
 import { setLocation } from 'util/window/Location';
+import { SubscriptionLevel } from 'common/api/useraccounts/useraccounts';
 
 import {
     UnsubscribeError,
@@ -237,7 +238,7 @@ const UnsubscribePage = withUserProfileInformation<UnsubscribePageOwnProps>(
                                         }
                                         {
                                             !props.userProfile.hasAccount && (
-                                                <Grid item xs={9} md={10}>
+                                                <Grid item xs={9} md={9}>
                                                     <PrimaryTextField
                                                         id="email"
                                                         className={classes.textField}
@@ -247,17 +248,17 @@ const UnsubscribePage = withUserProfileInformation<UnsubscribePageOwnProps>(
                                                 </Grid>
                                             )
                                         }
-                                        <Grid item xs={props.userProfile.hasAccount ? 12 : 3} md={props.userProfile.hasAccount ? 12 : 2} className={classes.submitButtonContainer}>
+                                        <Grid item xs={props.userProfile.hasAccount ? 12 : 3} md={props.userProfile.hasAccount ? 12 : 3} className={classes.submitButtonContainer}>
                                             <PrimaryButton type="submit" disabled={(!emailAddress && !props.userProfile.hasAccount) || !!validationError}>
                                                 Unsubscribe
                                             </PrimaryButton>
                                         </Grid>
                                     </Grid>
                                     {
-                                        !!props.userProfile.subscriptionLevel && (
+                                        (props.userProfile.subscriptionLevel === SubscriptionLevel.Premium) && (
                                             <div>
                                                 <Paragraph>
-                                                    This will also cancel your subscription to Babblegraph Premium.
+                                                    This will also cancel all future payments.
                                                 </Paragraph>
                                             </div>
                                         )

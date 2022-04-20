@@ -88,7 +88,7 @@ func forceSyncForUser(adminID admin.ID, r *router.Request) (interface{}, error) 
 		if err != nil {
 			return err
 		}
-		return useraccounts.SyncUserAccountWithPremiumNewsletterSubscription(tx, req.UserID, premiumNewsletterSubscription)
+		return billing.SyncUserAccountWithPremiumNewsletterSubscription(tx, req.UserID, premiumNewsletterSubscription)
 	}); err != nil {
 		return nil, err
 	}

@@ -24,6 +24,7 @@ export type GetUserProfileInformationResponse = {
 export type UserProfileInformation = {
 	hasAccount: boolean;
     isLoggedIn: boolean;
+    hasPaymentMethod: boolean;
 	subscriptionLevel: SubscriptionLevel | undefined;
     trialEligibilityDays: number | undefined;
 	nextTokens: Array<string>;

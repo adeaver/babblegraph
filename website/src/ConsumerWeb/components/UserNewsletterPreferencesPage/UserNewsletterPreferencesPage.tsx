@@ -57,6 +57,7 @@ import {
 import {
     toTitleCase
 } from 'util/string/StringConvert';
+import { SubscriptionLevel } from 'common/api/useraccounts/useraccounts';
 
 import TimeSelector from './TimeSelector';
 
@@ -356,7 +357,7 @@ const UserNewsletterPreferencesDisplay = asBaseComponent<GetUserNewsletterPrefer
                             </Heading2>
                             <Grid container>
                                 {
-                                    !props.userProfile.subscriptionLevel && (
+                                    (props.userProfile.subscriptionLevel === SubscriptionLevel.Legacy) && (
                                         <Grid className={classes.premiumSubscriptionBox} item xs={12}>
                                             <Paragraph color={TypographyColor.Primary}>
                                                 I hear that Babblegraph Premium subscribers get to practice their listening with podcasts.
@@ -385,7 +386,7 @@ const UserNewsletterPreferencesDisplay = asBaseComponent<GetUserNewsletterPrefer
                                     <PrimarySwitch
                                         checked={arePodcastsEnabled}
                                         onClick={() => {setArePodcastsEnabled(!arePodcastsEnabled)}}
-                                        disabled={isLoading || !props.userProfile.subscriptionLevel} />
+                                        disabled={isLoading || props.userProfile.subscriptionLevel === SubscriptionLevel.Legacy} />
                                 </Grid>
                                 <Grid item xs={10} xl={11}>
                                     <Heading4 align={Alignment.Left} color={TypographyColor.Primary}>
@@ -402,7 +403,7 @@ const UserNewsletterPreferencesDisplay = asBaseComponent<GetUserNewsletterPrefer
                                     <PrimarySwitch
                                         checked={includeExplicitPodcasts && arePodcastsEnabled}
                                         onClick={() => {setIncludeExplicitPodcasts(!includeExplicitPodcasts)}}
-                                        disabled={!arePodcastsEnabled || isLoading || !props.userProfile.subscriptionLevel} />
+                                        disabled={!arePodcastsEnabled || isLoading || props.userProfile.subscriptionLevel === SubscriptionLevel.Legacy} />
                                 </Grid>
                             </Grid>
                             <Grid item xs={12}>
@@ -420,7 +421,7 @@ const UserNewsletterPreferencesDisplay = asBaseComponent<GetUserNewsletterPrefer
                                             {
                                                 Object.keys(PodcastDurationPreference).map((p: PodcastDurationPreference) => ((
                                                     <Grid key={`podcast-option-${p}`} item xs={12}>
-                                                        <FormControlLabel value={PodcastDurationPreference[p]} control={<PrimaryRadio disabled={isLoading || !props.userProfile.subscriptionLevel} />} label={PodcastDurationPreference[p]} />
+                                                        <FormControlLabel value={PodcastDurationPreference[p]} control={<PrimaryRadio disabled={isLoading || props.userProfile.subscriptionLevel === SubscriptionLevel.Legacy} />} label={PodcastDurationPreference[p]} />
                                                     </Grid>
                                                 )))
                                             }

@@ -12,6 +12,7 @@ import { Heading3 } from 'common/typography/Heading';
 import { Alignment, TypographyColor } from 'common/typography/common';
 import { setLocation } from 'util/window/Location';
 import { PrimaryButton } from 'common/components/Button/Button';
+import Link, { LinkTarget } from 'common/components/Link/Link';
 
 import {
     RouteEncryptionKey,
@@ -68,9 +69,6 @@ const PremiumNewsletterSubscriptionCheckoutPage = withUserProfileInformation<Pre
         if (!props.userProfile.hasAccount) {
             setLocation(`/signup/${createUserToken}`);
             return;
-        } else if (!!props.userProfile.subscriptionLevel) {
-            setLocation(`/manage/${subscriptionManagementToken}`);
-            return;
         }
 
         return (
@@ -81,7 +79,7 @@ const PremiumNewsletterSubscriptionCheckoutPage = withUserProfileInformation<Pre
                 <Grid item xs={12} md={6}>
                     <DisplayCard>
                         <DisplayCardHeader
-                            title="Babblegraph Premium Checkout"
+                            title="Subscription Checkout"
                             backArrowDestination={`/manage/${subscriptionManagementToken}`} />
                         <OrderDetailsSection
                             trialEligibilityDays={props.userProfile.trialEligibilityDays}
@@ -171,7 +169,7 @@ const OrderDetailsSection = asBaseComponent<GetOrCreateBillingInformationRespons
                         disabled={props.isButtonDisabled}
                         size="large">
                         {
-                            !props.trialEligibilityDays ? "Proceed to checkout" : "Start your trial"
+                            !props.trialEligibilityDays ? "Proceed to pay" : "Add a payment method"
                         }
                     </PrimaryButton>
                 </Grid>
@@ -199,11 +197,38 @@ type PaymentSectionProps = {
 
 const PaymentSection = asBaseComponent<GetOrCreatePremiumNewsletterSubscriptionResponse, PaymentSectionProps>(
     (props: GetOrCreatePremiumNewsletterSubscriptionResponse & PaymentSectionProps & BaseComponentProps) => {
+        switch (props.premiumNewsletterSubscription.paymentState) {
+            case PaymentState.CreatedUnpaid:
+            case PaymentState.TrialNoPaymentMethod:
+                return (
+                    <PremiumNewsletterSubscriptionCardForm
+                        premiumNewsletterSusbcription={props.premiumNewsletterSubscription}
+                        subscriptionManagementToken={props.subscriptionManagementToken} />
+                );
+            case PaymentState.TrialPaymentMethodAdded:
+            case PaymentState.Active:
+            case PaymentState.Errored:
+                return (
+                    <div>
+                        <Heading3 color={TypographyColor.Warning}>
+                            It looks like we’ve already collected your payment information!
+                        </Heading3>
+                        <Link href={`/manage/${props.subscriptionManagementToken}/payment-settings`} target={LinkTarget.Self}>
+                            You can make changes to your payment information by clicking here.
+                        </Link>
+                    </div>
+                );
+        }
         return (
-            <PremiumNewsletterSubscriptionCardForm
-                premiumNewsletterSusbcription={props.premiumNewsletterSubscription}
-                subscriptionManagementToken={props.subscriptionManagementToken} />
-        );
+            <div>
+                <Heading3 color={TypographyColor.Warning}>
+                    Something went wrong. Try again later or contact hello@babblegraph.com for help.
+                </Heading3>
+                <Link href={`/manage/${props.subscriptionManagementToken}`} target={LinkTarget.Self}>
+                    Go back to subscription management
+                </Link>
+            </div>
+        )
     },
     (
         ownProps: PaymentSectionProps,

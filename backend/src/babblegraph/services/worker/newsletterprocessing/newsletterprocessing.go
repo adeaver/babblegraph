@@ -3,6 +3,7 @@ package newsletterprocessing
 import (
 	"babblegraph/config"
 	"babblegraph/model/newslettersendrequests"
+	"babblegraph/model/useraccounts"
 	"babblegraph/model/users"
 	"babblegraph/util/ctx"
 	"babblegraph/util/database"
@@ -139,7 +140,15 @@ func getSendRequestsForDay(c ctx.LogContext, t time.Time) ([]newslettersendreque
 		}
 		var userIDs []users.UserID
 		for _, u := range activeUsers {
-			userIDs = append(userIDs, u.ID)
+			userSubscription, err := useraccounts.LookupSubscriptionLevelForUser(tx, u.ID)
+			switch {
+			case err != nil:
+				return err
+			case userSubscription == nil:
+				// no-op
+			default:
+				userIDs = append(userIDs, u.ID)
+			}
 		}
 		sendRequestsForDay, err = newslettersendrequests.GetOrCreateSendRequestsForUsersForDay(c, tx, userIDs, wordsmith.LanguageCodeSpanish, t)
 		return err

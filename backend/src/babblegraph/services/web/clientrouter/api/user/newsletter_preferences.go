@@ -67,6 +67,7 @@ func getUserNewsletterPreferences(userAuth *routermiddleware.UserAuthentication,
 		}, nil
 	}
 	var doesUserHaveAccount bool
+	var isLegacySubscriber bool
 	var prefs *usernewsletterpreferences.UserNewsletterPreferences
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		var err error
@@ -75,6 +76,14 @@ func getUserNewsletterPreferences(userAuth *routermiddleware.UserAuthentication,
 			return err
 		}
 		doesUserHaveAccount, err = useraccounts.DoesUserAlreadyHaveAccount(tx, *userID)
+		if err != nil {
+			return err
+		}
+		userSubscription, err := useraccounts.LookupSubscriptionLevelForUser(tx, *userID)
+		if err != nil {
+			return err
+		}
+		isLegacySubscriber = userSubscription != nil && *userSubscription == useraccounts.SubscriptionLevelLegacy
 		return err
 	}); err != nil {
 		return nil, err
@@ -117,6 +126,15 @@ func getUserNewsletterPreferences(userAuth *routermiddleware.UserAuthentication,
 		return getUserNewsletterPreferencesResponse{
 			Error: clienterror.ErrorNoAuth.Ptr(),
 		}, nil
+	case !isLegacySubscriber:
+		userPreferences.ArePodcastsEnabled = ptr.Bool(prefs.PodcastPreferences.ArePodcastsEnabled)
+		userPreferences.IncludeExplicitPodcasts = ptr.Bool(prefs.PodcastPreferences.IncludeExplicitPodcasts)
+		if prefs.PodcastPreferences.MinimumDurationNanoseconds != nil {
+			userPreferences.MinimumPodcastDurationSeconds = ptr.Int64(int64(*prefs.PodcastPreferences.MinimumDurationNanoseconds / time.Second))
+		}
+		if prefs.PodcastPreferences.MaximumDurationNanoseconds != nil {
+			userPreferences.MaximumPodcastDurationSeconds = ptr.Int64(int64(*prefs.PodcastPreferences.MaximumDurationNanoseconds / time.Second))
+		}
 	default:
 		// no-op
 	}
@@ -225,7 +243,15 @@ func updateUserNewsletterPreferences(userAuth *routermiddleware.UserAuthenticati
 				cErr = clienterror.ErrorInvalidEmailAddress.Ptr()
 				return nil
 			}
-			return usernewsletterpreferences.UpdateUserNewsletterPreferences(r, tx, usernewsletterpreferences.UpdateUserNewsletterPreferencesInput{
+			doesUserHaveAccount, err := useraccounts.DoesUserAlreadyHaveAccount(tx, *userID)
+			switch {
+			case err != nil:
+				return err
+			case doesUserHaveAccount:
+				cErr = clienterror.ErrorNoAuth.Ptr()
+				return nil
+			}
+			input := usernewsletterpreferences.UpdateUserNewsletterPreferencesInput{
 				UserID:                              *userID,
 				LanguageCode:                        *languageCode,
 				IsLemmaReinforcementSpotlightActive: req.Preferences.IsLemmaReinforcementSpotlightActive,
@@ -234,7 +260,25 @@ func updateUserNewsletterPreferences(userAuth *routermiddleware.UserAuthenticati
 				QuarterHourIndex:                    req.Preferences.Schedule.QuarterHourIndex,
 				IsActiveForDays:                     req.Preferences.Schedule.IsActiveForDays,
 				NumberOfArticlesPerEmail:            req.Preferences.NumberOfArticlesPerEmail,
-			})
+			}
+			userSubscription, err := useraccounts.LookupSubscriptionLevelForUser(tx, *userID)
+			switch {
+			case err != nil:
+				return err
+			case userSubscription == nil,
+				*userSubscription != useraccounts.SubscriptionLevelLegacy:
+				input.PodcastPreferences = &usernewsletterpreferences.PodcastPreferencesInput{
+					ArePodcastsEnabled:      deref.Bool(req.Preferences.ArePodcastsEnabled, true),
+					IncludeExplicitPodcasts: deref.Bool(req.Preferences.IncludeExplicitPodcasts, true),
+				}
+				if req.Preferences.MinimumPodcastDurationSeconds != nil {
+					input.PodcastPreferences.MinimumDurationNanoseconds = ptr.Duration(time.Duration(*req.Preferences.MinimumPodcastDurationSeconds) * time.Second)
+				}
+				if req.Preferences.MaximumPodcastDurationSeconds != nil {
+					input.PodcastPreferences.MaximumDurationNanoseconds = ptr.Duration(time.Duration(*req.Preferences.MaximumPodcastDurationSeconds) * time.Second)
+				}
+			}
+			return usernewsletterpreferences.UpdateUserNewsletterPreferences(r, tx, input)
 		})
 		switch {
 		case err != nil:

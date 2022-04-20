@@ -1,10 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
 import { makeStyles } from '@material-ui/core/styles';
-import Card from '@material-ui/core/Card';
-import CheckCircleOutlineIcon from '@material-ui/icons/CheckCircleOutline';
 import Divider from '@material-ui/core/Divider';
-import ErrorOutlineIcon from '@material-ui/icons/ErrorOutline';
 import Grid from '@material-ui/core/Grid';
 
 import MailOutlineIcon from '@material-ui/icons/MailOutline';
@@ -12,17 +9,15 @@ import LibraryAddCheckIcon from '@material-ui/icons/LibraryAddCheck';
 import AutorenewIcon from '@material-ui/icons/Autorenew';
 
 import Color from 'common/styles/colors';
+import CenteredComponent from 'common/components/CenteredComponent/CenteredComponent';
+import DisplayCard from 'common/components/DisplayCard/DisplayCard';
 import Page from 'common/components/Page/Page';
 import Paragraph, { Size } from 'common/typography/Paragraph';
-import { TypographyColor } from 'common/typography/common';
+import { Alignment, TypographyColor } from 'common/typography/common';
 import { Heading1, Heading3 } from 'common/typography/Heading';
-import { PrimaryButton } from 'common/components/Button/Button';
-import { PrimaryTextField } from 'common/components/TextField/TextField';
-import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
 import { PhotoKey } from 'common/data/photos/Photos';
-import Link, { LinkTarget } from 'common/components/Link/Link';
+import Link from 'common/components/Link/Link';
 import { withCaptchaToken, loadCaptchaScript } from 'common/util/grecaptcha/grecaptcha';
-import Form from 'common/components/Form/Form';
 
 import SignupForm from 'ConsumerWeb/components/common/SignupForm/SignupForm';
 
@@ -92,63 +87,47 @@ const HomePage = () => {
 
     const classes = styleClasses();
     return (
-        <Page withBackground={PhotoKey.Seville}>
-            <Grid container>
-                <Grid item xs={false} md={3}>
-                    &nbsp;
-                </Grid>
-                <Grid item xs={12} md={6}>
-                    <Card className={classes.displayCard} variant='outlined'>
-                        <Heading1 color={TypographyColor.Primary}>
-                            {
-                                !hadSuccess ? (
-                                    "Don’t lose your Spanish"
-                                ) : (
-                                    "Almost done! Just one last step."
-                                )
-                            }
-                        </Heading1>
-                        <Divider />
+        <Page withNavbar withBackground={PhotoKey.Seville}>
+            <CenteredComponent useLargeVersion>
+                <DisplayCard>
+                    <Heading1 color={TypographyColor.Primary}>
                         {
-                            !hadSuccess && (
-                                <div>
-                                    <Paragraph>
-                                        Babblegraph picks up where your Spanish class left off by sending you a daily email with real articles from the Spanish-speaking world. You can even customize the content to make keeping up with your Spanish skills more engaging!
-                                    </Paragraph>
-                                    <Paragraph>
-                                        It’s completely free and you can unsubscribe anytime you’d like.
-                                    </Paragraph>
-                                </div>
-                            )
-                        }
-                        <SignupForm
-                            disabled={isLoading || !hasLoadedCaptcha}
-                            setIsLoading={setIsLoading}
-                            onSuccess={handleSuccess}
-                            shouldShowVerificationForm={hadSuccess} />
-                        {
-                            isLoading ? (
-                                <LoadingSpinner />
+                            hadSuccess ? (
+                                'Success! You’re one step closer to receiving interesting Spanish language content'
                             ) : (
-                                !hadSuccess ? (
-                                    <PostInitialContent />
-                                ) : (
-                                    <PostVerificationContent
-                                        handleReturnHome={() => setHadSuccess(false)} />
-                                )
+                                'Effortlessly work Spanish practice into your weekly routine'
                             )
                         }
-                    </Card>
-                    <Card className={classes.displayCard} variant='outlined'>
-                        <Paragraph>
-                            Have an account?
-                        </Paragraph>
-                        <Link href="/login" target={LinkTarget.Self}>
-                            Click here to login
-                        </Link>
-                    </Card>
-                </Grid>
-            </Grid>
+                    </Heading1>
+                    <Divider />
+                    {
+                        !hadSuccess && (
+                            <div>
+                                <Paragraph>
+                                    Living outside of a Spanish speaking country makes it hard to use Spanish regularly. Without realizing it, weeks or months can go by without using it, and your Spanish can easily begin to fade. That’s where Babblegraph comes in.
+                                </Paragraph>
+                                <Paragraph>
+                                    Babblegraph is an email newsletter with Spanish language news and podcasts to help you maintain and expand your reading and listening comprehension without having to move to a Spanish speaking country.
+                                </Paragraph>
+                                <Paragraph>
+                                    Try it free for 30 days. No account or credit card required!
+                                </Paragraph>
+                            </div>
+                        )
+                    }
+                    <SignupForm
+                        disabled={isLoading}
+                        shouldShowVerificationForm={hadSuccess}
+                        setIsLoading={setIsLoading}
+                        onSuccess={handleSuccess} /> {
+                        hadSuccess ? (
+                            <PostVerificationContent handleReturnHome={() => setHadSuccess(false)} />
+                        ) : (
+                            <PostInitialContent />
+                        )
+                    }
+                </DisplayCard>
+            </CenteredComponent>
         </Page>
     );
 }
@@ -157,8 +136,11 @@ const PostInitialContent = () => {
     const classes = styleClasses();
     return (
         <div>
+            <Paragraph size={Size.Small}>
+                By signing up, you’re acknowledging that you’ve read and agreed to our privacy policy.
+            </Paragraph>
             <Link href="/privacy-policy">
-                View our Privacy Policy
+                Read our privacy policy
             </Link>
             <Divider />
             <Heading3 color={TypographyColor.Primary}>
@@ -169,8 +151,8 @@ const PostInitialContent = () => {
                     <MailOutlineIcon className={classes.infoIcon} />
                 </Grid>
                 <Grid item xs={9} md={10}>
-                    <Paragraph>
-                        Sign up to receive an email every day containing articles from trusted Spanish-language news sources
+                    <Paragraph align={Alignment.Left}>
+                        Sign up to receive a newsletter containing articles from trusted Spanish-language news sources and podcasts on your schedule, as frequently as every day or as a little as every week.
                     </Paragraph>
                 </Grid>
             </Grid>
@@ -179,7 +161,7 @@ const PostInitialContent = () => {
                     <LibraryAddCheckIcon className={classes.infoIcon} />
                 </Grid>
                 <Grid item xs={9} md={10}>
-                    <Paragraph>
+                    <Paragraph align={Alignment.Left}>
                         Select topics that you’re interested in to keep the articles you receive fun and engaging
                     </Paragraph>
                 </Grid>
@@ -189,17 +171,11 @@ const PostInitialContent = () => {
                     <AutorenewIcon className={classes.infoIcon} />
                 </Grid>
                 <Grid item xs={9} md={10}>
-                    <Paragraph>
-                        Track words that you’re learning to receive more interesting articles that use those words so that you can reinforce them
+                    <Paragraph align={Alignment.Left}>
+                        Add new vocabulary words to receive more interesting articles that use those words so that you can reinforce them
                     </Paragraph>
                 </Grid>
             </Grid>
-            <Link href="/about">
-                Learn more about Babblegraph
-            </Link>
-            <Link href="/blog">
-                Read the blog
-            </Link>
         </div>
     );
 }

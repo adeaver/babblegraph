@@ -1,7 +1,6 @@
 package billing
 
 import (
-	"babblegraph/model/useraccountsnotifications"
 	"babblegraph/model/users"
 	"babblegraph/util/ctx"
 	"babblegraph/util/env"
@@ -63,8 +62,10 @@ func convertStripeSubscriptionToPremiumNewsletterSubscription(tx *sqlx.Tx, strip
 		CurrentPeriodEnd:      time.Unix(stripeSubscription.CurrentPeriodEnd, 0),
 		IsAutoRenewEnabled:    !stripeSubscription.CancelAtPeriodEnd,
 	}
+	var billingInformation *dbBillingInformation
 	if dbNewsletterSubscription != nil {
-		billingInformation, err := getBillingInformation(tx, dbNewsletterSubscription.BillingInformationID)
+		var err error
+		billingInformation, err = getBillingInformation(tx, dbNewsletterSubscription.BillingInformationID)
 		if err != nil {
 			return nil, err
 		}
@@ -74,8 +75,14 @@ func convertStripeSubscriptionToPremiumNewsletterSubscription(tx *sqlx.Tx, strip
 	switch stripeSubscription.Status {
 	case stripe.SubscriptionStatusTrialing:
 		premiumNewsletterSubscription.PaymentState = PaymentStateTrialNoPaymentMethod
-		if stripeSubscription.DefaultPaymentMethod != nil {
-			premiumNewsletterSubscription.PaymentState = PaymentStateTrialPaymentMethodAdded
+		if billingInformation != nil && billingInformation.UserID != nil {
+			paymentMethods, err := GetPaymentMethodsForUser(tx, *billingInformation.UserID)
+			if err != nil {
+				return nil, err
+			}
+			if len(paymentMethods) > 0 {
+				premiumNewsletterSubscription.PaymentState = PaymentStateTrialPaymentMethodAdded
+			}
 		}
 	case stripe.SubscriptionStatusIncomplete:
 		premiumNewsletterSubscription.PaymentState = PaymentStateCreatedUnpaid
@@ -148,28 +155,6 @@ func HandleStripeEvent(c ctx.LogContext, tx *sqlx.Tx, stripeSignature string, ev
 				}
 			}
 		}
-	case "customer.subscription.trial_will_end":
-		wasProcessed = true
-		var stripeSubscription stripe.Subscription
-		if err := json.Unmarshal(event.Data.Raw, &stripeSubscription); err != nil {
-			return err
-		}
-		premiumNewsletterSubscription, err := lookupPremiumNewsletterSubscriptionForStripeID(c, tx, stripeSubscription.ID)
-		switch {
-		case err != nil:
-			return err
-		case premiumNewsletterSubscription == nil:
-			c.Warnf("No subscription found for stripe ID %s", stripeSubscription.ID)
-		case premiumNewsletterSubscription != nil:
-			userID, err := premiumNewsletterSubscription.GetUserID()
-			if err != nil {
-				return err
-			}
-			_, err = useraccountsnotifications.EnqueueNotificationRequest(tx, *userID, useraccountsnotifications.NotificationTypeTrialEndingSoon, time.Now().Add(30*time.Minute))
-			if err != nil {
-				return err
-			}
-		}
 	case "account.updated",
 		"account.application.authorized",
 		"account.application.deauthorized",
@@ -216,6 +201,7 @@ func HandleStripeEvent(c ctx.LogContext, tx *sqlx.Tx, stripeSignature string, ev
 		"customer.source.expiring",
 		"customer.source.updated",
 		"customer.subscription.pending_update_expired",
+		"customer.subscription.trial_will_end",
 		"customer.tax_id.created",
 		"customer.tax_id.deleted",
 		"customer.tax_id.updated",

@@ -1,5 +1,5 @@
 package config
 
 const (
-	PremiumNewsletterSubscriptionTrialLengthDays int64 = 14
+	PremiumNewsletterSubscriptionTrialLengthDays int64 = 30
 )

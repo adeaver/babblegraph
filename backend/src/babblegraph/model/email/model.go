@@ -43,6 +43,10 @@ const (
 	EmailTypeAdminTwoFactorAuthenticationCode EmailType = "admin-two-factor-authentication-code"
 )
 
+func (e EmailType) Ptr() *EmailType {
+	return &e
+}
+
 type Recipient struct {
 	EmailAddress string
 	UserID       users.UserID

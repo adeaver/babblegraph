@@ -10,6 +10,8 @@ import {
 import HomePage from 'ConsumerWeb/components/HomePage/HomePage';
 import AboutPage from 'ConsumerWeb/components/AboutPage/AboutPage';
 import PrivacyPolicyPage from 'ConsumerWeb/components/PrivacyPolicyPage/PrivacyPolicyPage';
+import PricingPage from 'ConsumerWeb/components/PricingPage/PricingPage';
+
 import PaywallReportPage from 'ConsumerWeb/components/PaywallReportPage/PaywallReportPage';
 import AdvertisingPolicyPage from 'ConsumerWeb/components/AdvertisingPolicyPage/AdvertisingPolicyPage';
 
@@ -67,6 +69,7 @@ class App extends React.Component{
                     { /* Home Page & About Page */ }
                     <Route path="/about" component={AboutPage} />
                     <Route path="/privacy-policy" component={PrivacyPolicyPage} />
+                    <Route path="/pricing" component={PricingPage} />
                     <Route path="/advertising-policy" component={AdvertisingPolicyPage} />
                     <Route exact path="/" component={HomePage} />
 

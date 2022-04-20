@@ -23,6 +23,7 @@ import { Alignment, TypographyColor } from 'common/typography/common';
 import Paragraph, { Size } from 'common/typography/Paragraph';
 import { setLocation } from 'util/window/Location';
 import { PrimaryButton } from 'common/components/Button/Button';
+import { SubscriptionLevel } from 'common/api/useraccounts/useraccounts';
 
 import {
     withUserProfileInformation,
@@ -74,7 +75,10 @@ const PremiumInformationPage = withUserProfileInformation<PremiumInformationPage
         // If the user has an account, they are logged in because the higher level component will redirect them
         // If the user has a subscription level, they have an account and are logged in
         // If the user doesn't have an account, they do not have a subscription
-        if (!!props.userProfile.subscriptionLevel) {
+        if (
+            props.userProfile.subscriptionLevel === SubscriptionLevel.Premium ||
+            props.userProfile.subscriptionLevel === SubscriptionLevel.BetaPremium
+        ) {
             // The user already has a subscription
             callToAction = (
                 <Heading4 color={TypographyColor.Primary}>
@@ -136,14 +140,6 @@ const PremiumInformationPage = withUserProfileInformation<PremiumInformationPage
                         <Heading3 color={TypographyColor.Primary}>
                             {translations[TextBlock.Price]}
                         </Heading3>
-                        {
-                            /* TODO(i18n): fix this */
-                            !!props.userProfile.trialEligibilityDays && (
-                                <Heading3>
-                                    The best part is that you can try it for free for {props.userProfile.trialEligibilityDays} days!
-                                </Heading3>
-                            )
-                        }
                         <Grid container>
                             <Grid item xs={2}>
                                 &nbsp;

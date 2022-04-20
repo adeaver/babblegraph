@@ -37,12 +37,13 @@ type NotificationRequest struct {
 type NotificationType string
 
 const (
-	NotificationTypeTrialEndingSoon             NotificationType = "trial_ending_soon"
-	NotificationTypeAccountCreated              NotificationType = "account_created"
 	NotificationTypePaymentError                NotificationType = "payment_error"
 	NotificationTypePremiumSubscriptionCanceled NotificationType = "premium_subscription_canceled"
 
-	NotificationTypeInitialPremiumInformation NotificationType = "initial_premium_information"
+	NotificationTypeNeedPaymentMethodWarning           NotificationType = "need_payment_method_warning"
+	NotificationTypeTrialEndingSoon                    NotificationType = "trial_ending_soon"
+	NotificationTypeNeedPaymentMethodWarningUrgent     NotificationType = "need_payment_method_warning_urgent"
+	NotificationTypeNeedPaymentMethodWarningVeryUrgent NotificationType = "need_payment_method_warning_very_urgent"
 )
 
 type notificationRequestDebounceFulfillmentRecordID string
@@ -57,9 +58,9 @@ type dbNotificationRequestDebounceFulfillmentRecord struct {
 // This defines the minimum time we need to wait between enqueuing messages of the same type
 // If nil, only one message ever is allowed
 var minimumElapsedTimeBetweenNotificationsByType = map[NotificationType]*time.Duration{
-	NotificationTypeTrialEndingSoon:             nil,
-	NotificationTypeAccountCreated:              nil,
-	NotificationTypeInitialPremiumInformation:   nil,
-	NotificationTypePaymentError:                ptr.Duration(14 * 24 * time.Hour), // 2 weeks
-	NotificationTypePremiumSubscriptionCanceled: ptr.Duration(3 * 24 * time.Hour),  // 3 days
+	NotificationTypeNeedPaymentMethodWarningVeryUrgent: nil,
+	NotificationTypeNeedPaymentMethodWarning:           nil,
+	NotificationTypeNeedPaymentMethodWarningUrgent:     nil,
+	NotificationTypePaymentError:                       ptr.Duration(14 * 24 * time.Hour), // 2 weeks
+	NotificationTypePremiumSubscriptionCanceled:        ptr.Duration(3 * 24 * time.Hour),  // 3 days
 }

@@ -154,3 +154,13 @@ const (
 	CardTypeDiscover   CardType = "discover"
 	CardTypeOther      CardType = "other"
 )
+
+type newsletterSubscriptionTrialID string
+
+// This is intentionally keyed off of email address
+// The idea is that eventually we'll delete unsubscribed users.
+type dbNewsletterSubscriptionTrial struct {
+	ID           newsletterSubscriptionTrialID `db:"_id"`
+	EmailAddress string                        `db:"email_address"`
+	CreatedAt    time.Time                     `db:"created_at"`
+}

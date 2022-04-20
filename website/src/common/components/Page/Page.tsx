@@ -27,6 +27,7 @@ const pageStyles = makeStyles({
 type PageProps = {
     children: React.ReactNode;
     withBackground?: PhotoKey;
+    withNavbar?: boolean;
 };
 
 const Page = (props: PageProps) => {
@@ -34,7 +35,7 @@ const Page = (props: PageProps) => {
     const backgroundImage = props.withBackground && getAvailablePhotoForKey(props.withBackground);
     return (
         <div className={classes.pageRoot}>
-            <Header />
+            <Header includeNavbar={props.withNavbar} />
             <div className={classes.pageContent}>
                 <div className={classes.childrenContent}>
                     {props.children}
