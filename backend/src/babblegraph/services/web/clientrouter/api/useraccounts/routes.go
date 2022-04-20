@@ -102,11 +102,21 @@ func getUserProfileInformation(userAuth *routermiddleware.UserAuthentication, r 
 				if err != nil {
 					return err
 				}
-				premiumSubscription, err := billing.LookupPremiumNewsletterSubscriptionForUser(r, tx, *userID)
-				if err != nil {
-					return err
+				switch {
+				case subscriptionLevel == nil,
+					*subscriptionLevel == useraccounts.SubscriptionLevelBetaPremium,
+					*subscriptionLevel == useraccounts.SubscriptionLevelLegacy,
+					*subscriptionLevel == useraccounts.SubscriptionLevelLegacyFriendsAndFamily:
+					hasPaymentMethod = true
+				case *subscriptionLevel == useraccounts.SubscriptionLevelPremium:
+					premiumSubscription, err := billing.LookupPremiumNewsletterSubscriptionForUser(r, tx, *userID)
+					if err != nil {
+						return err
+					}
+					hasPaymentMethod = premiumSubscription != nil && premiumSubscription.PaymentState != billing.PaymentStateTrialNoPaymentMethod
+				default:
+					r.Warnf("Unrecognized subscription level %s", *subscriptionLevel)
 				}
-				hasPaymentMethod = premiumSubscription != nil && premiumSubscription.PaymentState != billing.PaymentStateTrialNoPaymentMethod
 				return nil
 			}); err != nil {
 				return nil, err
