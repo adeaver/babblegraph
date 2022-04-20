@@ -98,11 +98,9 @@ func getUserProfileInformation(userAuth *routermiddleware.UserAuthentication, r 
 				if err != nil {
 					return err
 				}
-				if subscriptionLevel == nil {
-					trialEligibilityDays, err = billing.GetPremiumNewsletterSubscriptionTrialEligibilityForUser(tx, *userID)
-					if err != nil {
-						return err
-					}
+				trialEligibilityDays, err = billing.GetPremiumNewsletterSubscriptionTrialEligibilityForUser(tx, *userID)
+				if err != nil {
+					return err
 				}
 				premiumSubscription, err := billing.LookupPremiumNewsletterSubscriptionForUser(r, tx, *userID)
 				if err != nil {

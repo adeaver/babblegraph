@@ -298,14 +298,14 @@ func GetPremiumNewsletterSubscriptionTrialEligibilityForUser(tx *sqlx.Tx, userID
 	switch {
 	case err != nil:
 		return nil, err
-	case subscriptionLevel == nil:
+	case subscriptionLevel == nil,
+		*subscriptionLevel == useraccounts.SubscriptionLevelPremium:
 		user, err := users.GetUser(tx, userID)
 		if err != nil {
 			return nil, err
 		}
 		return getNewsletterSubscriptionTrialEligibility(tx, user.EmailAddress)
 	case *subscriptionLevel == useraccounts.SubscriptionLevelLegacy,
-		*subscriptionLevel == useraccounts.SubscriptionLevelPremium,
 		*subscriptionLevel == useraccounts.SubscriptionLevelBetaPremium:
 		return ptr.Int64(0), nil
 	default:
