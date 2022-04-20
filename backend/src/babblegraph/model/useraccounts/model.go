@@ -5,6 +5,10 @@ import (
 	"time"
 )
 
+const (
+	DefaultSubscriptionBufferInDays = 3
+)
+
 type userPasswordID string
 
 type dbUserPassword struct {

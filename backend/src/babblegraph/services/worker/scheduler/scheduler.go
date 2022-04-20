@@ -22,17 +22,14 @@ func StartScheduler(errs chan error) error {
 		c.AddFunc("30 2 * * *", async.WithContext(errs, "refetch", fetchNewLinksForSeedURLs).Func())
 		c.AddFunc("30 3 * * *", async.WithContext(errs, "admin-2fa-cleanup", handleCleanUpAdminTwoFactorCodesAndAccessTokens).Func())
 		c.AddFunc("30 4 * * *", async.WithContext(errs, "cleanup-newsletters", handleCleanupOldNewsletter).Func())
-		c.AddFunc("30 12 * * *", async.WithContext(errs, "user-feedback", sendUserFeedbackEmails).Func())
 		c.AddFunc("*/1 * * * *", async.WithContext(errs, "pending-verifications", handlePendingVerifications).Func())
 		c.AddFunc("*/3 * * * *", async.WithContext(errs, "forgot-passwords", handlePendingForgotPasswordAttempts).Func())
-		c.AddFunc("*/5 * * * *", async.WithContext(errs, "account-notifications", handlePendingUserAccountNotificationRequests).Func())
 		c.AddFunc("*/1 * * * *", async.WithContext(errs, "send-2fa-codes", handleSendAdminTwoFactorAuthenticationCode).Func())
 		c.AddFunc("*/10 * * * *", async.WithContext(errs, "sync-billing", handleSyncBilling).Func())
 	case env.EnvironmentLocal,
 		env.EnvironmentLocalTestEmail:
 		c.AddFunc("*/1 * * * *", async.WithContext(errs, "cleanup-newsletters", handleCleanupOldNewsletter).Func())
 		c.AddFunc("*/1 * * * *", async.WithContext(errs, "admin-2fa-cleanup", handleCleanUpAdminTwoFactorCodesAndAccessTokens).Func())
-		c.AddFunc("*/1 * * * *", async.WithContext(errs, "account-notifications", handlePendingUserAccountNotificationRequests).Func())
 		c.AddFunc("*/1 * * * *", async.WithContext(errs, "pending-verifications", handlePendingVerifications).Func())
 		c.AddFunc("*/1 * * * *", async.WithContext(errs, "forgot-passwords", handlePendingForgotPasswordAttempts).Func())
 		c.AddFunc("*/5 * * * *", async.WithContext(errs, "archive-forgot-passwords", handleArchiveForgotPasswordAttempts).Func())

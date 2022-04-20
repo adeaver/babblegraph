@@ -14,11 +14,11 @@ import (
 )
 
 func handleSyncBilling(c async.Context) {
-	var userIDsWithExpiredSubscription []users.UserID
+	var expiringSubscriptions []useraccounts.ExpiringSubscriptionInfo
 	var premiumNewsletterSyncRequests map[billing.PremiumNewsletterSubscriptionID]billing.PremiumNewsletterSubscriptionUpdateType
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		var err error
-		userIDsWithExpiredSubscription, err = useraccounts.GetUserIDsForExpiredSubscriptionQuery(tx)
+		expiringSubscriptions, err = useraccounts.GetExpiringSubscriptions(tx)
 		if err != nil {
 			return err
 		}
@@ -36,6 +36,10 @@ func handleSyncBilling(c async.Context) {
 			if err != nil {
 				return err
 			}
+			userID, err = premiumNewsletterSubscription.GetUserID()
+			if err != nil {
+				return err
+			}
 			switch updateType {
 			case billing.PremiumNewsletterSubscriptionUpdateTypeTransitionToActive:
 				switch premiumNewsletterSubscription.PaymentState {
@@ -44,24 +48,13 @@ func handleSyncBilling(c async.Context) {
 					return billing.MarkPremiumNewsletterSyncRequestForRetry(tx, premiumSubscriptionID)
 				case billing.PaymentStateTrialNoPaymentMethod,
 					billing.PaymentStateTrialPaymentMethodAdded,
-					billing.PaymentStateActive:
-					c.Infof("Subscription %s is now active, updating", premiumSubscriptionID)
-					userID, err = premiumNewsletterSubscription.GetUserID()
-					if err != nil {
-						return err
-					}
-					if err := useraccounts.AddSubscriptionLevelForUser(tx, useraccounts.AddSubscriptionLevelForUserInput{
-						UserID:            *userID,
-						SubscriptionLevel: useraccounts.SubscriptionLevelPremium,
-						ShouldStartActive: true,
-						ExpirationTime:    premiumNewsletterSubscription.CurrentPeriodEnd,
-					}); err != nil {
-						return err
-					}
-					return billing.MarkPremiumNewsletterSyncRequestDone(tx, premiumSubscriptionID)
-				case billing.PaymentStateErrored,
+					billing.PaymentStateActive,
+					billing.PaymentStateErrored,
 					billing.PaymentStateTerminated:
-					c.Infof("Subscription %s is terminated, marking done", premiumSubscriptionID)
+					if err := billing.SyncUserAccountWithPremiumNewsletterSubscription(tx, *userID, premiumNewsletterSubscription); err != nil {
+						return err
+					}
+					c.Infof("Subscription %s is can be synced, marking done", premiumSubscriptionID)
 					return billing.MarkPremiumNewsletterSyncRequestDone(tx, premiumSubscriptionID)
 				default:
 					return fmt.Errorf("Unrecognized payment state for subscription ID %s: %d", premiumSubscriptionID, premiumNewsletterSubscription.PaymentState)
@@ -75,14 +68,7 @@ func handleSyncBilling(c async.Context) {
 					billing.PaymentStateErrored:
 					return fmt.Errorf("Subscription %s is in the wrong state", premiumSubscriptionID)
 				case billing.PaymentStateTerminated:
-					userID, err = premiumNewsletterSubscription.GetUserID()
-					if err != nil {
-						return err
-					}
-					if err := useraccounts.ExpireSubscriptionForUser(tx, *userID); err != nil {
-						return err
-					}
-					if _, err := useraccountsnotifications.EnqueueNotificationRequest(tx, *userID, useraccountsnotifications.NotificationTypePremiumSubscriptionCanceled, time.Now().Add(5*time.Minute)); err != nil {
+					if err := billing.SyncUserAccountWithPremiumNewsletterSubscription(tx, *userID, premiumNewsletterSubscription); err != nil {
 						return err
 					}
 					return billing.MarkPremiumNewsletterSyncRequestDone(tx, premiumSubscriptionID)
@@ -90,10 +76,6 @@ func handleSyncBilling(c async.Context) {
 					return fmt.Errorf("Unrecognized payment state for subscription ID %s: %d", premiumSubscriptionID, premiumNewsletterSubscription.PaymentState)
 				}
 			case billing.PremiumNewsletterSubscriptionUpdateTypeRemoteUpdated:
-				userID, err = premiumNewsletterSubscription.GetUserID()
-				if err != nil {
-					return err
-				}
 				if err := billing.SyncUserAccountWithPremiumNewsletterSubscription(tx, *userID, premiumNewsletterSubscription); err != nil {
 					return err
 				}
@@ -109,33 +91,71 @@ func handleSyncBilling(c async.Context) {
 			userIDsWithExpirationToSkip[*userID] = true
 		}
 	}
-	for _, userID := range userIDsWithExpiredSubscription {
-		if _, ok := userIDsWithExpirationToSkip[userID]; ok {
-			c.Infof("User ID %s had an update, skipping", userID)
+	for _, sub := range expiringSubscriptions {
+		if _, ok := userIDsWithExpirationToSkip[sub.UserID]; ok {
+			c.Infof("User ID %s had an update, skipping", sub.UserID)
 			continue
 		}
 		if err := database.WithTx(func(tx *sqlx.Tx) error {
-			premiumNewsletterSubscription, err := billing.LookupPremiumNewsletterSubscriptionForUser(c, tx, userID)
 			switch {
-			case err != nil:
-				return err
-			case premiumNewsletterSubscription == nil:
-				// no-op
-			case time.Now().Before(premiumNewsletterSubscription.CurrentPeriodEnd):
-				c.Infof("User ID has an active subscription. Updating...")
-				return useraccounts.UpdateSubscriptionExpirationTime(tx, userID, premiumNewsletterSubscription.CurrentPeriodEnd)
-			default:
-				// no-op
+			case sub.SubscriptionLevel == useraccounts.SubscriptionLevelLegacy:
+				c.Infof("Skipping subscription because it's in legacy")
+				return nil
+			case sub.SubscriptionLevel == useraccounts.SubscriptionLevelPremium:
+				premiumNewsletterSubscription, err := billing.LookupPremiumNewsletterSubscriptionForUser(c, tx, sub.UserID)
+				if err != nil {
+					return err
+				}
+				switch {
+				case !time.Now().Before(sub.ExpiringAt):
+					// We think the subscription should be expired.
+					switch {
+					case premiumNewsletterSubscription == nil:
+						// Stripe also thinks that the subscription is expired.
+						if err := useraccounts.ExpireSubscriptionForUser(tx, sub.UserID); err != nil {
+							return err
+						}
+						_, err := useraccountsnotifications.EnqueueNotificationRequest(tx, sub.UserID, useraccountsnotifications.NotificationTypePremiumSubscriptionCanceled, time.Now())
+						return err
+					case time.Now().Before(premiumNewsletterSubscription.CurrentPeriodEnd):
+						// Stripe does not think that the subscription is over, we update
+						c.Infof("User ID has an active subscription. Updating...")
+						return useraccounts.UpdateSubscriptionExpirationTime(tx, sub.UserID, premiumNewsletterSubscription.CurrentPeriodEnd)
+
+					}
+					return billing.CancelPremiumNewsletterSubscriptionForUser(c, tx, sub.UserID)
+				default:
+					// We don't think we should be expired
+					if premiumNewsletterSubscription == nil {
+						// Stripe DOES think we're expired.
+						return fmt.Errorf("User %s should have a stripe subscription, but doesn't", sub.UserID)
+					}
+					numberOfDaysUntilSubscriptionExpires := int64(sub.ExpiringAt.Sub(time.Now().Add(24*time.Hour*useraccounts.DefaultSubscriptionBufferInDays)) / (time.Duration(24) * time.Hour))
+					switch numberOfDaysUntilSubscriptionExpires {
+					case 7:
+						if premiumNewsletterSubscription.PaymentState == billing.PaymentStateTrialNoPaymentMethod {
+							_, err := useraccountsnotifications.EnqueueNotificationRequest(tx, sub.UserID, useraccountsnotifications.NotificationTypeNeedPaymentMethodWarning, time.Now())
+							return err
+						}
+					case 3:
+						_, err := useraccountsnotifications.EnqueueNotificationRequest(tx, sub.UserID, useraccountsnotifications.NotificationTypeTrialEndingSoon, time.Now())
+						return err
+					case 2:
+						if premiumNewsletterSubscription.PaymentState == billing.PaymentStateTrialNoPaymentMethod {
+							_, err := useraccountsnotifications.EnqueueNotificationRequest(tx, sub.UserID, useraccountsnotifications.NotificationTypeNeedPaymentMethodWarningUrgent, time.Now())
+							return err
+						}
+					case 1:
+						if premiumNewsletterSubscription.PaymentState == billing.PaymentStateTrialNoPaymentMethod {
+							_, err := useraccountsnotifications.EnqueueNotificationRequest(tx, sub.UserID, useraccountsnotifications.NotificationTypeNeedPaymentMethodWarningVeryUrgent, time.Now())
+							return err
+						}
+					}
+				}
 			}
-			if err := useraccounts.ExpireSubscriptionForUser(tx, userID); err != nil {
-				return err
-			}
-			if _, err := useraccountsnotifications.EnqueueNotificationRequest(tx, userID, useraccountsnotifications.NotificationTypePremiumSubscriptionCanceled, time.Now().Add(5*time.Minute)); err != nil {
-				return err
-			}
-			return billing.CancelPremiumNewsletterSubscriptionForUser(c, tx, userID)
+			return nil
 		}); err != nil {
-			c.Errorf("Error canceling subscription for User %s: %s", userID, err.Error())
+			c.Errorf("Error canceling subscription for User %s: %s", sub.UserID, err.Error())
 		}
 	}
 }

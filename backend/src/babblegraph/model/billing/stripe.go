@@ -1,7 +1,6 @@
 package billing
 
 import (
-	"babblegraph/model/useraccountsnotifications"
 	"babblegraph/model/users"
 	"babblegraph/util/ctx"
 	"babblegraph/util/env"
@@ -148,28 +147,6 @@ func HandleStripeEvent(c ctx.LogContext, tx *sqlx.Tx, stripeSignature string, ev
 				}
 			}
 		}
-	case "customer.subscription.trial_will_end":
-		wasProcessed = true
-		var stripeSubscription stripe.Subscription
-		if err := json.Unmarshal(event.Data.Raw, &stripeSubscription); err != nil {
-			return err
-		}
-		premiumNewsletterSubscription, err := lookupPremiumNewsletterSubscriptionForStripeID(c, tx, stripeSubscription.ID)
-		switch {
-		case err != nil:
-			return err
-		case premiumNewsletterSubscription == nil:
-			c.Warnf("No subscription found for stripe ID %s", stripeSubscription.ID)
-		case premiumNewsletterSubscription != nil:
-			userID, err := premiumNewsletterSubscription.GetUserID()
-			if err != nil {
-				return err
-			}
-			_, err = useraccountsnotifications.EnqueueNotificationRequest(tx, *userID, useraccountsnotifications.NotificationTypeTrialEndingSoon, time.Now().Add(30*time.Minute))
-			if err != nil {
-				return err
-			}
-		}
 	case "account.updated",
 		"account.application.authorized",
 		"account.application.deauthorized",
@@ -216,6 +193,7 @@ func HandleStripeEvent(c ctx.LogContext, tx *sqlx.Tx, stripeSignature string, ev
 		"customer.source.expiring",
 		"customer.source.updated",
 		"customer.subscription.pending_update_expired",
+		"customer.subscription.trial_will_end",
 		"customer.tax_id.created",
 		"customer.tax_id.deleted",
 		"customer.tax_id.updated",
