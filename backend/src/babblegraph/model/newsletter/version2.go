@@ -131,8 +131,9 @@ func CreateNewsletterVersion2(c ctx.LogContext, dateOfSendMidnightUTC time.Time,
 	var premiumLink *PremiumAdvertisement
 	userSubscriptionLevel := input.UserAccessor.getUserSubscriptionLevel()
 	switch {
-	case userSubscriptionLevel == nil,
-		*userSubscriptionLevel == useraccounts.SubscriptionLevelLegacy:
+	case userSubscriptionLevel == nil:
+		return nil, nil
+	case *userSubscriptionLevel == useraccounts.SubscriptionLevelLegacy:
 		premiumLinkURL, err := routes.MakePremiumInformationLink(input.UserAccessor.getUserID())
 		switch {
 		case err != nil:

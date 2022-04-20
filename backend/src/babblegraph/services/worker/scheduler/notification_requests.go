@@ -25,6 +25,7 @@ func handlePendingUserAccountNotificationRequests(c async.Context) {
 		AWSRegion:          "us-east-1",
 		FromAddress:        env.MustEnvironmentVariable("EMAIL_ADDRESS"),
 	})
+	c.Infof("Starting user accounts notification job")
 	var notificationRequests []useraccountsnotifications.NotificationRequest
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		var err error
@@ -34,6 +35,7 @@ func handlePendingUserAccountNotificationRequests(c async.Context) {
 		c.Errorf("Error fetching notifications: %s", err.Error())
 		return
 	}
+	c.Infof("Got %d notification requests to fulfill", len(notificationRequests))
 	for _, req := range notificationRequests {
 		if err := database.WithTx(func(tx *sqlx.Tx) error {
 			if err := useraccountsnotifications.FulfillNotificationRequest(tx, req.ID); err != nil {
@@ -64,6 +66,8 @@ func handlePendingUserAccountNotificationRequests(c async.Context) {
 			case useraccountsnotifications.NotificationTypePaymentError:
 				subject = ptr.String("Attention! There was an error processing your payment")
 				emailHTML, emailType, err = handlePaymentErrorNotification(c, tx, emailRecordID, user)
+			case useraccountsnotifications.NotificationTypeNeedPaymentMethodWarningUrgent:
+				c.Infof("Skipping type %s for now", req.Type)
 			default:
 				return fmt.Errorf("Unknown notification type %s", req.Type)
 			}
@@ -81,7 +85,9 @@ func handlePendingUserAccountNotificationRequests(c async.Context) {
 			})
 		}); err != nil {
 			c.Errorf("Error fulfilling request %s: %s", req.ID, err.Error())
+			continue
 		}
+		c.Infof("Fulfilled request %s", req.ID)
 	}
 }
 
