@@ -26,6 +26,7 @@ func StartScheduler(errs chan error) error {
 		c.AddFunc("*/3 * * * *", async.WithContext(errs, "forgot-passwords", handlePendingForgotPasswordAttempts).Func())
 		c.AddFunc("*/1 * * * *", async.WithContext(errs, "send-2fa-codes", handleSendAdminTwoFactorAuthenticationCode).Func())
 		c.AddFunc("*/10 * * * *", async.WithContext(errs, "sync-billing", handleSyncBilling).Func())
+		c.AddFunc("*/10 * * * *", async.WithContext(errs, "user-account-notifications", handlePendingUserAccountNotificationRequests).Func())
 	case env.EnvironmentLocal,
 		env.EnvironmentLocalTestEmail:
 		c.AddFunc("*/1 * * * *", async.WithContext(errs, "cleanup-newsletters", handleCleanupOldNewsletter).Func())
@@ -36,7 +37,7 @@ func StartScheduler(errs chan error) error {
 		c.AddFunc("*/30 * * * *", async.WithContext(errs, "refetch", fetchNewLinksForSeedURLs).Func())
 		c.AddFunc("*/1 * * * *", async.WithContext(errs, "send-2fa-codes", handleSendAdminTwoFactorAuthenticationCode).Func())
 		c.AddFunc("*/1 * * * *", async.WithContext(errs, "sync-billing", handleSyncBilling).Func())
-		async.WithContext(errs, "user-feedback", sendUserFeedbackEmails).Func()()
+		c.AddFunc("*/1 * * * *", async.WithContext(errs, "user-account-notifications", handlePendingUserAccountNotificationRequests).Func())
 	case env.EnvironmentLocalNoEmail:
 		async.WithContext(errs, "sync-billing", handleSyncBilling).Func()()
 		async.WithContext(errs, "refetch", fetchNewLinksForSeedURLs).Func()()
