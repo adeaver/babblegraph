@@ -7,7 +7,7 @@ const (
 	genericNonUserEmailTemplateFilename string = "generic_non_user_template.html"
 )
 
-type genericTemplate struct {
+type GenericTemplate struct {
 	EmailTitle       string
 	PreheaderText    string
 	BeforeParagraphs []string
@@ -17,7 +17,7 @@ type genericTemplate struct {
 
 type genericEmailWithOptionalActionTemplate struct {
 	BaseEmailTemplate
-	genericTemplate
+	GenericTemplate
 }
 
 type GenericEmailAction struct {
@@ -43,7 +43,7 @@ func MakeGenericUserEmailHTML(input MakeGenericUserEmailHTMLInput) (*string, err
 	}
 	return openAndExecuteTemplate(genericEmailTemplateFilename, genericEmailWithOptionalActionTemplate{
 		BaseEmailTemplate: *baseEmailTemplate,
-		genericTemplate: genericTemplate{
+		GenericTemplate: GenericTemplate{
 			EmailTitle:       input.EmailTitle,
 			PreheaderText:    input.PreheaderText,
 			BeforeParagraphs: input.BeforeParagraphs,
@@ -62,7 +62,7 @@ type MakeGenericEmailHTMLInput struct {
 }
 
 func MakeGenericEmailHTML(input MakeGenericEmailHTMLInput) (*string, error) {
-	return openAndExecuteTemplate(genericNonUserEmailTemplateFilename, genericTemplate{
+	return openAndExecuteTemplate(genericNonUserEmailTemplateFilename, GenericTemplate{
 		EmailTitle:       input.EmailTitle,
 		PreheaderText:    input.PreheaderText,
 		BeforeParagraphs: input.BeforeParagraphs,

@@ -71,6 +71,9 @@ func handlePendingUserAccountNotificationRequests(c async.Context) {
 			default:
 				return fmt.Errorf("Unknown notification type %s", req.Type)
 			}
+			if err != nil {
+				return err
+			}
 			if emailHTML == nil {
 				return nil
 			}

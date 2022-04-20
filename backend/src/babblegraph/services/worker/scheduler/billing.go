@@ -130,8 +130,8 @@ func handleSyncBilling(c async.Context) {
 				default:
 					// We don't think we should be expired
 					if premiumNewsletterSubscription == nil {
-						// Stripe DOES think we're expired.
-						return fmt.Errorf("User %s should have a stripe subscription, but doesn't", sub.UserID)
+						// Stripe thinks we should be expired - at this point, we just wait it out.
+						return nil
 					}
 					numberOfDaysUntilSubscriptionExpires := int64(sub.ExpiringAt.Sub(time.Now().Add(24*time.Hour*useraccounts.DefaultSubscriptionBufferInDays)) / (time.Duration(24) * time.Hour))
 					switch numberOfDaysUntilSubscriptionExpires {
@@ -155,16 +155,25 @@ func handleSyncBilling(c async.Context) {
 							c.Warnf("Unrecognized payment state for subscription %s: %d", *premiumNewsletterSubscription.ID, premiumNewsletterSubscription.PaymentState)
 						}
 					case 2:
+						if premiumNewsletterSubscription == nil {
+							return fmt.Errorf("User %s should have a stripe subscription, but doesn't", sub.UserID)
+						}
 						if premiumNewsletterSubscription.PaymentState == billing.PaymentStateTrialNoPaymentMethod {
 							_, err := useraccountsnotifications.EnqueueNotificationRequest(tx, sub.UserID, useraccountsnotifications.NotificationTypeNeedPaymentMethodWarningUrgent, time.Now())
 							return err
 						}
 					case 1:
+						if premiumNewsletterSubscription == nil {
+							return fmt.Errorf("User %s should have a stripe subscription, but doesn't", sub.UserID)
+						}
 						if premiumNewsletterSubscription.PaymentState == billing.PaymentStateTrialNoPaymentMethod {
 							_, err := useraccountsnotifications.EnqueueNotificationRequest(tx, sub.UserID, useraccountsnotifications.NotificationTypeNeedPaymentMethodWarningVeryUrgent, time.Now())
 							return err
 						}
 					case -1:
+						if premiumNewsletterSubscription == nil {
+							return nil
+						}
 						// This happens when we've entered the buffer phase
 						switch premiumNewsletterSubscription.PaymentState {
 						case billing.PaymentStateTrialNoPaymentMethod,
