@@ -94,9 +94,18 @@ func searchText(userAuth *routermiddleware.UserAuthentication, r *router.Request
 		}, nil
 	}
 	var doesUserHaveAccount bool
+	var isLegacySubscriber bool
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		var err error
 		doesUserHaveAccount, err = useraccounts.DoesUserAlreadyHaveAccount(tx, *userID)
+		if err != nil {
+			return err
+		}
+		userSubscription, err := useraccounts.LookupSubscriptionLevelForUser(tx, *userID)
+		if err != nil {
+			return err
+		}
+		isLegacySubscriber = userSubscription != nil && *userSubscription == useraccounts.SubscriptionLevelLegacy
 		return err
 	}); err != nil {
 		return nil, err
@@ -111,7 +120,7 @@ func searchText(userAuth *routermiddleware.UserAuthentication, r *router.Request
 		return searchTextResponse{
 			Error: clienterror.ErrorNoAuth.Ptr(),
 		}, nil
-	case userAuth.SubscriptionLevel == nil && len(req.Text) > 1:
+	case isLegacySubscriber && len(req.Text) > 1:
 		return searchTextResponse{
 			Error: clienterror.ErrorRequiresUpgrade.Ptr(),
 		}, nil

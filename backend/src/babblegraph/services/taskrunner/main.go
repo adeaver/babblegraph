@@ -26,9 +26,8 @@ func main() {
         create-user: create beta-premium user
         expire-user: expire user
         create-elastic-indexes: create new indices in ElasticSearch
-        user-vocabulary: migrates user vocabulary to new model
+        migrate-legacy-users: migrates all old users onto a legacy subscription
         product-updates: send product updates
-        admin-content-document-backfill: backfill all documents with new content
         create-admin: create admin`)
 	userEmail := flag.String("user-email", "none", "Email address of user to create")
 	flag.Parse()
@@ -64,8 +63,8 @@ func main() {
 		if err := tasks.CreateUserWithBetaPremiumSubscription(emailClient, *userEmail); err != nil {
 			log.Fatal(err.Error())
 		}
-	case "user-vocabulary":
-		if err := tasks.MigrateUserVocabulary(ctx.GetDefaultLogContext()); err != nil {
+	case "migrate-legacy-users":
+		if err := tasks.MigrateLegacyUsers(ctx.GetDefaultLogContext()); err != nil {
 			log.Fatal(err.Error())
 		}
 	case "expire-user":

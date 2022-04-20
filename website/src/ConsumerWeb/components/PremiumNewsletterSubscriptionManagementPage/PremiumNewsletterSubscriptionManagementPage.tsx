@@ -93,6 +93,9 @@ const PremiumNewsletterSubscriptionManagementPage = withUserProfileInformation<P
                     <PremiumSubscriptionManagementComponent
                         subscriptionManagementToken={token} />
                     <PaymentMethodManagementComponent />
+                    <Paragraph color={TypographyColor.Primary}>
+                        Need help? Just reach out to hello@babblegraph.com
+                    </Paragraph>
                 </DisplayCard>
             </CenteredComponent>
         )
@@ -224,7 +227,7 @@ const PremiumSubscriptionManagementComponent = asBaseComponent<LookupActivePremi
                 return (
                     <div>
                         <Heading3 color={TypographyColor.Primary}>
-                            You’re currently on Babblegraph Premium
+                            You’re currently subscribed to Babblegraph
                         </Heading3>
                         {
                             isAutoRenewEnabled ? (

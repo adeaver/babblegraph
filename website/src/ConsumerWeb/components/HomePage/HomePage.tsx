@@ -13,7 +13,7 @@ import CenteredComponent from 'common/components/CenteredComponent/CenteredCompo
 import DisplayCard from 'common/components/DisplayCard/DisplayCard';
 import Page from 'common/components/Page/Page';
 import Paragraph, { Size } from 'common/typography/Paragraph';
-import { TypographyColor } from 'common/typography/common';
+import { Alignment, TypographyColor } from 'common/typography/common';
 import { Heading1, Heading3 } from 'common/typography/Heading';
 import { PhotoKey } from 'common/data/photos/Photos';
 import Link from 'common/components/Link/Link';
@@ -151,7 +151,7 @@ const PostInitialContent = () => {
                     <MailOutlineIcon className={classes.infoIcon} />
                 </Grid>
                 <Grid item xs={9} md={10}>
-                    <Paragraph>
+                    <Paragraph align={Alignment.Left}>
                         Sign up to receive a newsletter containing articles from trusted Spanish-language news sources and podcasts on your schedule, as frequently as every day or as a little as every week.
                     </Paragraph>
                 </Grid>
@@ -161,7 +161,7 @@ const PostInitialContent = () => {
                     <LibraryAddCheckIcon className={classes.infoIcon} />
                 </Grid>
                 <Grid item xs={9} md={10}>
-                    <Paragraph>
+                    <Paragraph align={Alignment.Left}>
                         Select topics that you’re interested in to keep the articles you receive fun and engaging
                     </Paragraph>
                 </Grid>
@@ -171,7 +171,7 @@ const PostInitialContent = () => {
                     <AutorenewIcon className={classes.infoIcon} />
                 </Grid>
                 <Grid item xs={9} md={10}>
-                    <Paragraph>
+                    <Paragraph align={Alignment.Left}>
                         Add new vocabulary words to receive more interesting articles that use those words so that you can reinforce them
                     </Paragraph>
                 </Grid>

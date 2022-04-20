@@ -33,6 +33,7 @@ type MakeGenericUserEmailHTMLInput struct {
 	BeforeParagraphs   []string
 	GenericEmailAction *GenericEmailAction
 	AfterParagraphs    []string
+	ExcludeFooter      bool
 }
 
 func MakeGenericUserEmailHTML(input MakeGenericUserEmailHTMLInput) (*string, error) {

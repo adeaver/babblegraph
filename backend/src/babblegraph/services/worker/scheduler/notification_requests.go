@@ -1,9 +1,9 @@
 package scheduler
 
 import (
-	email_actions "babblegraph/actions/email"
 	"babblegraph/model/billing"
 	"babblegraph/model/email"
+	"babblegraph/model/emailtemplates"
 	"babblegraph/model/routes"
 	"babblegraph/model/useraccountsnotifications"
 	"babblegraph/model/users"
@@ -11,9 +11,9 @@ import (
 	"babblegraph/util/ctx"
 	"babblegraph/util/database"
 	"babblegraph/util/env"
+	"babblegraph/util/ptr"
 	"babblegraph/util/ses"
 	"fmt"
-	"log"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -43,236 +43,254 @@ func handlePendingUserAccountNotificationRequests(c async.Context) {
 			if err != nil {
 				return err
 			}
+			if user.Status != users.UserStatusVerified {
+				c.Infof("User is not verified, not sending")
+				return nil
+			}
+			var subject, emailHTML *string
+			var emailType *email.EmailType
+			emailRecordID := email.NewEmailRecordID()
 			switch req.Type {
 			case useraccountsnotifications.NotificationTypeTrialEndingSoon:
-				return handleTrialEndingSoonNotification(c, tx, emailClient, *user, req)
-			case useraccountsnotifications.NotificationTypeAccountCreated:
-				return handleAccountCreationNotification(tx, emailClient, *user)
-			case useraccountsnotifications.NotificationTypePaymentError:
-				return handlePaymentFailureNotification(tx, emailClient, *user)
+				subject = ptr.String("Attention! Your Babblegraph trial is ending soon!")
+				emailHTML, emailType, err = handleTrialEndingSoonNotification(c, tx, emailRecordID, user)
 			case useraccountsnotifications.NotificationTypePremiumSubscriptionCanceled:
-				return handlePremiumSubscriptionCanceledNotification(tx, emailClient, *user)
-			case useraccountsnotifications.NotificationTypeInitialPremiumInformation:
-				// Temporarily disable this
-				return nil
+				subject = ptr.String("Your Babblegraph subscription has ended")
+				emailHTML, emailType, err = handleSubscriptionCanceledNotification(c, tx, emailRecordID, user)
+			case useraccountsnotifications.NotificationTypeNeedPaymentMethodWarning,
+				useraccountsnotifications.NotificationTypeNeedPaymentMethodWarningVeryUrgent:
+				subject = ptr.String("Attention! Add a payment method to keep using Babblegraph")
+				emailHTML, emailType, err = handleNeedPaymentMethodWarningNotification(c, tx, emailRecordID, user)
+			case useraccountsnotifications.NotificationTypePaymentError:
+				subject = ptr.String("Attention! There was an error processing your payment")
+				emailHTML, emailType, err = handlePaymentErrorNotification(c, tx, emailRecordID, user)
 			default:
 				return fmt.Errorf("Unknown notification type %s", req.Type)
 			}
+			if emailHTML == nil {
+				return nil
+			}
+			if err := email.InsertEmailRecord(tx, emailRecordID, user.ID, *emailType); err != nil {
+				return err
+			}
+			return email.SendEmailWithHTMLBody(tx, emailClient, email.SendEmailWithHTMLBodyInput{
+				ID:           emailRecordID,
+				EmailAddress: user.EmailAddress,
+				Subject:      *subject,
+				Body:         *emailHTML,
+			})
 		}); err != nil {
 			c.Errorf("Error fulfilling request %s: %s", req.ID, err.Error())
 		}
 	}
 }
 
-func handleTrialEndingSoonNotification(c ctx.LogContext, tx *sqlx.Tx, cl *ses.Client, user users.User, req useraccountsnotifications.NotificationRequest) error {
-	subscriptionDetails, err := billing.LookupPremiumNewsletterSubscriptionForUser(c, tx, req.UserID)
+func handleTrialEndingSoonNotification(c ctx.LogContext, tx *sqlx.Tx, emailRecordID email.ID, user *users.User) (*string, *email.EmailType, error) {
+	premiumSubscription, err := billing.LookupPremiumNewsletterSubscriptionForUser(c, tx, user.ID)
 	switch {
 	case err != nil:
-		return err
-	case subscriptionDetails == nil:
-		// User does not have an active subscription, log and eat the message
-		log.Println(fmt.Sprintf("User %s does not have an active subscription", req.UserID))
-		return nil
+		return nil, nil, err
+	case premiumSubscription == nil:
+		c.Warnf("Need to send trial ending soon, but there is no subscription for user %s", user.ID)
+		return nil, nil, nil
 	default:
-		paymentSettingsLink := routes.MakeLoginLinkWithPaymentSettingsRedirectKey()
-		var emailInput *email_actions.SendGenericEmailWithOptionalActionForRecipientInput
-		switch subscriptionDetails.PaymentState {
+		userAccessor, err := emailtemplates.GetDefaultUserAccessor(tx, user.ID)
+		if err != nil {
+			return nil, nil, err
+		}
+		beforeParagraphs := []string{
+			"Hello!",
+			"We hope you’ve been enjoying Babblegraph. If not, your feedback is always appreciated!",
+			"Just respond to this email with any ideas or comments you have about what Babblegraph could be doing better.",
+			"This email is to let you know that your trial is almost over.",
+		}
+		var action *emailtemplates.GenericEmailAction
+		switch premiumSubscription.PaymentState {
 		case billing.PaymentStateTrialNoPaymentMethod:
-			emailInput = &email_actions.SendGenericEmailWithOptionalActionForRecipientInput{
-				EmailType: email.EmailTypeTrialEndingSoonActionRequired,
-				Recipient: email.Recipient{
-					UserID:       user.ID,
-					EmailAddress: user.EmailAddress,
-				},
-				Subject:       "ACTION REQUIRED: Trial Ending Soon",
-				EmailTitle:    "ACTION REQUIRED: Trial Ending Soon",
-				PreheaderText: "Your trial is ending in a few days and there is action required!",
-				BeforeParagraphs: []string{
-					"Hello!",
-					"Thank you so much for trying out Babblegraph Premium. I hope you’ve enjoyed it!",
-					"Your trial is ending in a few days, and it looks like you don’t have a payment method attached to your account.",
-					"Without a payment method attached, your access to premium will expire when your trial ends. If you do not wish to continue with premium, then no action is needed on your part. If you do, please add a payment method below.",
-					"You will still continue to receive the Babblegraph newsletter",
-				},
-				GenericEmailAction: &email_actions.GenericEmailAction{
-					Link:       paymentSettingsLink,
-					ButtonText: "Add a payment method",
-				},
-				AfterParagraphs: []string{
-					"Thank you again for trying out Babblegraph Premium. If you have any questions or need any help, just reply to this email!",
-				},
+			beforeParagraphs = append(beforeParagraphs, "It looks like you haven’t added a payment method yet. If you’d like to continue using Babblegraph, then you’ll need to add a payment method. You can do that at this link")
+			checkoutLink, err := routes.MakePremiumSubscriptionCheckoutLink(user.ID)
+			if err != nil {
+				return nil, nil, err
+			}
+			action = &emailtemplates.GenericEmailAction{
+				Link:       *checkoutLink,
+				ButtonText: "Add a payment method to your account",
 			}
 		case billing.PaymentStateTrialPaymentMethodAdded:
-			emailInput = &email_actions.SendGenericEmailWithOptionalActionForRecipientInput{
-				EmailType: email.EmailTypeTrialEndingSoon,
-				Recipient: email.Recipient{
-					UserID:       user.ID,
-					EmailAddress: user.EmailAddress,
-				},
-				Subject:       "Your Trial is Ending Soon",
-				EmailTitle:    "Your Trial is Ending Soon",
-				PreheaderText: "Your trial is ending in a few days!",
+			paymentSettingsRoute, err := routes.MakePaymentSettingsRouteForUserID(user.ID)
+			if err != nil {
+				return nil, nil, err
+			}
+			if !premiumSubscription.IsAutoRenewEnabled {
+				beforeParagraphs = append(beforeParagraphs, "You have a payment method added to your account, but your subscription will is not set to automatically renew. If you would like to continue to use Babblegraph, you’ll need to turn auto-renew on.")
+				action = &emailtemplates.GenericEmailAction{
+					Link:       *paymentSettingsRoute,
+					ButtonText: "Manage your subscription settings here",
+				}
+			} else {
+				beforeParagraphs = append(beforeParagraphs, "You have a payment method added to your account, so your subscription will automatically renew in a few days, and you’ll be charged $29 then.")
+			}
+		case billing.PaymentStateCreatedUnpaid,
+			billing.PaymentStateTerminated,
+			billing.PaymentStateErrored,
+			billing.PaymentStateActive:
+			return nil, nil, fmt.Errorf("Invalid payment state for premium subscription %s: %d", *premiumSubscription.ID, premiumSubscription.PaymentState)
+		}
+
+		emailHTML, err := emailtemplates.MakeGenericUserEmailHTML(emailtemplates.MakeGenericUserEmailHTMLInput{
+			EmailRecordID:      emailRecordID,
+			UserAccessor:       userAccessor,
+			EmailTitle:         "Your Babblegraph trial is ending soon",
+			PreheaderText:      "Your trial of Babblegraph is set to expire in the next few days",
+			BeforeParagraphs:   beforeParagraphs,
+			GenericEmailAction: action,
+			AfterParagraphs: []string{
+				"If you have any questions or believe there is an error in this email, just respond to this email.",
+				"Thank you so much for trying out Babblegraph!",
+			},
+		})
+		if err != nil {
+			return nil, nil, err
+		}
+		return emailHTML, email.EmailTypeTrialEndingSoon.Ptr(), nil
+	}
+}
+
+func handleSubscriptionCanceledNotification(c ctx.LogContext, tx *sqlx.Tx, emailRecordID email.ID, user *users.User) (*string, *email.EmailType, error) {
+	premiumSubscription, err := billing.LookupPremiumNewsletterSubscriptionForUser(c, tx, user.ID)
+	switch {
+	case err != nil:
+		return nil, nil, err
+	case premiumSubscription != nil:
+		c.Warnf("Need to send subscription ended, but there is an active subscription for user %s", user.ID)
+		return nil, nil, nil
+	default:
+		userAccessor, err := emailtemplates.GetDefaultUserAccessor(tx, user.ID)
+		if err != nil {
+			return nil, nil, err
+		}
+		emailHTML, err := emailtemplates.MakeGenericUserEmailHTML(emailtemplates.MakeGenericUserEmailHTMLInput{
+			EmailRecordID: emailRecordID,
+			UserAccessor:  userAccessor,
+			EmailTitle:    "Your Babblegraph subscription has ended",
+			PreheaderText: "Your Babblegraph subscription has expired",
+			BeforeParagraphs: []string{
+				"Hello!",
+				"Thanks so much for trying Babblegraph!",
+				"This email is to let you know that your subscription to Babblegraph has ended. You will no longer be charged for the subscription.",
+				"If you see any new charges on your credit card statement from Babblegraph, just respond to this email and we’ll get it sorted out.",
+				"Lastly, before you go, we’d love to know what we could do better! You can respond directly to this email to give feedback.",
+				"If you have any questions or believe there is an error in this email, just respond to this email.",
+				"Thanks again so much for trying out Babblegraph!",
+			},
+		})
+		if err != nil {
+			return nil, nil, err
+		}
+		return emailHTML, email.EmailTypePremiumSubscriptionCanceled.Ptr(), nil
+	}
+}
+
+func handleNeedPaymentMethodWarningNotification(c ctx.LogContext, tx *sqlx.Tx, emailRecordID email.ID, user *users.User) (*string, *email.EmailType, error) {
+	premiumSubscription, err := billing.LookupPremiumNewsletterSubscriptionForUser(c, tx, user.ID)
+	switch {
+	case err != nil:
+		return nil, nil, err
+	case premiumSubscription == nil:
+		c.Warnf("Need to send payment method warning email, but there is no subscription for user %s", user.ID)
+		return nil, nil, nil
+	default:
+		userAccessor, err := emailtemplates.GetDefaultUserAccessor(tx, user.ID)
+		if err != nil {
+			return nil, nil, err
+		}
+		switch premiumSubscription.PaymentState {
+		case billing.PaymentStateTrialNoPaymentMethod:
+			checkoutLink, err := routes.MakePremiumSubscriptionCheckoutLink(user.ID)
+			if err != nil {
+				return nil, nil, err
+			}
+			emailHTML, err := emailtemplates.MakeGenericUserEmailHTML(emailtemplates.MakeGenericUserEmailHTMLInput{
+				EmailRecordID: emailRecordID,
+				UserAccessor:  userAccessor,
+				EmailTitle:    "Your trial is about to expire with no payment method",
+				PreheaderText: "Your trial is ending, but you don’t have a pyament method added.",
 				BeforeParagraphs: []string{
 					"Hello!",
-					"Thank you so much for trying out Babblegraph Premium. I hope you’ve enjoyed it!",
-					"Your trial is ending in a few days. In the next few days, you’ll see a charge from Babblegraph on your card statement!",
-					"If you don’t wish to be charged, you can cancel your subscription with the link below. You will retain access to Babblegraph Premium until your trial period is over.",
+					"This email is to let you know that your subscription is ending soon, but you have no payment method added to your account.",
+					"If you would like to continue to use Babblegraph, you’ll need to add a payment method. You can do that at the link below.",
 				},
-				GenericEmailAction: &email_actions.GenericEmailAction{
-					Link:       paymentSettingsLink,
-					ButtonText: "Cancel your subscription",
+				GenericEmailAction: &emailtemplates.GenericEmailAction{
+					Link:       *checkoutLink,
+					ButtonText: "Add a payment method to your account",
 				},
 				AfterParagraphs: []string{
-					"If you want to continue using Babblegraph Premium, then there’s no action on your part! Thank you for supporting Babblegraph!",
-					"If you have any questions or need any help, just reply to this email.",
+					"If you have any questions or believe there is an error in this email, just respond to this email.",
+					"Thanks again so much for trying out Babblegraph!",
 				},
+			})
+			if err != nil {
+				return nil, nil, err
 			}
-		case billing.PaymentStateActive:
-			return nil
-		case billing.PaymentStateCreatedUnpaid,
+			return emailHTML, email.EmailTypeTrialEndingSoonActionRequired.Ptr(), nil
+		case billing.PaymentStateTerminated,
 			billing.PaymentStateErrored,
-			billing.PaymentStateTerminated:
-			// Log because this error is not retryable
-			c.Infof("User %s has a subscription in state %d, but expected either 1 or 2", req.UserID, subscriptionDetails.PaymentState)
-			return nil
-		default:
-			c.Infof("User %s has a subscription in an unrecognized state %d, but expected either 1 or 2", req.UserID, subscriptionDetails.PaymentState)
-			return nil
-
+			billing.PaymentStateActive,
+			billing.PaymentStateTrialPaymentMethodAdded:
+			return nil, nil, nil
 		}
-		if emailInput == nil {
-			return fmt.Errorf("unreachable")
-		}
-		if _, err := email_actions.SendGenericEmailWithOptionalActionForRecipient(tx, cl, *emailInput); err != nil {
-			return err
-		}
-		return nil
 	}
+	return nil, nil, nil
 }
 
-func handlePremiumSubscriptionCanceledNotification(tx *sqlx.Tx, cl *ses.Client, user users.User) error {
-	emailInput := &email_actions.SendGenericEmailWithOptionalActionForRecipientInput{
-		EmailType: email.EmailTypePremiumSubscriptionCanceled,
-		Recipient: email.Recipient{
-			UserID:       user.ID,
-			EmailAddress: user.EmailAddress,
-		},
-		Subject:       "Your Premium subscription has ended.",
-		EmailTitle:    "Your Premium subscription has ended.",
-		PreheaderText: "Your Premium subscription has ended.",
-		BeforeParagraphs: []string{
-			"Hello!",
-			"Thank you so much for trying out Babblegraph Premium! This email is a confirmation that your subscription has ended.",
-			"This means that you no longer have access to Premium features.",
-			"However, you will continue to receive the daily newsletter, unless you unsubscribed!",
-		},
-		AfterParagraphs: []string{
-			"If you think that you received this email by mistake or if you have any other questions or concerns, then just reply to this email.",
-		},
-	}
-	if _, err := email_actions.SendGenericEmailWithOptionalActionForRecipient(tx, cl, *emailInput); err != nil {
-		return err
-	}
-	return nil
-}
-
-func handlePaymentFailureNotification(tx *sqlx.Tx, cl *ses.Client, user users.User) error {
-	paymentSettingsLink := routes.MakeLoginLinkWithPaymentSettingsRedirectKey()
-	emailInput := &email_actions.SendGenericEmailWithOptionalActionForRecipientInput{
-		EmailType: email.EmailTypePaymentFailureNotification,
-		Recipient: email.Recipient{
-			UserID:       user.ID,
-			EmailAddress: user.EmailAddress,
-		},
-		Subject:       "ACTION REQUIRED: Payment Failed",
-		EmailTitle:    "ACTION REQUIRED: Payment Failed",
-		PreheaderText: "A recent payment attempt failed.",
-		BeforeParagraphs: []string{
-			"Hello!",
-			"There was a failure to charge the default payment method on your account.",
-			"Double check to make sure that your payment information is correct with the link below, as well as making sure with your financial institution that the transaction is allowed!",
-			"We will automatically retry with your current payment method. Sometimes, these payment failures happen and get resolved on their own.",
-			"If it keeps failing, you will lose access to Babblegraph Premium",
-		},
-		GenericEmailAction: &email_actions.GenericEmailAction{
-			Link:       paymentSettingsLink,
-			ButtonText: "Check your payment settings",
-		},
-		AfterParagraphs: []string{
-			"If you have any questions or need any help, just reply to this email!",
-		},
-	}
-	if _, err := email_actions.SendGenericEmailWithOptionalActionForRecipient(tx, cl, *emailInput); err != nil {
-		return err
-	}
-	return nil
-}
-
-func handleAccountCreationNotification(tx *sqlx.Tx, cl *ses.Client, user users.User) error {
-	emailInput := &email_actions.SendGenericEmailWithOptionalActionForRecipientInput{
-		EmailType: email.EmailTypeAccountCreationNotification,
-		Recipient: email.Recipient{
-			UserID:       user.ID,
-			EmailAddress: user.EmailAddress,
-		},
-		Subject:       "Account Creation Confirmation",
-		EmailTitle:    "Account Creation Confirmation",
-		PreheaderText: "Your account was successfully created",
-		BeforeParagraphs: []string{
-			"Hello!",
-			"This email is to let you know that your Babblegraph account was successfully created.",
-			"If you did not initiate this, please respond to this email!",
-			"If you did initiate this, then no further action is required on your part.",
-		},
-	}
-	if _, err := email_actions.SendGenericEmailWithOptionalActionForRecipient(tx, cl, *emailInput); err != nil {
-		return err
-	}
-	return nil
-}
-
-func handleInitialPremiumInformationNotification(tx *sqlx.Tx, cl *ses.Client, user users.User) error {
+func handlePaymentErrorNotification(c ctx.LogContext, tx *sqlx.Tx, emailRecordID email.ID, user *users.User) (*string, *email.EmailType, error) {
+	premiumSubscription, err := billing.LookupPremiumNewsletterSubscriptionForUser(c, tx, user.ID)
 	switch {
-	case user.Status != users.UserStatusVerified:
-		log.Println(fmt.Sprintf("User %s is not verified, skipping", user.ID))
-		return nil
-		// Add case for already subscribed
+	case err != nil:
+		return nil, nil, err
+	case premiumSubscription == nil:
+		c.Warnf("Need to send payment method warning email, but there is no subscription for user %s", user.ID)
+		return nil, nil, nil
 	default:
+		userAccessor, err := emailtemplates.GetDefaultUserAccessor(tx, user.ID)
+		if err != nil {
+			return nil, nil, err
+		}
+		switch premiumSubscription.PaymentState {
+		case billing.PaymentStateTrialNoPaymentMethod,
+			billing.PaymentStateActive,
+			billing.PaymentStateTerminated,
+			billing.PaymentStateTrialPaymentMethodAdded:
+			return nil, nil, nil
+		case billing.PaymentStateErrored:
+			paymentSettingsRoute, err := routes.MakePaymentSettingsRouteForUserID(user.ID)
+			if err != nil {
+				return nil, nil, err
+			}
+			emailHTML, err := emailtemplates.MakeGenericUserEmailHTML(emailtemplates.MakeGenericUserEmailHTMLInput{
+				EmailRecordID: emailRecordID,
+				UserAccessor:  userAccessor,
+				EmailTitle:    "There was an error processing your payment",
+				PreheaderText: "Your subscription is about to end and there was an error processing your payment.",
+				BeforeParagraphs: []string{
+					"Hello!",
+					"This email is to let you know that there has been an error processing the payment method that we have on file.",
+					"If you would like to continue to use Babblegraph, you’ll need to add a valid payment method. You can do that at the link below.",
+				},
+				GenericEmailAction: &emailtemplates.GenericEmailAction{
+					Link:       *paymentSettingsRoute,
+					ButtonText: "Edit the payment method on your account",
+				},
+				AfterParagraphs: []string{
+					"If you have any questions or believe there is an error in this email, just respond to this email.",
+					"Thanks again so much for trying out Babblegraph!",
+				},
+			})
+			if err != nil {
+				return nil, nil, err
+			}
+			return emailHTML, email.EmailTypePaymentFailureNotification.Ptr(), nil
+		}
 	}
-	premiumInformationLink, err := routes.MakePremiumInformationLink(user.ID)
-	if err != nil {
-		return err
-	}
-	emailInput := &email_actions.SendGenericEmailWithOptionalActionForRecipientInput{
-		EmailType: email.EmailTypeInitialPremiumAdvertisement,
-		Recipient: email.Recipient{
-			UserID:       user.ID,
-			EmailAddress: user.EmailAddress,
-		},
-		Subject:       "Enhance Your Babblegraph Experience with Premium",
-		EmailTitle:    "Enhance Your Babblegraph Experience with Premium",
-		PreheaderText: "Learn more about the features you can unlock with Babblegraph Premium",
-		BeforeParagraphs: []string{
-			"Hello!",
-			"Andrew here! I hope you’ve been enjoying your subscription to Babblegraph. If not, I always appreciate feedback for how to make it better.",
-			"As you may or may not know, Babblegraph is a one-person operation and is completely independent. There’s no Silicon Valley venture capital money, no team of engineers, no lavish offices! Just me!.",
-			"To keep Babblegraph independent, support myself, and cover the costs of running Babblegraph, I introduced a premium subscription tier which gives subscribers access to exclusive features to enhace their Babblegraph experience!",
-			"Some of the features include:",
-			"The ability to pick how many articles you receive in each newsletter, and which topics they cover. Want to make sure every email has some articles on cooking? You can do that!",
-			"Pick which days you receive your newsletter and which days you don’t.",
-			"Spotlight words that are on your tracking list by having Babblegraph prominently display an article guaranteed to use a word you’re practicing.",
-		},
-		GenericEmailAction: &email_actions.GenericEmailAction{
-			Link:       *premiumInformationLink,
-			ButtonText: "Learn more about Babblegraph Premium",
-		},
-		AfterParagraphs: []string{
-			"If you’re not interested, then you can safely ignore this email and continue using the Babblegraph daily newsletter!",
-			"And if you have any questions, you can always reply to this email!",
-		},
-	}
-	if _, err := email_actions.SendGenericEmailWithOptionalActionForRecipient(tx, cl, *emailInput); err != nil {
-		return err
-	}
-	return nil
+	return nil, nil, nil
 }

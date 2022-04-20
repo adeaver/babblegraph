@@ -18,7 +18,7 @@ import DisplayCard from 'common/components/DisplayCard/DisplayCard';
 import Page from 'common/components/Page/Page';
 import { PhotoKey } from 'common/data/photos/Photos';
 import { Alignment, TypographyColor } from 'common/typography/common';
-import Paragraph from 'common/typography/Paragraph';
+import Paragraph, { Size } from 'common/typography/Paragraph';
 import { Heading1, Heading3, Heading4 } from 'common/typography/Heading';
 import Link, { LinkTarget } from 'common/components/Link/Link';
 
@@ -35,10 +35,13 @@ const PricingPage = () => {
             <CenteredComponent useLargeVersion>
                 <DisplayCard>
                     <Heading1 color={TypographyColor.Primary}>
-                        Babblegraph costs $29/year.
+                        Babblegraph costs $29/year*.
                     </Heading1>
                     <Paragraph>
                         But you can try it before you buy it with a 30-day, no credit card required free trial.
+                    </Paragraph>
+                    <Paragraph size={Size.Small}>
+                        * plus tax where applicable
                     </Paragraph>
                     <Heading3 color={TypographyColor.Primary}>
                         Why is there no free option?

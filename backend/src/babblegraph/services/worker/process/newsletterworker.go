@@ -73,72 +73,34 @@ func StartNewsletterPreloadWorkerThread(newsletterProcessor *newsletterprocessin
 				if err != nil {
 					return err
 				}
-				shouldUseVersion2, err := newsletter.IsUserInVersion2Experiment(tx, sendRequest.UserID)
+				newsletter, err := newsletter.CreateNewsletterVersion2(c, dateOfSendUTCMidnight, newsletter.CreateNewsletterVersion2Input{
+					WordsmithAccessor:     wordsmithAccessor,
+					EmailAccessor:         emailAccessor,
+					UserAccessor:          userAccessor,
+					DocsAccessor:          docsAccessor,
+					ContentAccessor:       contentAccessor,
+					PodcastAccessor:       podcastAccessor,
+					AdvertisementAccessor: advertisementAccessor,
+				})
+				switch {
+				case err != nil:
+					return err
+				case newsletter == nil:
+					return fmt.Errorf("No send requested, but attempted to create newsletter")
+				case newsletter != nil:
+					// no-op
+				}
+				newsletterBytes, err := json.Marshal(newsletter)
 				if err != nil {
-					c.Warnf("Error getting whether or not user %s is in version 2 experiment: %s", sendRequest.UserID, err.Error())
-					shouldUseVersion2 = false
+					return err
 				}
-				c.Infof("Creating newsletter for send request with ID %s", sendRequest.ID)
-				if shouldUseVersion2 {
-					newsletter, err := newsletter.CreateNewsletterVersion2(c, dateOfSendUTCMidnight, newsletter.CreateNewsletterVersion2Input{
-						WordsmithAccessor:     wordsmithAccessor,
-						EmailAccessor:         emailAccessor,
-						UserAccessor:          userAccessor,
-						DocsAccessor:          docsAccessor,
-						ContentAccessor:       contentAccessor,
-						PodcastAccessor:       podcastAccessor,
-						AdvertisementAccessor: advertisementAccessor,
-					})
-					switch {
-					case err != nil:
-						return err
-					case newsletter == nil:
-						return fmt.Errorf("No send requested, but attempted to create newsletter")
-					case newsletter != nil:
-						// no-op
-					}
-					newsletterBytes, err := json.Marshal(newsletter)
-					if err != nil {
-						return err
-					}
-					c.Infof("Storing newsletter data for send request with ID %s", sendRequest.ID)
-					return s3Storage.UploadData(storage.UploadDataInput{
-						ContentType: storage.ContentTypeApplicationJSON,
-						BucketName:  "prod-spaces-1",
-						FileName:    sendRequest.GetFileKey(),
-						Data:        string(newsletterBytes),
-					})
-				} else {
-					newsletter, err := newsletter.CreateNewsletter(c, newsletter.CreateNewsletterInput{
-						DateOfSendMidnightUTC: dateOfSendUTCMidnight,
-						WordsmithAccessor:     wordsmithAccessor,
-						EmailAccessor:         emailAccessor,
-						UserAccessor:          userAccessor,
-						DocsAccessor:          docsAccessor,
-						ContentAccessor:       contentAccessor,
-						PodcastAccessor:       podcastAccessor,
-						AdvertisementAccessor: advertisementAccessor,
-					})
-					switch {
-					case err != nil:
-						return err
-					case newsletter == nil:
-						return fmt.Errorf("No send requested, but attempted to create newsletter")
-					case newsletter != nil:
-						// no-op
-					}
-					newsletterBytes, err := json.Marshal(newsletter)
-					if err != nil {
-						return err
-					}
-					c.Infof("Storing newsletter data for send request with ID %s", sendRequest.ID)
-					return s3Storage.UploadData(storage.UploadDataInput{
-						ContentType: storage.ContentTypeApplicationJSON,
-						BucketName:  "prod-spaces-1",
-						FileName:    sendRequest.GetFileKey(),
-						Data:        string(newsletterBytes),
-					})
-				}
+				c.Infof("Storing newsletter data for send request with ID %s", sendRequest.ID)
+				return s3Storage.UploadData(storage.UploadDataInput{
+					ContentType: storage.ContentTypeApplicationJSON,
+					BucketName:  "prod-spaces-1",
+					FileName:    sendRequest.GetFileKey(),
+					Data:        string(newsletterBytes),
+				})
 			}); err != nil {
 				c.Errorf("Got error processing send request with ID %s: %s", sendRequest.ID, err.Error())
 				continue

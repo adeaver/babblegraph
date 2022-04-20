@@ -66,7 +66,8 @@ func getPodcastMetadata(r *router.Request) (interface{}, error) {
 		switch {
 		case err != nil:
 			return err
-		case subscriptionLevel == nil:
+		case subscriptionLevel == nil,
+			*subscriptionLevel == useraccounts.SubscriptionLevelLegacy:
 			cErr = clienterror.ErrorNoAuth.Ptr()
 			return nil
 		default:
