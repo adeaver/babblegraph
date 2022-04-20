@@ -79,10 +79,7 @@ const CreateUserAccountPage = withUserProfileInformation<CreateUserAccountPageOw
     LoginRedirectKey.CheckoutPage,
     (props: CreateUserAccountPageOwnProps & UserProfileComponentProps) => {
         const [ subscriptionManagementToken, premiumSubscriptionCheckoutToken ] = props.userProfile.nextTokens;
-        if (!!props.userProfile.subscriptionLevel) {
-            setLocation(`/manage/${subscriptionManagementToken}`);
-            return <div />;
-        } else if (props.userProfile.hasAccount) {
+        if (props.userProfile.hasAccount) {
             setLocation(`/checkout/${premiumSubscriptionCheckoutToken}`);
             return <div />;
         }
