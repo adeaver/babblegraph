@@ -3,9 +3,12 @@ package routermiddleware
 import (
 	"babblegraph/model/useraccounts"
 	"babblegraph/model/users"
+	"babblegraph/services/web/clientrouter/clienterror"
 	"babblegraph/services/web/clientrouter/util/auth"
 	"babblegraph/services/web/router"
 	"babblegraph/util/database"
+	"babblegraph/util/email"
+	"babblegraph/util/ptr"
 	"fmt"
 	"net/http"
 
@@ -67,6 +70,54 @@ func MaybeWithAuthentication(handler MaybeWithAuthenticationHandler) router.Requ
 		}
 		return handler(userAuth, r)
 	}
+}
+
+type ValidateUserAuthInput struct {
+	DecodedUserID users.UserID
+	EmailAddress  *string
+}
+
+func ValidateUserAuth(userAuth *UserAuthentication, input ValidateUserAuthInput) (*clienterror.Error, error) {
+	if userAuth == nil {
+		var formattedEmailAddress *string
+		if input.EmailAddress != nil {
+			formattedEmailAddress = ptr.String(email.FormatEmailAddress(*input.EmailAddress))
+		}
+		var cErr *clienterror.Error
+		var doesUserHaveAccount bool
+		err := database.WithTx(func(tx *sqlx.Tx) error {
+			var err error
+			doesUserHaveAccount, err = useraccounts.DoesUserAlreadyHaveAccount(tx, input.DecodedUserID)
+			if err != nil {
+				return err
+			}
+			if formattedEmailAddress != nil {
+				user, err := users.LookupUserForIDAndEmail(tx, input.DecodedUserID, *formattedEmailAddress)
+				switch {
+				case err != nil:
+					return err
+				case user == nil:
+					cErr = clienterror.ErrorInvalidEmailAddress.Ptr()
+					return fmt.Errorf("No user")
+				}
+			}
+			return nil
+		})
+		switch {
+		case err != nil:
+			return nil, err
+		case cErr != nil:
+			return cErr, nil
+		case doesUserHaveAccount:
+			// User has an account but is not logged in
+			return clienterror.ErrorNoAuth.Ptr(), nil
+		}
+		return nil, nil
+	}
+	if input.DecodedUserID != userAuth.UserID {
+		return clienterror.ErrorNoAuth.Ptr(), nil
+	}
+	return nil, nil
 }
 
 type WithAuthenticationHandler func(auth UserAuthentication, r *router.Request) (interface{}, error)

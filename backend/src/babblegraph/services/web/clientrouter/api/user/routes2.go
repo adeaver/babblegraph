@@ -2,10 +2,13 @@ package user
 
 import (
 	"babblegraph/model/billing"
+	"babblegraph/model/content"
 	"babblegraph/model/routes"
 	"babblegraph/model/unsubscribereason"
 	"babblegraph/model/useraccounts"
+	"babblegraph/model/usercontenttopics"
 	"babblegraph/model/users"
+	"babblegraph/services/web/clientrouter/clienterror"
 	"babblegraph/services/web/clientrouter/routermiddleware"
 	"babblegraph/services/web/clientrouter/util/routetoken"
 	"babblegraph/services/web/router"
@@ -46,6 +49,11 @@ var Routes = router.RouteGroup{
 			Path: "get_user_vocabulary_entry_1",
 			Handler: routermiddleware.WithNoBodyRequestLogger(
 				routermiddleware.MaybeWithAuthentication(getUserVocabulary),
+			),
+		}, {
+			Path: "get_user_content_topics_for_token_1",
+			Handler: routermiddleware.WithNoBodyRequestLogger(
+				routermiddleware.MaybeWithAuthentication(getUserContentTopics),
 			),
 		},
 	},
@@ -177,4 +185,48 @@ func unsubscribeUser(userAuth *routermiddleware.UserAuthentication, r *router.Re
 			Success: true,
 		}, nil
 	}
+}
+
+type getUserContentTopicsRequest struct {
+	SubscriptionManagementToken string `json:"subscription_management_token"`
+}
+
+type getUserContentTopicsResponse struct {
+	Error    *clienterror.Error `json:"error,omitempty"`
+	TopicIDs []content.TopicID  `json:"topic_ids,omitempty"`
+}
+
+func getUserContentTopics(userAuth *routermiddleware.UserAuthentication, r *router.Request) (interface{}, error) {
+	var req getUserContentTopicsRequest
+	if err := r.GetJSONBody(&req); err != nil {
+		return nil, err
+	}
+	userID, err := routetoken.ValidateTokenAndGetUserID(req.SubscriptionManagementToken, routes.SubscriptionManagementRouteEncryptionKey)
+	if err != nil {
+		return getUserContentTopicsResponse{
+			Error: clienterror.ErrorInvalidToken.Ptr(),
+		}, nil
+	}
+	cErr, err := routermiddleware.ValidateUserAuth(userAuth, routermiddleware.ValidateUserAuthInput{
+		DecodedUserID: *userID,
+	})
+	switch {
+	case err != nil:
+		return nil, err
+	case cErr != nil:
+		return getUserContentTopicsResponse{
+			Error: cErr,
+		}, nil
+	}
+	var topicIDs []content.TopicID
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		var err error
+		topicIDs, err = usercontenttopics.GetTopicIDsForUser(tx, *userID)
+		return err
+	}); err != nil {
+		return nil, err
+	}
+	return getUserContentTopicsResponse{
+		TopicIDs: topicIDs,
+	}, nil
 }
