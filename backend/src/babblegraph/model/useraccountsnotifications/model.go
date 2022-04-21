@@ -44,6 +44,9 @@ const (
 	NotificationTypeTrialEndingSoon                    NotificationType = "trial_ending_soon"
 	NotificationTypeNeedPaymentMethodWarningUrgent     NotificationType = "need_payment_method_warning_urgent"
 	NotificationTypeNeedPaymentMethodWarningVeryUrgent NotificationType = "need_payment_method_warning_very_urgent"
+
+	NotificationTypeAccountCreatedDEPRECATED            NotificationType = "account_created"
+	NotificationTypeInitialPremiumInformationDEPRECATED NotificationType = "initial_premium_information"
 )
 
 type notificationRequestDebounceFulfillmentRecordID string

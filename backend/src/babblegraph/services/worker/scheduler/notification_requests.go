@@ -66,7 +66,9 @@ func handlePendingUserAccountNotificationRequests(c async.Context) {
 			case useraccountsnotifications.NotificationTypePaymentError:
 				subject = ptr.String("Attention! There was an error processing your payment")
 				emailHTML, emailType, err = handlePaymentErrorNotification(c, tx, emailRecordID, user)
-			case useraccountsnotifications.NotificationTypeNeedPaymentMethodWarningUrgent:
+			case useraccountsnotifications.NotificationTypeNeedPaymentMethodWarningUrgent,
+				useraccountsnotifications.NotificationTypeAccountCreatedDEPRECATED,
+				useraccountsnotifications.NotificationTypeInitialPremiumInformationDEPRECATED:
 				c.Infof("Skipping type %s for now", req.Type)
 			default:
 				return fmt.Errorf("Unknown notification type %s", req.Type)
