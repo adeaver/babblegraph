@@ -1,8 +1,8 @@
 package scheduler
 
 import (
-	email_actions "babblegraph/actions/email"
 	"babblegraph/model/email"
+	"babblegraph/model/emailtemplates"
 	"babblegraph/model/routes"
 	"babblegraph/model/useraccounts"
 	"babblegraph/model/users"
@@ -63,13 +63,17 @@ func sendForgotPasswordEmailForUserAndAttemptID(tx *sqlx.Tx, sesClient *ses.Clie
 	if err != nil {
 		return err
 	}
-	if _, err := email_actions.SendGenericEmailWithOptionalActionForRecipient(tx, sesClient, email_actions.SendGenericEmailWithOptionalActionForRecipientInput{
-		EmailType: email.EmailTypePasswordReset,
-		Recipient: email.Recipient{
-			UserID:       user.ID,
-			EmailAddress: user.EmailAddress,
-		},
-		Subject:       "Reset your Babblegraph Account Password",
+	emailRecordID := email.NewEmailRecordID()
+	if err := email.InsertEmailRecord(tx, emailRecordID, user.ID, email.EmailTypePasswordReset); err != nil {
+		return err
+	}
+	userAccessor, err := emailtemplates.GetDefaultUserAccessor(tx, user.ID)
+	if err != nil {
+		return err
+	}
+	emailHTML, err := emailtemplates.MakeGenericUserEmailHTML(emailtemplates.MakeGenericUserEmailHTMLInput{
+		EmailRecordID: emailRecordID,
+		UserAccessor:  userAccessor,
 		EmailTitle:    "Password Reset",
 		PreheaderText: "Reset your password for your Babblegraph account",
 		BeforeParagraphs: []string{
@@ -78,17 +82,23 @@ func sendForgotPasswordEmailForUserAndAttemptID(tx *sqlx.Tx, sesClient *ses.Clie
 			"If you did not make this request, you do not need to do anything. No one has access to your account.",
 			"If you did make this request, you can reset your password using the button below.",
 		},
-		GenericEmailAction: &email_actions.GenericEmailAction{
+		GenericEmailAction: &emailtemplates.GenericEmailAction{
 			Link:       *passwordResetLink,
 			ButtonText: "Reset your password",
 		},
 		AfterParagraphs: []string{
 			"This link is only valid for 15 minutes after the delivery time.",
 		},
-	}); err != nil {
+	})
+	if err != nil {
 		return err
 	}
-	return nil
+	return email.SendEmailWithHTMLBody(tx, sesClient, email.SendEmailWithHTMLBodyInput{
+		ID:           emailRecordID,
+		EmailAddress: user.EmailAddress,
+		Subject:      "Reset your Babblegraph Account Password",
+		Body:         *emailHTML,
+	})
 }
 
 func handleArchiveForgotPasswordAttempts(c async.Context) {

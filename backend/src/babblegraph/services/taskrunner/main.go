@@ -22,12 +22,8 @@ func main() {
 	}
 	taskName := flag.String("task", "none", `Name of task to run
         sample-email: send sample
-        privacy-policy: send privacy policy
-        create-user: create beta-premium user
-        expire-user: expire user
         create-elastic-indexes: create new indices in ElasticSearch
         migrate-legacy-users: migrates all old users onto a legacy subscription
-        product-updates: send product updates
         create-admin: create admin`)
 	userEmail := flag.String("user-email", "none", "Email address of user to create")
 	flag.Parse()
@@ -55,43 +51,19 @@ func main() {
 		if err := tasks.SendSampleNewsletter(emailClient, *userEmail); err != nil {
 			log.Fatal(err.Error())
 		}
-	case "create-user":
-		// Creates a user with Beta Premium Subscription
-		if userEmail == nil {
-			log.Fatal("no email specified")
-		}
-		if err := tasks.CreateUserWithBetaPremiumSubscription(emailClient, *userEmail); err != nil {
-			log.Fatal(err.Error())
-		}
 	case "migrate-legacy-users":
 		if err := tasks.MigrateLegacyUsers(ctx.GetDefaultLogContext()); err != nil {
 			log.Fatal(err.Error())
 		}
-	case "expire-user":
-		// Creates a user with Beta Premium Subscription
-		if userEmail == nil {
-			log.Fatal("no email specified")
-		}
-		if err := tasks.DeactivateUserSubscriptionForUser(emailClient, *userEmail); err != nil {
-			log.Fatal(err.Error())
-		}
-	case "privacy-policy":
-		tasks.SendPrivacyPolicyUpdate()
 	case "create-elastic-indexes":
 		if err := tasks.CreateElasticIndexes(); err != nil {
 			log.Fatal(err.Error())
 		}
-	case "product-updates":
-		tasks.SendProductUpdates()
 	case "create-admin":
 		if userEmail == nil {
 			log.Fatal("no email specified")
 		}
 		if err := tasks.CreateAdminAndEmitToken(*userEmail); err != nil {
-			log.Fatal(err.Error())
-		}
-	case "admin-content-document-backfill":
-		if err := tasks.ReindexDocuments(); err != nil {
 			log.Fatal(err.Error())
 		}
 	default:
