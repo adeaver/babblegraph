@@ -1,7 +1,6 @@
 package uservocabulary
 
 import (
-	"babblegraph/model/userlemma"
 	"babblegraph/model/users"
 	"babblegraph/util/ptr"
 	"babblegraph/wordsmith"
@@ -152,14 +151,6 @@ func GetUserVocabularySpotlightRecords(tx *sqlx.Tx, userID users.UserID, languag
 
 func UpsertUserVocabularySpotlightRecord(tx *sqlx.Tx, userID users.UserID, languageCode wordsmith.LanguageCode, id UserVocabularyEntryID) error {
 	if _, err := tx.Exec(upsertVocabularySpotlightRecordQuery, userID, languageCode, id); err != nil {
-		return err
-	}
-	return nil
-}
-
-// TODO(migration): delete after migration
-func CreateUserVocabularyFromSpotlight(tx *sqlx.Tx, userVocabularyEntryID UserVocabularyEntryID, spotlight userlemma.UserLemmaReinforcementSpotlightRecord) error {
-	if _, err := tx.Exec(createVocabularySpotlightRecordQuery, spotlight.UserID, spotlight.LanguageCode, userVocabularyEntryID, spotlight.LastSentOn, spotlight.NumberOfTimesSent); err != nil {
 		return err
 	}
 	return nil
