@@ -1,7 +1,6 @@
 package content
 
 import (
-	"babblegraph/util/ctx"
 	"babblegraph/util/urlparser"
 	"babblegraph/wordsmith"
 	"fmt"
@@ -18,8 +17,7 @@ const (
 	getSourceSeedTopicMappingQuery                = "SELECT * FROM content_source_seed_topic_mapping WHERE topic_id = $1 AND source_seed_id = $2"
 	getSourceSeedTopicMappingForSourceSeedIDQuery = "SELECT * FROM content_source_seed_topic_mapping WHERE source_seed_id = $1"
 
-	getSourceSeedForSourceQuery                  = "SELECT * FROM content_source_seed WHERE root_id = $1"
-	getSourceSeedTopicMappingForSourceSeedsQuery = "SELECT * FROM content_source_seed_topic_mapping WHERE topic_id = '%s' AND source_seed_id IN (?)"
+	getSourceSeedForSourceQuery = "SELECT * FROM content_source_seed WHERE root_id = $1"
 
 	getTopicIDsForSourceSeedIDsQuery = "SELECT DISTINCT(topic_id) FROM content_source_seed_topic_mapping WHERE _id IN (?)"
 
@@ -82,30 +80,6 @@ func lookupSourceSeedMappingID(tx *sqlx.Tx, sourceSeedID SourceSeedID, topicID T
 	}
 }
 
-func LookupTopicMappingIDForURL(c ctx.LogContext, tx *sqlx.Tx, u urlparser.ParsedURL, topicID TopicID) (*TopicMappingID, error) {
-	sourceSeedID, err := lookupSourceSeedIDForParsedURL(tx, u)
-	switch {
-	case err != nil:
-		return nil, err
-	case sourceSeedID != nil:
-		sourceSeedTopicMappingID, err := lookupSourceSeedMappingID(tx, *sourceSeedID, topicID)
-		switch {
-		case err != nil:
-			return nil, err
-		case sourceSeedTopicMappingID == nil:
-			c.Warnf("No source seed mapping for source seed %s and topic %s", *sourceSeedID, topicID)
-			return nil, nil
-		}
-		return MustMakeTopicMappingID(MakeTopicMappingIDInput{
-			SourceSeedTopicMappingID: sourceSeedTopicMappingID,
-		}).Ptr(), nil
-	default:
-		c.Warnf("No source seed found for URL with identifier %s", u.URLIdentifier)
-		// TODO: implement same logic with source mapping
-		return nil, nil
-	}
-}
-
 func LookupTopicMappingIDForSourceSeedID(tx *sqlx.Tx, sourceSeedID SourceSeedID) ([]TopicMappingID, []TopicID, error) {
 	var matches []dbSourceSeedTopicMapping
 	if err := tx.Select(&matches, getSourceSeedTopicMappingForSourceSeedIDQuery, sourceSeedID); err != nil {
@@ -120,44 +94,6 @@ func LookupTopicMappingIDForSourceSeedID(tx *sqlx.Tx, sourceSeedID SourceSeedID)
 		topicIDs = append(topicIDs, m.TopicID)
 	}
 	return topicMappingIDs, topicIDs, nil
-}
-
-func LookupTopicMappingIDForSourceAndTopic(c ctx.LogContext, tx *sqlx.Tx, sourceID SourceID, topicID TopicID) (*TopicMappingID, error) {
-	matches, err := lookupSourceSeedsForSource(tx, sourceID)
-	switch {
-	case err != nil:
-		return nil, err
-	case matches == nil:
-		c.Warnf("No source seeds found for source ID %s", sourceID)
-		return nil, nil
-	default:
-		var sourceSeedIDs []SourceSeedID
-		for _, m := range matches {
-			sourceSeedIDs = append(sourceSeedIDs, m.ID)
-		}
-		query, args, err := sqlx.In(fmt.Sprintf(getSourceSeedTopicMappingForSourceSeedsQuery, topicID), sourceSeedIDs)
-		if err != nil {
-			return nil, err
-		}
-		sql := tx.Rebind(query)
-		var mappings []dbSourceSeedTopicMapping
-		err = tx.Select(&mappings, sql, args...)
-		switch {
-		case err != nil:
-			return nil, err
-		case len(mappings) == 0:
-			return nil, nil
-		case len(mappings) == 1:
-			return MustMakeTopicMappingID(MakeTopicMappingIDInput{
-				SourceSeedTopicMappingID: mappings[0].ID.Ptr(),
-			}).Ptr(), nil
-		default:
-			c.Infof("Found %d mappings for source ID %s and topic %s: %+v, choosing the first one", len(mappings), sourceID, topicID, mappings)
-			return MustMakeTopicMappingID(MakeTopicMappingIDInput{
-				SourceSeedTopicMappingID: mappings[0].ID.Ptr(),
-			}).Ptr(), nil
-		}
-	}
 }
 
 func lookupSourceSeedsForSource(tx *sqlx.Tx, sourceID SourceID) ([]dbSourceSeed, error) {
