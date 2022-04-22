@@ -12,7 +12,6 @@ import AboutPage from 'ConsumerWeb/components/AboutPage/AboutPage';
 import PrivacyPolicyPage from 'ConsumerWeb/components/PrivacyPolicyPage/PrivacyPolicyPage';
 import PricingPage from 'ConsumerWeb/components/PricingPage/PricingPage';
 
-import PaywallReportPage from 'ConsumerWeb/components/PaywallReportPage/PaywallReportPage';
 import AdvertisingPolicyPage from 'ConsumerWeb/components/AdvertisingPolicyPage/AdvertisingPolicyPage';
 
 import BlogListPage from 'ConsumerWeb/components/BlogListPage/BlogListPage';
@@ -50,7 +49,6 @@ class App extends React.Component{
                     <Route exact path="/manage/:token/premium" component={PremiumInformationPage} />
                     <Route path="/manage/:token/payment-settings" component={PremiumNewsletterSubscriptionManagementPage} />
                     <Route exact path="/manage/:token" component={SubscriptionManagementHomePage} />
-                    <Route path="/paywall-thank-you/:token" component={PaywallReportPage} />
 
                     { /* Podcast Player */ }
                     <Route path="/podcast/:userPodcastID" component={PodcastPlayerPage} />
