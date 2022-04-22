@@ -20,7 +20,8 @@ const (
         ) ON CONFLICT (user_id, language_code, unique_hash) DO UPDATE
         SET
             is_active = $7,
-            is_visible = $8
+            is_visible = $8,
+            last_modified_at = timezone('utc', now())
         RETURNING _id`
 
 	selectVocabularySpotlightRecordForUserQuery = "SELECT * FROM user_vocabulary_spotlight_records WHERE user_id = $1 AND language_code = $2 ORDER BY last_sent_on ASC"
