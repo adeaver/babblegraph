@@ -9,10 +9,13 @@ import (
 	"babblegraph/util/ctx"
 	"babblegraph/util/deref"
 	"babblegraph/util/ptr"
+	"babblegraph/wordsmith"
+	"regexp"
 	"sort"
-	"strings"
 	"time"
 )
+
+var multipleSpaces = regexp.MustCompile(" +")
 
 type getSpotlightLemmaForNewsletterInput struct {
 	emailRecordID           email.ID
@@ -124,9 +127,9 @@ func lookupSpotlightForAllPotentialSpotlights(c ctx.LogContext, input lookupSpot
 			if input.excludeFocusContentIneligible && !isDocumentFocusContentEligible(d.Document) {
 				continue
 			}
-			description := deref.String(d.Document.LemmatizedDescription, "")
-			for _, lemmaID := range strings.Split(description, " ") {
-				if lemmaID == string(potentialSpotlight) {
+			lemmaPhrasesInDescription := multipleSpaces.Split(deref.String(d.Document.LemmatizedDescription, ""), -1)
+			for idx := 0; idx < len(lemmaPhrasesInDescription); idx++ {
+				if containsSpotlight(lemmaPhrasesInDescription, idx, lemmaIDPhrases) {
 					link, err := makeLinkFromDocument(c, makeLinkFromDocumentInput{
 						emailRecordID:   input.emailRecordID,
 						userAccessor:    input.userAccessor,
@@ -138,9 +141,6 @@ func lookupSpotlightForAllPotentialSpotlights(c ctx.LogContext, input lookupSpot
 						return nil, err
 					case link == nil:
 						continue
-					}
-					if err := input.userAccessor.insertSpotlightReinforcementRecord(potentialSpotlight); err != nil {
-						return nil, err
 					}
 					if err := input.userAccessor.insertSpotlightReinforcementRecord(potentialSpotlight); err != nil {
 						return nil, err
@@ -181,4 +181,22 @@ func getOrderedListOfPotentialSpotlights(userAccessor userPreferencesAccessor) [
 		return iSentOn.Before(jSentOn)
 	})
 	return append(entriesNotSent, sentEntries...)
+}
+
+func containsSpotlight(tokenizedDescription []string, currentIdx int, lemmaPhrases [][]wordsmith.LemmaID) bool {
+	for _, lemmaPhrase := range lemmaPhrases {
+		isMatch := false
+		if currentIdx+len(lemmaPhrase) < len(tokenizedDescription) {
+			isMatch = true
+			for idx, lemmaID := range lemmaPhrase {
+				if lemmaID.Str() != tokenizedDescription[currentIdx+idx] {
+					isMatch = false
+				}
+			}
+		}
+		if isMatch {
+			return true
+		}
+	}
+	return false
 }
