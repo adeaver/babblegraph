@@ -25,18 +25,6 @@ func RegisterRouteGroups() error {
 				Handler:          handleSignupUser,
 				TrackEventWithID: ptr.String("signup"),
 			}, {
-				Path:    "get_user_lemmas_for_token_1",
-				Handler: handleGetUserLemmasForToken,
-			}, {
-				Path:    "add_user_lemma_for_token_1",
-				Handler: handleAddUserLemmasForToken,
-			}, {
-				Path:    "remove_user_lemma_for_token_1",
-				Handler: removeUserLemmaForToken,
-			}, {
-				Path:    "update_user_lemma_active_state_for_token_1",
-				Handler: handleUpdateUserLemmaActiveStateForToken,
-			}, {
 				Path:    "handle_request_password_reset_link_1",
 				Handler: requestPasswordResetLink,
 			},

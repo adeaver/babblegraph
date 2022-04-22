@@ -16,18 +16,6 @@ type domainQuery struct {
 	Domain string `db:"domain"`
 }
 
-func GetDomainsWithUnfetchedLinks(tx *sqlx.Tx) ([]string, error) {
-	var domainsWithUnfetchedLinks []domainQuery
-	if err := tx.Select(&domainsWithUnfetchedLinks, "SELECT DISTINCT(domain) FROM links2 WHERE last_fetch_version IS DISTINCT FROM $1", CurrentFetchVersion); err != nil {
-		return nil, err
-	}
-	var out []string
-	for _, domain := range domainsWithUnfetchedLinks {
-		out = append(out, domain.Domain)
-	}
-	return out, nil
-}
-
 type URLWithSourceMapping struct {
 	URL      urlparser.ParsedURL
 	SourceID content.SourceID
@@ -53,29 +41,6 @@ func SetURLAsFetched(tx *sqlx.Tx, urlIdentifier URLIdentifier) error {
 		return err
 	}
 	return nil
-}
-
-func LookupUnfetchedLinkForDomain(tx *sqlx.Tx, domain string) (*Link, error) {
-	out, err := LookupBulkUnfetchedLinksForDomain(tx, domain, 1)
-	if err != nil {
-		return nil, err
-	}
-	if len(out) != 1 {
-		return nil, nil
-	}
-	return &out[0], nil
-}
-
-func LookupBulkUnfetchedLinksForDomain(tx *sqlx.Tx, domain string, chunkSize int) ([]Link, error) {
-	var matches []dbLink
-	if err := tx.Select(&matches, "SELECT * FROM links2 WHERE last_fetch_version IS DISTINCT FROM $1 AND domain=$2 ORDER BY seed_job_ingest_timestamp DESC NULLS LAST, seq_num ASC LIMIT $3", CurrentFetchVersion, domain, chunkSize); err != nil {
-		return nil, err
-	}
-	var out []Link
-	for _, match := range matches {
-		out = append(out, match.ToNonDB())
-	}
-	return out, nil
 }
 
 func LookupBulkUnfetchedLinksForSourceID(tx *sqlx.Tx, sourceID content.SourceID, chunkSize int) ([]Link, error) {
@@ -128,14 +93,6 @@ func GetLinksCursor(tx *sqlx.Tx, fn func(link Link) (bool, error)) error {
 		case err != nil && !shouldEndIteration:
 			log.Println(fmt.Sprintf("Got error: %s, continuing...", err.Error()))
 		}
-	}
-	return nil
-}
-
-// TODO(content-migration): get rid of this
-func UpdateLinkSource(tx *sqlx.Tx, u urlparser.ParsedURL, sourceID content.SourceID) error {
-	if _, err := tx.Exec("UPDATE links2 SET source_id = $1 WHERE url_identifier = $2", sourceID, u.URLIdentifier); err != nil {
-		return err
 	}
 	return nil
 }

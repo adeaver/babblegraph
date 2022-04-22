@@ -1,9 +1,11 @@
 package index
 
 import (
-	"babblegraph/actions/email"
+	"babblegraph/model/email"
+	"babblegraph/model/routes"
 	"babblegraph/services/web/clientrouter/middleware"
 	"babblegraph/util/database"
+	"babblegraph/util/encrypt"
 	"fmt"
 	"log"
 	"net/http"
@@ -28,7 +30,16 @@ func HandleServeLogo(staticFileDirName string) func(w http.ResponseWriter, r *ht
 				return
 			}
 			if err := database.WithTx(func(tx *sqlx.Tx) error {
-				return email.HandleDailyEmailOpenToken(tx, token)
+				return encrypt.WithDecodedToken(token, func(t encrypt.TokenPair) error {
+					if t.Key != routes.EmailOpenedKey.Str() {
+						return fmt.Errorf("Token has wrong key: %s", t.Key)
+					}
+					emailRecordID, ok := t.Value.(string)
+					if !ok {
+						return fmt.Errorf("Token has wrong value type")
+					}
+					return email.SetEmailFirstOpened(tx, email.ID(emailRecordID))
+				})
 			}); err != nil {
 				log.Println(fmt.Sprintf("Got error handling token %s: %s", token, err.Error()))
 			}
