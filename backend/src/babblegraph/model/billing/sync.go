@@ -56,16 +56,17 @@ func SyncUserAccountWithPremiumNewsletterSubscription(tx *sqlx.Tx, userID users.
 	if premiumNewsletterSubscription == nil {
 		return useraccounts.ExpireSubscriptionForUser(tx, userID)
 	}
+	subscriptionLevel, err := useraccounts.LookupSubscriptionLevelForUser(tx, userID)
+	if err != nil {
+		return err
+	}
 	switch premiumNewsletterSubscription.PaymentState {
 	case PaymentStateCreatedUnpaid:
 		return nil
 	case PaymentStateTrialNoPaymentMethod,
 		PaymentStateTrialPaymentMethodAdded,
 		PaymentStateActive:
-		subscriptionLevel, err := useraccounts.LookupSubscriptionLevelForUser(tx, userID)
 		switch {
-		case err != nil:
-			return err
 		case subscriptionLevel == nil,
 			*subscriptionLevel == useraccounts.SubscriptionLevelLegacy:
 			return useraccounts.AddSubscriptionLevelForUser(tx, useraccounts.AddSubscriptionLevelForUserInput{
@@ -79,7 +80,11 @@ func SyncUserAccountWithPremiumNewsletterSubscription(tx *sqlx.Tx, userID users.
 		}
 	case PaymentStateErrored,
 		PaymentStateTerminated:
-		if subscriptionLevel == nil || *subscriptionLevel != useraccounts.SubscriptionLevelLegacy {
+		switch {
+		case subscriptionLevel == nil,
+			*subscriptionLevel == useraccounts.SubscriptionLevelLegacy:
+			// no-op
+		case subscriptionLevel != nil:
 			return useraccounts.ExpireSubscriptionForUser(tx, userID)
 		}
 	default:
