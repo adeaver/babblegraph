@@ -79,7 +79,9 @@ func SyncUserAccountWithPremiumNewsletterSubscription(tx *sqlx.Tx, userID users.
 		}
 	case PaymentStateErrored,
 		PaymentStateTerminated:
-		return useraccounts.ExpireSubscriptionForUser(tx, userID)
+		if subscriptionLevel == nil || *subscriptionLevel != useraccounts.SubscriptionLevelLegacy {
+			return useraccounts.ExpireSubscriptionForUser(tx, userID)
+		}
 	default:
 		return fmt.Errorf("Unsupported Payment State %d", premiumNewsletterSubscription.PaymentState)
 	}
