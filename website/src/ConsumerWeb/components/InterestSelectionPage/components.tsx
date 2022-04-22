@@ -17,21 +17,32 @@ import {
     GetTopicsForLanguageResponse,
     getTopicsForLanguage,
 } from 'ConsumerWeb/api/content/content';
+import {
+    GetUserContentTopicsResponse,
+    getUserContentTopics,
+} from 'ConsumerWeb/api/user/content';
 
 type TopicSelectorOwnProps = {
+    subscriptionManagementToken: string;
     languageCode: WordsmithLanguageCode;
 
-    handleTopicsChange: (topics: Topic[]) => void;
+    isDisabled?: boolean;
+
+    handleUserTopicsChange: (topics: Array<Topic>) => void;
 }
 
+type TopicSelectorAPIProps = GetUserContentTopicsResponse & GetTopicsForLanguageResponse;
+
 export const TopicSelector = asBaseComponent(
-    (props: BaseComponentProps & TopicSelectorOwnProps & GetTopicsForLanguageResponse) => {
+    (props: BaseComponentProps & TopicSelectorOwnProps & TopicSelectorAPIProps) => {
         const topicsByID = (props.results || []).reduce((acc: { [topicID: string]: Topic }, next: Topic) => ({
             ...acc,
             [next.topicId]: next,
         }), {});
 
-        const [ checkedTopics, setCheckedTopics ] = useState<Topic[]>([]);
+        const [ checkedTopics, setCheckedTopics ] = useState<Array<Topic>>(
+            (props.results || []).filter((t: Topic) => props.topicIds.indexOf(t.topicId) !== -1)
+        );
         const handleToggleSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
             const topicID = event.target.value as string;
             let nextTopics = checkedTopics;
@@ -41,7 +52,7 @@ export const TopicSelector = asBaseComponent(
                 nextTopics = checkedTopics.filter((t: Topic) => t.topicId !== topicID);
             }
             setCheckedTopics(nextTopics);
-            props.handleTopicsChange(nextTopics);
+            props.handleUserTopicsChange(nextTopics);
         }
 
         return (
@@ -55,6 +66,7 @@ export const TopicSelector = asBaseComponent(
                                         value={t.topicId}
                                         onChange={handleToggleSelected}
                                         checked={checkedTopics.some((t2: Topic) => t.topicId === t2.topicId)}
+                                        disabled={!!props.isDisabled}
                                         name={`checkbox-${t.topicId}`} />
                                 }
                                 label={toTitleCase(t.englishLabel)} />
@@ -68,6 +80,24 @@ export const TopicSelector = asBaseComponent(
         ownProps: TopicSelectorOwnProps,
         onSuccess: (resp: GetTopicsForLanguageResponse) => void,
         onError: (err: Error) => void,
-    ) => getTopicsForLanguage({ languageCode: ownProps.languageCode }, onSuccess, onError),
+    ) => {
+        getTopicsForLanguage(
+            {
+                languageCode: ownProps.languageCode
+            },
+            (resp: GetTopicsForLanguageResponse) => {
+                getUserContentTopics({
+                    subscriptionManagementToken: ownProps.subscriptionManagementToken,
+                },
+                (resp2: GetUserContentTopicsResponse) => {
+                    onSuccess({
+                        ...resp,
+                        ...resp2,
+                    });
+                },
+                onError);
+            },
+            onError);
+    },
     false,
 );

@@ -18,9 +18,6 @@ func RegisterRouteGroups() error {
 		Prefix: "user",
 		Routes: []api.Route{
 			{
-				Path:    "update_user_content_topics_for_token_1",
-				Handler: handleUpdateUserContentTopicsForToken,
-			}, {
 				Path:             "signup_user_1",
 				Handler:          handleSignupUser,
 				TrackEventWithID: ptr.String("signup"),

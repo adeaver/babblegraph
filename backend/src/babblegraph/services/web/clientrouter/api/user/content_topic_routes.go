@@ -2,79 +2,121 @@ package user
 
 import (
 	"babblegraph/model/content"
-	"babblegraph/model/contenttopics"
+	"babblegraph/model/routes"
 	"babblegraph/model/usercontenttopics"
+	"babblegraph/services/web/clientrouter/clienterror"
+	"babblegraph/services/web/clientrouter/routermiddleware"
+	"babblegraph/services/web/clientrouter/util/routetoken"
+	"babblegraph/services/web/router"
 	"babblegraph/util/database"
-	"babblegraph/util/email"
-	"babblegraph/util/ptr"
-	"encoding/json"
+	"babblegraph/wordsmith"
 
 	"github.com/jmoiron/sqlx"
 )
 
-type getUserContentTopicsForTokenRequest struct {
-	Token string `json:"token"`
+type getUserContentTopicsRequest struct {
+	SubscriptionManagementToken string `json:"subscription_management_token"`
 }
 
-type getUserContentTopicsForTokenResponse struct {
-	ContentTopics []contenttopics.ContentTopic `json:"content_topics"`
+type getUserContentTopicsResponse struct {
+	Error    *clienterror.Error `json:"error,omitempty"`
+	TopicIDs []content.TopicID  `json:"topic_ids,omitempty"`
 }
 
-func handleGetUserContentTopicsForToken(body []byte) (interface{}, error) {
-	var req getUserContentTopicsForTokenRequest
-	if err := json.Unmarshal(body, &req); err != nil {
+func getUserContentTopics(userAuth *routermiddleware.UserAuthentication, r *router.Request) (interface{}, error) {
+	var req getUserContentTopicsRequest
+	if err := r.GetJSONBody(&req); err != nil {
 		return nil, err
 	}
-	userID, err := parseSubscriptionManagementToken(req.Token, nil)
+	userID, err := routetoken.ValidateTokenAndGetUserID(req.SubscriptionManagementToken, routes.SubscriptionManagementRouteEncryptionKey)
 	if err != nil {
-		return nil, err
+		return getUserContentTopicsResponse{
+			Error: clienterror.ErrorInvalidToken.Ptr(),
+		}, nil
 	}
-	var contentTopics []contenttopics.ContentTopic
+	cErr, err := routermiddleware.ValidateUserAuth(userAuth, routermiddleware.ValidateUserAuthInput{
+		DecodedUserID: *userID,
+	})
+	switch {
+	case err != nil:
+		return nil, err
+	case cErr != nil:
+		return getUserContentTopicsResponse{
+			Error: cErr,
+		}, nil
+	}
+	var topicIDs []content.TopicID
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		var err error
-		contentTopics, err = usercontenttopics.GetContentTopicsForUser(tx, *userID)
+		topicIDs, err = usercontenttopics.GetTopicIDsForUser(tx, *userID)
 		return err
 	}); err != nil {
 		return nil, err
 	}
-	return getUserContentTopicsForTokenResponse{
-		ContentTopics: contentTopics,
+	return getUserContentTopicsResponse{
+		TopicIDs: topicIDs,
 	}, nil
 }
 
-type updateUserContentTopicsForTokenRequest struct {
-	Token         string                       `json:"token"`
-	EmailAddress  string                       `json:"email_address"`
-	ContentTopics []contenttopics.ContentTopic `json:"content_topics"`
+type upsertUserContentTopicsRequest struct {
+	EmailAddress                *string           `json:"email_address,omitempty"`
+	SubscriptionManagementToken string            `json:"subscription_management_token"`
+	TopicIDs                    []content.TopicID `json:"topic_ids"`
+	LanguageCode                string            `json:"language_code"`
 }
 
-type updateUserContentTopicsForTokenResponse struct{}
+type upsertUserContentTopicsResponse struct {
+	Success bool               `json:"success"`
+	Error   *clienterror.Error `json:"error,omitempty"`
+}
 
-func handleUpdateUserContentTopicsForToken(body []byte) (interface{}, error) {
-	var req updateUserContentTopicsForTokenRequest
-	if err := json.Unmarshal(body, &req); err != nil {
+func upsertUserContentTopics(userAuth *routermiddleware.UserAuthentication, r *router.Request) (interface{}, error) {
+	var req upsertUserContentTopicsRequest
+	if err := r.GetJSONBody(&req); err != nil {
 		return nil, err
 	}
-	formattedEmailAddress := email.FormatEmailAddress(req.EmailAddress)
-	userID, err := parseSubscriptionManagementToken(req.Token, ptr.String(formattedEmailAddress))
+	userID, err := routetoken.ValidateTokenAndGetUserID(req.SubscriptionManagementToken, routes.SubscriptionManagementRouteEncryptionKey)
 	if err != nil {
+		return upsertUserContentTopicsResponse{
+			Error: clienterror.ErrorInvalidToken.Ptr(),
+		}, nil
+	}
+	cErr, err := routermiddleware.ValidateUserAuth(userAuth, routermiddleware.ValidateUserAuthInput{
+		DecodedUserID: *userID,
+		EmailAddress:  req.EmailAddress,
+	})
+	switch {
+	case err != nil:
 		return nil, err
+	case cErr != nil:
+		return upsertUserContentTopicsResponse{
+			Error: cErr,
+		}, nil
+	}
+	// TODO(multiple-languages): eventually, I'll need to update this
+	// so that it is language aware, since not all topics will apply to all languages
+	if _, err := wordsmith.GetLanguageCodeFromString(req.LanguageCode); err != nil {
+		return upsertUserContentTopicsResponse{
+			Error: clienterror.ErrorInvalidLanguageCode.Ptr(),
+		}, nil
 	}
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
-		var topicMappings []usercontenttopics.ContentTopicWithTopicID
-		for _, t := range req.ContentTopics {
-			topicID, err := content.GetTopicIDByContentTopic(tx, t)
+		var mappings []usercontenttopics.ContentTopicWithTopicID
+		for _, t := range req.TopicIDs {
+			topic, err := content.GetContentTopicForTopicID(tx, t)
 			if err != nil {
 				return err
 			}
-			topicMappings = append(topicMappings, usercontenttopics.ContentTopicWithTopicID{
-				Topic:   t,
-				TopicID: *topicID,
+			mappings = append(mappings, usercontenttopics.ContentTopicWithTopicID{
+				Topic:   *topic,
+				TopicID: t,
 			})
 		}
-		return usercontenttopics.UpdateContentTopicsForUser(tx, *userID, topicMappings)
+		return usercontenttopics.UpdateContentTopicsForUser(tx, *userID, mappings)
 	}); err != nil {
 		return nil, err
 	}
-	return updateUserContentTopicsForTokenResponse{}, nil
+	return upsertUserContentTopicsResponse{
+		Success: true,
+	}, nil
 }
