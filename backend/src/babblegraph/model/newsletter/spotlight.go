@@ -186,7 +186,7 @@ func getOrderedListOfPotentialSpotlights(userAccessor userPreferencesAccessor) [
 func containsSpotlight(tokenizedDescription []string, currentIdx int, lemmaPhrases [][]wordsmith.LemmaID) bool {
 	for _, lemmaPhrase := range lemmaPhrases {
 		isMatch := false
-		if currentIdx+len(lemmaPhrase) < len(tokenizedDescription) {
+		if currentIdx+len(lemmaPhrase) <= len(tokenizedDescription) {
 			isMatch = true
 			for idx, lemmaID := range lemmaPhrase {
 				if lemmaID.Str() != tokenizedDescription[currentIdx+idx] {
