@@ -104,13 +104,10 @@ const HomePage = () => {
                         !hadSuccess && (
                             <div>
                                 <Paragraph>
-                                    Living outside of a Spanish speaking country makes it hard to use Spanish regularly. Without realizing it, weeks or months can go by without using it, and your Spanish can easily begin to fade. That’s where Babblegraph comes in.
+                                    Babblegraph picks up where your Spanish class left off by sending you an email newsletter with real articles and podcasts from the Spanish-speaking world. You can even customize the content to make keeping up with your Spanish skills more engaging!
                                 </Paragraph>
                                 <Paragraph>
-                                    Babblegraph is an email newsletter with Spanish language news and podcasts that helps you effortless incorporate Spanish practice into your daily or weekly routine. It can help you to expand your reading and listening comprehension without having to move to a Spanish speaking country.
-                                </Paragraph>
-                                <Paragraph>
-                                    Try it free for 30 days. No account or credit card required!
+                                    Try it risk-free for 30 days. No account or credit card required!
                                 </Paragraph>
                             </div>
                         )
