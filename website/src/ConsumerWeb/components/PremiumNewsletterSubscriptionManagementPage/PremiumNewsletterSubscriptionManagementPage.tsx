@@ -5,6 +5,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 import Snackbar from '@material-ui/core/Snackbar';
 
+import Alert from 'common/components/Alert/Alert';
 import CenteredComponent from 'common/components/CenteredComponent/CenteredComponent';
 import DisplayCard from 'common/components/DisplayCard/DisplayCard';
 import DisplayCardHeader from 'common/components/DisplayCard/DisplayCardHeader';
@@ -15,7 +16,7 @@ import Paragraph, { Size } from 'common/typography/Paragraph';
 import PaymentMethodDisplay from 'ConsumerWeb/components/common/Billing/PaymentMethodDisplay';
 import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
 import { PrimaryButton, WarningButton } from 'common/components/Button/Button';
-import Alert from 'common/components/Alert/Alert';
+import { SubscriptionLevel } from 'common/api/useraccounts/useraccounts';
 
 import {
     asBaseComponent,
@@ -76,22 +77,25 @@ type PremiumNewsletterSubscriptionManagementPageProps = RouteComponentProps<Para
 
 const PremiumNewsletterSubscriptionManagementPage = withUserProfileInformation<PremiumNewsletterSubscriptionManagementPageProps>(
     RouteEncryptionKey.SubscriptionManagement,
-    [],
+    [RouteEncryptionKey.PremiumSubscriptionCheckout],
     (ownProps: PremiumNewsletterSubscriptionManagementPageProps) => {
         return ownProps.match.params.token;
     },
     LoginRedirectKey.PaymentSettings,
     (props: PremiumNewsletterSubscriptionManagementPageProps & UserProfileComponentProps) => {
         const { token } = props.match.params;
+        const [ checkoutToken ] = props.userProfile.nextTokens;
 
         return (
             <CenteredComponent>
                 <DisplayCard>
                     <DisplayCardHeader
-                        title="Premium Subscription and Payment Settings"
+                        title="Payment and Subscription Settings"
                         backArrowDestination={`/manage/${token}`} />
                     <PremiumSubscriptionManagementComponent
-                        subscriptionManagementToken={token} />
+                        subscriptionManagementToken={token}
+                        checkoutToken={checkoutToken}
+                        subscriptionLevel={props.userProfile.subscriptionLevel} />
                     <PaymentMethodManagementComponent />
                     <Paragraph color={TypographyColor.Primary}>
                         Need help? Just reach out to hello@babblegraph.com
@@ -104,6 +108,9 @@ const PremiumNewsletterSubscriptionManagementPage = withUserProfileInformation<P
 
 type PremiumSubscriptionManagementComponentOwnProps = {
     subscriptionManagementToken: string;
+    checkoutToken: string;
+
+    subscriptionLevel: SubscriptionLevel | null;
 }
 
 const PremiumSubscriptionManagementComponent = asBaseComponent<LookupActivePremiumNewsletterSubscriptionResponse, PremiumSubscriptionManagementComponentOwnProps>(
@@ -111,10 +118,17 @@ const PremiumSubscriptionManagementComponent = asBaseComponent<LookupActivePremi
         if (!props.premiumNewsletterSubscription) {
             return (
                 <div>
-                    <Heading3 color={TypographyColor.Primary}>
-                        You don’t have an active Babblegraph Premium subscription
+                    <Heading3 color={TypographyColor.Warning}>
+                        You don’t have an active Babblegraph subscription
                     </Heading3>
-                    <Link href={`/manage/${props.subscriptionManagementToken}/premium`} target={LinkTarget.Self}>
+                    <Link
+                        href={props.subscriptionLevel === SubscriptionLevel.Legacy ? (
+                                `/manage/${props.subscriptionManagementToken}/premium`
+                            ) : (
+                                `/checkout/${props.checkoutToken}`
+                            )
+                        }
+                        target={LinkTarget.Self}>
                         If you’d like to start or restart one, click here.
                     </Link>
                 </div>
