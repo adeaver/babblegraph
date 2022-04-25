@@ -79,7 +79,7 @@ const SubscriptionManagementHomePage = withUserProfileInformation<SubscriptionMa
                             <NavigationCard
                                 location={`/manage/${token}/payment-settings`}
                                 title="Subscription and Payment Settings"
-                                description="Need to update your preferred payment method or cancel your subscription? Click here!" />
+                                description="Need to update your preferred payment method or pause your subscription? Click here!" />
                         )
                     }
                     <NavigationCard
