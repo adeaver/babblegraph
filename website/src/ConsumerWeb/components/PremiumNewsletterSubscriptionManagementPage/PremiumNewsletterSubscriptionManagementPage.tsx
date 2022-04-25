@@ -90,7 +90,7 @@ const PremiumNewsletterSubscriptionManagementPage = withUserProfileInformation<P
             <CenteredComponent>
                 <DisplayCard>
                     <DisplayCardHeader
-                        title="Premium Subscription and Payment Settings"
+                        title="Payment and Subscription Settings"
                         backArrowDestination={`/manage/${token}`} />
                     <PremiumSubscriptionManagementComponent
                         subscriptionManagementToken={token}
@@ -118,8 +118,8 @@ const PremiumSubscriptionManagementComponent = asBaseComponent<LookupActivePremi
         if (!props.premiumNewsletterSubscription) {
             return (
                 <div>
-                    <Heading3 color={TypographyColor.Primary}>
-                        You don’t have an active Babblegraph Premium subscription
+                    <Heading3 color={TypographyColor.Warning}>
+                        You don’t have an active Babblegraph subscription
                     </Heading3>
                     <Link
                         href={props.subscriptionLevel === SubscriptionLevel.Legacy ? (
