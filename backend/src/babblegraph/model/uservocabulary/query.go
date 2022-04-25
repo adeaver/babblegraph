@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	selectVocabularyEntryForUserQuery = "SELECT * FROM user_vocabulary_entries WHERE is_visible = TRUE AND user_id = $1 AND language_code = $2"
+	selectVocabularyEntryForUserQuery = "SELECT * FROM user_vocabulary_entries WHERE is_visible = TRUE AND user_id = $1 AND language_code = $2 AND is_active = TRUE"
 	upsertVocabularyEntryQuery        = `INSERT INTO
         user_vocabulary_entries (
             user_id, language_code, vocabulary_id, vocabulary_type, vocabulary_display, study_note, is_active, is_visible, unique_hash
@@ -33,17 +33,6 @@ const (
         SET
         last_sent_on=timezone('utc', now()),
         number_of_times_sent=user_vocabulary_spotlight_records.number_of_times_sent+1`
-
-	// TODO(migration): remove this query
-	createVocabularySpotlightRecordQuery = `INSERT INTO
-        user_vocabulary_spotlight_records (
-            user_id, language_code, vocabulary_entry_id, last_sent_on, number_of_times_sent
-        ) VALUES (
-            $1, $2, $3, $4, $5
-        ) ON CONFLICT (user_id, language_code, vocabulary_entry_id) DO UPDATE
-        SET
-        last_sent_on=$4,
-        number_of_times_sent=$5`
 )
 
 func GetUserVocabularyEntries(tx *sqlx.Tx, userID users.UserID, languageCode wordsmith.LanguageCode, includeDefinitions bool) ([]UserVocabularyEntry, error) {
