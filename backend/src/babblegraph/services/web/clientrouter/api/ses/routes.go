@@ -2,46 +2,45 @@ package ses
 
 import (
 	"babblegraph/model/billing"
+	"babblegraph/model/email"
 	"babblegraph/model/sesnotifications"
 	"babblegraph/model/users"
-	"babblegraph/services/web/clientrouter/api"
+	"babblegraph/services/web/clientrouter/routermiddleware"
+	"babblegraph/services/web/router"
 	"babblegraph/util/ctx"
 	"babblegraph/util/database"
+	email_util "babblegraph/util/email"
 	"babblegraph/util/ses"
 	"encoding/json"
 	"fmt"
-	"log"
 
-	"github.com/getsentry/sentry-go"
 	"github.com/jmoiron/sqlx"
 )
 
-func RegisterRouteGroups() error {
-	return api.RegisterRouteGroup(api.RouteGroup{
-		Prefix: "ses",
-		Routes: []api.Route{
-			{
-				Path:    "handle_bounce_notification_1",
-				Handler: handleBounceNotification,
-			}, {
-				Path:    "handle_complaint_notification_1",
-				Handler: handleComplaintNotification,
-			},
+var Routes = router.RouteGroup{
+	Prefix: "ses",
+	Routes: []router.Route{
+		{
+			Path:    "handle_bounce_notification_1",
+			Handler: routermiddleware.WithNoBodyRequestLogger(handleBounceNotification),
+		}, {
+			Path:    "handle_complaint_notification_1",
+			Handler: routermiddleware.WithNoBodyRequestLogger(handleComplaintNotification),
 		},
-	})
+	},
 }
 
 type sesNotificationResponse struct{}
 
-func handleBounceNotification(body []byte) (interface{}, error) {
+func handleBounceNotification(r *router.Request) (interface{}, error) {
 	var req ses.Notification
-	if err := json.Unmarshal(body, &req); err != nil {
+	if err := r.GetJSONBody(&req); err != nil {
 		return nil, err
 	}
 	switch {
 	case req.SubscribeURL != nil:
-		log.Println(fmt.Sprintf("Got subscription confirmation with URL: %s", *req.SubscribeURL))
-		return nil, nil
+		r.Infof("Got subscription confirmation with URL: %s", *req.SubscribeURL)
+		return sesNotificationResponse{}, nil
 	case req.Message != nil:
 		var b ses.NotificationBody
 		if err := json.Unmarshal([]byte(*req.Message), &b); err != nil {
@@ -52,38 +51,11 @@ func handleBounceNotification(body []byte) (interface{}, error) {
 		}); err != nil {
 			return nil, err
 		}
-		c := ctx.GetDefaultLogContext()
 		for _, recipient := range b.Bounce.BouncedRecipients {
 			if err := database.WithTx(func(tx *sqlx.Tx) error {
-				didUpdate, err := users.AddUserToBlocklistByEmailAddress(tx, recipient.EmailAddress, users.UserStatusBlocklistBounced)
-				if err != nil {
-					return fmt.Errorf("Error on adding %s to bounce list: %s", recipient.EmailAddress, err.Error())
-				}
-				if didUpdate {
-					log.Println(fmt.Sprintf("Successfully added %s to bounce list", recipient.EmailAddress))
-					user, err := users.LookupUserByEmailAddress(tx, recipient.EmailAddress)
-					switch {
-					case err != nil:
-						return fmt.Errorf("Error finding user %s: %s", recipient.EmailAddress, err.Error())
-					case user == nil:
-						log.Println(fmt.Sprintf("No user found %s", recipient.EmailAddress))
-					default:
-						subscription, err := billing.LookupPremiumNewsletterSubscriptionForUser(c, tx, user.ID)
-						switch {
-						case err != nil:
-							return fmt.Errorf("error cancelling subscription for user %s: %s", recipient.EmailAddress, err.Error())
-						case subscription == nil:
-							// no-op
-						default:
-							return billing.CancelPremiumNewsletterSubscriptionForUser(c, tx, user.ID)
-						}
-					}
-				} else {
-					log.Println(fmt.Sprintf("Did not add %s to bounce list", recipient.EmailAddress))
-				}
-				return nil
+				return handleAddUserToBlocklistByEmailAddress(r, tx, recipient.EmailAddress, users.UserStatusBlocklistBounced)
 			}); err != nil {
-				sentry.CaptureException(err)
+				r.Errorf("Error adding user to blocklist: %s", err.Error())
 				continue
 			}
 		}
@@ -93,14 +65,14 @@ func handleBounceNotification(body []byte) (interface{}, error) {
 	}
 }
 
-func handleComplaintNotification(body []byte) (interface{}, error) {
+func handleComplaintNotification(r *router.Request) (interface{}, error) {
 	var req ses.Notification
-	if err := json.Unmarshal(body, &req); err != nil {
+	if err := r.GetJSONBody(&req); err != nil {
 		return nil, err
 	}
 	switch {
 	case req.SubscribeURL != nil:
-		log.Println(fmt.Sprintf("Got subscription confirmation with URL: %s", *req.SubscribeURL))
+		r.Infof("Got subscription confirmation with URL: %s", *req.SubscribeURL)
 		return nil, nil
 	case req.Message != nil:
 		var b ses.NotificationBody
@@ -110,44 +82,59 @@ func handleComplaintNotification(body []byte) (interface{}, error) {
 		if err := database.WithTx(func(tx *sqlx.Tx) error {
 			return sesnotifications.InsertSESNotification(tx, req)
 		}); err != nil {
-			sentry.CaptureException(fmt.Errorf("Error persisting SES notification: %s. Continuing...", err.Error()))
+			return nil, err
 		}
-		c := ctx.GetDefaultLogContext()
 		for _, recipient := range b.Complaint.ComplainedRecipients {
 			if err := database.WithTx(func(tx *sqlx.Tx) error {
-				didUpdate, err := users.AddUserToBlocklistByEmailAddress(tx, recipient.EmailAddress, users.UserStatusBlocklistComplaint)
-				if err != nil {
-					return fmt.Errorf("Error on adding %s to complaint list: %s", recipient.EmailAddress, err.Error())
-				}
-				if didUpdate {
-					log.Println(fmt.Sprintf("Successfully added %s to complaint list", recipient.EmailAddress))
-					user, err := users.LookupUserByEmailAddress(tx, recipient.EmailAddress)
-					switch {
-					case err != nil:
-						return fmt.Errorf("Error finding user %s: %s", recipient.EmailAddress, err.Error())
-					case user == nil:
-						log.Println(fmt.Sprintf("No user found %s", recipient.EmailAddress))
-					default:
-						subscription, err := billing.LookupPremiumNewsletterSubscriptionForUser(c, tx, user.ID)
-						switch {
-						case err != nil:
-							return fmt.Errorf("error cancelling subscription for user %s: %s", recipient.EmailAddress, err.Error())
-						case subscription == nil:
-							// no-op
-						default:
-							return billing.CancelPremiumNewsletterSubscriptionForUser(c, tx, user.ID)
-						}
-					}
-				} else {
-					log.Println(fmt.Sprintf("Did not add %s to complaint list", recipient.EmailAddress))
-				}
-				return nil
+				return handleAddUserToBlocklistByEmailAddress(r, tx, recipient.EmailAddress, users.UserStatusBlocklistComplaint)
 			}); err != nil {
-				return nil, err
+				r.Errorf("Error adding user to blocklist: %s", err.Error())
+				continue
 			}
 		}
 		return sesNotificationResponse{}, nil
 	default:
 		return nil, fmt.Errorf("Complaint does not have a body")
 	}
+}
+
+func handleAddUserToBlocklistByEmailAddress(c ctx.LogContext, tx *sqlx.Tx, emailAddress string, blocklist users.UserStatus) error {
+	formattedEmailAddress := email_util.FormatEmailAddress(emailAddress)
+	user, err := users.LookupUserByEmailAddress(tx, formattedEmailAddress)
+	switch {
+	case err != nil:
+		return err
+	case user == nil:
+		c.Infof("No user found for email address, skipping this user")
+		return nil
+	}
+	shouldBlocklist, err := email.HandleBouncedEmail(tx, user.ID)
+	switch {
+	case err != nil:
+		return err
+	case !shouldBlocklist:
+		c.Infof("User %s has been quarantined.", user.ID)
+		return nil
+	default:
+		didUpdate, err := users.AddUserToBlocklist(tx, user.ID, blocklist)
+		switch {
+		case err != nil:
+			return err
+		case !didUpdate:
+			c.Infof("Blocklisting user %s did not cause update", user.ID)
+			return nil
+		default:
+			c.Infof("Added user %s to blocklist", user.ID)
+			subscription, err := billing.LookupPremiumNewsletterSubscriptionForUser(c, tx, user.ID)
+			switch {
+			case err != nil:
+				return fmt.Errorf("error cancelling subscription for user %s: %s", user.ID, err.Error())
+			case subscription == nil:
+				// no-op
+			default:
+				return billing.CancelPremiumNewsletterSubscriptionForUser(c, tx, user.ID)
+			}
+		}
+	}
+	return nil
 }

@@ -50,6 +50,14 @@ func handlePendingForgotPasswordAttempts(c async.Context) {
 				c.Infof("User with ID %s does not have verified status. Skipping forgot password attempt", attempt.UserID)
 				return nil
 			}
+			isOnBounceQuarantine, err := email.IsUserOnBounceQuarantine(tx, user.ID)
+			switch {
+			case err != nil:
+				return err
+			case isOnBounceQuarantine:
+				c.Infof("User is on bounce quarantine, fulfilling")
+				return nil
+			}
 			return sendForgotPasswordEmailForUserAndAttemptID(tx, emailClient, *user, attempt.ID)
 		}); err != nil {
 			c.Errorf("Error sending forgot password attempt for user %s: %s", attempt.UserID, err.Error())

@@ -10,9 +10,8 @@ const (
 	getAllUsersByStatusQuery = "SELECT * FROM users WHERE status='%s'"
 
 	// In order of preference
-	updateUserStatusByQuery        = "UPDATE users SET status = $1, last_modified_at = timezone('utc', now()) WHERE email_address = $2 and _id = $3"
-	updateUserStatusByID           = "UPDATE users SET status = $1, last_modified_at = timezone('utc', now()) WHERE _id = $2"
-	updateUserStatusByEmailAddress = "UPDATE users SET status = $1, last_modified_at = timezone('utc', now()) WHERE email_address = $2"
+	updateUserStatusByQuery = "UPDATE users SET status = $1, last_modified_at = timezone('utc', now()) WHERE email_address = $2 and _id = $3"
+	updateUserStatusByID    = "UPDATE users SET status = $1, last_modified_at = timezone('utc', now()) WHERE _id = $2"
 
 	lookupUserByEmailAddressAndID = "SELECT * FROM users WHERE _id = $1 AND email_address = $2"
 	lookupUserByEmailAddressQuery = "SELECT * FROM users WHERE email_address = $1"
@@ -58,7 +57,7 @@ func LookupUserForIDAndEmail(tx *sqlx.Tx, userID UserID, emailAddress string) (*
 	return &user, nil
 }
 
-func AddUserToBlocklistByEmailAddress(tx *sqlx.Tx, emailAddress string, newStatus UserStatus) (_didUpdate bool, _err error) {
+func AddUserToBlocklist(tx *sqlx.Tx, userID UserID, newStatus UserStatus) (_didUpdate bool, _err error) {
 	switch newStatus {
 	case UserStatusBlocklistBounced,
 		UserStatusBlocklistComplaint:
@@ -70,7 +69,7 @@ func AddUserToBlocklistByEmailAddress(tx *sqlx.Tx, emailAddress string, newStatu
 	default:
 		return false, fmt.Errorf("Unrecognized status %s", newStatus)
 	}
-	res, err := tx.Exec(updateUserStatusByEmailAddress, string(newStatus), emailAddress)
+	res, err := tx.Exec(updateUserStatusByID, string(newStatus), userID)
 	if err != nil {
 		return false, err
 	}

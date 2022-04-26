@@ -144,6 +144,14 @@ func StartNewsletterFulfillmentWorkerThread(newsletterProcessor *newsletterproce
 				if err := newslettersendrequests.UpdateSendRequestStatus(tx, sendRequest.ID, newslettersendrequests.PayloadStatusSent); err != nil {
 					return err
 				}
+				isOnBounceQuarantine, err := email.IsUserOnBounceQuarantine(tx, user.ID)
+				switch {
+				case err != nil:
+					return err
+				case isOnBounceQuarantine:
+					c.Infof("User is on bounce quarantine, skipping this newsletter")
+					return nil
+				}
 				userNewsletterPreferences, err := usernewsletterpreferences.GetUserNewsletterPrefrencesForLanguage(c, tx, sendRequest.UserID, sendRequest.LanguageCode, ptr.Time(dateOfSendUTCMidnight))
 				if err != nil {
 					return err

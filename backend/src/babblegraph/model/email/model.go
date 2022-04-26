@@ -51,15 +51,13 @@ type Recipient struct {
 	UserID       users.UserID
 }
 
-// All email templates should use this
-type BaseEmailTemplate struct {
-	SubscriptionManagementLink string
-	HeroImageURL               string
-	HomePageURL                string
-}
+type bounceRecordID string
 
-type EmailUsage struct {
-	UserID             users.UserID `db:"user_id"`
-	NumberOfSentEmails int          `db:"number_emails_sent"`
-	HasOpenedOneEmail  bool         `db:"has_opened_one_email"`
+type dbBounceRecord struct {
+	ID             bounceRecordID `db:"_id"`
+	CreatedAt      time.Time      `db:"created_at"`
+	LastModifiedAt time.Time      `db:"last_modified_at"`
+	UserID         users.UserID   `db:"user_id"`
+	LastBounceAt   time.Time      `db:"last_bounce_at"`
+	AttemptNumber  int            `db:"attempt_number"`
 }

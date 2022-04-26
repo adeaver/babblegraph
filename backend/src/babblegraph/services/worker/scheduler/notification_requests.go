@@ -49,6 +49,14 @@ func handlePendingUserAccountNotificationRequests(c async.Context) {
 				c.Infof("User is not verified, not sending")
 				return nil
 			}
+			isOnBounceQuarantine, err := email.IsUserOnBounceQuarantine(tx, req.UserID)
+			switch {
+			case err != nil:
+				return err
+			case isOnBounceQuarantine && req.Type != useraccountsnotifications.NotificationTypePremiumSubscriptionCanceled:
+				c.Infof("User is on bounce quarantine, skipping notification")
+				return nil
+			}
 			var subject, emailHTML *string
 			var emailType *email.EmailType
 			emailRecordID := email.NewEmailRecordID()

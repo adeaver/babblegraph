@@ -26,6 +26,7 @@ func RegisterClientRouter(r *mux.Router) error {
 		user.Routes,
 		podcasts.Routes,
 		language.Routes,
+		ses.Routes,
 	}); err != nil {
 		return err
 	}
@@ -38,9 +39,6 @@ func RegisterClientRouter(r *mux.Router) error {
 func registerAPI(r *mux.Router) error {
 	api.CreateNewAPIRouter(r)
 	if err := user.RegisterRouteGroups(); err != nil {
-		return err
-	}
-	if err := ses.RegisterRouteGroups(); err != nil {
 		return err
 	}
 	if err := utm.RegisterRouteGroups(); err != nil {
