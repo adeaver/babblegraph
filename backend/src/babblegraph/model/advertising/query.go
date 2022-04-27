@@ -192,6 +192,9 @@ func joinPossibleAdvertisements(c ctx.LogContext, userAdvertisements []dbUserAdv
 		}
 	}
 	weightedCampaignIDs := getWeightedCampaignIDs(weightsByCampaign)
+	if len(weightedCampaignIDs) == 0 {
+		return nil, nil
+	}
 	rand.Seed(time.Now().UnixNano())
 	idx := rand.Intn(len(weightedCampaignIDs))
 	campaignID := weightedCampaignIDs[idx]
