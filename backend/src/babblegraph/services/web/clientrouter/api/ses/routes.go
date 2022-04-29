@@ -112,7 +112,7 @@ func handleAddUserToBlocklistByEmailAddress(c ctx.LogContext, tx *sqlx.Tx, email
 	switch {
 	case err != nil:
 		return err
-	case !shouldBlocklist:
+	case !shouldBlocklist && blocklist != users.UserStatusBlocklistComplaint:
 		c.Infof("User %s has been quarantined.", user.ID)
 		return nil
 	default:
