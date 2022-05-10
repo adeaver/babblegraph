@@ -101,7 +101,7 @@ const ResolveSetupIntentForm = asBaseComponent<StripeBeginPaymentMethodSetupResp
                             className={classes.submitButton}
                             type='submit'
                             disabled={isLoading}>
-                            Add Payment Method
+                            Confirm New Payment Method
                         </PrimaryButton>
                     </CenteredComponent>
                     {
