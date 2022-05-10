@@ -75,36 +75,10 @@ func handleSyncBilling(c async.Context) {
 				default:
 					return fmt.Errorf("Unrecognized payment state for subscription ID %s: %d", premiumSubscriptionID, premiumNewsletterSubscription.PaymentState)
 				}
-			case billing.PremiumNewsletterSubscriptionUpdateTypeRemoteUpdated:
+			case billing.PremiumNewsletterSubscriptionUpdateTypeRemoteUpdated,
+				billing.PremiumNewsletterSubscriptionUpdateTypePaymentMethodAdded:
 				if err := billing.SyncUserAccountWithPremiumNewsletterSubscription(tx, *userID, premiumNewsletterSubscription); err != nil {
 					return err
-				}
-				return billing.MarkPremiumNewsletterSyncRequestDone(tx, premiumSubscriptionID)
-			case billing.PremiumNewsletterSubscriptionUpdateTypePaymentMethodAdded:
-				paymentMethods, err := billing.GetPaymentMethodsForUser(tx, *userID)
-				if err != nil {
-					return err
-				}
-				var defaultPaymentMethod *billing.PaymentMethod
-				for _, paymentMethod := range paymentMethods {
-					paymentMethod := paymentMethod
-					switch {
-					case defaultPaymentMethod == nil:
-						defaultPaymentMethod = &paymentMethod
-					case paymentMethod.IsDefault:
-						// If there's already a default, do not mark another one as default
-						c.Infof("There's already a default payment method. Skipping...")
-						return billing.MarkPremiumNewsletterSyncRequestDone(tx, premiumSubscriptionID)
-					default:
-						// no-op
-					}
-				}
-				if defaultPaymentMethod != nil {
-					if err := billing.MarkPaymentMethodAsDefaultForUser(tx, *userID, defaultPaymentMethod.ExternalID); err != nil {
-						return err
-					}
-				} else {
-					c.Infof("No payment methods found")
 				}
 				return billing.MarkPremiumNewsletterSyncRequestDone(tx, premiumSubscriptionID)
 			default:

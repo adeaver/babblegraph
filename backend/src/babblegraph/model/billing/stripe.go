@@ -52,7 +52,6 @@ func GetSetupIntentClientSecretForUser(tx *sqlx.Tx, userID users.UserID) (*strin
 	}
 }
 
-// Warning: This function has side effects
 func convertStripeSubscriptionToPremiumNewsletterSubscription(tx *sqlx.Tx, stripeSubscription *stripe.Subscription, dbNewsletterSubscription *dbPremiumNewsletterSubscription) (*PremiumNewsletterSubscription, error) {
 	var paymentIntentID *string
 	if stripeSubscription.LatestInvoice != nil && stripeSubscription.LatestInvoice.PaymentIntent != nil {
@@ -83,15 +82,6 @@ func convertStripeSubscriptionToPremiumNewsletterSubscription(tx *sqlx.Tx, strip
 			}
 			if len(paymentMethods) > 0 {
 				premiumNewsletterSubscription.PaymentState = PaymentStateTrialPaymentMethodAdded
-				var hasDefault bool
-				for _, paymentMethod := range paymentMethods {
-					hasDefault = hasDefault || paymentMethod.IsDefault
-				}
-				if !hasDefault {
-					if err := MarkPaymentMethodAsDefaultForUser(tx, *billingInformation.UserID, paymentMethods[0].ExternalID); err != nil {
-						return nil, err
-					}
-				}
 			}
 		}
 	case stripe.SubscriptionStatusIncomplete:

@@ -66,6 +66,21 @@ func SyncUserAccountWithPremiumNewsletterSubscription(tx *sqlx.Tx, userID users.
 	case PaymentStateTrialNoPaymentMethod,
 		PaymentStateTrialPaymentMethodAdded,
 		PaymentStateActive:
+		paymentMethods, err := GetPaymentMethodsForUser(tx, userID)
+		if err != nil {
+			return err
+		}
+		if len(paymentMethods) > 0 {
+			var hasDefault bool
+			for _, paymentMethod := range paymentMethods {
+				hasDefault = hasDefault || paymentMethod.IsDefault
+			}
+			if !hasDefault {
+				if err := MarkPaymentMethodAsDefaultForUser(tx, userID, paymentMethods[0].ExternalID); err != nil {
+					return err
+				}
+			}
+		}
 		switch {
 		case subscriptionLevel == nil,
 			*subscriptionLevel == useraccounts.SubscriptionLevelLegacy:
