@@ -52,6 +52,7 @@ func GetSetupIntentClientSecretForUser(tx *sqlx.Tx, userID users.UserID) (*strin
 	}
 }
 
+// Warning: This function has side effects
 func convertStripeSubscriptionToPremiumNewsletterSubscription(tx *sqlx.Tx, stripeSubscription *stripe.Subscription, dbNewsletterSubscription *dbPremiumNewsletterSubscription) (*PremiumNewsletterSubscription, error) {
 	var paymentIntentID *string
 	if stripeSubscription.LatestInvoice != nil && stripeSubscription.LatestInvoice.PaymentIntent != nil {
@@ -82,6 +83,15 @@ func convertStripeSubscriptionToPremiumNewsletterSubscription(tx *sqlx.Tx, strip
 			}
 			if len(paymentMethods) > 0 {
 				premiumNewsletterSubscription.PaymentState = PaymentStateTrialPaymentMethodAdded
+				var hasDefault bool
+				for _, paymentMethod := range paymentMethods {
+					hasDefault = hasDefault || paymentMethod.IsDefault
+				}
+				if !hasDefault {
+					if err := MarkPaymentMethodAsDefaultForUser(tx, *billingInformation.UserID, paymentMethods[0].ExternalID); err != nil {
+						return nil, err
+					}
+				}
 			}
 		}
 	case stripe.SubscriptionStatusIncomplete:
@@ -153,6 +163,31 @@ func HandleStripeEvent(c ctx.LogContext, tx *sqlx.Tx, stripeSignature string, ev
 				if err := InsertPremiumNewsletterSyncRequest(tx, *premiumNewsletterSubscription.ID, PremiumNewsletterSubscriptionUpdateTypeRemoteUpdated); err != nil {
 					return err
 				}
+			}
+		}
+	case "setup_intent.succeeded":
+		wasProcessed = true
+		var stripeSetupIntent stripe.SetupIntent
+		if err := json.Unmarshal(event.Data.Raw, &stripeSetupIntent); err != nil {
+			return err
+		}
+		if stripeSetupIntent.Customer != nil {
+			billingInformation, err := LookupBillingInformationByExternalID(tx, stripeSetupIntent.Customer.ID)
+			switch {
+			case err != nil:
+				return err
+			case billingInformation == nil,
+				billingInformation.UserID == nil:
+				// no-op
+			default:
+				subscription, err := LookupPremiumNewsletterSubscriptionForUser(c, tx, *billingInformation.UserID)
+				if err != nil {
+					return err
+				}
+				if err := InsertPremiumNewsletterSyncRequest(tx, *subscription.ID, PremiumNewsletterSubscriptionUpdateTypePaymentMethodAdded); err != nil {
+					return err
+				}
+
 			}
 		}
 	case "account.updated",
@@ -294,7 +329,6 @@ func HandleStripeEvent(c ctx.LogContext, tx *sqlx.Tx, stripeSignature string, ev
 		"setup_intent.created",
 		"setup_intent.requires_action",
 		"setup_intent.setup_failed",
-		"setup_intent.succeeded",
 		"sigma.scheduled_query_run.created",
 		"sku.created",
 		"sku.deleted",
