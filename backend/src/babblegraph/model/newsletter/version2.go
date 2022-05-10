@@ -1,6 +1,7 @@
 package newsletter
 
 import (
+	"babblegraph/model/billing"
 	"babblegraph/model/content"
 	"babblegraph/model/documents"
 	"babblegraph/model/email"
@@ -21,6 +22,8 @@ import (
 )
 
 // MODEL
+
+const addPaymentMethodBannerWaitingPeriod = 3 * 24 * time.Hour
 
 type NewsletterVersion2 struct {
 	UserID        users.UserID           `json:"user_id"`
@@ -134,22 +137,6 @@ func CreateNewsletterVersion2(c ctx.LogContext, dateOfSendMidnightUTC time.Time,
 	case userSubscriptionLevel == nil:
 		return nil, nil
 	case *userSubscriptionLevel == useraccounts.SubscriptionLevelLegacy:
-		premiumLinkURL, err := routes.MakePremiumInformationLink(input.UserAccessor.getUserID())
-		switch {
-		case err != nil:
-			c.Infof("Error making premium link %s", err.Error())
-		case premiumLinkURL == nil:
-			c.Infof("No premium link, skipping")
-		default:
-			// TODO: make this dynamic
-			premiumLink = &PremiumAdvertisement{
-				PreText: "¿Quieres añadir frases completas a tu lista de vocabulario o practicar escuchar con podcasts en Español?",
-				Link: NewsletterLink{
-					URL:  *premiumLinkURL,
-					Text: "Haz clic aquí para aprender sobre Babblegraph Premium",
-				},
-			}
-		}
 		advertisement, err := lookupAdvertisement(c, emailRecordID, input.UserAccessor, input.AdvertisementAccessor)
 		if err != nil {
 			return nil, err
@@ -202,6 +189,22 @@ func CreateNewsletterVersion2(c ctx.LogContext, dateOfSendMidnightUTC time.Time,
 			// no-op
 		default:
 			out = append(out, *podcastSection)
+		}
+		needsPaymentMethod := input.UserAccessor.getSubscriptionPaymentState() != nil && *input.UserAccessor.getSubscriptionPaymentState() == billing.PaymentStateTrialNoPaymentMethod
+		// TODO: add 3 day waiting period
+		if *userSubscriptionLevel == useraccounts.SubscriptionLevelPremium && needsPaymentMethod {
+			checkoutLink, err := routes.MakePremiumSubscriptionCheckoutLink(input.UserAccessor.getUserID())
+			if err != nil {
+				return nil, err
+			}
+			// TODO(multiple-languages): make this dynamic
+			premiumLink = &PremiumAdvertisement{
+				PreText: "¿Te gusta usar Babblegraph? Asegurate de que sigas tener acceso después de acabar tu prueba gratis.",
+				Link: NewsletterLink{
+					URL:  *checkoutLink,
+					Text: "Haz clic aquí para agregar un método de pago.",
+				},
+			}
 		}
 	default:
 		return nil, fmt.Errorf("Unrecognized subscription level: %s", *userSubscriptionLevel)
