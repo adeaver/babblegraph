@@ -62,6 +62,7 @@ const PremiumNewsletterSubscriptionCardForm = (props: PremiumNewsletterSubscript
         case PaymentState.Errored:
             return (
                 <ResolveSetupIntentForm
+                    premiumNewsletterSubscriptionID={props.premiumNewsletterSusbcription.id}
                     toggleSuccessMessage={setShouldShowSuccessPage}
                     redirectURL={!!props.subscriptionManagementToken ? `https://www.babblegraph.com/manage/${props.subscriptionManagementToken}/payment-settings` : `https://www.babblegraph.com/login`} />
             );

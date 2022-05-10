@@ -18,7 +18,7 @@ import (
 // This file is for any stripe specific methods
 
 const (
-	CaptureStripeEventQuery = "INSERT INTO billing_stripe_event (type, processed, data) VALUES ($1, $2, $3)"
+	captureStripeEventQuery = "INSERT INTO billing_stripe_event (type, processed, data) VALUES ($1, $2, $3)"
 )
 
 func GetSetupIntentClientSecretForUser(tx *sqlx.Tx, userID users.UserID) (*string, error) {
@@ -329,6 +329,6 @@ func HandleStripeEvent(c ctx.LogContext, tx *sqlx.Tx, stripeSignature string, ev
 	default:
 		c.Warnf("Unrecognized event type: %s", event.Type)
 	}
-	_, err = tx.Exec(CaptureStripeEventQuery, event.Type, wasProcessed, eventBytes)
+	_, err = tx.Exec(captureStripeEventQuery, event.Type, wasProcessed, eventBytes)
 	return err
 }

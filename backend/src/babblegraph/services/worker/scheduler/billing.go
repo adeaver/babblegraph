@@ -80,6 +80,30 @@ func handleSyncBilling(c async.Context) {
 					return err
 				}
 				return billing.MarkPremiumNewsletterSyncRequestDone(tx, premiumSubscriptionID)
+			case billing.PremiumNewsletterSubscriptionUpdateTypePaymentMethodAdded:
+				paymentMethods, err := billing.GetPaymentMethodsForUser(tx, *userID)
+				if err != nil {
+					return err
+				}
+				var defaultPaymentMethod *billing.PaymentMethod
+				for _, paymentMethod := range paymentMethods {
+					paymentMethod := paymentMethod
+					switch {
+					case defaultPaymentMethod == nil:
+						defaultPaymentMethod = &paymentMethod
+					case paymentMethod.IsDefault:
+						// If there's already a default, do not mark another one as default
+						return billing.MarkPremiumNewsletterSyncRequestDone(tx, premiumSubscriptionID)
+					default:
+						// no-op
+					}
+				}
+				if defaultPaymentMethod != nil {
+					if err := billing.MarkPaymentMethodAsDefaultForUser(tx, *userID, defaultPaymentMethod.ExternalID); err != nil {
+						return err
+					}
+				}
+				return billing.MarkPremiumNewsletterSyncRequestDone(tx, premiumSubscriptionID)
 			default:
 				return fmt.Errorf("Unrecognized update type: %s", updateType)
 			}

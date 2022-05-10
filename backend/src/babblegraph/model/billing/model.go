@@ -115,6 +115,8 @@ const (
 	PremiumNewsletterSubscriptionUpdateTypeTransitionToActive PremiumNewsletterSubscriptionUpdateType = "transition-to-active"
 	PremiumNewsletterSubscriptionUpdateTypeCanceled           PremiumNewsletterSubscriptionUpdateType = "canceled"
 
+	PremiumNewsletterSubscriptionUpdateTypePaymentMethodAdded PremiumNewsletterSubscriptionUpdateType = "payment-method-added"
+
 	// This update type is for when we receive an update pushed from
 	// the remote payment processor
 	PremiumNewsletterSubscriptionUpdateTypeRemoteUpdated PremiumNewsletterSubscriptionUpdateType = "remote-updated"
