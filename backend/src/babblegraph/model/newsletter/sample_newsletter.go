@@ -142,6 +142,6 @@ func (s *SampleNewsletterUserAccessor) insertSpotlightReinforcementRecord(userVo
 	return nil
 }
 
-func (s *SampleNewsletterUserAccessor) getPaymentState() *billing.PaymentState {
-	return nil
+func (s *SampleNewsletterUserAccessor) getSubscriptionPaymentState() *billing.PaymentState {
+	return s.defaultUserPreferencesAccessor.getSubscriptionPaymentState()
 }
