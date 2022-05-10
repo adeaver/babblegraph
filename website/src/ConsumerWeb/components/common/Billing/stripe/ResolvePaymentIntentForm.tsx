@@ -17,8 +17,7 @@ import PaymentMethodDisplay from 'ConsumerWeb/components/common/Billing/PaymentM
 import Alert from 'common/components/Alert/Alert';
 import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
 
-import { withStripe, WithStripeProps } from './withStripe';
-import { StripeError } from './GenericCardForm';
+import { withStripe, WithStripeProps, StripeError } from './withStripe';
 
 import {
     asBaseComponent,
@@ -129,7 +128,10 @@ const ResolvePaymentIntentForm = asBaseComponent<GetPaymentMethodsForUserRespons
                             <Grid item xs={12} md={6}
                                 className={classes.paymentMethodDisplayContainer}
                                 key={paymentMethod.externalId}>
-                                <PaymentMethodDisplay onClick={handleSelectPaymentMethodID} paymentMethod={paymentMethod} />
+                                <PaymentMethodDisplay
+                                    onClick={handleSelectPaymentMethodID}
+                                    paymentMethod={paymentMethod}
+                                    isHighlighted={paymentMethod.externalId ===  existingPaymentMethodIDToUse} />
                             </Grid>
                         ))
                     }

@@ -24,8 +24,7 @@ import {
     stripeBeginPaymentMethodSetup,
 } from 'ConsumerWeb/api/billing/stripe';
 
-import { withStripe, WithStripeProps } from './withStripe';
-import { StripeError } from './GenericCardForm';
+import { withStripe, WithStripeProps, StripeError } from './withStripe';
 
 type StripeSetupIntentResult = {
     error?: StripeError | null;

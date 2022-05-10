@@ -8,6 +8,15 @@ import { loadStripe } from "@stripe/stripe-js";
 
 declare const window: any;
 
+export type StripeError = {
+    type: string;
+    code: string;
+    decline_code: string;
+    message: string;
+    param: string;
+    payment_intent: string;
+};
+
 export type WithStripeProps = {
     stripe: any;
     elements: any;

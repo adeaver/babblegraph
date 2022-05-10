@@ -123,7 +123,7 @@ const OrderDetailsSection = asBaseComponent<GetOrCreateBillingInformationRespons
                 </Grid>
                 <Grid item xs={8}>
                     <Paragraph align={Alignment.Left}>
-                        1-year Babblegraph Premium Subscription
+                        1-year Babblegraph Subscription
                     </Paragraph>
                 </Grid>
                 <Grid item xs={4}>
