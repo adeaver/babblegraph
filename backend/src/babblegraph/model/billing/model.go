@@ -98,6 +98,10 @@ const (
 	PaymentStateTerminated PaymentState = 5
 )
 
+func (p PaymentState) Ptr() *PaymentState {
+	return &p
+}
+
 type dbPremiumNewsletterSubscriptionSyncRequest struct {
 	CreatedAt                       time.Time                               `db:"created_at"`
 	LastModifiedAt                  time.Time                               `db:"last_modified_at"`

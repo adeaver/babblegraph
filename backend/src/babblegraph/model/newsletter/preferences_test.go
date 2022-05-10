@@ -1,6 +1,7 @@
 package newsletter
 
 import (
+	"babblegraph/model/billing"
 	"babblegraph/model/content"
 	"babblegraph/model/documents"
 	"babblegraph/model/email"
@@ -27,6 +28,7 @@ type testUserAccessor struct {
 	vocabularyEntries         []uservocabulary.UserVocabularyEntry
 	allowableSourceIDs        []content.SourceID
 	spotlightRecords          []uservocabulary.UserVocabularySpotlightRecord
+	paymentState              *billing.PaymentState
 
 	insertedDocuments        []documents.Document
 	insertedSpotlightRecords []uservocabulary.UserVocabularyEntryID
@@ -89,6 +91,10 @@ func (t *testUserAccessor) insertDocumentForUserAndReturnID(emailRecordID email.
 func (t *testUserAccessor) insertSpotlightReinforcementRecord(userVocabularyEntryID uservocabulary.UserVocabularyEntryID) error {
 	t.insertedSpotlightRecords = append(t.insertedSpotlightRecords, userVocabularyEntryID)
 	return nil
+}
+
+func (t *testUserAccessor) getSubscriptionPaymentState() *billing.PaymentState {
+	return t.paymentState
 }
 
 func (t *testUserAccessor) getUserCreatedDate() time.Time {

@@ -1,6 +1,7 @@
 package newsletter
 
 import (
+	"babblegraph/model/billing"
 	"babblegraph/model/content"
 	"babblegraph/model/documents"
 	"babblegraph/model/email"
@@ -139,4 +140,8 @@ func (s *SampleNewsletterUserAccessor) insertDocumentForUserAndReturnID(emailRec
 
 func (s *SampleNewsletterUserAccessor) insertSpotlightReinforcementRecord(userVocabularyEntryID uservocabulary.UserVocabularyEntryID) error {
 	return nil
+}
+
+func (s *SampleNewsletterUserAccessor) getSubscriptionPaymentState() *billing.PaymentState {
+	return s.defaultUserPreferencesAccessor.getSubscriptionPaymentState()
 }
