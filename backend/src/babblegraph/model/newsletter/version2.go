@@ -191,8 +191,8 @@ func CreateNewsletterVersion2(c ctx.LogContext, dateOfSendMidnightUTC time.Time,
 			out = append(out, *podcastSection)
 		}
 		needsPaymentMethod := input.UserAccessor.getSubscriptionPaymentState() != nil && *input.UserAccessor.getSubscriptionPaymentState() == billing.PaymentStateTrialNoPaymentMethod
-		// TODO: add 3 day waiting period
-		if *userSubscriptionLevel == useraccounts.SubscriptionLevelPremium && needsPaymentMethod {
+		isAccountOldEnoughForPaymentMethodReminder := input.UserAccessor.getUserCreatedDate().Add(addPaymentMethodBannerWaitingPeriod).After(time.Now())
+		if *userSubscriptionLevel == useraccounts.SubscriptionLevelPremium && needsPaymentMethod && isAccountOldEnoughForPaymentMethodReminder {
 			checkoutLink, err := routes.MakePremiumSubscriptionCheckoutLink(input.UserAccessor.getUserID())
 			if err != nil {
 				return nil, err
