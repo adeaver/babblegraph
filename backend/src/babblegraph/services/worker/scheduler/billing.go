@@ -75,7 +75,8 @@ func handleSyncBilling(c async.Context) {
 				default:
 					return fmt.Errorf("Unrecognized payment state for subscription ID %s: %d", premiumSubscriptionID, premiumNewsletterSubscription.PaymentState)
 				}
-			case billing.PremiumNewsletterSubscriptionUpdateTypeRemoteUpdated:
+			case billing.PremiumNewsletterSubscriptionUpdateTypeRemoteUpdated,
+				billing.PremiumNewsletterSubscriptionUpdateTypePaymentMethodAdded:
 				if err := billing.SyncUserAccountWithPremiumNewsletterSubscription(tx, *userID, premiumNewsletterSubscription); err != nil {
 					return err
 				}

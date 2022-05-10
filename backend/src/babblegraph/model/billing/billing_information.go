@@ -13,9 +13,10 @@ import (
 )
 
 const (
-	getBillingInformationQuery             = "SELECT * FROM billing_information WHERE _id = $1"
-	lookupBillingInformationForUserIDQuery = "SELECT * FROM billing_information WHERE user_id = $1"
-	insertBillingInformationForUserIDQuery = "INSERT INTO billing_information (user_id, external_id_mapping_id) VALUES ($1, $2)"
+	getBillingInformationQuery                 = "SELECT * FROM billing_information WHERE _id = $1"
+	lookupBillingInformationForUserIDQuery     = "SELECT * FROM billing_information WHERE user_id = $1"
+	lookupBillingInformationForExternalIDQuery = "SELECT * FROM billing_information WHERE external_id_mapping_id = $1"
+	insertBillingInformationForUserIDQuery     = "INSERT INTO billing_information (user_id, external_id_mapping_id) VALUES ($1, $2)"
 )
 
 func GetOrCreateBillingInformationForUser(c ctx.LogContext, tx *sqlx.Tx, userID users.UserID) (*BillingInformation, error) {
@@ -73,6 +74,34 @@ func GetOrCreateBillingInformationForUser(c ctx.LogContext, tx *sqlx.Tx, userID 
 			UserID:           &userID,
 			StripeCustomerID: ptr.String(stripeCustomer.ID),
 		}, nil
+	}
+}
+
+// TODO: maybe external ID type should be exported
+func LookupBillingInformationByExternalID(tx *sqlx.Tx, externalID string) (*BillingInformation, error) {
+	externalIDMapping, err := lookupExternalIDMappingByExternalID(tx, externalIDTypeStripe, externalID)
+	switch {
+	case err != nil:
+		return nil, err
+	case externalIDMapping != nil:
+		var matches []dbBillingInformation
+		err = tx.Select(&matches, lookupBillingInformationForExternalIDQuery, externalIDMapping.ID)
+		switch {
+		case err != nil:
+			return nil, err
+		case len(matches) == 0:
+			return nil, nil
+		case len(matches) > 1:
+			return nil, fmt.Errorf("Expected at most one billing information for external id %s, but got %d", externalIDMapping.ID, len(matches))
+		default:
+			return &BillingInformation{
+				UserID:           matches[0].UserID,
+				StripeCustomerID: ptr.String(externalID),
+			}, nil
+		}
+	default:
+		// This is where we'd try another ID Type
+		return nil, nil
 	}
 }
 

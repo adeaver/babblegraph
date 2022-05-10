@@ -23,6 +23,11 @@ import {
     StripeBeginPaymentMethodSetupResponse,
     stripeBeginPaymentMethodSetup,
 } from 'ConsumerWeb/api/billing/stripe';
+import {
+    PremiumNewsletterSubscriptionUpdateType,
+    PreparePremiumNewsletterSubscriptionSyncResponse,
+    preparePremiumNewsletterSubscriptionSync,
+} from 'ConsumerWeb/api/billing/billing';
 
 import { withStripe, WithStripeProps, StripeError } from './withStripe';
 
@@ -38,6 +43,7 @@ const styleClasses = makeStyles({
 });
 
 type ResolveSetupIntentFormOwnProps = {
+    premiumNewsletterSubscriptionID: string;
     toggleSuccessMessage: (shouldShowSuccessMessage) => void;
     redirectURL: string;
 }
@@ -50,22 +56,37 @@ const ResolveSetupIntentForm = asBaseComponent<StripeBeginPaymentMethodSetupResp
 
             const handleSubmit = () => {
                 setIsLoading(true);
-                props.stripe.confirmSetup({
-                    elements: props.elements,
-                    confirmParams: {
-                        return_url: props.redirectURL,
-                    },
-                    redirect: 'if_required',
-                }).then((result: StripeSetupIntentResult) => {
-                    setIsLoading(false);
-                    if (!!result.setupIntent && result.setupIntent.status === "succeeded") {
-                        props.toggleSuccessMessage(true);
-                    } else if (!!result.error) {
-                        setErrorMessage(result.error.message);
-                    } else {
+                preparePremiumNewsletterSubscriptionSync({
+                    id: props.premiumNewsletterSubscriptionID,
+                    updateType: PremiumNewsletterSubscriptionUpdateType.PaymentMethodAdded,
+                },
+                (resp: PreparePremiumNewsletterSubscriptionSyncResponse) => {
+                    if (!resp.success) {
+                        setIsLoading(false);
                         setErrorMessage("There was an error setting up your card");
+                        return
                     }
-                }).catch((err: Error) => {
+                    props.stripe.confirmSetup({
+                        elements: props.elements,
+                        confirmParams: {
+                            return_url: props.redirectURL,
+                        },
+                        redirect: 'if_required',
+                    }).then((result: StripeSetupIntentResult) => {
+                        setIsLoading(false);
+                        if (!!result.setupIntent && result.setupIntent.status === "succeeded") {
+                            props.toggleSuccessMessage(true);
+                        } else if (!!result.error) {
+                            setErrorMessage(result.error.message);
+                        } else {
+                            setErrorMessage("There was an error setting up your card");
+                        }
+                    }).catch((err: Error) => {
+                        setIsLoading(false);
+                        setErrorMessage("There was an error setting up your card");
+                    });
+                },
+                (err: Error) => {
                     setIsLoading(false);
                     setErrorMessage("There was an error setting up your card");
                 });
@@ -80,7 +101,7 @@ const ResolveSetupIntentForm = asBaseComponent<StripeBeginPaymentMethodSetupResp
                             className={classes.submitButton}
                             type='submit'
                             disabled={isLoading}>
-                            Add Payment Method
+                            Confirm New Payment Method
                         </PrimaryButton>
                     </CenteredComponent>
                     {

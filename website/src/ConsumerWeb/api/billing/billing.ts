@@ -92,6 +92,7 @@ export function setPremiumNewsletterSubscriptionAutoRenew(
 
 export enum PremiumNewsletterSubscriptionUpdateType {
     TransitionToActive = 'transition-to-active',
+    PaymentMethodAdded = 'payment-method-added',
 }
 
 export type PreparePremiumNewsletterSubscriptionSyncRequest = {
