@@ -66,6 +66,11 @@ func CreatePremiumNewsletterSubscriptionForUserWithID(c ctx.LogContext, tx *sqlx
 				Price: stripeProductID,
 			},
 		},
+		PaymentSettings: &stripe.SubscriptionPaymentSettingsParams{
+			PaymentMethodTypes: []*string{
+				stripe.String("card"),
+			},
+		},
 	}
 	subscriptionParams.AddExpand("latest_invoice.payment_intent")
 	subscriptionParams.AddExpand("default_payment_method")

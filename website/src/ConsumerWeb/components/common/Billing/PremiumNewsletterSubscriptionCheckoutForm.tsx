@@ -51,7 +51,8 @@ const PremiumNewsletterSubscriptionCardForm = (props: PremiumNewsletterSubscript
                     <ResolvePaymentIntentForm
                             premiumNewsletterSubscriptionID={props.premiumNewsletterSusbcription.id}
                             clientSecret={props.premiumNewsletterSusbcription.stripePaymentIntentId}
-                            toggleSuccessMessage={setShouldShowSuccessPage} />
+                            toggleSuccessMessage={setShouldShowSuccessPage}
+                            redirectURL={!!props.subscriptionManagementToken ? `https://www.babblegraph.com/manage/${props.subscriptionManagementToken}/payment-settings` : `https://www.babblegraph.com/login`} />
                 );
             }
             throw new Error("Payment intent ID is not set")

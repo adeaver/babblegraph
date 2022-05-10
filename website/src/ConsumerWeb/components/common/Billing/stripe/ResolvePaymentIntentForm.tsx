@@ -18,7 +18,7 @@ import Alert from 'common/components/Alert/Alert';
 import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
 
 import { withStripe, WithStripeProps } from './withStripe';
-import GenericCardForm, { StripeError } from './GenericCardForm';
+import { StripeError } from './GenericCardForm';
 
 import {
     asBaseComponent,
@@ -54,6 +54,7 @@ type ResolvePaymentIntentFormOwnProps = {
     premiumNewsletterSubscriptionID: string;
     clientSecret: string;
     toggleSuccessMessage: (shouldShowSuccessMessage) => void;
+    redirectURL: string;
 }
 
 const ResolvePaymentIntentForm = asBaseComponent<GetPaymentMethodsForUserResponse, ResolvePaymentIntentFormOwnProps>(
@@ -94,9 +95,16 @@ const ResolvePaymentIntentForm = asBaseComponent<GetPaymentMethodsForUserRespons
                         props.setError(new Error("something went wrong"));
                         return
                     }
-                    props.stripe.confirmPayment({
-                        ...props.elements,
-                    }).then((result: StripePaymentIntentResult) => {
+                    const stripePromise = existingPaymentMethodIDToUse ? props.stripe.confirmCardPayment(props.clientSecret, {
+                        payment_method: existingPaymentMethodIDToUse,
+                    }) : props.stripe.confirmPayment({
+                        elements: props.elements,
+                        confirmParams: {
+                            return_url: props.redirectURL,
+                        },
+                    redirect: 'if_required',
+                    });
+                    stripePromise.then((result: StripePaymentIntentResult) => {
                         setIsLoading(false);
                         if (!!result.paymentIntent && result.paymentIntent.status === "succeeded") {
                             props.toggleSuccessMessage(true);
