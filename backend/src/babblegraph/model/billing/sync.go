@@ -91,8 +91,6 @@ func SyncUserAccountWithPremiumNewsletterSubscription(tx *sqlx.Tx, userID users.
 				ExpirationTime:    premiumNewsletterSubscription.CurrentPeriodEnd,
 			})
 		case subscriptionLevel != nil:
-			// TODO(here): get latest invoice payment and set as default
-
 			return useraccounts.UpdateSubscriptionExpirationTime(tx, userID, premiumNewsletterSubscription.CurrentPeriodEnd)
 		}
 	case PaymentStateErrored,
