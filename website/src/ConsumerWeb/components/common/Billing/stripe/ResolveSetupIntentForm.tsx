@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 import {
-    CardNumberElement,
+    PaymentElement,
 } from "@stripe/react-stripe-js";
 
 import { makeStyles } from '@material-ui/core/styles';
@@ -23,9 +23,13 @@ import {
     StripeBeginPaymentMethodSetupResponse,
     stripeBeginPaymentMethodSetup,
 } from 'ConsumerWeb/api/billing/stripe';
+import {
+    PremiumNewsletterSubscriptionUpdateType,
+    PreparePremiumNewsletterSubscriptionSyncResponse,
+    preparePremiumNewsletterSubscriptionSync,
+} from 'ConsumerWeb/api/billing/billing';
 
-import { withStripe, WithStripeProps } from './withStripe';
-import GenericCardForm, { StripeError } from './GenericCardForm';
+import { withStripe, WithStripeProps, StripeError } from './withStripe';
 
 type StripeSetupIntentResult = {
     error?: StripeError | null;
@@ -39,42 +43,51 @@ const styleClasses = makeStyles({
 });
 
 type ResolveSetupIntentFormOwnProps = {
+    premiumNewsletterSubscriptionID: string;
     toggleSuccessMessage: (shouldShowSuccessMessage) => void;
+    redirectURL: string;
 }
 
 const ResolveSetupIntentForm = asBaseComponent<StripeBeginPaymentMethodSetupResponse, ResolveSetupIntentFormOwnProps>(
     withStripe<ResolveSetupIntentFormOwnProps & StripeBeginPaymentMethodSetupResponse & BaseComponentProps>(
         (props: ResolveSetupIntentFormOwnProps & StripeBeginPaymentMethodSetupResponse & BaseComponentProps & WithStripeProps) => {
-            const [ cardholderName, setCardholderName ] = useState<string>(null);
-            const [ postalCode, setPostalCode ] = useState<string>(null);
-
             const [ isLoading, setIsLoading ] = useState<boolean>(false);
-
             const [ errorMessage, setErrorMessage ] = useState<string>(null);
 
             const handleSubmit = () => {
                 setIsLoading(true);
-                const cardElement = props.elements.getElement(CardNumberElement);
-                props.stripe.confirmCardSetup(props.setupIntentClientSecret, {
-                    payment_method: {
-                        card: cardElement,
-                        billing_details: {
-                            name: cardholderName,
-                            address: {
-                                postal_code: postalCode,
-                            },
-                        },
-                    }
-                }).then((result: StripeSetupIntentResult) => {
-                    setIsLoading(false);
-                    if (!!result.setupIntent && result.setupIntent.status === "succeeded") {
-                        props.toggleSuccessMessage(true);
-                    } else if (!!result.error) {
-                        setErrorMessage(result.error.message);
-                    } else {
+                preparePremiumNewsletterSubscriptionSync({
+                    id: props.premiumNewsletterSubscriptionID,
+                    updateType: PremiumNewsletterSubscriptionUpdateType.PaymentMethodAdded,
+                },
+                (resp: PreparePremiumNewsletterSubscriptionSyncResponse) => {
+                    if (!resp.success) {
+                        setIsLoading(false);
                         setErrorMessage("There was an error setting up your card");
+                        return
                     }
-                }).catch((err: Error) => {
+                    props.stripe.confirmSetup({
+                        elements: props.elements,
+                        confirmParams: {
+                            return_url: props.redirectURL,
+                        },
+                        redirect: 'if_required',
+                    }).then((result: StripeSetupIntentResult) => {
+                        setIsLoading(false);
+                        if (!!result.setupIntent && result.setupIntent.status === "succeeded") {
+                            props.toggleSuccessMessage(true);
+                        } else if (!!result.error) {
+                            setErrorMessage(result.error.message);
+                        } else {
+                            setErrorMessage("There was an error setting up your card");
+                        }
+                    }).catch((err: Error) => {
+                        setIsLoading(false);
+                        setErrorMessage("There was an error setting up your card");
+                    });
+                },
+                (err: Error) => {
+                    setIsLoading(false);
                     setErrorMessage("There was an error setting up your card");
                 });
             }
@@ -82,18 +95,13 @@ const ResolveSetupIntentForm = asBaseComponent<StripeBeginPaymentMethodSetupResp
             const classes = styleClasses();
             return (
                 <Form handleSubmit={handleSubmit}>
-                    <GenericCardForm
-                        cardholderName={cardholderName}
-                        postalCode={postalCode}
-                        isDisabled={isLoading}
-                        setCardholderName={setCardholderName}
-                        setPostalCode={setPostalCode} />
+                    <PaymentElement />
                     <CenteredComponent>
                         <PrimaryButton
                             className={classes.submitButton}
                             type='submit'
                             disabled={isLoading}>
-                            Add Payment Method
+                            Confirm New Payment Method
                         </PrimaryButton>
                     </CenteredComponent>
                     {

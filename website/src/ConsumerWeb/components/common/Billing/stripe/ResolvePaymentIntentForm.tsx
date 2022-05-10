@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 import {
-    CardNumberElement,
+    PaymentElement,
 } from "@stripe/react-stripe-js";
 
 import { makeStyles } from '@material-ui/core/styles';
@@ -17,8 +17,7 @@ import PaymentMethodDisplay from 'ConsumerWeb/components/common/Billing/PaymentM
 import Alert from 'common/components/Alert/Alert';
 import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
 
-import { withStripe, WithStripeProps } from './withStripe';
-import GenericCardForm, { StripeError } from './GenericCardForm';
+import { withStripe, WithStripeProps, StripeError } from './withStripe';
 
 import {
     asBaseComponent,
@@ -52,8 +51,9 @@ type StripePaymentIntentResult = {
 
 type ResolvePaymentIntentFormOwnProps = {
     premiumNewsletterSubscriptionID: string;
-    stripePaymentIntentClientSecret: string;
+    clientSecret: string;
     toggleSuccessMessage: (shouldShowSuccessMessage) => void;
+    redirectURL: string;
 }
 
 const ResolvePaymentIntentForm = asBaseComponent<GetPaymentMethodsForUserResponse, ResolvePaymentIntentFormOwnProps>(
@@ -78,9 +78,6 @@ const ResolvePaymentIntentForm = asBaseComponent<GetPaymentMethodsForUserRespons
                 }
             }
 
-            const [ cardholderName, setCardholderName ] = useState<string>(null);
-            const [ postalCode, setPostalCode ] = useState<string>(null);
-
             const [ isLoading, setIsLoading ] = useState<boolean>(false);
 
             const [ errorMessage, setErrorMessage ] = useState<string>(null);
@@ -97,19 +94,16 @@ const ResolvePaymentIntentForm = asBaseComponent<GetPaymentMethodsForUserRespons
                         props.setError(new Error("something went wrong"));
                         return
                     }
-                    const cardElement = props.elements.getElement(CardNumberElement);
-                    const paymentMethod = !!existingPaymentMethodIDToUse ? existingPaymentMethodIDToUse : {
-                        card: cardElement,
-                        billing_details: {
-                            name: cardholderName,
-                            address: {
-                                postal_code: postalCode,
-                            },
+                    const stripePromise = existingPaymentMethodIDToUse ? props.stripe.confirmCardPayment(props.clientSecret, {
+                        payment_method: existingPaymentMethodIDToUse,
+                    }) : props.stripe.confirmPayment({
+                        elements: props.elements,
+                        confirmParams: {
+                            return_url: props.redirectURL,
                         },
-                    }
-                    props.stripe.confirmCardPayment(props.stripePaymentIntentClientSecret, {
-                        payment_method: paymentMethod,
-                    }).then((result: StripePaymentIntentResult) => {
+                    redirect: 'if_required',
+                    });
+                    stripePromise.then((result: StripePaymentIntentResult) => {
                         setIsLoading(false);
                         if (!!result.paymentIntent && result.paymentIntent.status === "succeeded") {
                             props.toggleSuccessMessage(true);
@@ -134,7 +128,10 @@ const ResolvePaymentIntentForm = asBaseComponent<GetPaymentMethodsForUserRespons
                             <Grid item xs={12} md={6}
                                 className={classes.paymentMethodDisplayContainer}
                                 key={paymentMethod.externalId}>
-                                <PaymentMethodDisplay onClick={handleSelectPaymentMethodID} paymentMethod={paymentMethod} />
+                                <PaymentMethodDisplay
+                                    onClick={handleSelectPaymentMethodID}
+                                    paymentMethod={paymentMethod}
+                                    isHighlighted={paymentMethod.externalId ===  existingPaymentMethodIDToUse} />
                             </Grid>
                         ))
                     }
@@ -150,12 +147,7 @@ const ResolvePaymentIntentForm = asBaseComponent<GetPaymentMethodsForUserRespons
                         label="Use new card" />
                     {
                         showCardForm && (
-                            <GenericCardForm
-                                cardholderName={cardholderName}
-                                postalCode={postalCode}
-                                isDisabled={isLoading}
-                                setCardholderName={setCardholderName}
-                                setPostalCode={setPostalCode} />
+                            <PaymentElement />
                         )
                     }
                     <CenteredComponent>

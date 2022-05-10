@@ -3,7 +3,7 @@ import { makePostRequestWithStandardEncoding } from 'util/bgfetch/bgfetch';
 export type StripeBeginPaymentMethodSetupRequest = {}
 
 export type StripeBeginPaymentMethodSetupResponse = {
-    setupIntentClientSecret: string;
+    clientSecret: string;
 }
 
 export function stripeBeginPaymentMethodSetup(

@@ -115,6 +115,8 @@ const (
 	PremiumNewsletterSubscriptionUpdateTypeTransitionToActive PremiumNewsletterSubscriptionUpdateType = "transition-to-active"
 	PremiumNewsletterSubscriptionUpdateTypeCanceled           PremiumNewsletterSubscriptionUpdateType = "canceled"
 
+	PremiumNewsletterSubscriptionUpdateTypePaymentMethodAdded PremiumNewsletterSubscriptionUpdateType = "payment-method-added"
+
 	// This update type is for when we receive an update pushed from
 	// the remote payment processor
 	PremiumNewsletterSubscriptionUpdateTypeRemoteUpdated PremiumNewsletterSubscriptionUpdateType = "remote-updated"
@@ -132,6 +134,8 @@ func GetPremiumNewsletterSubscriptionUpdateTypeFromString(u string) (*PremiumNew
 	switch u {
 	case PremiumNewsletterSubscriptionUpdateTypeTransitionToActive.Str():
 		return PremiumNewsletterSubscriptionUpdateTypeTransitionToActive.Ptr(), nil
+	case PremiumNewsletterSubscriptionUpdateTypePaymentMethodAdded.Str():
+		return PremiumNewsletterSubscriptionUpdateTypePaymentMethodAdded.Ptr(), nil
 	default:
 		return nil, fmt.Errorf("unrecognized update type %s", u)
 	}

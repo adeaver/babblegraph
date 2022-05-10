@@ -12,7 +12,7 @@ import (
 type stripeBeginPaymentMethodSetupRequest struct{}
 
 type stripeBeginPaymentMethodSetupResponse struct {
-	SetupIntentClientSecret string `json:"setup_intent_client_secret"`
+	SetupIntentClientSecret string `json:"client_secret"`
 }
 
 func stripeBeginPaymentMethodSetup(userAuth routermiddleware.UserAuthentication, r *router.Request) (interface{}, error) {
