@@ -93,6 +93,7 @@ func handleSyncBilling(c async.Context) {
 						defaultPaymentMethod = &paymentMethod
 					case paymentMethod.IsDefault:
 						// If there's already a default, do not mark another one as default
+						c.Infof("There's already a default payment method. Skipping...")
 						return billing.MarkPremiumNewsletterSyncRequestDone(tx, premiumSubscriptionID)
 					default:
 						// no-op
@@ -102,6 +103,8 @@ func handleSyncBilling(c async.Context) {
 					if err := billing.MarkPaymentMethodAsDefaultForUser(tx, *userID, defaultPaymentMethod.ExternalID); err != nil {
 						return err
 					}
+				} else {
+					c.Infof("No payment methods found")
 				}
 				return billing.MarkPremiumNewsletterSyncRequestDone(tx, premiumSubscriptionID)
 			default:

@@ -134,6 +134,8 @@ func GetPremiumNewsletterSubscriptionUpdateTypeFromString(u string) (*PremiumNew
 	switch u {
 	case PremiumNewsletterSubscriptionUpdateTypeTransitionToActive.Str():
 		return PremiumNewsletterSubscriptionUpdateTypeTransitionToActive.Ptr(), nil
+	case PremiumNewsletterSubscriptionUpdateTypePaymentMethodAdded.Str():
+		return PremiumNewsletterSubscriptionUpdateTypePaymentMethodAdded.Ptr(), nil
 	default:
 		return nil, fmt.Errorf("unrecognized update type %s", u)
 	}
