@@ -13,13 +13,20 @@ export type WithStripeProps = {
     elements: any;
 }
 
-export function withStripe<P>(WrappedComponent: React.ComponentType<P & WithStripeProps>) {
+export type StripeComponentProps = {
+    clientSecret: string;
+}
+
+export function withStripe<P extends StripeComponentProps>(WrappedComponent: React.ComponentType<P & WithStripeProps>) {
     return (props: P) => {
         const stripePromise = loadStripe(window.initialData["stripe_public_key"]);
+        const options = {
+            clientSecret: props.clientSecret,
+        };
         return (
             // Unclear why, but Elements doesn't think it has children
             // @ts-ignore
-            <Elements stripe={stripePromise}>
+            <Elements stripe={stripePromise} options={options}>
                 <ElementsConsumer>
                     {({stripe, elements}) => (
                         <WrappedComponent stripe={stripe} elements={elements} {...props} />
