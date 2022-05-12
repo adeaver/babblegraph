@@ -228,6 +228,8 @@ func getStripeSubscriptionAndConvertSubscriptionForDBPremiumNewsletterSubscripti
 		subscriptionParams := &stripe.SubscriptionParams{}
 		subscriptionParams.AddExpand("latest_invoice.payment_intent")
 		subscriptionParams.AddExpand("default_payment_method")
+		subscriptionParams.AddExpand("plan")
+		subscriptionParams.AddExpand("discount")
 		stripeSubscription, err := sub.Get(externalID.ExternalID, subscriptionParams)
 		if err != nil {
 			return nil, err

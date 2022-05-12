@@ -47,6 +47,8 @@ type PremiumNewsletterSubscription struct {
 	CurrentPeriodEnd      time.Time                        `json:"current_period_end"`
 	StripePaymentIntentID *string                          `json:"stripe_payment_intent_id,omitempty"`
 	IsAutoRenewEnabled    bool                             `json:"is_auto_renew_enabled"`
+
+	PriceCents *int64 `json:"price_cents,omitempty"`
 }
 
 func (p *PremiumNewsletterSubscription) GetUserID() (*users.UserID, error) {
@@ -172,3 +174,40 @@ type dbNewsletterSubscriptionTrial struct {
 	EmailAddress string                        `db:"email_address"`
 	CreatedAt    time.Time                     `db:"created_at"`
 }
+
+type PromotionCode struct {
+	ExternalID string        `json:"external_id"`
+	Code       string        `json:"code"`
+	Discount   Discount      `json:"discount"`
+	Type       PromotionType `json:"promotion_type"`
+	IsActive   bool          `json:"is_active"`
+}
+
+type PromotionCodeID string
+
+type dbPromotionCode struct {
+	CreatedAt           time.Time           `db:"created_at"`
+	LastModifiedAt      time.Time           `db:"last_modified_at"`
+	ID                  PromotionCodeID     `db:"_id"`
+	Type                PromotionType       `db:"type"`
+	ExternalIDMappingID externalIDMappingID `db:"external_id_mapping_id"`
+}
+
+type dbUserPromotion struct {
+	CreatedAt            time.Time            `db:"created_at"`
+	LastModifiedAt       time.Time            `db:"last_modified_at"`
+	PromotionID          PromotionCodeID      `db:"promotion_id"`
+	BillingInformationID BillingInformationID `db:"billing_information_id"`
+}
+
+type Discount struct {
+	PercentOffBPS  *int64 `json:"percent_off_bps,omitempty"`
+	AmountOffCents *int64 `json:"amount_off_cents,omitempty"`
+}
+
+type PromotionType string
+
+const (
+	PromotionTypeCheckout PromotionType = "checkout"
+	PromotionTypeURL      PromotionType = "url"
+)
