@@ -4,10 +4,13 @@ import (
 	"babblegraph/model/billing"
 	"babblegraph/services/web/router"
 	"babblegraph/util/ctx"
+	"babblegraph/util/database"
 	"babblegraph/util/encrypt"
 	"fmt"
 	"net/http"
 	"time"
+
+	"github.com/jmoiron/sqlx"
 )
 
 const (
@@ -19,7 +22,20 @@ const (
 type withMaybePromotionHandler func(promotionCode *billing.PromotionCode, r *router.Request) (interface{}, error)
 
 func withMaybePromotion(handler withMaybePromotionHandler) func(r *router.Request) (interface{}, error) {
-	return nil
+	return func(r *router.Request) (interface{}, error) {
+		var promotionCode *billing.PromotionCode
+		promotionCookieTokenValue := lookupPromotionCodeCookie(r)
+		if promotionCookieTokenValue != nil {
+			if err := database.WithTx(func(tx *sqlx.Tx) error {
+				var err error
+				promotionCode, err = billing.LookupPromotionByCode(tx, promotionCookieTokenValue.Code)
+				return err
+			}); err != nil {
+				return nil, err
+			}
+		}
+		return handler(promotionCode, r)
+	}
 }
 
 func SetPromotionCodeIfActive(r *router.Request, promotionCode billing.PromotionCode) error {
@@ -82,6 +98,7 @@ func decodePromotionCode(c ctx.LogContext, tokenStr string) *promotionCodeTokenV
 			return fmt.Errorf("Value did not correct parse")
 		}
 		out = &val
+		return nil
 	}); err != nil {
 		c.Debugf("Error decoding token %s", err.Error())
 	}
