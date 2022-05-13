@@ -58,7 +58,9 @@ func makePromotionCodeHandler(code string) func(r *router.Request) (interface{},
 			return nil, err
 		}
 		r.Debugf("Got promotion %+v", promotionCode)
-		routermiddleware.SetPromotionCodeIfActive(r, promotionCode)
+		if err := routermiddleware.SetPromotionCodeIfActive(r, promotionCode); err != nil {
+			return nil, err
+		}
 		return ptr.String(env.GetAbsoluteURLForEnvironment("")), nil
 	}
 }

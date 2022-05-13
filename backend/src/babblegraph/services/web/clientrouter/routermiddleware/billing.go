@@ -19,9 +19,9 @@ const (
 	promotionCodeValidity = 30 * 24 * time.Hour
 )
 
-type withMaybePromotionHandler func(promotionCode *billing.PromotionCode, r *router.Request) (interface{}, error)
+type WithMaybePromotionHandler func(promotionCode *billing.PromotionCode, r *router.Request) (interface{}, error)
 
-func withMaybePromotion(handler withMaybePromotionHandler) func(r *router.Request) (interface{}, error) {
+func WithMaybePromotion(handler WithMaybePromotionHandler) func(r *router.Request) (interface{}, error) {
 	return func(r *router.Request) (interface{}, error) {
 		var promotionCode *billing.PromotionCode
 		promotionCookieTokenValue := lookupPromotionCodeCookie(r)
@@ -44,7 +44,7 @@ func SetPromotionCodeIfActive(r *router.Request, promotionCode billing.Promotion
 		return err
 	}
 	if promotionCode.IsActive {
-		if lookupPromotionCodeCookie(r) != nil {
+		if lookupPromotionCodeCookie(r) == nil {
 			r.RespondWithCookie(&http.Cookie{
 				Name:     PromotionCodeCookieName,
 				Value:    *promoToken,
@@ -93,11 +93,30 @@ func decodePromotionCode(c ctx.LogContext, tokenStr string) *promotionCodeTokenV
 		if tokenPair.Key != PromotionCodeCookieName {
 			return fmt.Errorf("Incorrect key for cookie value: %s", tokenPair.Key)
 		}
-		val, ok := tokenPair.Value.(promotionCodeTokenValue)
+		val, ok := tokenPair.Value.(map[string]interface{})
 		if !ok {
-			return fmt.Errorf("Value did not correct parse")
+			return fmt.Errorf("Value did not correctly parse as a map, was %T", tokenPair.Value)
 		}
-		out = &val
+		setAtUnixTimestampInterface, ok := val["set_at_unix_timestamp"]
+		if !ok {
+			return fmt.Errorf("Map %+v did not have set_at_unix_timestamp", val)
+		}
+		setAtUnixTimestamp, ok := setAtUnixTimestampInterface.(float64)
+		if !ok {
+			return fmt.Errorf("Set at unix timestamp was a %T not a float64", setAtUnixTimestampInterface)
+		}
+		codeInterface, ok := val["code"]
+		if !ok {
+			return fmt.Errorf("Map %+v did not have code", val)
+		}
+		code, ok := codeInterface.(string)
+		if !ok {
+			return fmt.Errorf("Code was a %T not a string", codeInterface)
+		}
+		out = &promotionCodeTokenValue{
+			SetAtUnixTimestamp: int64(setAtUnixTimestamp),
+			Code:               code,
+		}
 		return nil
 	}); err != nil {
 		c.Debugf("Error decoding token %s", err.Error())
