@@ -13,6 +13,8 @@ export type PremiumNewsletterSubscription = {
     stripePaymentIntentId: string | undefined;
     currentPeriodEnd: string;
     isAutoRenewEnabled: boolean;
+    priceCents: number | undefined;
+    hasValidDiscount: boolean;
 }
 
 export type Discount = {

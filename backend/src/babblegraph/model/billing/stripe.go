@@ -58,9 +58,10 @@ func convertStripeSubscriptionToPremiumNewsletterSubscription(tx *sqlx.Tx, strip
 		paymentIntentID = ptr.String(stripeSubscription.LatestInvoice.PaymentIntent.ClientSecret)
 	}
 	var priceCents *int64
+	var hasValidDiscount bool
 	if stripeSubscription.Plan != nil {
 		priceCents = ptr.Int64(stripeSubscription.Plan.Amount)
-		hasValidDiscount := stripeSubscription.Discount != nil && stripeSubscription.Discount.Coupon != nil && stripeSubscription.Discount.Coupon.Valid
+		hasValidDiscount = stripeSubscription.Discount != nil && stripeSubscription.Discount.Coupon != nil && stripeSubscription.Discount.Coupon.Valid
 		if hasValidDiscount {
 			priceCents = ptr.Int64(*priceCents - stripeSubscription.Discount.Coupon.AmountOff)
 		}
@@ -70,6 +71,7 @@ func convertStripeSubscriptionToPremiumNewsletterSubscription(tx *sqlx.Tx, strip
 		CurrentPeriodEnd:      time.Unix(stripeSubscription.CurrentPeriodEnd, 0),
 		IsAutoRenewEnabled:    !stripeSubscription.CancelAtPeriodEnd,
 		PriceCents:            priceCents,
+		HasValidDiscount:      hasValidDiscount,
 	}
 	var billingInformation *dbBillingInformation
 	if dbNewsletterSubscription != nil {

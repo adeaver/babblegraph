@@ -48,7 +48,8 @@ type PremiumNewsletterSubscription struct {
 	StripePaymentIntentID *string                          `json:"stripe_payment_intent_id,omitempty"`
 	IsAutoRenewEnabled    bool                             `json:"is_auto_renew_enabled"`
 
-	PriceCents *int64 `json:"price_cents,omitempty"`
+	PriceCents       *int64 `json:"price_cents,omitempty"`
+	HasValidDiscount bool   `json:"has_valid_discount"`
 }
 
 func (p *PremiumNewsletterSubscription) GetUserID() (*users.UserID, error) {
