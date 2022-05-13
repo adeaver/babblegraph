@@ -14,3 +14,21 @@ export type PremiumNewsletterSubscription = {
     currentPeriodEnd: string;
     isAutoRenewEnabled: boolean;
 }
+
+export type Discount = {
+    percentOffBps: number | undefined;
+    amountOffCents: number | undefined;
+}
+
+export type PromotionCode = {
+    externalId: string;
+    code: string;
+    discount: Discount;
+    type: PromotionType;
+    isActive: boolean;
+}
+
+export enum PromotionType {
+    Checkout = 'checkout',
+    URL = 'url',
+}

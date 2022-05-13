@@ -2,13 +2,16 @@ import { makePostRequestWithStandardEncoding } from 'util/bgfetch/bgfetch';
 
 export enum Permission {
     ManagePermissions = 'manage-permissions',
-    ViewUserMetrics = 'view-user-metrics',
-	WriteBlog = "write-blog",
-	PublishBlog = "publish-blog",
 	EditContentTopics = "edit-content-topics",
 	EditContentSources = "edit-content-sources",
 	ManageBilling = 'manage-billing',
+	BillingAddCouponCodes = 'billing-add-coupon-codes',
 	PodcastSearch = 'podcast-search',
+
+    // TODO: delete these
+    ViewUserMetrics = 'view-user-metrics',
+	WriteBlog = "write-blog",
+	PublishBlog = "publish-blog",
 	EditAdvertisingVendors = 'edit-advertising-vendors',
 	EditAdvertisingSources = 'edit-advertising-sources',
 	ViewAdvertisingCampaigns = 'view-advertising-campaigns',

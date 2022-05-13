@@ -19,6 +19,7 @@ import CenteredComponent from 'common/components/CenteredComponent/CenteredCompo
 import {
     PremiumNewsletterSubscription,
     PaymentState,
+    PromotionType,
 } from 'common/api/billing/billing';
 import { SubscriptionLevel } from 'common/api/useraccounts/useraccounts';
 import {
@@ -29,6 +30,9 @@ import {
 
     ForceSyncForUserResponse,
     forceSyncForUser,
+
+    CreatePromotionCodeResponse,
+    createPromotionCode,
 } from 'AdminWeb/api/billing/billing';
 
 const styleClasses = makeStyles({
@@ -91,6 +95,8 @@ const BillingManagementPage = () => {
                     <DisplayCardHeader
                         title="Billing Manager"
                         backArrowDestination="/ops/dashboard" />
+                    <PromotionCodeForm />
+                    <Divider />
                     <Form handleSubmit={handleSubmit}>
                         <Grid container>
                             <Grid item xs={12}>
@@ -222,6 +228,109 @@ const PremiumNewsletterSubscriptionView = (props: PremiumNewsletterSubscriptionV
                 }
             </Paragraph>
         </div>
+    );
+}
+
+const PromotionCodeForm = () => {
+    const [ isLoading, setIsLoading ] = useState<boolean>(false);
+
+    const [ promotionCode, setPromotionCode ] = useState<string>(null);
+    const handlePromotionCodeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setPromotionCode((event.target as HTMLInputElement).value);
+    }
+
+    // TODO: make this dynamic later
+    const [ promotionType, setPromotionType ] = useState<PromotionType>(PromotionType.URL);
+
+    const [ amountOffCents, setAmountOffCents ] = useState<number>(null);
+    const handleAmountOffCentsChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const amount = parseFloat((event.target as HTMLInputElement).value.replace(/\$/g, ""));
+        setAmountOffCents(amount * 100);
+        setPercentOffBps(null);
+    }
+
+    const [ percentOffBps, setPercentOffBps ] = useState<number>(null);
+    const handlePercentOffBpsChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const percent = parseFloat((event.target as HTMLInputElement).value.replace(/%/g, ""));
+        setPercentOffBps(percent * 100);
+        setAmountOffCents(null);
+    }
+
+   const [ maxRedemptions, setMaxRedemptions ] = useState<number>(null);
+   const handleMaxRedemptionsChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const amount = parseInt((event.target as HTMLInputElement).value, 10);
+        setMaxRedemptions(amount);
+    }
+
+    const handleSubmit = () => {
+        setIsLoading(true);
+        createPromotionCode({
+            code: promotionCode,
+            discount: {
+                amountOffCents: amountOffCents,
+                percentOffBps: percentOffBps,
+            },
+            promotionType: promotionType,
+            maxRedemptions: maxRedemptions,
+        },
+        (resp: CreatePromotionCodeResponse) => {
+            setIsLoading(false);
+        },
+        (err: Error) => {
+            setIsLoading(false);
+        });
+    }
+
+    const classes = styleClasses();
+    return (
+        <Form handleSubmit={handleSubmit}>
+            <Grid container>
+                <Grid item xs={3}>
+                    <PrimaryTextField
+                        id="promotion-code"
+                        className={classes.formComponent}
+                        label="Promotion Code"
+                        variant="outlined"
+                        defaultValue={promotionCode}
+                        onChange={handlePromotionCodeChange} />
+                </Grid>
+                <Grid item xs={3}>
+                    <PrimaryTextField
+                        id="amount-off"
+                        className={classes.formComponent}
+                        label="Amount Off"
+                        variant="outlined"
+                        defaultValue={amountOffCents != null ? `$${amountOffCents/100}` : "--"}
+                        onChange={handleAmountOffCentsChange} />
+                </Grid>
+                <Grid item xs={3}>
+                    <PrimaryTextField
+                        id="percent-off"
+                        className={classes.formComponent}
+                        label="Percent Off"
+                        variant="outlined"
+                        defaultValue={percentOffBps != null ? `${percentOffBps/100}%` : "--"}
+                        onChange={handlePercentOffBpsChange} />
+                </Grid>
+                <Grid item xs={3}>
+                    <PrimaryTextField
+                        id="max-redemptions"
+                        className={classes.formComponent}
+                        label="Max Redemptions"
+                        variant="outlined"
+                        defaultValue={maxRedemptions}
+                        onChange={handleMaxRedemptionsChange} />
+                </Grid>
+                <Grid item xs={6}>
+                    <PrimaryButton
+                        className={classes.formComponent}
+                        disabled={!promotionCode && !(amountOffCents && percentOffBps)}
+                        type="submit">
+                        Submit
+                    </PrimaryButton>
+                </Grid>
+            </Grid>
+        </Form>
     );
 }
 

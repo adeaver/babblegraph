@@ -28,6 +28,12 @@ var Routes = router.RouteGroup{
 				admin.PermissionManageBilling,
 				forceSyncForUser,
 			),
+		}, {
+			Path: "create_promotion_code_1",
+			Handler: middleware.WithPermission(
+				admin.PermissionManageBilling,
+				createPromotionCode,
+			),
 		},
 	},
 }
@@ -94,5 +100,43 @@ func forceSyncForUser(adminID admin.ID, r *router.Request) (interface{}, error) 
 	}
 	return forceSyncForUserResponse{
 		Success: true,
+	}, nil
+}
+
+type createPromotionCodeRequest struct {
+	Code           string           `json:"code"`
+	Discount       billing.Discount `json:"discount"`
+	MaxRedemptions *int64           `json:"max_redemptions,omitempty"`
+	PromotionType  string           `json:"promotion_type"`
+}
+
+type createPromotionCodeResponse struct {
+	PromotionCode *billing.PromotionCode `json:"promotion_code"`
+}
+
+func createPromotionCode(adminID admin.ID, r *router.Request) (interface{}, error) {
+	var req createPromotionCodeRequest
+	if err := r.GetJSONBody(&req); err != nil {
+		return nil, err
+	}
+	promotionType, err := billing.GetPromotionTypeForString(req.PromotionType)
+	if err != nil {
+		return nil, err
+	}
+	var promotionCode *billing.PromotionCode
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		var err error
+		promotionCode, err = billing.CreatePromotionCode(r, tx, billing.CreatePromotionCodeInput{
+			Code:           req.Code,
+			Discount:       req.Discount,
+			MaxRedemptions: req.MaxRedemptions,
+			PromotionType:  *promotionType,
+		})
+		return err
+	}); err != nil {
+		return nil, err
+	}
+	return createPromotionCodeResponse{
+		PromotionCode: promotionCode,
 	}, nil
 }

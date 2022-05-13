@@ -211,3 +211,22 @@ const (
 	PromotionTypeCheckout PromotionType = "checkout"
 	PromotionTypeURL      PromotionType = "url"
 )
+
+func (p PromotionType) Str() string {
+	return string(p)
+}
+
+func (p PromotionType) Ptr() *PromotionType {
+	return &p
+}
+
+func GetPromotionTypeForString(s string) (*PromotionType, error) {
+	switch s {
+	case PromotionTypeCheckout.Str():
+		return PromotionTypeCheckout.Ptr(), nil
+	case PromotionTypeURL.Str():
+		return PromotionTypeURL.Ptr(), nil
+	default:
+		return nil, fmt.Errorf("Unrecognized promotion type %s", s)
+	}
+}

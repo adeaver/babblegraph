@@ -88,7 +88,9 @@ func CreatePromotionCode(c ctx.LogContext, tx *sqlx.Tx, input CreatePromotionCod
 			}
 		}
 	}()
-	couponParams := &stripe.CouponParams{}
+	couponParams := &stripe.CouponParams{
+		Currency: ptr.String("USD"),
+	}
 	switch {
 	case input.Discount.AmountOffCents != nil:
 		couponParams.AmountOff = input.Discount.AmountOffCents
@@ -103,7 +105,7 @@ func CreatePromotionCode(c ctx.LogContext, tx *sqlx.Tx, input CreatePromotionCod
 		return nil, err
 	}
 	stripePromotionCode, err = promotioncode.New(&stripe.PromotionCodeParams{
-		Coupon: stripe.String(coupon.ID),
+		Coupon: stripe.String(stripeCoupon.ID),
 		Code:   ptr.String(input.Code),
 		Active: ptr.Bool(true),
 	})
