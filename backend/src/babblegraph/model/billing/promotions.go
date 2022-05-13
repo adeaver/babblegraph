@@ -1,6 +1,7 @@
 package billing
 
 import (
+	"babblegraph/model/users"
 	"babblegraph/util/ctx"
 	"babblegraph/util/env"
 	"babblegraph/util/ptr"
@@ -14,6 +15,12 @@ import (
 const (
 	lookupAllPromotionCodes    = "SELECT * FROM billing_promotion_codes"
 	lookupPromotionByCodeQuery = "SELECT * FROM billing_promotion_codes WHERE code = $1"
+
+	lookupPromotionCodeByIDQuery     = "SELECT * FROM billing_promotion_codes WHERE _id = $1"
+	lookupPromotionCodesForUserQuery = "SELECT * FROM billing_user_promotion WHERE billing_information_id = $1"
+
+	addPromotionCodeForUserQuery   = "INSERT INTO billing_user_promotion (user_id, promotion_id) VALUES ($1, $2)"
+	applyPromotionCodeForUserQuery = "UPDATE billing_user_promotion SET applied=TRUE WHERE user_id = $1 AND promotion_id = $1"
 )
 
 func GetPromotionCodeCacheKey(code string) string {
@@ -92,21 +99,63 @@ func LookupPromotionByCode(tx *sqlx.Tx, code string) (*PromotionCode, error) {
 	case len(matches) > 1:
 		return nil, fmt.Errorf("Expected at most one match for code %s but got %d", code, len(matches))
 	default:
-		externalIDMapping, err := getExternalIDMapping(tx, matches[0].ExternalIDMappingID)
-		switch {
-		case err != nil:
-			return nil, err
-		case externalIDMapping.IDType == externalIDTypeStripe:
-			stripe.Key = env.MustEnvironmentVariable("STRIPE_KEY")
-			searchParams := &stripe.PromotionCodeParams{}
-			stripePromotionCode, err := promotioncode.Get(externalIDMapping.ExternalID, searchParams)
-			if err != nil {
-				return nil, err
-			}
-			return mergePromotionCode(matches[0], stripePromotionCode)
-		default:
-			return nil, fmt.Errorf("Unrecognized external ID type %s", externalIDMapping.IDType)
+		return getPromotionCodeFromDBVersion(tx, matches[0])
+	}
+}
+
+func InsertUnappliedPromotionCodeForUser(tx *sqlx.Tx, userID users.UserID, id PromotionCodeID) error {
+	_, err := tx.Exec(addPromotionCodeForUserQuery, userID, id)
+	return err
+}
+
+func lookupUnappliedPromotionCodeForUser(tx *sqlx.Tx, userID users.UserID) (*PromotionCode, error) {
+	var matches []dbUserPromotion
+	if err := tx.Select(&matches, lookupPromotionCodesForUserQuery, userID); err != nil {
+		return nil, err
+	}
+	for _, m := range matches {
+		if m.Applied {
+			continue
 		}
+		return getPromotionCodeForID(tx, m.PromotionID)
+	}
+	return nil, nil
+}
+
+func applyPromotionCodeForUser(tx *sqlx.Tx, userID users.UserID, promotionID PromotionCodeID) error {
+	_, err := tx.Exec(applyPromotionCodeForUserQuery, userID, promotionID)
+	return err
+}
+
+func getPromotionCodeForID(tx *sqlx.Tx, id PromotionCodeID) (*PromotionCode, error) {
+	var matches []dbPromotionCode
+	if err := tx.Select(&matches, lookupPromotionCodeByIDQuery, id); err != nil {
+		return nil, err
+	}
+	switch {
+	case len(matches) == 0,
+		len(matches) > 1:
+		return nil, fmt.Errorf("Expected exactly one match for id %s but got %d", id, len(matches))
+	default:
+		return getPromotionCodeFromDBVersion(tx, matches[0])
+	}
+}
+
+func getPromotionCodeFromDBVersion(tx *sqlx.Tx, dbVersion dbPromotionCode) (*PromotionCode, error) {
+	externalIDMapping, err := getExternalIDMapping(tx, dbVersion.ExternalIDMappingID)
+	switch {
+	case err != nil:
+		return nil, err
+	case externalIDMapping.IDType == externalIDTypeStripe:
+		stripe.Key = env.MustEnvironmentVariable("STRIPE_KEY")
+		searchParams := &stripe.PromotionCodeParams{}
+		stripePromotionCode, err := promotioncode.Get(externalIDMapping.ExternalID, searchParams)
+		if err != nil {
+			return nil, err
+		}
+		return mergePromotionCode(dbVersion, stripePromotionCode)
+	default:
+		return nil, fmt.Errorf("Unrecognized external ID type %s", externalIDMapping.IDType)
 	}
 }
 
@@ -120,6 +169,7 @@ func mergePromotionCode(db dbPromotionCode, stripePromotionCode *stripe.Promotio
 		percentOffBPS = ptr.Int64(int64(stripePromotionCode.Coupon.PercentOff * 100))
 	}
 	return &PromotionCode{
+		ID:       db.ID,
 		IsActive: isActive,
 		Code:     db.Code,
 		Type:     db.Type,
@@ -127,5 +177,6 @@ func mergePromotionCode(db dbPromotionCode, stripePromotionCode *stripe.Promotio
 			AmountOffCents: ptr.Int64(stripePromotionCode.Coupon.AmountOff),
 			PercentOffBPS:  percentOffBPS,
 		},
+		externalID: ptr.String(stripePromotionCode.Coupon.ID),
 	}, nil
 }

@@ -23,6 +23,15 @@ var Routes = router.RouteGroup{
 	Prefix: "user",
 	Routes: []router.Route{
 		{
+			Path: "signup_user_1",
+			Handler: routermiddleware.WithNoBodyRequestLogger(
+				routermiddleware.WithUTMEventTracking(
+					"signup",
+					routermiddleware.WithMaybePromotion(handleSignupUser),
+				),
+			),
+		},
+		{
 			Path: "unsubscribe_user_1",
 			Handler: routermiddleware.WithNoBodyRequestLogger(
 				routermiddleware.MaybeWithAuthentication(unsubscribeUser),

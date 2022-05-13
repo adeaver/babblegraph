@@ -177,10 +177,20 @@ type dbNewsletterSubscriptionTrial struct {
 }
 
 type PromotionCode struct {
-	Code     string        `json:"code"`
-	Discount Discount      `json:"discount"`
-	Type     PromotionType `json:"promotion_type"`
-	IsActive bool          `json:"is_active"`
+	ID       PromotionCodeID `json:"_id"`
+	Code     string          `json:"code"`
+	Discount Discount        `json:"discount"`
+	Type     PromotionType   `json:"promotion_type"`
+	IsActive bool            `json:"is_active"`
+
+	externalID *string
+}
+
+func (p PromotionCode) getExternalID() (*string, error) {
+	if p.externalID == nil {
+		return nil, fmt.Errorf("No external ID")
+	}
+	return p.externalID, nil
 }
 
 type PromotionCodeID string
@@ -195,10 +205,11 @@ type dbPromotionCode struct {
 }
 
 type dbUserPromotion struct {
-	CreatedAt            time.Time            `db:"created_at"`
-	LastModifiedAt       time.Time            `db:"last_modified_at"`
-	PromotionID          PromotionCodeID      `db:"promotion_id"`
-	BillingInformationID BillingInformationID `db:"billing_information_id"`
+	CreatedAt      time.Time       `db:"created_at"`
+	LastModifiedAt time.Time       `db:"last_modified_at"`
+	PromotionID    PromotionCodeID `db:"promotion_id"`
+	UserID         users.UserID    `db:"user_id"`
+	Applied        bool            `db:"applied"`
 }
 
 type Discount struct {

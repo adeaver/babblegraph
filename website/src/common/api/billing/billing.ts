@@ -23,7 +23,7 @@ export type Discount = {
 }
 
 export type PromotionCode = {
-    externalId: string;
+    id: string;
     code: string;
     discount: Discount;
     type: PromotionType;

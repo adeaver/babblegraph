@@ -18,7 +18,8 @@ CREATE TABLE IF NOT EXISTS billing_user_promotion(
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()),
     last_modified_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc', now()),
     promotion_id uuid NOT NULL REFERENCES billing_promotion_codes(_id),
-    billing_information_id uuid NOT NULL REFERENCES billing_information(_id),
+    user_id uuid NOT NULL REFERENCES users(_id),
+    applied BOOLEAN NOT NULL DEFAULT false,
 
-    PRIMARY KEY (billing_information_id, promotion_id)
+    PRIMARY KEY (user_id, promotion_id)
 );
