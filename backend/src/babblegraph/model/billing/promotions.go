@@ -17,10 +17,10 @@ const (
 	lookupPromotionByCodeQuery = "SELECT * FROM billing_promotion_codes WHERE code = $1"
 
 	lookupPromotionCodeByIDQuery     = "SELECT * FROM billing_promotion_codes WHERE _id = $1"
-	lookupPromotionCodesForUserQuery = "SELECT * FROM billing_user_promotion WHERE billing_information_id = $1"
+	lookupPromotionCodesForUserQuery = "SELECT * FROM billing_user_promotion WHERE user_id = $1"
 
 	addPromotionCodeForUserQuery   = "INSERT INTO billing_user_promotion (user_id, promotion_id) VALUES ($1, $2)"
-	applyPromotionCodeForUserQuery = "UPDATE billing_user_promotion SET applied=TRUE WHERE user_id = $1 AND promotion_id = $1"
+	applyPromotionCodeForUserQuery = "UPDATE billing_user_promotion SET applied=TRUE WHERE user_id = $1 AND promotion_id = $2"
 )
 
 func GetPromotionCodeCacheKey(code string) string {
