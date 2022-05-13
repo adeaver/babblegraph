@@ -178,10 +178,10 @@ const PremiumSubscriptionManagementComponent = asBaseComponent<LookupActivePremi
                 return (
                     <div>
                         <Heading3 color={TypographyColor.Primary}>
-                            You’re currently trialing Babblegraph Premium until {new Date(props.premiumNewsletterSubscription.currentPeriodEnd).toLocaleDateString()}
+                            You’re currently trialing Babblegraph until {new Date(props.premiumNewsletterSubscription.currentPeriodEnd).toLocaleDateString()}
                         </Heading3>
                         <Paragraph>
-                            However, you haven’t added a payment method, so you are set to lose Babblegraph Premium features on that date. You can add a payment method with the form below.
+                            However, you haven’t added a payment method, so you are set to lose access to Babblegraph on that date. You can add a payment method with the form below.
                         </Paragraph>
                         <PremiumNewsletterSubscriptionCardForm
                             premiumNewsletterSusbcription={props.premiumNewsletterSubscription} />
@@ -191,7 +191,7 @@ const PremiumSubscriptionManagementComponent = asBaseComponent<LookupActivePremi
                 return (
                     <div>
                         <Heading3 color={TypographyColor.Primary}>
-                            You’re currently trialing Babblegraph Premium until {new Date(props.premiumNewsletterSubscription.currentPeriodEnd).toLocaleDateString()}
+                            You’re currently trialing Babblegraph until {new Date(props.premiumNewsletterSubscription.currentPeriodEnd).toLocaleDateString()}
                         </Heading3>
                         {
                             isAutoRenewEnabled ? (
@@ -214,7 +214,7 @@ const PremiumSubscriptionManagementComponent = asBaseComponent<LookupActivePremi
                             ) : (
                                 <div>
                                     <Paragraph color={TypographyColor.Warning}>
-                                        Auto-renew is currently disabled, so you’ll lose access to Babblegraph Premium features at that date. You can enable it below.
+                                        Auto-renew is currently disabled, so you’ll lose access to Babblegraph at that date. You can enable it below.
                                     </Paragraph>
                                     {
                                         isLoadingAutoRenew ? (
@@ -264,7 +264,7 @@ const PremiumSubscriptionManagementComponent = asBaseComponent<LookupActivePremi
                             ) : (
                                 <div>
                                     <Paragraph color={TypographyColor.Warning}>
-                                        Auto-renew is currently disabled, so you’ll lose access to Babblegraph Premium features on {new Date(props.premiumNewsletterSubscription.currentPeriodEnd).toLocaleDateString()}. You can enable it below.
+                                        Auto-renew is currently disabled, so you’ll lose access to Babblegraph on {new Date(props.premiumNewsletterSubscription.currentPeriodEnd).toLocaleDateString()}. You can enable it below.
                                     </Paragraph>
                                     {
                                         isLoadingAutoRenew ? (
@@ -291,10 +291,10 @@ const PremiumSubscriptionManagementComponent = asBaseComponent<LookupActivePremi
                 return (
                     <div>
                         <Heading3 color={TypographyColor.Primary}>
-                            We’ve encountered an error processing payment for your Babblegraph Premium subscription
+                            We’ve encountered an error processing payment for your Babblegraph subscription
                         </Heading3>
                         <Paragraph>
-                            If you’d like to continue using Babblegraph Premium, please designate a new default payment method. If you would not like to continue, then no action is required.
+                            If you’d like to continue using Babblegraph, please designate a new default payment method. If you would not like to continue, then no action is required.
                         </Paragraph>
                         <Paragraph>
                             It may take a day or two for this issue to be resolved with your account.
