@@ -136,6 +136,7 @@ func createPromotionCode(adminID admin.ID, r *router.Request) (interface{}, erro
 	}); err != nil {
 		return nil, err
 	}
+	// Invalidate cache here
 	return createPromotionCodeResponse{
 		PromotionCode: promotionCode,
 	}, nil

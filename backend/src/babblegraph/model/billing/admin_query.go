@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	createPromotionCodeQuery = "INSERT INTO billing_promotion_codes (type, external_id_mapping_id) VALUES ($1, $2)"
+	createPromotionCodeQuery = "INSERT INTO billing_promotion_codes (code, type, external_id_mapping_id) VALUES ($1, $2, $3)"
 )
 
 type UserBillingInformation struct {
@@ -116,7 +116,7 @@ func CreatePromotionCode(c ctx.LogContext, tx *sqlx.Tx, input CreatePromotionCod
 	if err != nil {
 		return nil, err
 	}
-	if _, err := tx.Exec(createPromotionCodeQuery, input.PromotionType, externalIDMappingID); err != nil {
+	if _, err := tx.Exec(createPromotionCodeQuery, input.Code, input.PromotionType, externalIDMappingID); err != nil {
 		return nil, err
 	}
 	return nil, nil

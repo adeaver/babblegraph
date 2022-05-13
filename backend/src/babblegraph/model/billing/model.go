@@ -177,11 +177,10 @@ type dbNewsletterSubscriptionTrial struct {
 }
 
 type PromotionCode struct {
-	ExternalID string        `json:"external_id"`
-	Code       string        `json:"code"`
-	Discount   Discount      `json:"discount"`
-	Type       PromotionType `json:"promotion_type"`
-	IsActive   bool          `json:"is_active"`
+	Code     string        `json:"code"`
+	Discount Discount      `json:"discount"`
+	Type     PromotionType `json:"promotion_type"`
+	IsActive bool          `json:"is_active"`
 }
 
 type PromotionCodeID string
@@ -192,6 +191,7 @@ type dbPromotionCode struct {
 	ID                  PromotionCodeID     `db:"_id"`
 	Type                PromotionType       `db:"type"`
 	ExternalIDMappingID externalIDMappingID `db:"external_id_mapping_id"`
+	Code                string              `db:"code"`
 }
 
 type dbUserPromotion struct {
