@@ -2,7 +2,8 @@ import { makePostRequestWithStandardEncoding } from 'util/bgfetch/bgfetch';
 
 import {
     PaymentState,
-    PremiumNewsletterSubscription
+    PremiumNewsletterSubscription,
+    PromotionCode,
 } from 'common/api/billing/billing';
 
 export type GetOrCreateBillingInformationRequest = {
@@ -188,6 +189,25 @@ export function deletePaymentMethodForUser(
 ) {
     makePostRequestWithStandardEncoding<DeletePaymentMethodForUserRequest, DeletePaymentMethodForUserResponse>(
         '/api/billing/delete_payment_method_for_user_1',
+        req,
+        onSuccess,
+        onError,
+    );
+}
+
+export type LookupPromotionCodeRequest = {}
+
+export type LookupPromotionCodeResponse = {
+    promotionCode: PromotionCode | undefined;
+}
+
+export function lookupPromotionCode(
+    req: LookupPromotionCodeRequest,
+    onSuccess: (resp: LookupPromotionCodeResponse) => void,
+    onError: (err: Error) => void,
+) {
+    makePostRequestWithStandardEncoding<LookupPromotionCodeRequest, LookupPromotionCodeResponse>(
+        '/api/billing/lookup_promotion_code_1',
         req,
         onSuccess,
         onError,

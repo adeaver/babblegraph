@@ -1,12 +1,13 @@
 package user
 
 import (
+	"babblegraph/model/billing"
 	"babblegraph/model/users"
 	"babblegraph/model/userverificationattempt"
+	"babblegraph/services/web/router"
 	"babblegraph/util/database"
 	"babblegraph/util/email"
 	"babblegraph/util/recaptcha"
-	"encoding/json"
 	"fmt"
 	"log"
 
@@ -39,9 +40,9 @@ type signupUserResponse struct {
 	ErrorMessage *signupError `json:"error_message,omitempty"`
 }
 
-func handleSignupUser(body []byte) (interface{}, error) {
+func handleSignupUser(promotionCode *billing.PromotionCode, r *router.Request) (interface{}, error) {
 	var req signupUserRequest
-	if err := json.Unmarshal(body, &req); err != nil {
+	if err := r.GetJSONBody(&req); err != nil {
 		return nil, err
 	}
 	isValid, err := recaptcha.VerifyRecaptchaToken("signup", req.CaptchaToken)
@@ -88,6 +89,11 @@ func handleSignupUser(body []byte) (interface{}, error) {
 		case numAttempts != nil && *numAttempts >= maxVerificationAttemptsForUser:
 			sErr = signupErrorRateLimited.Ptr()
 			return fmt.Errorf("Rate limited")
+		}
+		if promotionCode != nil {
+			if err := billing.InsertUnappliedPromotionCodeForUser(tx, user.ID, promotionCode.ID); err != nil {
+				return err
+			}
 		}
 		return userverificationattempt.InsertVerificationAttemptForUser(tx, user.ID)
 	}); err != nil {

@@ -1,5 +1,6 @@
 import {
-    asLeftZeroPaddedString
+    asLeftZeroPaddedString,
+    asRoundedFixedDecimal
 } from './NumberString';
 
 describe("appropriately converts numbers to left zero padded strings", () => {
@@ -26,5 +27,27 @@ describe("appropriately converts numbers to left zero padded strings", () => {
     it("correctly converts larger than max value", () => {
         const out = asLeftZeroPaddedString(1000, 10);
         expect(out).toEqual("1000");
+    });
+});
+
+describe("appropriately prints numbers as rounded fixed strings", () => {
+    it("an integer value", () => {
+        const out = asRoundedFixedDecimal(1000, 2);
+        expect(out).toEqual("1000.00");
+    });
+
+    it("a rounded value", () => {
+        const out = asRoundedFixedDecimal(15.959, 2);
+        expect(out).toEqual("15.96");
+    });
+
+    it("a non-rounded value", () => {
+        const out = asRoundedFixedDecimal(15.9529, 2);
+        expect(out).toEqual("15.95");
+    });
+
+    it("a negative non-rounded value", () => {
+        const out = asRoundedFixedDecimal(-15.9529, 2);
+        expect(out).toEqual("-15.95");
     });
 });
