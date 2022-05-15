@@ -14,6 +14,7 @@ import (
 )
 
 func handleSyncBilling(c async.Context) {
+	c.Infof("Starting billing sync")
 	var expiringSubscriptions []useraccounts.ExpiringSubscriptionInfo
 	var premiumNewsletterSyncRequests map[billing.PremiumNewsletterSubscriptionID]billing.PremiumNewsletterSubscriptionUpdateType
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
@@ -28,6 +29,7 @@ func handleSyncBilling(c async.Context) {
 		c.Errorf("Error getting billing items to sync: %s", err.Error())
 		return
 	}
+	c.Infof("Billing sync got %d sync requests and %d expiring subscriptions", len(premiumNewsletterSyncRequests), len(expiringSubscriptions))
 	userIDsWithExpirationToSkip := make(map[users.UserID]bool)
 	for premiumSubscriptionID, updateType := range premiumNewsletterSyncRequests {
 		var userID *users.UserID
