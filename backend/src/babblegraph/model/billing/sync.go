@@ -98,7 +98,7 @@ func SyncUserAccountWithPremiumNewsletterSubscription(tx *sqlx.Tx, userID users.
 		switch {
 		case subscriptionLevel == nil,
 			*subscriptionLevel == useraccounts.SubscriptionLevelLegacy:
-			// no-op
+			return nil
 		case subscriptionLevel != nil:
 			return useraccounts.ExpireSubscriptionForUser(tx, userID)
 		}
