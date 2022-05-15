@@ -64,7 +64,6 @@ var minimumElapsedTimeBetweenNotificationsByType = map[NotificationType]*time.Du
 	NotificationTypeNeedPaymentMethodWarningVeryUrgent: nil,
 	NotificationTypeNeedPaymentMethodWarning:           nil,
 	NotificationTypeNeedPaymentMethodWarningUrgent:     nil,
-	NotificationTypeTrialEndingSoon:                    nil,
 	NotificationTypePaymentError:                       ptr.Duration(14 * 24 * time.Hour), // 2 weeks
 	NotificationTypePremiumSubscriptionCanceled:        ptr.Duration(3 * 24 * time.Hour),  // 3 days
 }
