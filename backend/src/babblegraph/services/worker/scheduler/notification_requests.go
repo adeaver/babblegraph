@@ -180,6 +180,10 @@ func handleSubscriptionCanceledNotification(c ctx.LogContext, tx *sqlx.Tx, email
 		if err != nil {
 			return nil, nil, err
 		}
+		checkoutLink, err := routes.MakePremiumSubscriptionCheckoutLink(user.ID)
+		if err != nil {
+			return nil, nil, err
+		}
 		emailHTML, err := emailtemplates.MakeGenericUserEmailHTML(emailtemplates.MakeGenericUserEmailHTMLInput{
 			EmailRecordID: emailRecordID,
 			UserAccessor:  userAccessor,
@@ -189,7 +193,14 @@ func handleSubscriptionCanceledNotification(c ctx.LogContext, tx *sqlx.Tx, email
 				"Hello!",
 				"Thanks so much for trying Babblegraph!",
 				"This email is to let you know that your subscription to Babblegraph has ended. You will no longer be charged for the subscription.",
-				"If you see any new charges on your credit card statement from Babblegraph, just respond to this email and we’ll get it sorted out.",
+				"If you wanted to continue to use Babblegraph, you can restart your subscription at the link below.",
+			},
+			GenericEmailAction: &emailtemplates.GenericEmailAction{
+				Link:       *checkoutLink,
+				ButtonText: "Click here to restart your subscription",
+			},
+			AfterParagraphs: []string{
+				"If you are not restarting your subscription and you see any new charges on your credit card statement from Babblegraph, just respond to this email and we’ll get it sorted out.",
 				"Lastly, before you go, we’d love to know what we could do better! You can respond directly to this email to give feedback.",
 				"If you have any questions or believe there is an error in this email, just respond to this email.",
 				"Thanks again so much for trying out Babblegraph!",
