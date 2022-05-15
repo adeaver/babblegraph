@@ -142,7 +142,7 @@ type ExpiringSubscriptionInfo struct {
 }
 
 func GetExpiringSubscriptions(tx *sqlx.Tx) ([]ExpiringSubscriptionInfo, error) {
-	query, args, err := sqlx.In(fmt.Sprintf(getUserIDForExpiringSubscriptionQuery, DefaultSubscriptionBufferInDays+7), []SubscriptionLevel{
+	query, args, err := sqlx.In(fmt.Sprintf(getUserIDForExpiringSubscriptionQuery, DefaultSubscriptionBufferInDays+8), []SubscriptionLevel{
 		SubscriptionLevelPremium,
 		SubscriptionLevelLegacy,
 	})
