@@ -13,4 +13,24 @@ export type PremiumNewsletterSubscription = {
     stripePaymentIntentId: string | undefined;
     currentPeriodEnd: string;
     isAutoRenewEnabled: boolean;
+    priceCents: number | undefined;
+    hasValidDiscount: boolean;
+}
+
+export type Discount = {
+    percentOffBps: number | undefined;
+    amountOffCents: number | undefined;
+}
+
+export type PromotionCode = {
+    id: string;
+    code: string;
+    discount: Discount;
+    type: PromotionType;
+    isActive: boolean;
+}
+
+export enum PromotionType {
+    Checkout = 'checkout',
+    URL = 'url',
 }

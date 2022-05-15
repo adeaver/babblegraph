@@ -72,6 +72,19 @@ func CreatePremiumNewsletterSubscriptionForUserWithID(c ctx.LogContext, tx *sqlx
 			},
 		},
 	}
+	promotionCode, err := lookupUnappliedPromotionCodeForUser(tx, userID)
+	if err != nil {
+		return nil, err
+	}
+	if promotionCode != nil {
+		if err := applyPromotionCodeForUser(tx, userID, promotionCode.ID); err != nil {
+			return nil, err
+		}
+		subscriptionParams.Coupon, err = promotionCode.getExternalID()
+		if err != nil {
+			return nil, err
+		}
+	}
 	subscriptionParams.AddExpand("latest_invoice.payment_intent")
 	subscriptionParams.AddExpand("default_payment_method")
 	externalID, err := getExternalIDMapping(tx, billingInformation.ExternalIDMappingID)
@@ -228,6 +241,8 @@ func getStripeSubscriptionAndConvertSubscriptionForDBPremiumNewsletterSubscripti
 		subscriptionParams := &stripe.SubscriptionParams{}
 		subscriptionParams.AddExpand("latest_invoice.payment_intent")
 		subscriptionParams.AddExpand("default_payment_method")
+		subscriptionParams.AddExpand("plan")
+		subscriptionParams.AddExpand("discount")
 		stripeSubscription, err := sub.Get(externalID.ExternalID, subscriptionParams)
 		if err != nil {
 			return nil, err

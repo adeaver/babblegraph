@@ -123,6 +123,11 @@ func (i IndexRoute) makeMuxRoute() func(http.ResponseWriter, *http.Request) {
 		}
 		redirectURL, ok := resp.(*string)
 		if ok {
+			if len(wrappedRequest.respCookies) != 0 {
+				for _, cookie := range wrappedRequest.respCookies {
+					http.SetCookie(w, cookie)
+				}
+			}
 			http.Redirect(w, req, *redirectURL, http.StatusFound)
 			return
 		}

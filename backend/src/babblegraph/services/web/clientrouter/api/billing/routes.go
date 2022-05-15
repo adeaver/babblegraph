@@ -65,6 +65,11 @@ var Routes = router.RouteGroup{
 			Handler: routermiddleware.WithNoBodyRequestLogger(
 				stripeHandleWebhookEvent,
 			),
+		}, {
+			Path: "lookup_promotion_code_1",
+			Handler: routermiddleware.WithNoBodyRequestLogger(
+				routermiddleware.WithMaybePromotion(lookupPromotionCode),
+			),
 		},
 	},
 }
@@ -297,5 +302,15 @@ func deletePaymentMethodForUser(userAuth routermiddleware.UserAuthentication, r 
 	}
 	return deletePaymentMethodForUserResponse{
 		Success: true,
+	}, nil
+}
+
+type lookupPromotionCodeResponse struct {
+	PromotionCode *billing.PromotionCode `json:"promotion_code,omitempty"`
+}
+
+func lookupPromotionCode(promotionCode *billing.PromotionCode, r *router.Request) (interface{}, error) {
+	return lookupPromotionCodeResponse{
+		PromotionCode: promotionCode,
 	}, nil
 }

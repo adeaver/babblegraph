@@ -33,3 +33,12 @@ func WithCache(key string, v interface{}, ttl time.Duration, fn func() (interfac
 		return nil
 	})
 }
+
+func InvalidateCacheKey(cacheKey string) error {
+	return database.WithTx(func(tx *sqlx.Tx) error {
+		if _, err := tx.Exec(deleteFromCacheQuery, cacheKey); err != nil {
+			return err
+		}
+		return nil
+	})
+}

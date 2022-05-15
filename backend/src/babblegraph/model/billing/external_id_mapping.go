@@ -7,8 +7,9 @@ import (
 )
 
 const (
-	getExternalIDMappingByIDQuery = "SELECT * FROM billing_external_id_mapping WHERE _id = $1"
-	insertExternalIDMappingQuery  = "INSERT INTO billing_external_id_mapping (id_type, external_id) VALUES ($1, $2) RETURNING _id"
+	getManyExternalIDMappingByIDQuery = "SELECT * FROM billing_external_id_mapping WHERE _id IN (?)"
+	getExternalIDMappingByIDQuery     = "SELECT * FROM billing_external_id_mapping WHERE _id = $1"
+	insertExternalIDMappingQuery      = "INSERT INTO billing_external_id_mapping (id_type, external_id) VALUES ($1, $2) RETURNING _id"
 
 	getExternalIDMappingByExternalIDQuery = "SELECT * FROM billing_external_id_mapping WHERE id_type = $1 AND external_id = $2"
 )
@@ -25,6 +26,19 @@ func getExternalIDMapping(tx *sqlx.Tx, id externalIDMappingID) (*dbExternalIDMap
 	default:
 		return &matches[0], nil
 	}
+}
+
+func getManyExternalIDMapping(tx *sqlx.Tx, ids []externalIDMappingID) ([]dbExternalIDMapping, error) {
+	query, args, err := sqlx.In(getManyExternalIDMappingByIDQuery, ids)
+	if err != nil {
+		return nil, err
+	}
+	sql := tx.Rebind(query)
+	var matches []dbExternalIDMapping
+	if err := tx.Select(&matches, sql, args...); err != nil {
+		return nil, err
+	}
+	return matches, nil
 }
 
 func lookupExternalIDMappingByExternalID(tx *sqlx.Tx, idType externalIDType, externalID string) (*dbExternalIDMapping, error) {
