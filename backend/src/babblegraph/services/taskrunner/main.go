@@ -24,6 +24,7 @@ func main() {
         sample-email: send sample
         create-elastic-indexes: create new indices in ElasticSearch
         migrate-legacy-users: migrates all old users onto a legacy subscription
+        expiration-dry-run: does a dry run of user account expiration
         create-admin: create admin`)
 	userEmail := flag.String("user-email", "none", "Email address of user to create")
 	flag.Parse()
@@ -64,6 +65,10 @@ func main() {
 			log.Fatal("no email specified")
 		}
 		if err := tasks.CreateAdminAndEmitToken(*userEmail); err != nil {
+			log.Fatal(err.Error())
+		}
+	case "expiration-dry-run":
+		if err := tasks.SubscriptionExpirationDryRun(ctx.GetDefaultLogContext()); err != nil {
 			log.Fatal(err.Error())
 		}
 	default:
