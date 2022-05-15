@@ -11,11 +11,6 @@ while [ $# -gt 0 ]; do
     shift
 done
 
-if [[ -z $EMAIL ]]; then
-    echo "Must specify email"
-    exit 1
-fi
-
 echo "Building..."
 docker build \
     -f deploy/taskrunner/Dockerfile \
@@ -30,4 +25,4 @@ docker run -d \
     --env-file ./env/taskrunner.env \
     --name babblegraph_task_runner \
     babblegraph.com/taskrunner:$(git rev-parse --short HEAD) \
-    /bin/bash -c "./taskrunner --task=create-user --user-email=${EMAIL}"
+    /bin/bash -c "./taskrunner --task=expiration-dry-run"
