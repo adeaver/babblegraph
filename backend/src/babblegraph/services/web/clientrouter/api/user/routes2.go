@@ -168,6 +168,18 @@ func unsubscribeUser(userAuth *routermiddleware.UserAuthentication, r *router.Re
 				return err
 			}
 		}
+		premiumNewsletterSubscription, err := billing.LookupPremiumNewsletterSubscriptionForUser(r, tx, *userID)
+		switch {
+		case err != nil:
+			return err
+		case premiumNewsletterSubscription == nil:
+			r.Infof("No active premium newsletter subscription for user %s", *userID)
+		default:
+			if err := billing.InsertPremiumNewsletterSyncRequest(tx, *premiumNewsletterSubscription.ID, billing.PremiumNewsletterSubscriptionUpdateTypeCanceled); err != nil {
+				return err
+			}
+			return billing.CancelPremiumNewsletterSubscriptionForUser(r, tx, *userID)
+		}
 		return users.UnsubscribeUserByID(tx, *userID)
 	})
 	switch {
