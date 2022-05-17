@@ -19,6 +19,14 @@ import { PhotoKey } from 'common/data/photos/Photos';
 import Link from 'common/components/Link/Link';
 import { withCaptchaToken, loadCaptchaScript } from 'common/util/grecaptcha/grecaptcha';
 
+import {
+    LookupPromotionCodeResponse,
+    lookupPromotionCode
+} from 'ConsumerWeb/api/billing/billing';
+import { PromotionCode } from 'common/api/billing/billing';
+
+import { asRoundedFixedDecimal } from 'util/string/NumberString';
+
 import SignupForm from 'ConsumerWeb/components/common/SignupForm/SignupForm';
 
 import {
@@ -66,6 +74,12 @@ const styleClasses = makeStyles({
     verificationButton: {
         width: '100%',
     },
+    promotionContainer: {
+        width: '100%',
+        backgroundColor: Color.Primary,
+        padding: '2px 0',
+        borderRadius: '5px',
+    },
 });
 
 const HomePage = () => {
@@ -73,7 +87,14 @@ const HomePage = () => {
     const [ hadSuccess, setHadSuccess ] = useState<boolean>(false);
     const [ hasLoadedCaptcha, setHasLoadedCaptcha ] = useState<boolean>(false);
 
+    const [ promotionCode, setPromotionCode ] = useState<PromotionCode>(null);
+
     useEffect(() => {
+        lookupPromotionCode({},
+        (resp: LookupPromotionCodeResponse) => {
+            setPromotionCode(resp.promotionCode);
+        },
+        (err: Error) => {});
         loadCaptchaScript();
         setPageLoadEvent({},
             (resp: SetPageLoadEventResponse) => {},
@@ -101,16 +122,30 @@ const HomePage = () => {
                     </Heading1>
                     <Divider />
                     {
+                        (!hadSuccess && !!promotionCode) && (
+                            promotionCode.isActive ? (
+                                <div className={classes.promotionContainer}>
+                                    <Paragraph color={TypographyColor.White}>
+                                        You’re saving US${asRoundedFixedDecimal(promotionCode.discount.amountOffCents / 100.0, 2)} with code {promotionCode.code.toUpperCase()}
+                                    </Paragraph>
+                                </div>
+                            ) : (
+                                <div className={classes.promotionContainer}>
+                                    <Paragraph color={TypographyColor.White}>
+                                        Your code {promotionCode.code.toUpperCase()} is no longer active.
+                                    </Paragraph>
+                                </div>
+                            )
+                        )
+                    }
+                    {
                         !hadSuccess && (
                             <div>
                                 <Paragraph>
-                                    Living outside of a Spanish speaking country makes it hard to use Spanish regularly. Without realizing it, weeks or months can go by without using it, and your Spanish can easily begin to fade. That’s where Babblegraph comes in.
+                                    Babblegraph picks up where your Spanish class left off by sending you an email newsletter with real articles and podcasts from the Spanish-speaking world. You can even customize the content to make keeping up with your Spanish skills more engaging!
                                 </Paragraph>
                                 <Paragraph>
-                                    Babblegraph is an email newsletter with Spanish language news and podcasts that helps you effortless incorporate Spanish practice into your daily or weekly routine. It can help you to expand your reading and listening comprehension without having to move to a Spanish speaking country.
-                                </Paragraph>
-                                <Paragraph>
-                                    Try it free for 30 days. No account or credit card required!
+                                    Try it risk-free for 30 days. No account or credit card required!
                                 </Paragraph>
                             </div>
                         )

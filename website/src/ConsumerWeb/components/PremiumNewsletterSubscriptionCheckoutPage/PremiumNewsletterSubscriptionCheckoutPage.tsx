@@ -40,6 +40,8 @@ import {
     getOrCreatePremiumNewsletterSubscription,
 } from 'ConsumerWeb/api/billing/billing';
 
+import { asRoundedFixedDecimal } from 'util/string/NumberString';
+
 const styleClasses = makeStyles({
     callToActionButton: {
         margin: '15px 0',
@@ -64,8 +66,6 @@ const PremiumNewsletterSubscriptionCheckoutPage = withUserProfileInformation<Pre
         const { token } = props.match.params;
         const [ subscriptionManagementToken, createUserToken ] = props.userProfile.nextTokens;
 
-        const [ shouldShowCheckoutForm, setShouldShowCheckoutForm ] = useState<boolean>(false);
-
         if (!props.userProfile.hasAccount) {
             setLocation(`/signup/${createUserToken}`);
             return;
@@ -84,15 +84,7 @@ const PremiumNewsletterSubscriptionCheckoutPage = withUserProfileInformation<Pre
                         <OrderDetailsSection
                             trialEligibilityDays={props.userProfile.trialEligibilityDays}
                             premiumSubscriptionCheckoutToken={token}
-                            isButtonDisabled={shouldShowCheckoutForm}
-                            handleProceedToCheckout={() => setShouldShowCheckoutForm(true)} />
-                        {
-                            shouldShowCheckoutForm && (
-                                <PaymentSection
-                                    premiumSubscriptionCheckoutToken={token}
-                                    subscriptionManagementToken={subscriptionManagementToken} />
-                            )
-                        }
+                            subscriptionManagementToken={subscriptionManagementToken} />
                     </DisplayCard>
                 </Grid>
             </Grid>
@@ -103,13 +95,15 @@ const PremiumNewsletterSubscriptionCheckoutPage = withUserProfileInformation<Pre
 type OrderDetailsSectionProps = {
     premiumSubscriptionCheckoutToken: string;
     trialEligibilityDays: number | undefined;
-    isButtonDisabled: boolean;
-
-    handleProceedToCheckout: () => void;
+    subscriptionManagementToken: string;
 }
 
-const OrderDetailsSection = asBaseComponent<GetOrCreateBillingInformationResponse, OrderDetailsSectionProps>(
-    (props: GetOrCreateBillingInformationResponse & OrderDetailsSectionProps & BaseComponentProps) => {
+type OrderDetailsSectionAPIProps = GetOrCreatePremiumNewsletterSubscriptionResponse & GetOrCreateBillingInformationResponse;
+
+const OrderDetailsSection = asBaseComponent<OrderDetailsSectionAPIProps, OrderDetailsSectionProps>(
+    (props: OrderDetailsSectionAPIProps & OrderDetailsSectionProps & BaseComponentProps) => {
+        const [ shouldShowCheckoutForm, setShouldShowCheckoutForm ] = useState<boolean>(false);
+
         const classes = styleClasses();
         return (
             <Grid container>
@@ -123,12 +117,12 @@ const OrderDetailsSection = asBaseComponent<GetOrCreateBillingInformationRespons
                 </Grid>
                 <Grid item xs={8}>
                     <Paragraph align={Alignment.Left}>
-                        1-year Babblegraph Premium Subscription
+                        1-year Babblegraph Subscription
                     </Paragraph>
                 </Grid>
                 <Grid item xs={4}>
                     <Paragraph align={Alignment.Right}>
-                        US$29.00
+                        US${asRoundedFixedDecimal(props.premiumNewsletterSubscription.priceCents / 100.0, 2)}
                     </Paragraph>
                 </Grid>
                 <Grid item xs={12}>
@@ -141,7 +135,7 @@ const OrderDetailsSection = asBaseComponent<GetOrCreateBillingInformationRespons
                 </Grid>
                 <Grid item xs={4}>
                     <Paragraph align={Alignment.Right}>
-                        { !!props.trialEligibilityDays ? "US$0.00" : "US$29.00"}
+                        { !!props.trialEligibilityDays ? "US$0.00" : `$${asRoundedFixedDecimal(props.premiumNewsletterSubscription.priceCents / 100.0, 2)}`}
                     </Paragraph>
                 </Grid>
                 {
@@ -157,34 +151,64 @@ const OrderDetailsSection = asBaseComponent<GetOrCreateBillingInformationRespons
                     !!props.trialEligibilityDays && (
                         <Grid item xs={4}>
                             <Paragraph align={Alignment.Right}>
-                                US$29.00
+                                US${asRoundedFixedDecimal(props.premiumNewsletterSubscription.priceCents / 100.0, 2)}
+                            </Paragraph>
+                        </Grid>
+                    )
+                }
+                {
+                    props.premiumNewsletterSubscription.hasValidDiscount && (
+                        <Grid item xs={12}>
+                            <Paragraph size={Size.Small} align={Alignment.Center}>
+                                Renews at US$29.00 after the first year
                             </Paragraph>
                         </Grid>
                     )
                 }
                 <Grid item xs={12}>
                     <PrimaryButton
-                        onClick={props.handleProceedToCheckout}
+                        onClick={() => {setShouldShowCheckoutForm(true)}}
                         className={classes.callToActionButton}
-                        disabled={props.isButtonDisabled}
+                        disabled={shouldShowCheckoutForm}
                         size="large">
                         {
                             !props.trialEligibilityDays ? "Proceed to pay" : "Add a payment method"
                         }
                     </PrimaryButton>
                 </Grid>
+                {
+                    shouldShowCheckoutForm && (
+                        <Grid item xs={12}>
+                            <PaymentSection
+                                premiumSubscriptionCheckoutToken={props.premiumSubscriptionCheckoutToken}
+                                subscriptionManagementToken={props.subscriptionManagementToken}
+                                premiumNewsletterSubscription={props.premiumNewsletterSubscription} />
+                        </Grid>
+                    )
+                }
             </Grid>
         );
     },
     (
         ownProps: OrderDetailsSectionProps,
-        onSuccess: (GetOrCreateBillingInformationResponse) => void,
+        onSuccess: (OrderDetailsSectionAPIProps) => void,
         onError: (err: Error) => void,
     ) => {
         getOrCreateBillingInformation({
             premiumSubscriptionCheckoutToken: ownProps.premiumSubscriptionCheckoutToken,
         },
-        onSuccess,
+        (resp: GetOrCreateBillingInformationResponse) => {
+            getOrCreatePremiumNewsletterSubscription({
+                premiumSubscriptionCheckoutToken: ownProps.premiumSubscriptionCheckoutToken,
+            },
+            (resp2: GetOrCreatePremiumNewsletterSubscriptionResponse) => {
+                onSuccess({
+                    ...resp,
+                    ...resp2,
+                });
+            },
+            onError);
+        },
         onError);
     },
     false,
@@ -193,55 +217,42 @@ const OrderDetailsSection = asBaseComponent<GetOrCreateBillingInformationRespons
 type PaymentSectionProps = {
     premiumSubscriptionCheckoutToken: string;
     subscriptionManagementToken: string;
+    premiumNewsletterSubscription: PremiumNewsletterSubscription;
 }
 
-const PaymentSection = asBaseComponent<GetOrCreatePremiumNewsletterSubscriptionResponse, PaymentSectionProps>(
-    (props: GetOrCreatePremiumNewsletterSubscriptionResponse & PaymentSectionProps & BaseComponentProps) => {
-        switch (props.premiumNewsletterSubscription.paymentState) {
-            case PaymentState.CreatedUnpaid:
-            case PaymentState.TrialNoPaymentMethod:
-                return (
-                    <PremiumNewsletterSubscriptionCardForm
-                        premiumNewsletterSusbcription={props.premiumNewsletterSubscription}
-                        subscriptionManagementToken={props.subscriptionManagementToken} />
-                );
-            case PaymentState.TrialPaymentMethodAdded:
-            case PaymentState.Active:
-            case PaymentState.Errored:
-                return (
-                    <div>
-                        <Heading3 color={TypographyColor.Warning}>
-                            It looks like we’ve already collected your payment information!
-                        </Heading3>
-                        <Link href={`/manage/${props.subscriptionManagementToken}/payment-settings`} target={LinkTarget.Self}>
-                            You can make changes to your payment information by clicking here.
-                        </Link>
-                    </div>
-                );
-        }
-        return (
-            <div>
-                <Heading3 color={TypographyColor.Warning}>
-                    Something went wrong. Try again later or contact hello@babblegraph.com for help.
-                </Heading3>
-                <Link href={`/manage/${props.subscriptionManagementToken}`} target={LinkTarget.Self}>
-                    Go back to subscription management
-                </Link>
-            </div>
-        )
-    },
-    (
-        ownProps: PaymentSectionProps,
-        onSuccess: (GetOrCreatePremiumNewsletterSubscriptionResponse) => void,
-        onError: (err: Error) => void,
-    ) => {
-        getOrCreatePremiumNewsletterSubscription({
-            premiumSubscriptionCheckoutToken: ownProps.premiumSubscriptionCheckoutToken,
-        },
-        onSuccess,
-        onError);
-    },
-    false,
-)
+const PaymentSection = (props: PaymentSectionProps) => {
+    switch (props.premiumNewsletterSubscription.paymentState) {
+        case PaymentState.CreatedUnpaid:
+        case PaymentState.TrialNoPaymentMethod:
+            return (
+                <PremiumNewsletterSubscriptionCardForm
+                    premiumNewsletterSusbcription={props.premiumNewsletterSubscription}
+                    subscriptionManagementToken={props.subscriptionManagementToken} />
+            );
+        case PaymentState.TrialPaymentMethodAdded:
+        case PaymentState.Active:
+        case PaymentState.Errored:
+            return (
+                <div>
+                    <Heading3 color={TypographyColor.Warning}>
+                        It looks like we’ve already collected your payment information!
+                    </Heading3>
+                    <Link href={`/manage/${props.subscriptionManagementToken}/payment-settings`} target={LinkTarget.Self}>
+                        You can make changes to your payment information by clicking here.
+                    </Link>
+                </div>
+            );
+    }
+    return (
+        <div>
+            <Heading3 color={TypographyColor.Warning}>
+                Something went wrong. Try again later or contact hello@babblegraph.com for help.
+            </Heading3>
+            <Link href={`/manage/${props.subscriptionManagementToken}`} target={LinkTarget.Self}>
+                Go back to subscription management
+            </Link>
+        </div>
+    )
+}
 
 export default PremiumNewsletterSubscriptionCheckoutPage;

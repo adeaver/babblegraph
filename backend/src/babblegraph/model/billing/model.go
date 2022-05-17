@@ -47,6 +47,9 @@ type PremiumNewsletterSubscription struct {
 	CurrentPeriodEnd      time.Time                        `json:"current_period_end"`
 	StripePaymentIntentID *string                          `json:"stripe_payment_intent_id,omitempty"`
 	IsAutoRenewEnabled    bool                             `json:"is_auto_renew_enabled"`
+
+	PriceCents       *int64 `json:"price_cents,omitempty"`
+	HasValidDiscount bool   `json:"has_valid_discount"`
 }
 
 func (p *PremiumNewsletterSubscription) GetUserID() (*users.UserID, error) {
@@ -98,6 +101,10 @@ const (
 	PaymentStateTerminated PaymentState = 5
 )
 
+func (p PaymentState) Ptr() *PaymentState {
+	return &p
+}
+
 type dbPremiumNewsletterSubscriptionSyncRequest struct {
 	CreatedAt                       time.Time                               `db:"created_at"`
 	LastModifiedAt                  time.Time                               `db:"last_modified_at"`
@@ -114,6 +121,8 @@ const (
 	// but are unsure if the remote payment processor has finished processing
 	PremiumNewsletterSubscriptionUpdateTypeTransitionToActive PremiumNewsletterSubscriptionUpdateType = "transition-to-active"
 	PremiumNewsletterSubscriptionUpdateTypeCanceled           PremiumNewsletterSubscriptionUpdateType = "canceled"
+
+	PremiumNewsletterSubscriptionUpdateTypePaymentMethodAdded PremiumNewsletterSubscriptionUpdateType = "payment-method-added"
 
 	// This update type is for when we receive an update pushed from
 	// the remote payment processor
@@ -132,6 +141,8 @@ func GetPremiumNewsletterSubscriptionUpdateTypeFromString(u string) (*PremiumNew
 	switch u {
 	case PremiumNewsletterSubscriptionUpdateTypeTransitionToActive.Str():
 		return PremiumNewsletterSubscriptionUpdateTypeTransitionToActive.Ptr(), nil
+	case PremiumNewsletterSubscriptionUpdateTypePaymentMethodAdded.Str():
+		return PremiumNewsletterSubscriptionUpdateTypePaymentMethodAdded.Ptr(), nil
 	default:
 		return nil, fmt.Errorf("unrecognized update type %s", u)
 	}
@@ -163,4 +174,71 @@ type dbNewsletterSubscriptionTrial struct {
 	ID           newsletterSubscriptionTrialID `db:"_id"`
 	EmailAddress string                        `db:"email_address"`
 	CreatedAt    time.Time                     `db:"created_at"`
+}
+
+type PromotionCode struct {
+	ID       PromotionCodeID `json:"_id"`
+	Code     string          `json:"code"`
+	Discount Discount        `json:"discount"`
+	Type     PromotionType   `json:"promotion_type"`
+	IsActive bool            `json:"is_active"`
+
+	externalID *string
+}
+
+func (p PromotionCode) getExternalID() (*string, error) {
+	if p.externalID == nil {
+		return nil, fmt.Errorf("No external ID")
+	}
+	return p.externalID, nil
+}
+
+type PromotionCodeID string
+
+type dbPromotionCode struct {
+	CreatedAt           time.Time           `db:"created_at"`
+	LastModifiedAt      time.Time           `db:"last_modified_at"`
+	ID                  PromotionCodeID     `db:"_id"`
+	Type                PromotionType       `db:"type"`
+	ExternalIDMappingID externalIDMappingID `db:"external_id_mapping_id"`
+	Code                string              `db:"code"`
+}
+
+type dbUserPromotion struct {
+	CreatedAt      time.Time       `db:"created_at"`
+	LastModifiedAt time.Time       `db:"last_modified_at"`
+	PromotionID    PromotionCodeID `db:"promotion_id"`
+	UserID         users.UserID    `db:"user_id"`
+	Applied        bool            `db:"applied"`
+}
+
+type Discount struct {
+	PercentOffBPS  *int64 `json:"percent_off_bps,omitempty"`
+	AmountOffCents *int64 `json:"amount_off_cents,omitempty"`
+}
+
+type PromotionType string
+
+const (
+	PromotionTypeCheckout PromotionType = "checkout"
+	PromotionTypeURL      PromotionType = "url"
+)
+
+func (p PromotionType) Str() string {
+	return string(p)
+}
+
+func (p PromotionType) Ptr() *PromotionType {
+	return &p
+}
+
+func GetPromotionTypeForString(s string) (*PromotionType, error) {
+	switch s {
+	case PromotionTypeCheckout.Str():
+		return PromotionTypeCheckout.Ptr(), nil
+	case PromotionTypeURL.Str():
+		return PromotionTypeURL.Ptr(), nil
+	default:
+		return nil, fmt.Errorf("Unrecognized promotion type %s", s)
+	}
 }

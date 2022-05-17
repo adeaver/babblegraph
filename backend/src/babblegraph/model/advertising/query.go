@@ -192,12 +192,18 @@ func joinPossibleAdvertisements(c ctx.LogContext, userAdvertisements []dbUserAdv
 		}
 	}
 	weightedCampaignIDs := getWeightedCampaignIDs(weightsByCampaign)
+	if len(weightedCampaignIDs) == 0 {
+		return nil, nil
+	}
 	rand.Seed(time.Now().UnixNano())
 	idx := rand.Intn(len(weightedCampaignIDs))
 	campaignID := weightedCampaignIDs[idx]
 	advertisements, ok := adsByCampaignID[campaignID]
-	if !ok {
+	switch {
+	case !ok:
 		c.Warnf("Campaign ID %s selected, but there were no matching ads", campaignID)
+		return nil, nil
+	case len(advertisements) == 0:
 		return nil, nil
 	}
 	adIdx := rand.Intn(len(advertisements))

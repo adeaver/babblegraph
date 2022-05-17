@@ -1,6 +1,7 @@
 package newsletter
 
 import (
+	"babblegraph/model/billing"
 	"babblegraph/model/content"
 	"babblegraph/model/documents"
 	"babblegraph/model/email"
@@ -42,6 +43,8 @@ type userPreferencesAccessor interface {
 	getSpotlightRecordsOrderedBySentOn() []uservocabulary.UserVocabularySpotlightRecord
 	insertDocumentForUserAndReturnID(emailRecordID email.ID, doc documents.Document) (*userdocuments.UserDocumentID, error)
 	insertSpotlightReinforcementRecord(entry uservocabulary.UserVocabularyEntryID) error
+
+	getSubscriptionPaymentState() *billing.PaymentState
 }
 
 type DefaultUserPreferencesAccessor struct {
@@ -61,6 +64,8 @@ type DefaultUserPreferencesAccessor struct {
 	userVocabularyEntries     []uservocabulary.UserVocabularyEntry
 	allowableSourceIDs        []content.SourceID
 	userSpotlightRecords      []uservocabulary.UserVocabularySpotlightRecord
+
+	premiumNewsletterSubscription *billing.PremiumNewsletterSubscription
 }
 
 func GetDefaultUserPreferencesAccessor(c ctx.LogContext, tx *sqlx.Tx, userID users.UserID, languageCode wordsmith.LanguageCode, dateOfSendUTCMidnight time.Time) (*DefaultUserPreferencesAccessor, error) {
@@ -107,6 +112,10 @@ func GetDefaultUserPreferencesAccessor(c ctx.LogContext, tx *sqlx.Tx, userID use
 	if err != nil {
 		return nil, err
 	}
+	premiumNewsletterSubscription, err := billing.LookupPremiumNewsletterSubscriptionForUser(c, tx, userID)
+	if err != nil {
+		return nil, err
+	}
 	return &DefaultUserPreferencesAccessor{
 		tx:                        tx,
 		userID:                    userID,
@@ -122,11 +131,12 @@ func GetDefaultUserPreferencesAccessor(c ctx.LogContext, tx *sqlx.Tx, userID use
 			LowerBound: 30,
 			UpperBound: 80,
 		},
-		sentDocumentIDs:       sentDocumentIDs,
-		userTopics:            userTopics,
-		userVocabularyEntries: filteredVocabularyEntries,
-		allowableSourceIDs:    allowableSourceIDs,
-		userSpotlightRecords:  userSpotlightRecords,
+		sentDocumentIDs:               sentDocumentIDs,
+		userTopics:                    userTopics,
+		userVocabularyEntries:         filteredVocabularyEntries,
+		allowableSourceIDs:            allowableSourceIDs,
+		userSpotlightRecords:          userSpotlightRecords,
+		premiumNewsletterSubscription: premiumNewsletterSubscription,
 	}, nil
 }
 
@@ -188,6 +198,13 @@ func (d *DefaultUserPreferencesAccessor) insertDocumentForUserAndReturnID(emailR
 
 func (d *DefaultUserPreferencesAccessor) insertSpotlightReinforcementRecord(userVocabularyEntryID uservocabulary.UserVocabularyEntryID) error {
 	return uservocabulary.UpsertUserVocabularySpotlightRecord(d.tx, d.userID, d.languageCode, userVocabularyEntryID)
+}
+
+func (d *DefaultUserPreferencesAccessor) getSubscriptionPaymentState() *billing.PaymentState {
+	if d.premiumNewsletterSubscription == nil {
+		return nil
+	}
+	return d.premiumNewsletterSubscription.PaymentState.Ptr()
 }
 
 func getAllowableSourceIDsForUser(tx *sqlx.Tx, userID users.UserID) ([]content.SourceID, error) {

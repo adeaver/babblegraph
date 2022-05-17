@@ -55,14 +55,17 @@ type UserPermissionMapping struct {
 type Permission string
 
 const (
-	PermissionManagePermissions             Permission = "manage-permissions"
+	PermissionManagePermissions     Permission = "manage-permissions"
+	PermissionEditContentTopics     Permission = "edit-content-topics"
+	PermissionEditContentSources    Permission = "edit-content-sources"
+	PermissionManageBilling         Permission = "manage-billing"
+	PermissionBillingAddCouponCodes Permission = "billing-add-coupon-codes"
+	PermissionPodcastSearch         Permission = "podcast-search"
+
+	// TODO: delete these
 	PermissionViewUserMetrics               Permission = "view-user-metrics"
 	PermissionWriteBlog                     Permission = "write-blog"
 	PermissionPublishBlog                   Permission = "publish-blog"
-	PermissionEditContentTopics             Permission = "edit-content-topics"
-	PermissionEditContentSources            Permission = "edit-content-sources"
-	PermissionManageBilling                 Permission = "manage-billing"
-	PermissionPodcastSearch                 Permission = "podcast-search"
 	PermissionEditAdvertisingVendors        Permission = "edit-advertising-vendors"
 	PermissionEditAdvertisingSources        Permission = "edit-advertising-sources"
 	PermissionViewAdvertisingCampaigns      Permission = "view-advertising-campaigns"

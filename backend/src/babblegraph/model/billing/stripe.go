@@ -18,7 +18,7 @@ import (
 // This file is for any stripe specific methods
 
 const (
-	CaptureStripeEventQuery = "INSERT INTO billing_stripe_event (type, processed, data) VALUES ($1, $2, $3)"
+	captureStripeEventQuery = "INSERT INTO billing_stripe_event (type, processed, data) VALUES ($1, $2, $3)"
 )
 
 func GetSetupIntentClientSecretForUser(tx *sqlx.Tx, userID users.UserID) (*string, error) {
@@ -57,10 +57,21 @@ func convertStripeSubscriptionToPremiumNewsletterSubscription(tx *sqlx.Tx, strip
 	if stripeSubscription.LatestInvoice != nil && stripeSubscription.LatestInvoice.PaymentIntent != nil {
 		paymentIntentID = ptr.String(stripeSubscription.LatestInvoice.PaymentIntent.ClientSecret)
 	}
+	var priceCents *int64
+	var hasValidDiscount bool
+	if stripeSubscription.Plan != nil {
+		priceCents = ptr.Int64(stripeSubscription.Plan.Amount)
+		hasValidDiscount = stripeSubscription.Discount != nil && stripeSubscription.Discount.Coupon != nil && stripeSubscription.Discount.Coupon.Valid
+		if hasValidDiscount {
+			priceCents = ptr.Int64(*priceCents - stripeSubscription.Discount.Coupon.AmountOff)
+		}
+	}
 	premiumNewsletterSubscription := PremiumNewsletterSubscription{
 		StripePaymentIntentID: paymentIntentID,
 		CurrentPeriodEnd:      time.Unix(stripeSubscription.CurrentPeriodEnd, 0),
 		IsAutoRenewEnabled:    !stripeSubscription.CancelAtPeriodEnd,
+		PriceCents:            priceCents,
+		HasValidDiscount:      hasValidDiscount,
 	}
 	var billingInformation *dbBillingInformation
 	if dbNewsletterSubscription != nil {
@@ -153,6 +164,31 @@ func HandleStripeEvent(c ctx.LogContext, tx *sqlx.Tx, stripeSignature string, ev
 				if err := InsertPremiumNewsletterSyncRequest(tx, *premiumNewsletterSubscription.ID, PremiumNewsletterSubscriptionUpdateTypeRemoteUpdated); err != nil {
 					return err
 				}
+			}
+		}
+	case "setup_intent.succeeded":
+		wasProcessed = true
+		var stripeSetupIntent stripe.SetupIntent
+		if err := json.Unmarshal(event.Data.Raw, &stripeSetupIntent); err != nil {
+			return err
+		}
+		if stripeSetupIntent.Customer != nil {
+			billingInformation, err := LookupBillingInformationByExternalID(tx, stripeSetupIntent.Customer.ID)
+			switch {
+			case err != nil:
+				return err
+			case billingInformation == nil,
+				billingInformation.UserID == nil:
+				// no-op
+			default:
+				subscription, err := LookupPremiumNewsletterSubscriptionForUser(c, tx, *billingInformation.UserID)
+				if err != nil {
+					return err
+				}
+				if err := InsertPremiumNewsletterSyncRequest(tx, *subscription.ID, PremiumNewsletterSubscriptionUpdateTypePaymentMethodAdded); err != nil {
+					return err
+				}
+
 			}
 		}
 	case "account.updated",
@@ -294,7 +330,6 @@ func HandleStripeEvent(c ctx.LogContext, tx *sqlx.Tx, stripeSignature string, ev
 		"setup_intent.created",
 		"setup_intent.requires_action",
 		"setup_intent.setup_failed",
-		"setup_intent.succeeded",
 		"sigma.scheduled_query_run.created",
 		"sku.created",
 		"sku.deleted",
@@ -329,6 +364,6 @@ func HandleStripeEvent(c ctx.LogContext, tx *sqlx.Tx, stripeSignature string, ev
 	default:
 		c.Warnf("Unrecognized event type: %s", event.Type)
 	}
-	_, err = tx.Exec(CaptureStripeEventQuery, event.Type, wasProcessed, eventBytes)
+	_, err = tx.Exec(captureStripeEventQuery, event.Type, wasProcessed, eventBytes)
 	return err
 }
