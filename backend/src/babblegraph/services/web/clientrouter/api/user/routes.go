@@ -6,7 +6,6 @@ import (
 	"babblegraph/services/web/clientrouter/api"
 	"babblegraph/util/database"
 	"babblegraph/util/encrypt"
-	"babblegraph/util/ptr"
 	"fmt"
 	"strings"
 
@@ -18,16 +17,6 @@ func RegisterRouteGroups() error {
 		Prefix: "user",
 		Routes: []api.Route{
 			{
-				Path:             "signup_user_1",
-				Handler:          handleSignupUser,
-				TrackEventWithID: ptr.String("signup"),
-			}, {
-				Path:    "get_user_content_topics_for_token_1",
-				Handler: handleGetUserContentTopicsForToken,
-			}, {
-				Path:    "update_user_content_topics_for_token_1",
-				Handler: handleUpdateUserContentTopicsForToken,
-			}, {
 				Path:    "handle_request_password_reset_link_1",
 				Handler: requestPasswordResetLink,
 			},
