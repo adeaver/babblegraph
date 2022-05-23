@@ -65,7 +65,8 @@ func SyncUserAccountWithPremiumNewsletterSubscription(tx *sqlx.Tx, userID users.
 		return nil
 	case PaymentStateTrialNoPaymentMethod,
 		PaymentStateTrialPaymentMethodAdded,
-		PaymentStateActive:
+		PaymentStateActive,
+		PaymentStateErrored:
 		paymentMethods, err := GetPaymentMethodsForUser(tx, userID)
 		if err != nil {
 			return err
@@ -93,8 +94,6 @@ func SyncUserAccountWithPremiumNewsletterSubscription(tx *sqlx.Tx, userID users.
 		case subscriptionLevel != nil:
 			return useraccounts.UpdateSubscriptionExpirationTime(tx, userID, premiumNewsletterSubscription.CurrentPeriodEnd)
 		}
-	case PaymentStateErrored:
-		return nil
 	case PaymentStateTerminated:
 		switch {
 		case subscriptionLevel == nil,
