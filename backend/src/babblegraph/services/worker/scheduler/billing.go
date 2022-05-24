@@ -116,9 +116,13 @@ func handleSyncBilling(c async.Context) {
 					case premiumNewsletterSubscription == nil:
 						// Stripe also thinks that the subscription is expired, no-op
 					case time.Now().Before(premiumNewsletterSubscription.CurrentPeriodEnd):
-						// Stripe does not think that the subscription is over, we update
-						c.Infof("User ID has an active subscription. Updating...")
-						return useraccounts.UpdateSubscriptionExpirationTime(tx, sub.UserID, premiumNewsletterSubscription.CurrentPeriodEnd)
+						// Stripe does not think that the subscription is over
+						if premiumNewsletterSubscription.PaymentState != billing.PaymentStateErrored {
+							// If the state is not errored, we need to update
+							c.Infof("User ID has an active subscription. Updating...")
+							return useraccounts.UpdateSubscriptionExpirationTime(tx, sub.UserID, premiumNewsletterSubscription.CurrentPeriodEnd)
+						}
+						// If the state is errored, we fall through here
 					case premiumNewsletterSubscription.PaymentState == billing.PaymentStateActive,
 						premiumNewsletterSubscription.PaymentState == billing.PaymentStateTrialPaymentMethodAdded:
 						c.Warnf("Subscription %s is in state %d, and has expired", *premiumNewsletterSubscription.ID, premiumNewsletterSubscription.PaymentState)
