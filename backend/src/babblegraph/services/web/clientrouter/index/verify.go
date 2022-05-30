@@ -47,7 +47,8 @@ func handleVerification(r *router.Request) (interface{}, error) {
 		return nil, err
 	}
 	switch premiumNewsletterSubscription.PaymentState {
-	case billing.PaymentStateCreatedUnpaid:
+	case billing.PaymentStateCreatedUnpaid,
+		billing.PaymentStatePaymentPending:
 		return routes.MakePremiumSubscriptionCheckoutLink(*userID)
 	case billing.PaymentStateTrialNoPaymentMethod,
 		billing.PaymentStateTrialPaymentMethodAdded,

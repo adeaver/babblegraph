@@ -99,6 +99,12 @@ const (
 
 	// This subscription has ended
 	PaymentStateTerminated PaymentState = 5
+
+	// This subscription is waiting the latest invoice
+	// There are two cases here: we went from a trial to an active subscription and have not received payment
+	// Or there is an upcoming payment on an active subscription. Generally, you do not want to update the user account status
+	// If the payment is in this state
+	PaymentStatePaymentPending PaymentState = 6
 )
 
 func (p PaymentState) Ptr() *PaymentState {

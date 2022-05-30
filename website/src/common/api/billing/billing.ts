@@ -5,6 +5,7 @@ export enum PaymentState {
     Active = 3,
     Errored = 4,
     Terminated = 5,
+    PaymentPending = 6,
 }
 
 export type PremiumNewsletterSubscription = {

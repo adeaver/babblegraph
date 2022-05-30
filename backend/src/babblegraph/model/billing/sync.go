@@ -93,7 +93,8 @@ func SyncUserAccountWithPremiumNewsletterSubscription(tx *sqlx.Tx, userID users.
 		case subscriptionLevel != nil:
 			return useraccounts.UpdateSubscriptionExpirationTime(tx, userID, premiumNewsletterSubscription.CurrentPeriodEnd)
 		}
-	case PaymentStateErrored:
+	case PaymentStatePaymentPending,
+		PaymentStateErrored:
 		return nil
 	case PaymentStateTerminated:
 		switch {

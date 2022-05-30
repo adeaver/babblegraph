@@ -207,6 +207,8 @@ const PremiumNewsletterSubscriptionView = (props: PremiumNewsletterSubscriptionV
             titleColor = TypographyColor.Primary;
             stateDisplay = "Active";
             break;
+        case PaymentState.PaymentPending:
+            stateDisplay = "Payment Pending";
         case PaymentState.Errored:
             titleColor = TypographyColor.Warning;
             stateDisplay = "Errored";

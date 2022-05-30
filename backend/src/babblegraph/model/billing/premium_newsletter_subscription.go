@@ -259,6 +259,7 @@ func getStripeSubscriptionAndConvertSubscriptionForDBPremiumNewsletterSubscripti
 		PaymentStateTrialNoPaymentMethod,
 		PaymentStateTrialPaymentMethodAdded,
 		PaymentStateActive,
+		PaymentStatePaymentPending,
 		PaymentStateErrored:
 		return premiumNewsletterSubscription, nil
 	case PaymentStateTerminated:

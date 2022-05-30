@@ -73,6 +73,7 @@ func SubscriptionExpirationDryRun(c ctx.LogContext) error {
 						case billing.PaymentStateActive,
 							billing.PaymentStateTerminated,
 							billing.PaymentStateCreatedUnpaid,
+							billing.PaymentStatePaymentPending,
 							billing.PaymentStateErrored:
 							// no-op
 						default:
@@ -100,6 +101,7 @@ func SubscriptionExpirationDryRun(c ctx.LogContext) error {
 							billing.PaymentStateTrialPaymentMethodAdded,
 							billing.PaymentStateActive,
 							billing.PaymentStateTerminated,
+							billing.PaymentStatePaymentPending,
 							billing.PaymentStateCreatedUnpaid:
 							// no-op
 						case billing.PaymentStateErrored:
