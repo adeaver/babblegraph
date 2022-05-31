@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 
+import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 
@@ -29,11 +30,30 @@ import {
 } from 'common/base/BaseComponent';
 import { toTitleCase } from 'util/string/StringConvert';
 
+const styleClasses = makeStyles({
+    confirmationForm: {
+        padding: '10px 0',
+        width: '100%',
+    },
+    emailField: {
+        width: '100%',
+    },
+    submitButtonContainer: {
+        alignSelf: 'center',
+        padding: '5px',
+    },
+    submitButton: {
+        display: 'block',
+        margin: 'auto',
+    },
+});
+
 type InterestSelectorOwnProps = {
     languageCode: WordsmithLanguageCode;
     subscriptionManagementToken: string;
     emailAddress?: string;
     omitEmailAddress?: boolean;
+    postSubmit?: () => void;
 }
 
 type InterestSelectorAPIProps = {
@@ -77,6 +97,7 @@ const InterestSelector = asBaseComponent(
             },
             (resp: UpdateUserContentTopicsForTokenResponse) => {
                 setIsLoading(false);
+                !!props.postSubmit && props.postSubmit();
             },
             (err: Error) => {
                 setIsLoading(false);
@@ -84,6 +105,7 @@ const InterestSelector = asBaseComponent(
             });
         }
 
+        const classes = styleClasses();
         return (
             <Grid container>
                 {
@@ -101,7 +123,9 @@ const InterestSelector = asBaseComponent(
                     ))
                 }
                 <Grid item xs={12}>
-                    <Form handleSubmit={handleSubmit}>
+                    <Form
+                        className={classes.confirmationForm}
+                        handleSubmit={handleSubmit}>
                         <Grid container>
                         {
                             !!props.omitEmailAddress ? (
@@ -112,15 +136,17 @@ const InterestSelector = asBaseComponent(
                                 <Grid item xs={8} md={10}>
                                     <PrimaryTextField
                                         id="email"
+                                        className={classes.emailField}
                                         label="Email Address"
                                         variant="outlined"
                                         onChange={handleEmailAddressChange} />
                                 </Grid>
                             )
                         }
-                            <Grid item xs={4} md={2}>
+                            <Grid item xs={4} md={2} className={classes.submitButtonContainer}>
                                 <PrimaryButton
                                     type="submit"
+                                    className={classes.submitButton}
                                     disabled={!emailAddress && !props.omitEmailAddress}>
                                     Submit
                                 </PrimaryButton>

@@ -23,6 +23,17 @@ func GetAdvertisingPolicyURL() string {
 	return env.GetAbsoluteURLForEnvironment("advertising-policy")
 }
 
+func MakeOnboardingRouteForUserID(userID users.UserID) (*string, error) {
+	token, err := encrypt.GetToken(encrypt.TokenPair{
+		Key:   OnboardingKey.Str(),
+		Value: userID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return ptr.String(env.GetAbsoluteURLForEnvironment(fmt.Sprintf("onboarding/%s", *token))), nil
+}
+
 func MakeSubscriptionManagementRouteForUserID(userID users.UserID) (*string, error) {
 	token, err := MakeSubscriptionManagementToken(userID)
 	if err != nil {

@@ -17,6 +17,8 @@ import AdvertisingPolicyPage from 'ConsumerWeb/components/AdvertisingPolicyPage/
 import BlogListPage from 'ConsumerWeb/components/BlogListPage/BlogListPage';
 import BlogPostPage from 'ConsumerWeb/components/BlogPostPage/BlogPostPage';
 
+import OnboardingPage from 'ConsumerWeb/components/OnboardingPage';
+
 import SubscriptionManagementHomePage from 'ConsumerWeb/components/SubscriptionManagement/SubscriptionManagementHomePage';
 import InterestSelectionPage from 'ConsumerWeb/components/InterestSelectionPage';
 import UnsubscribePage from 'ConsumerWeb/components/UnsubscribePage/UnsubscribePage';
@@ -49,6 +51,8 @@ class App extends React.Component{
                     <Route exact path="/manage/:token/premium" component={PremiumInformationPage} />
                     <Route path="/manage/:token/payment-settings" component={PremiumNewsletterSubscriptionManagementPage} />
                     <Route exact path="/manage/:token" component={SubscriptionManagementHomePage} />
+
+                    <Route path="/onboarding/:token" component={OnboardingPage} />
 
                     { /* Podcast Player */ }
                     <Route path="/podcast/:userPodcastID" component={PodcastPlayerPage} />

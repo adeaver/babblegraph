@@ -53,7 +53,7 @@ func handleVerification(r *router.Request) (interface{}, error) {
 	case billing.PaymentStateTrialNoPaymentMethod,
 		billing.PaymentStateTrialPaymentMethodAdded,
 		billing.PaymentStateActive:
-		return routes.MakeSubscriptionManagementRouteForUserID(*userID)
+		return routes.MakeOnboardingRouteForUserID(*userID)
 	case billing.PaymentStateErrored,
 		billing.PaymentStateTerminated:
 		return nil, fmt.Errorf("Got invalid state: %d", premiumNewsletterSubscription.PaymentState)

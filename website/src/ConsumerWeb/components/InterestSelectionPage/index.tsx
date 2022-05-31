@@ -41,7 +41,8 @@ const InterestSelectionPage = withUserProfileInformation<InterestSelectionPagePr
                         backArrowDestination={`/manage/${token}`} />
                     <InterestSelector
                         subscriptionManagementToken={token}
-                        languageCode={WordsmithLanguageCode.Spanish} />
+                        languageCode={WordsmithLanguageCode.Spanish}
+                        omitEmailAddress={props.userProfile.hasAccount} />
                 </DisplayCard>
             </CenteredComponent>
         );
