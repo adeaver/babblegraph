@@ -25,7 +25,7 @@ type InterestSelectionPageProps = RouteComponentProps<Params>;
 
 const InterestSelectionPage = withUserProfileInformation<InterestSelectionPageProps>(
     RouteEncryptionKey.SubscriptionManagement,
-    [ RouteEncryptionKey.SubscriptionManagement ],
+    [ ],
     (ownProps: InterestSelectionPageProps) => {
         return ownProps.match.params.token;
     },
