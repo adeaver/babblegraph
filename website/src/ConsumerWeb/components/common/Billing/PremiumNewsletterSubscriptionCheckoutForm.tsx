@@ -58,6 +58,7 @@ const PremiumNewsletterSubscriptionCardForm = (props: PremiumNewsletterSubscript
             throw new Error("Payment intent ID is not set")
         case PaymentState.TrialNoPaymentMethod:
         case PaymentState.TrialPaymentMethodAdded:
+        case PaymentState.PaymentPending:
         case PaymentState.Active:
         case PaymentState.Errored:
             return (

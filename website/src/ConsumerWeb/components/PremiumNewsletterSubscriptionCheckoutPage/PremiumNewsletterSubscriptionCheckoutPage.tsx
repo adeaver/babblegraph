@@ -224,6 +224,8 @@ const PaymentSection = (props: PaymentSectionProps) => {
     switch (props.premiumNewsletterSubscription.paymentState) {
         case PaymentState.CreatedUnpaid:
         case PaymentState.TrialNoPaymentMethod:
+        case PaymentState.PaymentPending:
+        case PaymentState.Errored:
             return (
                 <PremiumNewsletterSubscriptionCardForm
                     premiumNewsletterSusbcription={props.premiumNewsletterSubscription}
@@ -231,7 +233,6 @@ const PaymentSection = (props: PaymentSectionProps) => {
             );
         case PaymentState.TrialPaymentMethodAdded:
         case PaymentState.Active:
-        case PaymentState.Errored:
             return (
                 <div>
                     <Heading3 color={TypographyColor.Warning}>

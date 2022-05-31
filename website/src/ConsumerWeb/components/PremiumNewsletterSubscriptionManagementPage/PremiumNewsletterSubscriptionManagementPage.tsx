@@ -287,6 +287,7 @@ const PremiumSubscriptionManagementComponent = asBaseComponent<LookupActivePremi
                             premiumNewsletterSusbcription={props.premiumNewsletterSubscription} />
                     </div>
                 );
+            case PaymentState.PaymentPending:
             case PaymentState.Errored:
                 return (
                     <div>
