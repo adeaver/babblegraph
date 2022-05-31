@@ -1,10 +1,5 @@
 import { makePostRequestWithStandardEncoding } from 'util/bgfetch/bgfetch';
-
-export type Topic = {
-    id: string;
-    label: string;
-    isActive: boolean;
-}
+import { Topic, TopicDisplayName } from 'common/api/content';
 
 export type GetAllContentTopicsRequest = {}
 
@@ -87,14 +82,6 @@ export function updateIsContentTopicActive(
         onSuccess,
         onError,
     );
-}
-
-export type TopicDisplayName = {
-	id: string;
-	topicId: string;
-	languageCode: string;
-	label: string;
-	isActive: boolean;
 }
 
 export type GetAllTopicDisplayNamesForTopicRequest = {

@@ -41,11 +41,10 @@ import {
     getAllAdvertisementsForCampaign,
 } from 'AdminWeb/api/advertising/advertising';
 import {
-    Topic,
-
     GetAllContentTopicsResponse,
     getAllContentTopics,
 } from 'AdminWeb/api/content/topic';
+import { Topic } from 'common/api/content';
 
 import { asBaseComponent, BaseComponentProps } from 'common/base/BaseComponent';
 

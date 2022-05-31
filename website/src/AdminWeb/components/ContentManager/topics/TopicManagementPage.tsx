@@ -25,7 +25,6 @@ import {
     updateIsContentTopicActive,
     UpdateIsContentTopicActiveResponse,
 
-    TopicDisplayName,
     getAllTopicDisplayNamesForTopic,
     GetAllTopicDisplayNamesForTopicResponse,
     addTopicDisplayNameForTopic,
@@ -35,6 +34,7 @@ import {
     updateTopicDisplayNameLabel,
     UpdateTopicDisplayNameLabelResponse,
 } from 'AdminWeb/api/content/topic';
+import { TopicDisplayName } from 'common/api/content';
 
 const styleClasses = makeStyles({
     headerContainer: {

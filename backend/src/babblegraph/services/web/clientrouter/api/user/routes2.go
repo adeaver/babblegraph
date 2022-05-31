@@ -56,6 +56,12 @@ var Routes = router.RouteGroup{
 			Handler: routermiddleware.WithNoBodyRequestLogger(
 				routermiddleware.MaybeWithAuthentication(getUserVocabulary),
 			),
+		}, {
+			Path:    "get_user_content_topics_for_token_1",
+			Handler: handleGetUserContentTopicsForToken,
+		}, {
+			Path:    "update_user_content_topics_for_token_1",
+			Handler: handleUpdateUserContentTopicsForToken,
 		},
 	},
 }

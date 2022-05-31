@@ -18,7 +18,7 @@ import BlogListPage from 'ConsumerWeb/components/BlogListPage/BlogListPage';
 import BlogPostPage from 'ConsumerWeb/components/BlogPostPage/BlogPostPage';
 
 import SubscriptionManagementHomePage from 'ConsumerWeb/components/SubscriptionManagement/SubscriptionManagementHomePage';
-import InterestSelectionPage from 'ConsumerWeb/components/SubscriptionManagement/InterestSelectionPage';
+import InterestSelectionPage from 'ConsumerWeb/components/InterestSelectionPage';
 import UnsubscribePage from 'ConsumerWeb/components/UnsubscribePage/UnsubscribePage';
 import WordReinforcementPage from 'ConsumerWeb/components/WordReinforcementPage/WordReinforcementPage';
 import UserNewsletterPreferencesPage from 'ConsumerWeb/components/UserNewsletterPreferencesPage/UserNewsletterPreferencesPage';

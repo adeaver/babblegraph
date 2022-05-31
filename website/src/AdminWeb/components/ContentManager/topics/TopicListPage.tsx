@@ -15,7 +15,6 @@ import Link, { LinkTarget } from 'common/components/Link/Link';
 import { PrimarySwitch } from 'common/components/Switch/Switch';
 
 import {
-    Topic,
     GetAllContentTopicsResponse,
     getAllContentTopics,
     AddTopicResponse,
@@ -23,6 +22,7 @@ import {
     updateIsContentTopicActive,
     UpdateIsContentTopicActiveResponse,
 } from 'AdminWeb/api/content/topic';
+import { Topic } from 'common/api/content'
 
 const styleClasses = makeStyles({
     topicContainer: {

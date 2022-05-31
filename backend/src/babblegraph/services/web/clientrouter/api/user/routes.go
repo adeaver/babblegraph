@@ -17,12 +17,6 @@ func RegisterRouteGroups() error {
 		Prefix: "user",
 		Routes: []api.Route{
 			{
-				Path:    "get_user_content_topics_for_token_1",
-				Handler: handleGetUserContentTopicsForToken,
-			}, {
-				Path:    "update_user_content_topics_for_token_1",
-				Handler: handleUpdateUserContentTopicsForToken,
-			}, {
 				Path:    "handle_request_password_reset_link_1",
 				Handler: requestPasswordResetLink,
 			},

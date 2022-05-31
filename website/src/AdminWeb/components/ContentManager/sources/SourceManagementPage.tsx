@@ -51,11 +51,10 @@ import {
     UpsertSourceFilterForSourceResponse,
 } from 'AdminWeb/api/content/sources';
 import {
-    Topic,
-
     getAllContentTopics,
     GetAllContentTopicsResponse,
 } from 'AdminWeb/api/content/topic';
+import { Topic } from 'common/api/content';
 
 const styleClasses = makeStyles({
     headerDisplayCard: {

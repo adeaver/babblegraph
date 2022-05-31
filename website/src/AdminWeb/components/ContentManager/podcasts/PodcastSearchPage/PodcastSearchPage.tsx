@@ -43,11 +43,10 @@ import {
     addPodcast,
 } from 'AdminWeb/api/podcasts/podcasts';
 import {
-    Topic,
-
     getAllContentTopics,
     GetAllContentTopicsResponse,
 } from 'AdminWeb/api/content/topic';
+import { Topic } from 'common/api/content';
 
 const styleClasses = makeStyles({
     formComponent: {

@@ -25,7 +25,8 @@ func main() {
         create-elastic-indexes: create new indices in ElasticSearch
         migrate-legacy-users: migrates all old users onto a legacy subscription
         expiration-dry-run: does a dry run of user account expiration
-        create-admin: create admin`)
+        create-admin: create admin
+        bootstrap: bootstraps local environment`)
 	userEmail := flag.String("user-email", "none", "Email address of user to create")
 	flag.Parse()
 	if taskName == nil {
@@ -58,6 +59,10 @@ func main() {
 		}
 	case "create-elastic-indexes":
 		if err := tasks.CreateElasticIndexes(); err != nil {
+			log.Fatal(err.Error())
+		}
+	case "bootstrap":
+		if err := tasks.BootstrapDatabase(); err != nil {
 			log.Fatal(err.Error())
 		}
 	case "create-admin":
