@@ -71,7 +71,7 @@ func GetUserNewsletterPrefrencesForLanguage(c ctx.LogContext, tx *sqlx.Tx, userI
 	if err != nil {
 		return nil, err
 	}
-	userSchedule, err := getUserNewsletterSchedule(c, tx, userID, languageCode, forSendTime)
+	userSchedule, err := GetUserNewsletterSchedule(c, tx, userID, languageCode, forSendTime)
 	if err != nil {
 		return nil, err
 	}

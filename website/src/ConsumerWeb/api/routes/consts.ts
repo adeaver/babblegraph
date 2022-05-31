@@ -3,6 +3,7 @@ export enum LoginRedirectKey {
 	Vocabulary = 'vb',
 	ContentTopics = 'cts',
 	NewsletterPreferences = 'npf',
+	NewsletterSchedule = 'sch',
 	CheckoutPage = 'premco',
 	PaymentSettings = 'pymtst',
 }

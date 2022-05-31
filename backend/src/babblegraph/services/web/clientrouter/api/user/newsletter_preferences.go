@@ -21,13 +21,6 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type userSchedule struct {
-	IANATimezone     string `json:"iana_timezone"`
-	HourIndex        int    `json:"hour_index"`
-	QuarterHourIndex int    `json:"quarter_hour_index"`
-	IsActiveForDays  []bool `json:"is_active_for_days"`
-}
-
 type userNewsletterPreferences struct {
 	LanguageCode                        wordsmith.LanguageCode `json:"language_code"`
 	IsLemmaReinforcementSpotlightActive bool                   `json:"is_lemma_reinforcement_spotlight_active"`
@@ -156,8 +149,6 @@ type updateUserNewsletterPreferencesResponse struct {
 
 const (
 	errorEmptyEmailAddress clienterror.Error = "no-email-address"
-	errorInvalidTimezone   clienterror.Error = "invalid-timezone"
-	errorNoActiveDay       clienterror.Error = "no-active-day"
 )
 
 func updateUserNewsletterPreferences(userAuth *routermiddleware.UserAuthentication, r *router.Request) (interface{}, error) {

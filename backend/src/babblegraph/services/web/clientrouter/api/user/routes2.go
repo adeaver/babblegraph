@@ -66,6 +66,16 @@ var Routes = router.RouteGroup{
 			Handler: routermiddleware.WithNoBodyRequestLogger(
 				routermiddleware.MaybeWithAuthentication(handleUpdateUserContentTopicsForToken),
 			),
+		}, {
+			Path: "get_user_newsletter_schedule_1",
+			Handler: routermiddleware.WithNoBodyRequestLogger(
+				routermiddleware.MaybeWithAuthentication(getUserNewsletterSchedule),
+			),
+		}, {
+			Path: "update_user_newsletter_schedule_1",
+			Handler: routermiddleware.WithNoBodyRequestLogger(
+				routermiddleware.MaybeWithAuthentication(updateUserNewsletterSchedule),
+			),
 		},
 	},
 }
