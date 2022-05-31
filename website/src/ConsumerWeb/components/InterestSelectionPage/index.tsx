@@ -40,6 +40,7 @@ const InterestSelectionPage = withUserProfileInformation<InterestSelectionPagePr
                         title="Select interests"
                         backArrowDestination={`/manage/${token}`} />
                     <InterestSelector
+                        subscriptionManagementToken={token}
                         languageCode={WordsmithLanguageCode.Spanish} />
                 </DisplayCard>
             </CenteredComponent>

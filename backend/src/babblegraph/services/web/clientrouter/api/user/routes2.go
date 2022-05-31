@@ -57,11 +57,15 @@ var Routes = router.RouteGroup{
 				routermiddleware.MaybeWithAuthentication(getUserVocabulary),
 			),
 		}, {
-			Path:    "get_user_content_topics_for_token_1",
-			Handler: handleGetUserContentTopicsForToken,
+			Path: "get_user_content_topics_for_token_1",
+			Handler: routermiddleware.WithNoBodyRequestLogger(
+				routermiddleware.MaybeWithAuthentication(handleGetUserContentTopicsForToken),
+			),
 		}, {
-			Path:    "update_user_content_topics_for_token_1",
-			Handler: handleUpdateUserContentTopicsForToken,
+			Path: "update_user_content_topics_for_token_1",
+			Handler: routermiddleware.WithNoBodyRequestLogger(
+				routermiddleware.MaybeWithAuthentication(handleUpdateUserContentTopicsForToken),
+			),
 		},
 	},
 }
