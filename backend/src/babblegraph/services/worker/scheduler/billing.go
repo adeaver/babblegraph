@@ -45,7 +45,8 @@ func handleSyncBilling(c async.Context) {
 			switch updateType {
 			case billing.PremiumNewsletterSubscriptionUpdateTypeTransitionToActive:
 				switch premiumNewsletterSubscription.PaymentState {
-				case billing.PaymentStateCreatedUnpaid:
+				case billing.PaymentStateCreatedUnpaid,
+					billing.PaymentStatePaymentPending:
 					c.Infof("Subscription %s is still unpaid, skipping.", premiumSubscriptionID)
 					return billing.MarkPremiumNewsletterSyncRequestForRetry(tx, premiumSubscriptionID)
 				case billing.PaymentStateTrialNoPaymentMethod,
@@ -67,6 +68,7 @@ func handleSyncBilling(c async.Context) {
 					billing.PaymentStateTrialNoPaymentMethod,
 					billing.PaymentStateTrialPaymentMethodAdded,
 					billing.PaymentStateActive,
+					billing.PaymentStatePaymentPending,
 					billing.PaymentStateErrored:
 					return fmt.Errorf("Subscription %s is in the wrong state", premiumSubscriptionID)
 				case billing.PaymentStateTerminated:
@@ -156,6 +158,7 @@ func handleSyncBilling(c async.Context) {
 						case billing.PaymentStateActive,
 							billing.PaymentStateTerminated,
 							billing.PaymentStateCreatedUnpaid,
+							billing.PaymentStatePaymentPending,
 							billing.PaymentStateErrored:
 							// no-op
 						default:
@@ -187,6 +190,7 @@ func handleSyncBilling(c async.Context) {
 							billing.PaymentStateTrialPaymentMethodAdded,
 							billing.PaymentStateActive,
 							billing.PaymentStateTerminated,
+							billing.PaymentStatePaymentPending,
 							billing.PaymentStateCreatedUnpaid:
 							// no-op
 						case billing.PaymentStateErrored:

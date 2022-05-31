@@ -3,10 +3,10 @@ set -euo pipefail
 
 docker-compose -f ops/local-dbs.compose.yaml up --build -d
 
-until (docker exec ops_wordsmith_1 psql -U dev -d wordsmith -c 'SELECT * FROM word_bigram_counts'); do
+until (docker exec ops-wordsmith-1 psql -U dev -d wordsmith -c 'SELECT * FROM word_bigram_counts'); do
     echo "Waiting for container to be up"
     sleep 1;
 done;
 
 echo "Applying file"
-docker exec ops_wordsmith_1 psql -U dev -d wordsmith -a -f /home/postgres/wordsmith-data/populate_db.sql
+docker exec ops-wordsmith-1 psql -U dev -d wordsmith -a -f /home/postgres/wordsmith-data/populate_db.sql

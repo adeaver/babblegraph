@@ -97,17 +97,27 @@ func CreatePremiumNewsletterSubscriptionForUserWithID(c ctx.LogContext, tx *sqlx
 	default:
 		return nil, fmt.Errorf("Unrecognized external ID type %s", externalID.IDType)
 	}
-	// There is no active subscription, but there may have been a previous one, so we need
-	// to check the trial eligibility
-	trialEligibilityDays, err := GetPremiumNewsletterSubscriptionTrialEligibilityForUser(tx, userID)
-	if err != nil {
-		return nil, err
-	}
-	if trialEligibilityDays != nil && *trialEligibilityDays > 0 {
-		subscriptionParams.TrialPeriodDays = trialEligibilityDays
-		if err := insertTrialRecordForUser(tx, userID); err != nil {
+	switch env.MustEnvironmentName() {
+	case env.EnvironmentProd,
+		env.EnvironmentStage:
+		// There is no active subscription, but there may have been a previous one, so we need
+		// to check the trial eligibility
+		trialEligibilityDays, err := GetPremiumNewsletterSubscriptionTrialEligibilityForUser(tx, userID)
+		if err != nil {
 			return nil, err
 		}
+		if trialEligibilityDays != nil && *trialEligibilityDays > 0 {
+			subscriptionParams.TrialPeriodDays = trialEligibilityDays
+			if err := insertTrialRecordForUser(tx, userID); err != nil {
+				return nil, err
+			}
+		}
+	case env.EnvironmentLocal,
+		env.EnvironmentLocalNoEmail,
+		env.EnvironmentLocalTestEmail,
+		env.EnvironmentTest:
+		// To test locally, we set the subscription to expire in 5 minutes
+		subscriptionParams.TrialEnd = ptr.Int64(time.Now().Add(5 * time.Minute).Unix())
 	}
 	stripeSubscription, err := sub.New(subscriptionParams)
 	if err != nil {
@@ -259,6 +269,7 @@ func getStripeSubscriptionAndConvertSubscriptionForDBPremiumNewsletterSubscripti
 		PaymentStateTrialNoPaymentMethod,
 		PaymentStateTrialPaymentMethodAdded,
 		PaymentStateActive,
+		PaymentStatePaymentPending,
 		PaymentStateErrored:
 		return premiumNewsletterSubscription, nil
 	case PaymentStateTerminated:

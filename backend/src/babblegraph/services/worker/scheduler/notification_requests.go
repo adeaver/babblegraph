@@ -144,7 +144,8 @@ func handleTrialEndingSoonNotification(c ctx.LogContext, tx *sqlx.Tx, emailRecor
 		case billing.PaymentStateCreatedUnpaid,
 			billing.PaymentStateTerminated,
 			billing.PaymentStateErrored,
-			billing.PaymentStateActive:
+			billing.PaymentStateActive,
+			billing.PaymentStatePaymentPending:
 			return nil, nil, fmt.Errorf("Invalid payment state for premium subscription %s: %d", *premiumSubscription.ID, premiumSubscription.PaymentState)
 		}
 
@@ -258,6 +259,7 @@ func handleNeedPaymentMethodWarningNotification(c ctx.LogContext, tx *sqlx.Tx, e
 		case billing.PaymentStateTerminated,
 			billing.PaymentStateErrored,
 			billing.PaymentStateActive,
+			billing.PaymentStatePaymentPending,
 			billing.PaymentStateTrialPaymentMethodAdded:
 			return nil, nil, nil
 		}
@@ -282,6 +284,7 @@ func handlePaymentErrorNotification(c ctx.LogContext, tx *sqlx.Tx, emailRecordID
 		case billing.PaymentStateTrialNoPaymentMethod,
 			billing.PaymentStateActive,
 			billing.PaymentStateTerminated,
+			billing.PaymentStatePaymentPending,
 			billing.PaymentStateTrialPaymentMethodAdded:
 			return nil, nil, nil
 		case billing.PaymentStateErrored:

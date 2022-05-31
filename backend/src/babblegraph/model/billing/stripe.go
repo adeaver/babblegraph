@@ -98,9 +98,14 @@ func convertStripeSubscriptionToPremiumNewsletterSubscription(tx *sqlx.Tx, strip
 	case stripe.SubscriptionStatusIncomplete:
 		premiumNewsletterSubscription.PaymentState = PaymentStateCreatedUnpaid
 	case stripe.SubscriptionStatusActive:
-		premiumNewsletterSubscription.PaymentState = PaymentStateActive
-	case stripe.SubscriptionStatusPastDue,
-		stripe.SubscriptionStatusUnpaid:
+		status := PaymentStateActive
+		if stripeSubscription.LatestInvoice != nil && stripeSubscription.LatestInvoice.Status != stripe.InvoiceStatusPaid {
+			status = PaymentStatePaymentPending
+		}
+		premiumNewsletterSubscription.PaymentState = status
+	case stripe.SubscriptionStatusPastDue:
+		premiumNewsletterSubscription.PaymentState = PaymentStatePaymentPending
+	case stripe.SubscriptionStatusUnpaid:
 		premiumNewsletterSubscription.PaymentState = PaymentStateErrored
 	case stripe.SubscriptionStatusIncompleteExpired,
 		stripe.SubscriptionStatusCanceled:

@@ -30,14 +30,18 @@ def _make_lemma_generator():
     for lemma_key in observed_lemmas:
         _id = observed_lemmas[lemma_key]
         lemma_text, part_of_speech = lemma_key.split(",")
-        part_of_speech_id = observed_parts_of_speech[part_of_speech]
+        part_of_speech_id = observed_parts_of_speech.get(part_of_speech, None)
+        if part_of_speech_id is None:
+            continue
         yield "{},{},{},{},{}".format(_id, CORPUS[1], LANGUAGE, lemma_text, part_of_speech_id)
 
 def _make_word_generator():
     for word_key in observed_words:
         word_text, part_of_speech, _id, lemma_key = _word_data_for_word_key(word_key)
         lemma_id = observed_lemmas[lemma_key]
-        part_of_speech_id = observed_parts_of_speech[part_of_speech]
+        part_of_speech_id = observed_parts_of_speech.get(part_of_speech, None)
+        if part_of_speech_id is None:
+            continue
         yield "{},{},{},{},{},{}".format(_id, LANGUAGE, CORPUS[1], part_of_speech_id, lemma_id, word_text)
 
 def _make_bigram_generator():
