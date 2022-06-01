@@ -64,8 +64,12 @@ const SubscriptionManagementHomePage = withUserProfileInformation<SubscriptionMa
                     }
                     <NavigationCard
                         location={`/manage/${token}/preferences`}
-                        title="Schedule and newsletter settings"
-                        description="Select which days you receive your newsletter and at what time. Also, toggle other settings, such as how many articles appear per email." />
+                        title="Newsletter settings"
+                        description="Toggle settings, such as how many articles appear per email." />
+                    <NavigationCard
+                        location={`/manage/${token}/schedule`}
+                        title="Schedule settings"
+                        description="Select which days you receive your newsletter and at what time." />
                     <NavigationCard
                         location={`/manage/${token}/interests`}
                         title="Manage Your Interests"

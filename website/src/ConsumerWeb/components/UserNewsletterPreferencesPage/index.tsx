@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { RouteComponentProps } from 'react-router-dom';
 
 import CenteredComponent from 'common/components/CenteredComponent/CenteredComponent';
@@ -15,8 +15,6 @@ import {
     UserProfileComponentProps,
 } from 'ConsumerWeb/base/UserProfile/withUserProfile';
 
-import TimeSelector from './TimeSelector';
-
 type Params = {
     token: string;
 }
@@ -29,23 +27,18 @@ const UserNewsletterPreferencesPage = withUserProfileInformation<UserNewsletterP
     (ownProps: UserNewsletterPreferencesPageProps) => {
         return ownProps.match.params.token;
     },
-    LoginRedirectKey.NewsletterSchedule,
+    LoginRedirectKey.NewsletterPreferences,
     (props: UserNewsletterPreferencesPageProps & UserProfileComponentProps) => {
-        const { token } = props.match.params;
-
         return (
             <CenteredComponent>
                 <DisplayCard>
                     <DisplayCardHeader
-                        title="Schedule settings"
-                        backArrowDestination={`/manage/${token}`} />
-                    <TimeSelector
-                        subscriptionManagementToken={token}
-                        languageCode={WordsmithLanguageCode.Spanish}
-                        omitEmailAddress={props.userProfile.hasAccount} />
+                        title="Manage Preferences"
+                        backArrowDestination={`/manage/${props.match.params.token}`} />
+
                 </DisplayCard>
             </CenteredComponent>
-        )
+        );
     }
 );
 

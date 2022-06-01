@@ -24,6 +24,7 @@ import InterestSelectionPage from 'ConsumerWeb/components/InterestSelectionPage'
 import UnsubscribePage from 'ConsumerWeb/components/UnsubscribePage/UnsubscribePage';
 import WordReinforcementPage from 'ConsumerWeb/components/WordReinforcementPage/WordReinforcementPage';
 import UserNewsletterSchedulePage from 'ConsumerWeb/components/UserNewsletterSchedulePage';
+import UserNewsletterPreferencesPage from 'ConsumerWeb/components/UserNewsletterPreferencesPage';
 
 import LoginPage from 'ConsumerWeb/components/UserAccounts/LoginPage';
 import CreateUserAccountPage from 'ConsumerWeb/components/CreateUserAccountPage/CreateUserAccountPage';

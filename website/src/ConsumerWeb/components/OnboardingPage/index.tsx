@@ -140,6 +140,9 @@ const ScheduleSelection = (props: ScheduleSelectionProps) => {
     }
     return (
         <div>
+            <Paragraph size={Size.Small}>
+                Page 2 of 4
+            </Paragraph>
             <Heading1 color={TypographyColor.Primary}>
                 Is the timing right between us?
             </Heading1>
@@ -171,6 +174,9 @@ const InterestSelection = (props: InterestSelectionProps) => {
     }
     return (
         <div>
+            <Paragraph size={Size.Small}>
+                Page 3 of 4
+            </Paragraph>
             <Heading1 color={TypographyColor.Primary}>
                 Now, what are some topics you’re interested in?
             </Heading1>
