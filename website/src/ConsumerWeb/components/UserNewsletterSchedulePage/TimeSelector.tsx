@@ -58,6 +58,7 @@ type TimeSelectorOwnProps = {
     languageCode: WordsmithLanguageCode;
     emailAddress?: string;
     omitEmailAddress?: boolean;
+    postSubmit?: () => void;
 }
 
 type TimeZoneOption = {
@@ -114,6 +115,7 @@ const TimeSelector = asBaseComponent(
             },
             (resp: UpdateUserNewsletterScheduleResponse) => {
                 setIsLoading(false);
+                !!props.postSubmit && props.postSubmit();
             },
             (err: Error) => {
                 setIsLoading(false);

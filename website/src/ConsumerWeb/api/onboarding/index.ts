@@ -3,6 +3,7 @@ import { makePostRequestWithStandardEncoding } from 'util/bgfetch/bgfetch';
 export enum OnboardingStatus {
 	NotStarted = 'not-started',
 	Settings = 'settings',
+	Schedule = 'schedule',
 	InterestSelection = 'interest-selection',
 	Vocabulary = 'vocabulary',
 	Finished = 'finished',

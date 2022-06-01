@@ -10,6 +10,7 @@ type OnboardingStage string
 const (
 	OnboardingStageNotStarted        OnboardingStage = "not-started"
 	OnboardingStageSettings          OnboardingStage = "settings"
+	OnboardingStageSchedule          OnboardingStage = "schedule"
 	OnboardingStageInterestSelection OnboardingStage = "interest-selection"
 	OnboardingStageVocabulary        OnboardingStage = "vocabulary"
 	OnboardingStageFinished          OnboardingStage = "finished"

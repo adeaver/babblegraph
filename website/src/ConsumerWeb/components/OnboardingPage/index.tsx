@@ -19,6 +19,7 @@ import {
 } from 'ConsumerWeb/api/onboarding';
 
 import InterestSelector from 'ConsumerWeb/components/InterestSelectionPage/InterestSelector';
+import TimeSelector from 'ConsumerWeb/components/UserNewsletterSchedulePage/TimeSelector';
 
 import { WordsmithLanguageCode } from 'common/model/language/language';
 import {
@@ -49,6 +50,17 @@ const OnboardingPage = asBaseComponent(
         switch (onboardingStatus) {
             case OnboardingStatus.NotStarted:
                 body = <Introduction handleSetStatus={setOnboardingStatus} />
+                break;
+            case OnboardingStatus.Schedule:
+                if (!props.subscriptionManagementToken || !props.emailAddress) {
+                   props.setError(new Error("Something went wrong"));
+                }
+                body = (
+                    <ScheduleSelection
+                        emailAddress={props.emailAddress}
+                        subscriptionManagementToken={props.subscriptionManagementToken}
+                        handleSetStatus={setOnboardingStatus} />
+                );
                 break;
             case OnboardingStatus.InterestSelection:
                 if (!props.subscriptionManagementToken || !props.emailAddress) {
@@ -93,7 +105,7 @@ type IntroductionProps = {
 
 const Introduction = (props: IntroductionProps) => {
     const advanceStatus = () => {
-        props.handleSetStatus(OnboardingStatus.InterestSelection);
+        props.handleSetStatus(OnboardingStatus.Schedule);
     }
 
     const classes = styleClasses();
@@ -116,6 +128,37 @@ const Introduction = (props: IntroductionProps) => {
     )
 }
 
+type ScheduleSelectionProps = {
+    emailAddress: string;
+    subscriptionManagementToken: string;
+    handleSetStatus: (newStatus: OnboardingStatus) => void;
+}
+
+const ScheduleSelection = (props: ScheduleSelectionProps) => {
+    const advanceStatus = () => {
+        props.handleSetStatus(OnboardingStatus.InterestSelection);
+    }
+    return (
+        <div>
+            <Heading1 color={TypographyColor.Primary}>
+                Is the timing right between us?
+            </Heading1>
+            <Paragraph>
+                Okay, jokes aside. Let’s talk time. You can customize which days and times you want to receive your emails.
+            </Paragraph>
+            <Paragraph>
+                Don’t worry, we don’t share this information with anyone or judge you if your preferred practice time is 3am...
+            </Paragraph>
+            <TimeSelector
+                languageCode={WordsmithLanguageCode.Spanish}
+                subscriptionManagementToken={props.subscriptionManagementToken}
+                emailAddress={props.emailAddress}
+                postSubmit={advanceStatus}
+                omitEmailAddress />
+        </div>
+    )
+}
+
 type InterestSelectionProps = {
     emailAddress: string;
     subscriptionManagementToken: string;
@@ -129,7 +172,7 @@ const InterestSelection = (props: InterestSelectionProps) => {
     return (
         <div>
             <Heading1 color={TypographyColor.Primary}>
-                First, what are some topics you’re interested in?
+                Now, what are some topics you’re interested in?
             </Heading1>
             <Paragraph>
                 This will help us tailor your newsletter to your interests. It’s easier to keep up with Spanish if your content is more interesting.
