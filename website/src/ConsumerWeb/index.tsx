@@ -48,6 +48,7 @@ class App extends React.Component{
                     <Route path="/manage/:token/unsubscribe" component={UnsubscribePage} />
                     <Route path="/manage/:token/interests" component={InterestSelectionPage} />
                     <Route path="/manage/:token/vocabulary" component={WordReinforcementPage} />
+                    <Route path="/manage/:token/preferences" component={UserNewsletterPreferencesPage} />
                     <Route path="/manage/:token/schedule" component={UserNewsletterSchedulePage} />
                     <Route exact path="/manage/:token/premium" component={PremiumInformationPage} />
                     <Route path="/manage/:token/payment-settings" component={PremiumNewsletterSubscriptionManagementPage} />

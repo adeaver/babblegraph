@@ -15,6 +15,8 @@ import {
     UserProfileComponentProps,
 } from 'ConsumerWeb/base/UserProfile/withUserProfile';
 
+import UserNewsletterPreferencesDisplay from './UserNewsletterPreferencesDisplay';
+
 type Params = {
     token: string;
 }
@@ -35,7 +37,10 @@ const UserNewsletterPreferencesPage = withUserProfileInformation<UserNewsletterP
                     <DisplayCardHeader
                         title="Manage Preferences"
                         backArrowDestination={`/manage/${props.match.params.token}`} />
-
+                    <UserNewsletterPreferencesDisplay
+                        subscriptionManagementToken={props.match.params.token}
+                        languageCode={WordsmithLanguageCode.Spanish}
+                        omitEmailAddress={props.userProfile.hasAccount} />
                 </DisplayCard>
             </CenteredComponent>
         );

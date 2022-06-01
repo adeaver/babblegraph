@@ -18,6 +18,7 @@ import {
     GetOnboardingStatusForUserResponse,
 } from 'ConsumerWeb/api/onboarding';
 
+import UserNewsletterPreferencesDisplay from 'ConsumerWeb/components/UserNewsletterPreferencesPage/UserNewsletterPreferencesDisplay';
 import InterestSelector from 'ConsumerWeb/components/InterestSelectionPage/InterestSelector';
 import TimeSelector from 'ConsumerWeb/components/UserNewsletterSchedulePage/TimeSelector';
 
@@ -50,6 +51,17 @@ const OnboardingPage = asBaseComponent(
         switch (onboardingStatus) {
             case OnboardingStatus.NotStarted:
                 body = <Introduction handleSetStatus={setOnboardingStatus} />
+                break;
+            case OnboardingStatus.Settings:
+                if (!props.subscriptionManagementToken || !props.emailAddress) {
+                   props.setError(new Error("Something went wrong"));
+                }
+                body = (
+                    <SettingsSelection
+                        emailAddress={props.emailAddress}
+                        subscriptionManagementToken={props.subscriptionManagementToken}
+                        handleSetStatus={setOnboardingStatus} />
+                );
                 break;
             case OnboardingStatus.Schedule:
                 if (!props.subscriptionManagementToken || !props.emailAddress) {
@@ -105,7 +117,7 @@ type IntroductionProps = {
 
 const Introduction = (props: IntroductionProps) => {
     const advanceStatus = () => {
-        props.handleSetStatus(OnboardingStatus.Schedule);
+        props.handleSetStatus(OnboardingStatus.Settings);
     }
 
     const classes = styleClasses();
@@ -125,6 +137,37 @@ const Introduction = (props: IntroductionProps) => {
                 </PrimaryButton>
             </CenteredComponent>
         </Form>
+    )
+}
+
+type SettingsSelectionProps = {
+    emailAddress: string;
+    subscriptionManagementToken: string;
+    handleSetStatus: (newStatus: OnboardingStatus) => void;
+}
+
+const SettingsSelection = (props: SettingsSelectionProps) => {
+    const advanceStatus = () => {
+        props.handleSetStatus(OnboardingStatus.Schedule);
+    }
+    return (
+        <div>
+            <Paragraph size={Size.Small}>
+                Page 1 of 4
+            </Paragraph>
+            <Heading1 color={TypographyColor.Primary}>
+                It’s your newsletter, let’s make it feel like yours.
+            </Heading1>
+            <Paragraph>
+                Let’s get started with some questions about your basic newsletter experience.
+            </Paragraph>
+            <UserNewsletterPreferencesDisplay
+                languageCode={WordsmithLanguageCode.Spanish}
+                subscriptionManagementToken={props.subscriptionManagementToken}
+                emailAddress={props.emailAddress}
+                postSubmit={advanceStatus}
+                omitEmailAddress />
+        </div>
     )
 }
 
