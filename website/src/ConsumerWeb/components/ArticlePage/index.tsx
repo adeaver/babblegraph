@@ -7,6 +7,11 @@ import Grid from '@material-ui/core/Grid';
 import Color from 'common/styles/colors';
 import Paragraph from 'common/typography/Paragraph';
 import { Alignment, TypographyColor } from 'common/typography/common';
+import {
+    PrimaryButton,
+    WarningButton,
+    ConfirmationButton,
+} from 'common/components/Button/Button';
 
 import {
     getArticleMetadata,
@@ -68,14 +73,15 @@ const ArticlePage = asBaseComponent(
                 <Grid className={classes.navbar} item xs={12}>
                     <Grid container>
                         <Grid item xs={6}>
-                            <Paragraph color={!!selection ? TypographyColor.Primary : TypographyColor.Gray}>
+                            <PrimaryButton
+                                disabled={!selection}>
                                 Lookup Word
-                            </Paragraph>
+                            </PrimaryButton>
                         </Grid>
                         <Grid item xs={6}>
-                            <Paragraph color={TypographyColor.Primary}>
+                            <WarningButton>
                                 Not Working?
-                            </Paragraph>
+                            </WarningButton>
                         </Grid>
                     </Grid>
                 </Grid>
@@ -84,7 +90,7 @@ const ArticlePage = asBaseComponent(
                         ref={setIFrameRef}
                         id="contentIFrame"
                         className={classes.content}
-                        src="/a/abc" />
+                        src={`/a/${props.articleId}`} />
                 </Grid>
             </Grid>
         );

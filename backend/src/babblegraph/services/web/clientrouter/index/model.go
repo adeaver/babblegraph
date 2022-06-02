@@ -3,6 +3,7 @@ package index
 import (
 	"babblegraph/services/web/clientrouter/middleware"
 	"babblegraph/util/env"
+	"encoding/base64"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -38,7 +39,18 @@ func RegisterIndexRoutes(r *mux.Router, indexPages []IndexPage) error {
 	})
 	r.HandleFunc("/article/{token}", handleArticleRoute(staticFileDirName))
 	r.HandleFunc("/a/{token}", func(w http.ResponseWriter, r *http.Request) {
-		resp, err := http.Get("https://www.elmundo.es/internacional/2022/06/01/6296945aa0066c001f7302b5-directo.html")
+		routeVars := mux.Vars(r)
+		token, ok := routeVars["token"]
+		if !ok {
+			http.Error(w, http.StatusText(400), 400)
+			return
+		}
+		url, err := base64.URLEncoding.DecodeString(token)
+		if err != nil {
+			http.Error(w, http.StatusText(500), 500)
+			return
+		}
+		resp, err := http.Get(string(url))
 		if err != nil {
 			return
 		}

@@ -15,7 +15,6 @@ import (
 	"babblegraph/wordsmith"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -135,7 +134,7 @@ func (s *SampleNewsletterUserAccessor) getSpotlightRecordsOrderedBySentOn() []us
 }
 
 func (s *SampleNewsletterUserAccessor) insertDocumentForUserAndReturnID(emailRecordID email.ID, doc documents.Document) (*userdocuments.UserDocumentID, error) {
-	return userdocuments.UserDocumentID(uuid.New().String()).Ptr(), nil
+	return s.defaultUserPreferencesAccessor.insertDocumentForUserAndReturnID(emailRecordID, doc)
 }
 
 func (s *SampleNewsletterUserAccessor) insertSpotlightReinforcementRecord(userVocabularyEntryID uservocabulary.UserVocabularyEntryID) error {
