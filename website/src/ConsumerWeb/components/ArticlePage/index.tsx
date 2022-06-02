@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { RouteComponentProps } from 'react-router-dom';
 
 import { makeStyles } from '@material-ui/core/styles';
@@ -28,20 +28,20 @@ type ArticlePageOwnProps = RouteComponentProps<Params>;
 
 const ArticlePage = asBaseComponent(
     (props: ArticlePageOwnProps & BaseComponentProps & ArticlePageAPIProps) => {
+        const [ iframeRef, setIFrameRef ] = useState<HTMLIFrameElement>(null);
+
         const [ selection, setSelection ] = useState<string>(null);
 
-        const iframe = useRef<HTMLIFrameElement>(null);
         useEffect(() => {
-            // @ts-ignore
-            const contentElement: HTMLIFrameElement = document.getElementById("contentIFrame");
-            if (!!contentElement) {
-                contentElement.contentWindow.document.addEventListener('selectionchange', function() {
-                    // @ts-ignore
-                    const selection = this.getSelection().toString();
-                    setSelection(selection);
-                });
+            !!iframeRef && iframeRef.addEventListener('load', function() {
+                iframeRef.contentWindow.document.addEventListener('selectionchange', function() {
+                    setSelection(this.getSelection().toString());
+                })
+            });
+            return () => {
+                !!iframeRef && iframeRef.removeEventListener('selectionchange', function() {})
             }
-        }, [iframe.current])
+        }, [iframeRef])
 
         console.log(`selection: ${selection}`);
         const classes = styleClasses();
@@ -49,7 +49,7 @@ const ArticlePage = asBaseComponent(
             <Grid container>
                 <Grid item xs={12}>
                     <iframe
-                        ref={iframe}
+                        ref={setIFrameRef}
                         id="contentIFrame"
                         className={classes.content}
                         src="/a/abc" />
