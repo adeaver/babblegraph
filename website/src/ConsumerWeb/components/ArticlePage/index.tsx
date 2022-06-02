@@ -4,6 +4,10 @@ import { RouteComponentProps } from 'react-router-dom';
 import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 
+import Color from 'common/styles/colors';
+import Paragraph from 'common/typography/Paragraph';
+import { Alignment, TypographyColor } from 'common/typography/common';
+
 import {
     asBaseComponent,
     BaseComponentProps,
@@ -11,11 +15,20 @@ import {
 
 const styleClasses = makeStyles({
     content: {
+        border: 'none',
+        borderTop: `2px solid ${Color.Primary}`,
+        position: 'absolute',
+        left: '0',
+        top: '140px',
+        width: '100%',
+        minHeight: 'calc(100vh - 145px)',
+    },
+    navbar: {
         position: 'absolute',
         left: '0',
         top: '80px',
         width: '100%',
-        minHeight: '100%',
+        height: '60px',
     },
 });
 
@@ -47,6 +60,20 @@ const ArticlePage = asBaseComponent(
         const classes = styleClasses();
         return (
             <Grid container>
+                <Grid className={classes.navbar} item xs={12}>
+                    <Grid container>
+                        <Grid item xs={6}>
+                            <Paragraph color={!!selection ? TypographyColor.Primary : TypographyColor.Gray}>
+                                Lookup Word
+                            </Paragraph>
+                        </Grid>
+                        <Grid item xs={6}>
+                            <Paragraph color={TypographyColor.Primary}>
+                                Not Working?
+                            </Paragraph>
+                        </Grid>
+                    </Grid>
+                </Grid>
                 <Grid item xs={12}>
                     <iframe
                         ref={setIFrameRef}
