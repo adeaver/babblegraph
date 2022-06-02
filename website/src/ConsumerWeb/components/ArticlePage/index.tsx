@@ -40,6 +40,16 @@ const styleClasses = makeStyles({
         width: '100%',
         height: '60px',
     },
+    navbarContainer: {
+        height: '100%',
+    },
+    navbarItem: {
+        height: '100%',
+        display: 'flex',
+        padding: '5px',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
 });
 
 type Params = {
@@ -71,14 +81,14 @@ const ArticlePage = asBaseComponent(
         return (
             <Grid container>
                 <Grid className={classes.navbar} item xs={12}>
-                    <Grid container>
-                        <Grid item xs={6}>
+                    <Grid className={classes.navbarContainer} container>
+                        <Grid className={classes.navbarItem} item xs={6}>
                             <PrimaryButton
                                 disabled={!selection}>
                                 Lookup Word
                             </PrimaryButton>
                         </Grid>
-                        <Grid item xs={6}>
+                        <Grid className={classes.navbarItem} item xs={6}>
                             <WarningButton>
                                 Not Working?
                             </WarningButton>
