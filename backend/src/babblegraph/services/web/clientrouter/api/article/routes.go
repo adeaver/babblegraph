@@ -8,7 +8,6 @@ import (
 	"babblegraph/services/web/router"
 	"babblegraph/util/database"
 	"babblegraph/util/encrypt"
-	"babblegraph/util/urlparser"
 	"encoding/base64"
 	"fmt"
 	"reflect"
@@ -63,8 +62,7 @@ func getArticleMetadata(r *router.Request) (interface{}, error) {
 				if userDocument.DocumentURL == nil {
 					return fmt.Errorf("User Document has no document URL")
 				}
-				u := urlparser.MustParseURL(*userDocument.DocumentURL)
-				articleID = base64.URLEncoding.EncodeToString([]byte(u.URLIdentifier))
+				articleID = base64.URLEncoding.EncodeToString([]byte(*userDocument.DocumentURL))
 				return nil
 			})
 		default:

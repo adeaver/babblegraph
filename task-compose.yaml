@@ -26,4 +26,4 @@ services:
       - STRIPE_KEY=$BABBLEGRAPH_STRIPE_KEY
       - AES_KEY=ryDMLNhwEqPBHMgu6YOsCZ0ihx4WgvqE
       - ENV=local
-    command: go run /usr/local/go/src/babblegraph/services/taskrunner/main.go --task=create-elastic-indexes
+    command: go run /usr/local/go/src/babblegraph/services/taskrunner/main.go --task=sample-email --user-email=deaver.andrew+test.short.trial@gmail.com
