@@ -5,6 +5,7 @@ import (
 	"babblegraph/services/taskrunner/bootstrap"
 	"babblegraph/util/database"
 	"babblegraph/util/env"
+	"babblegraph/util/urlparser"
 	"babblegraph/wordsmith"
 	"fmt"
 
@@ -29,6 +30,27 @@ func BootstrapDatabase() error {
 				_, err = content.AddTopicDisplayName(tx, *topicID, wordsmith.LanguageCodeSpanish, displayName, true)
 				if err != nil {
 					return err
+				}
+			}
+			for domain, info := range bootstrap.Sources {
+				sourceID, err := content.InsertSource(tx, content.InsertSourceInput{
+					Title:                 domain,
+					LanguageCode:          info.LanguageCode,
+					URL:                   domain,
+					Type:                  content.SourceTypeNewsWebsite,
+					IngestStrategy:        content.IngestStrategyWebsiteHTML1,
+					Country:               info.Country,
+					ShouldUseURLAsSeedURL: true,
+					IsActive:              true,
+				})
+				if err != nil {
+					return err
+				}
+				for _, u := range info.SeedURLs {
+					parsed := urlparser.MustParseURL(u)
+					if _, err := content.AddSourceSeed(tx, *sourceID, parsed, true); err != nil {
+						return err
+					}
 				}
 			}
 			return nil
