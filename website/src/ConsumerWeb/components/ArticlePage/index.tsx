@@ -66,6 +66,7 @@ const styleClasses = makeStyles({
         position: 'absolute',
         top: '50%',
         left: '50%',
+        width: '50%',
         transform: 'translate(-50%, -50%)',
     }
 });
@@ -74,7 +75,7 @@ type Params = {
     token: string;
 }
 
-type ArticlePageAPIProps = GetArticleMetadataResponse;
+type ArticlePageAPIProps = GetArticleMetadataResponse & GetUserProfileInformationResponse;
 type ArticlePageOwnProps = RouteComponentProps<Params>;
 
 const ArticlePage = asBaseComponent(
@@ -82,6 +83,10 @@ const ArticlePage = asBaseComponent(
         const [ iframeRef, setIFrameRef ] = useState<HTMLIFrameElement>(null);
         const [ selection, setSelection ] = useState<string>(null);
         const [ isModalOpen, setIsModalOpen ] = useState<boolean>(false);
+
+        const [ shouldShowLoginForm, setShouldShowLoginForm ] = useState<boolean>(
+            props.userProfile.hasAccount && !props.userProfile.isLoggedIn
+        );
 
         const handleToggleWordSearch = (isOpen: boolean) => {
             return () => {
@@ -130,9 +135,11 @@ const ArticlePage = asBaseComponent(
                 {
                     !!isModalOpen && (
                         <WordSearchModal
-                            readerToken={props.readerToken}
+                            shouldShowLoginForm={shouldShowLoginForm}
+                            wordReinforcementToken={props.userProfile.nextTokens[0]}
                             selection={selection}
-                            handleCloseModal={handleToggleWordSearch(false)} />
+                            handleCloseModal={handleToggleWordSearch(false)}
+                            handleToggleLoginForm={setShouldShowLoginForm} />
                     )
                 }
             </Grid>
@@ -147,52 +154,45 @@ const ArticlePage = asBaseComponent(
             articleToken: ownProps.match.params.token,
         },
         (resp: GetArticleMetadataResponse) => {
-            onSuccess(resp);
+            getUserProfileInformation({
+                key: RouteEncryptionKey.ArticleReaderKey,
+                token: resp.readerToken,
+                nextKeys: [RouteEncryptionKey.WordReinforcement],
+            },
+            (resp2: GetUserProfileInformationResponse) => {
+                onSuccess({
+                    ...resp,
+                    ...resp2
+                });
+            },
+            onError)
         },
         onError);
     },
     true,
 );
 
-type WordSearchModalOwnProps = {
-    readerToken: string;
+type WordSearchModalProps = {
+    shouldShowLoginForm: boolean;
     selection: string;
+    wordReinforcementToken: string;
 
     handleCloseModal: () => void;
+    handleToggleLoginForm: (v: boolean) => void;
 }
 
-type WordSearchModalAPIProps = GetUserProfileInformationResponse;
-
-const WordSearchModal = asBaseComponent(
-    (props: BaseComponentProps & WordSearchModalAPIProps & WordSearchModalOwnProps) => {
-        const classes = styleClasses();
-        return (
-            <Modal
-                open={true}
-                onClose={props.handleCloseModal}>
-                <DisplayCard
-                    className={classes.wordSearchModal}>
-                    { props.selection }
-                </DisplayCard>
-            </Modal>
-        );
-    },
-    (
-        ownProps: WordSearchModalOwnProps,
-        onSuccess: (resp: WordSearchModalAPIProps) => void,
-        onError: (err: Error) => void
-    ) => {
-        getUserProfileInformation({
-            key: RouteEncryptionKey.ArticleReaderKey,
-            token: ownProps.readerToken,
-            nextKeys: [RouteEncryptionKey.WordReinforcement],
-        },
-        (resp: GetUserProfileInformationResponse) => {
-            onSuccess(resp);
-        },
-        onError)
-    },
-    false
-)
+const WordSearchModal = (props: WordSearchModalProps) => {
+    const classes = styleClasses();
+    return (
+        <Modal
+            open={true}
+            onClose={props.handleCloseModal}>
+            <DisplayCard
+                className={classes.wordSearchModal}>
+                { props.selection }
+            </DisplayCard>
+        </Modal>
+    );
+}
 
 export default ArticlePage;
