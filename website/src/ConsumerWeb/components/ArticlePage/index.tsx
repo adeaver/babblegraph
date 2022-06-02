@@ -9,6 +9,11 @@ import Paragraph from 'common/typography/Paragraph';
 import { Alignment, TypographyColor } from 'common/typography/common';
 
 import {
+    getArticleMetadata,
+    GetArticleMetadataResponse,
+} from 'ConsumerWeb/api/article';
+
+import {
     asBaseComponent,
     BaseComponentProps,
 } from 'common/base/BaseComponent';
@@ -36,7 +41,7 @@ type Params = {
     token: string;
 }
 
-type ArticlePageAPIProps = {}
+type ArticlePageAPIProps = GetArticleMetadataResponse;
 type ArticlePageOwnProps = RouteComponentProps<Params>;
 
 const ArticlePage = asBaseComponent(
@@ -88,7 +93,15 @@ const ArticlePage = asBaseComponent(
         ownProps: ArticlePageOwnProps,
         onSuccess: (resp: ArticlePageAPIProps) => void,
         onError: (err: Error) => void,
-    ) => onSuccess({}),
+    ) => {
+        getArticleMetadata({
+            articleToken: ownProps.match.params.token,
+        },
+        (resp: GetArticleMetadataResponse) => {
+            onSuccess(resp);
+        },
+        onError);
+    },
     true,
 );
 

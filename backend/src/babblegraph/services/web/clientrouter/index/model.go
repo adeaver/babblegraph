@@ -36,6 +36,7 @@ func RegisterIndexRoutes(r *mux.Router, indexPages []IndexPage) error {
 	r.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, fmt.Sprintf("%s/favicon.ico", staticFileDirName))
 	})
+	r.HandleFunc("/article/{token}", handleArticleRoute(staticFileDirName))
 	r.HandleFunc("/a/{token}", func(w http.ResponseWriter, r *http.Request) {
 		resp, err := http.Get("https://www.elmundo.es/internacional/2022/06/01/6296945aa0066c001f7302b5-directo.html")
 		if err != nil {

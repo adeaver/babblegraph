@@ -52,8 +52,8 @@ class App extends React.Component{
                     <Route path="/manage/:token/payment-settings" component={PremiumNewsletterSubscriptionManagementPage} />
                     <Route exact path="/manage/:token" component={SubscriptionManagementHomePage} />
 
-                    { /* Podcast Player */ }
-                    <Route path="/read" component={ArticlePage} />
+                    { /* Content */ }
+                    <Route path="/article/:articleToken" component={ArticlePage} />
                     <Route path="/podcast/:userPodcastID" component={PodcastPlayerPage} />
 
                     { /* User Account Management */ }
