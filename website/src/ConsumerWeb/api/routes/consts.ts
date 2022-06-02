@@ -14,4 +14,5 @@ export enum RouteEncryptionKey {
 	PremiumSubscriptionCheckout = 'premium-subscription-checkout',
 	CreateUser = 'create-user',
 	ForgotPassword = 'forgot-password',
+	ArticleReaderKey = 'article-reader',
 }
