@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { RouteComponentProps } from 'react-router-dom';
 
 import { makeStyles } from '@material-ui/core/styles';
@@ -28,19 +28,28 @@ type ArticlePageOwnProps = RouteComponentProps<Params>;
 
 const ArticlePage = asBaseComponent(
     (props: ArticlePageOwnProps & BaseComponentProps & ArticlePageAPIProps) => {
-        useEffect(() => {
-            const iframe = document.getElementById('contentIFrame');
-            iframe.addEventListener('selectionchange', function() {
-                const selection = document.getSelection().toString();
-                console.log(selection);
-            });
-        }, [])
+        const [ selection, setSelection ] = useState<string>(null);
 
+        const iframe = useRef<HTMLIFrameElement>(null);
+        useEffect(() => {
+            // @ts-ignore
+            const contentElement: HTMLIFrameElement = document.getElementById("contentIFrame");
+            if (!!contentElement) {
+                contentElement.contentWindow.document.addEventListener('selectionchange', function() {
+                    // @ts-ignore
+                    const selection = this.getSelection().toString();
+                    setSelection(selection);
+                });
+            }
+        }, [iframe.current])
+
+        console.log(`selection: ${selection}`);
         const classes = styleClasses();
         return (
             <Grid container>
                 <Grid item xs={12}>
                     <iframe
+                        ref={iframe}
                         id="contentIFrame"
                         className={classes.content}
                         src="/a/abc" />
