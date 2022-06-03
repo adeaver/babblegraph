@@ -25,6 +25,7 @@ export type InjectedUserVocabularyComponentProps = {
     userVocabularyEntries: Array<UserVocabularyEntry>;
 
     handleAddNewVocabularyEntry: (newEntry: UserVocabularyEntry) => void;
+    handleRemoveVocabularyEntry: (removedEntry: UserVocabularyEntry) => void;
 } & BaseComponentProps;
 
 export function withUserVocabulary<P extends WithUserVocabularyProps>(WrappedComponent: React.ComponentType<P & InjectedUserVocabularyComponentProps>) {
@@ -34,16 +35,19 @@ export function withUserVocabulary<P extends WithUserVocabularyProps>(WrappedCom
             const handleAddNewVocabularyEntry = (newEntry: UserVocabularyEntry) => {
                 setUserVocabularyEntries(userVocabularyEntries.concat(newEntry));
             }
+            const handleRemoveVocabularyEntry = (removedEntry: UserVocabularyEntry) => {
+                setUserVocabularyEntries(userVocabularyEntries.filter((e: UserVocabularyEntry) => removedEntry.uniqueHash !== e.uniqueHash));
+            }
 
             const wrappedProps = {
                 ...props,
                 "userVocabularyEntries": userVocabularyEntries,
             }
-            console.log("wrapped", wrappedProps);
             return (
                 <WrappedComponent
                     {...wrappedProps }
-                    handleAddNewVocabularyEntry={handleAddNewVocabularyEntry} />
+                    handleAddNewVocabularyEntry={handleAddNewVocabularyEntry}
+                    handleRemoveVocabularyEntry={handleRemoveVocabularyEntry} />
             )
         },
         (

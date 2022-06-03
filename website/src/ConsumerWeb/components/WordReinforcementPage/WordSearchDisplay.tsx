@@ -49,6 +49,10 @@ const styleClasses = makeStyles({
     },
 });
 
+const wordSearchErrorMessages = {
+    "default": "Something went wrong processing your request",
+}
+
 type WordSearchDisplayOwnProps = {
     searchTerms: string[];
     wordReinforcementToken: string;
@@ -62,14 +66,16 @@ type WordSearchDisplayAPIProps = SearchTextResponse;
 
 const WordSearchDisplay = asBaseComponent(
     (props: BaseComponentProps & WordSearchDisplayOwnProps & WordSearchDisplayAPIProps) => {
-        console.log("child", props.userVocabularyEntries);
         const uniqueHashes = (props.userVocabularyEntries || []).reduce(
             (acc: { [hash: string]: boolean }, next: UserVocabularyEntry) => ({
                 ...acc,
                 [next.uniqueHash]: true,
             }),
         {});
-        console.log("child", uniqueHashes);
+
+        const [ errorMessage, setErrorMessage ] = useState<string>(
+            !!props.error ? wordSearchErrorMessages["default"] : null
+        )
 
         return (
             <Grid container>
@@ -93,6 +99,9 @@ const WordSearchDisplay = asBaseComponent(
                         })
                     )
                 }
+                <Snackbar open={!!errorMessage} autoHideDuration={6000} onClose={() => setErrorMessage(null)}>
+                    <Alert severity="error">{errorMessage}</Alert>
+                </Snackbar>
             </Grid>
         );
     },

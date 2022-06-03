@@ -24,6 +24,7 @@ const styleClasses = makeStyles({
     },
 });
 
+
 type WordSearchFormProps = {
     wordReinforcementToken: string;
     subscriptionManagementToken: string;
