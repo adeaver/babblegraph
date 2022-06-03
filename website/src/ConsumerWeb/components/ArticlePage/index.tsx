@@ -5,6 +5,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 import Modal from '@material-ui/core/Modal';
 
+import CenteredComponent from 'common/components/CenteredComponent/CenteredComponent';
 import DisplayCard from 'common/components/DisplayCard/DisplayCard';
 import Color from 'common/styles/colors';
 import Paragraph from 'common/typography/Paragraph';
@@ -17,6 +18,7 @@ import {
     ConfirmationButton,
 } from 'common/components/Button/Button';
 import { loadCaptchaScript } from 'common/util/grecaptcha/grecaptcha';
+import { openLocationAsNewTab } from 'util/window/Location';
 
 import {
     getArticleMetadata,
@@ -75,8 +77,14 @@ const styleClasses = makeStyles({
         top: '50%',
         left: '50%',
         width: '50%',
+        minWidth: '300px',
         transform: 'translate(-50%, -50%)',
-    }
+        maxHeight: '500px',
+        overflowY: 'scroll',
+    },
+    closeModalButton: {
+        width: '100%',
+    },
 });
 
 type Params = {
@@ -110,6 +118,7 @@ const ArticlePage = asBaseComponent(
                 setHasLoadedCaptcha(true);
             }
             !!iframeRef && iframeRef.addEventListener('load', function() {
+                // TODO(here): go through and add links
                 iframeRef.contentWindow.document.addEventListener('selectionchange', function() {
                     setSelection(this.getSelection().toString());
                 })
@@ -135,7 +144,8 @@ const ArticlePage = asBaseComponent(
                             </PrimaryButton>
                         </Grid>
                         <Grid className={classes.navbarItem} item xs={6}>
-                            <WarningButton>
+                            <WarningButton
+                                onClick={() => {openLocationAsNewTab(props.articleUrl)}}>
                                 Not Working?
                             </WarningButton>
                         </Grid>
@@ -201,6 +211,7 @@ type WordSearchModalProps = {
 
 const WordSearchModal = (props: WordSearchModalProps) => {
     const classes = styleClasses();
+    // TODO: add login form
     return (
         <Modal
             open={true}
@@ -211,6 +222,16 @@ const WordSearchModal = (props: WordSearchModalProps) => {
                     selection={props.selection}
                     wordReinforcementToken={props.wordReinforcementToken}
                     subscriptionManagementToken={props.subscriptionManagementToken} />
+                <CenteredComponent>
+                    <PrimaryButton
+                        className={classes.closeModalButton}
+                        onClick={props.handleCloseModal}>
+                        Close popup
+                    </PrimaryButton>
+                </CenteredComponent>
+                <Link href={`/manage/${props.wordReinforcementToken}/vocabulary`}>
+                    Go to your vocabulary list
+                </Link>
             </DisplayCard>
         </Modal>
     );
@@ -224,17 +245,12 @@ type WordSearchComponentProps = {
 
 const WordSearchComponent = withUserVocabulary(
     (props: WordSearchComponentProps & InjectedUserVocabularyComponentProps) => (
-        <div>
-            <WordSearchDisplay
-                searchTerms={props.selection.trim().split(/ +/g)}
-                wordReinforcementToken={props.wordReinforcementToken}
-                subscriptionManagementToken={props.subscriptionManagementToken}
-                userVocabularyEntries={props.userVocabularyEntries}
-                handleAddNewUserVocabularyEntry={props.handleAddNewVocabularyEntry} />
-            <Link href={`/manage/${props.wordReinforcementToken}/vocabulary`}>
-                Go to your vocabulary list
-            </Link>
-        </div>
+        <WordSearchDisplay
+            searchTerms={props.selection.trim().split(/ +/g)}
+            wordReinforcementToken={props.wordReinforcementToken}
+            subscriptionManagementToken={props.subscriptionManagementToken}
+            userVocabularyEntries={props.userVocabularyEntries}
+            handleAddNewUserVocabularyEntry={props.handleAddNewVocabularyEntry} />
     )
 )
 

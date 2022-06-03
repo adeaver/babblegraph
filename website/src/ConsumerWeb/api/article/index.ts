@@ -7,6 +7,7 @@ export type GetArticleMetadataRequest = {
 export type GetArticleMetadataResponse = {
     readerToken: string;
     articleId: string;
+    articleUrl: string;
 }
 
 export function getArticleMetadata(
