@@ -94,6 +94,8 @@ const styleClasses = makeStyles({
     },
 });
 
+import NewWordSearchForm from "./WordSearchForm";
+
 type Params = {
     token: string;
 }
@@ -128,10 +130,9 @@ const WordReinforcementPage = withUserProfileInformation<WordReinforcementPagePr
                     <DisplayCardHeader
                         title="Add vocabulary words"
                         backArrowDestination={`/manage/${subscriptionManagementToken}`} />
-                    <UserVocabularyDisplay
+                    <NewWordSearchForm
                         wordReinforcementToken={token}
-                        subscriptionManagementToken={subscriptionManagementToken}
-                        hasSubscription={props.userProfile.subscriptionLevel !== SubscriptionLevel.Legacy} />
+                        subscriptionManagementToken={subscriptionManagementToken} />
                 </DisplayCard>
             </CenteredComponent>
         );
