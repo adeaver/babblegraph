@@ -10,8 +10,9 @@ import (
 )
 
 const (
-	selectVocabularyEntryForUserQuery = "SELECT * FROM user_vocabulary_entries WHERE is_visible = TRUE AND user_id = $1 AND language_code = $2 AND is_active = TRUE"
-	upsertVocabularyEntryQuery        = `INSERT INTO
+	selectActiveVocabularyEntryForUserQuery  = "SELECT * FROM user_vocabulary_entries WHERE is_visible = TRUE AND user_id = $1 AND language_code = $2 AND is_active = TRUE"
+	selectVisibleVocabularyEntryForUserQuery = "SELECT * FROM user_vocabulary_entries WHERE is_visible = TRUE AND user_id = $1 AND language_code = $2"
+	upsertVocabularyEntryQuery               = `INSERT INTO
         user_vocabulary_entries (
             user_id, language_code, vocabulary_id, vocabulary_type, vocabulary_display, study_note, is_active, is_visible, unique_hash
         ) VALUES (
@@ -35,10 +36,16 @@ const (
         number_of_times_sent=user_vocabulary_spotlight_records.number_of_times_sent+1`
 )
 
-func GetUserVocabularyEntries(tx *sqlx.Tx, userID users.UserID, languageCode wordsmith.LanguageCode, includeDefinitions bool) ([]UserVocabularyEntry, error) {
+func GetUserVocabularyEntries(tx *sqlx.Tx, userID users.UserID, languageCode wordsmith.LanguageCode, includeInactives, includeDefinitions bool) ([]UserVocabularyEntry, error) {
 	var matches []dbUserVocabularyEntry
-	if err := tx.Select(&matches, selectVocabularyEntryForUserQuery, userID, languageCode); err != nil {
-		return nil, err
+	if !includeInactives {
+		if err := tx.Select(&matches, selectActiveVocabularyEntryForUserQuery, userID, languageCode); err != nil {
+			return nil, err
+		}
+	} else {
+		if err := tx.Select(&matches, selectVisibleVocabularyEntryForUserQuery, userID, languageCode); err != nil {
+			return nil, err
+		}
 	}
 	var phraseDefinitionIDs []wordsmith.PhraseDefinitionID
 	var lemmaIDs []wordsmith.LemmaID
