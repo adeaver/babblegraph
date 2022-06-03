@@ -8,12 +8,15 @@ import Modal from '@material-ui/core/Modal';
 import DisplayCard from 'common/components/DisplayCard/DisplayCard';
 import Color from 'common/styles/colors';
 import Paragraph from 'common/typography/Paragraph';
+import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
+import Link from 'common/components/Link/Link';
 import { Alignment, TypographyColor } from 'common/typography/common';
 import {
     PrimaryButton,
     WarningButton,
     ConfirmationButton,
 } from 'common/components/Button/Button';
+import { loadCaptchaScript } from 'common/util/grecaptcha/grecaptcha';
 
 import {
     getArticleMetadata,
@@ -25,15 +28,20 @@ import {
     GetUserProfileInformationResponse,
     getUserProfileInformation,
 } from 'ConsumerWeb/api/useraccounts2/useraccounts';
+import { UserVocabularyEntry } from 'ConsumerWeb/api/user/userVocabulary';
 import {
     RouteEncryptionKey,
 } from 'ConsumerWeb/api/routes/consts';
-
-
 import {
     asBaseComponent,
     BaseComponentProps,
 } from 'common/base/BaseComponent';
+
+import WordSearchDisplay from 'ConsumerWeb/components/WordReinforcementPage/WordSearchDisplay';
+import {
+    withUserVocabulary,
+    InjectedUserVocabularyComponentProps,
+} from 'ConsumerWeb/components/WordReinforcementPage/withUserVocabulary';
 
 const styleClasses = makeStyles({
     content: {
@@ -94,7 +102,13 @@ const ArticlePage = asBaseComponent(
             }
         }
 
+        const [ hasLoadedCaptcha, setHasLoadedCaptcha ] = useState<boolean>(false);
+
         useEffect(() => {
+            if (!hasLoadedCaptcha) {
+                loadCaptchaScript();
+                setHasLoadedCaptcha(true);
+            }
             !!iframeRef && iframeRef.addEventListener('load', function() {
                 iframeRef.contentWindow.document.addEventListener('selectionchange', function() {
                     setSelection(this.getSelection().toString());
@@ -105,8 +119,10 @@ const ArticlePage = asBaseComponent(
             }
         }, [iframeRef])
 
-        console.log(`selection: ${selection}`);
         const classes = styleClasses();
+        if (!hasLoadedCaptcha) {
+            return <LoadingSpinner />;
+        }
         return (
             <Grid container>
                 <Grid className={classes.navbar} item xs={12}>
@@ -137,6 +153,7 @@ const ArticlePage = asBaseComponent(
                         <WordSearchModal
                             shouldShowLoginForm={shouldShowLoginForm}
                             wordReinforcementToken={props.userProfile.nextTokens[0]}
+                            subscriptionManagementToken={props.userProfile.nextTokens[1]}
                             selection={selection}
                             handleCloseModal={handleToggleWordSearch(false)}
                             handleToggleLoginForm={setShouldShowLoginForm} />
@@ -157,7 +174,7 @@ const ArticlePage = asBaseComponent(
             getUserProfileInformation({
                 key: RouteEncryptionKey.ArticleReaderKey,
                 token: resp.readerToken,
-                nextKeys: [RouteEncryptionKey.WordReinforcement],
+                nextKeys: [RouteEncryptionKey.WordReinforcement, RouteEncryptionKey.SubscriptionManagement],
             },
             (resp2: GetUserProfileInformationResponse) => {
                 onSuccess({
@@ -176,6 +193,7 @@ type WordSearchModalProps = {
     shouldShowLoginForm: boolean;
     selection: string;
     wordReinforcementToken: string;
+    subscriptionManagementToken: string;
 
     handleCloseModal: () => void;
     handleToggleLoginForm: (v: boolean) => void;
@@ -189,10 +207,35 @@ const WordSearchModal = (props: WordSearchModalProps) => {
             onClose={props.handleCloseModal}>
             <DisplayCard
                 className={classes.wordSearchModal}>
-                { props.selection }
+                <WordSearchComponent
+                    selection={props.selection}
+                    wordReinforcementToken={props.wordReinforcementToken}
+                    subscriptionManagementToken={props.subscriptionManagementToken} />
             </DisplayCard>
         </Modal>
     );
 }
+
+type WordSearchComponentProps = {
+    selection: string;
+    wordReinforcementToken: string;
+    subscriptionManagementToken: string;
+}
+
+const WordSearchComponent = withUserVocabulary(
+    (props: WordSearchComponentProps & InjectedUserVocabularyComponentProps) => (
+        <div>
+            <WordSearchDisplay
+                searchTerms={props.selection.trim().split(/ +/g)}
+                wordReinforcementToken={props.wordReinforcementToken}
+                subscriptionManagementToken={props.subscriptionManagementToken}
+                userVocabularyEntries={props.userVocabularyEntries}
+                handleAddNewUserVocabularyEntry={props.handleAddNewVocabularyEntry} />
+            <Link href={`/manage/${props.wordReinforcementToken}/vocabulary`}>
+                Go to your vocabulary list
+            </Link>
+        </div>
+    )
+)
 
 export default ArticlePage;
