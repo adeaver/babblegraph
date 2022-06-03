@@ -62,22 +62,14 @@ type WordSearchDisplayAPIProps = SearchTextResponse;
 
 const WordSearchDisplay = asBaseComponent(
     (props: BaseComponentProps & WordSearchDisplayOwnProps & WordSearchDisplayAPIProps) => {
-        const [ uniqueHashes, setUniqueHashes ] = useState<{ [hash: string]: boolean } >(
-            (props.userVocabularyEntries || []).reduce(
-                (acc: { [hash: string]: boolean }, next: UserVocabularyEntry) => ({
-                    ...acc,
-                    [next.uniqueHash]: true,
-                }),
-            {})
-        );
-
-        const handleAddNewUserVocabularyEntry = (newEntry: UserVocabularyEntry) => {
-            setUniqueHashes({
-                ...uniqueHashes,
-                [newEntry.uniqueHash]: true
-            });
-            props.handleAddNewUserVocabularyEntry(newEntry);
-        }
+        console.log("child", props.userVocabularyEntries);
+        const uniqueHashes = (props.userVocabularyEntries || []).reduce(
+            (acc: { [hash: string]: boolean }, next: UserVocabularyEntry) => ({
+                ...acc,
+                [next.uniqueHash]: true,
+            }),
+        {});
+        console.log("child", uniqueHashes);
 
         return (
             <Grid container>
@@ -96,7 +88,7 @@ const WordSearchDisplay = asBaseComponent(
                                     isAdded={!!uniqueHashes[r.uniqueHash]}
                                     isOnlyDefinition={props.result.results.length <= 1}
                                     subscriptionManagementToken={props.subscriptionManagementToken}
-                                    handleAddNewUserVocabularyEntry={handleAddNewUserVocabularyEntry} />
+                                    handleAddNewUserVocabularyEntry={props.handleAddNewUserVocabularyEntry} />
                         )
                         })
                     )

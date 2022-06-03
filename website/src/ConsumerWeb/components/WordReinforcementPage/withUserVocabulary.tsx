@@ -35,8 +35,15 @@ export function withUserVocabulary<P extends WithUserVocabularyProps>(WrappedCom
                 setUserVocabularyEntries(userVocabularyEntries.concat(newEntry));
             }
 
+            const wrappedProps = {
+                ...props,
+                "userVocabularyEntries": userVocabularyEntries,
+            }
+            console.log("wrapped", wrappedProps);
             return (
-                <WrappedComponent {...props } handleAddNewVocabularyEntry={handleAddNewVocabularyEntry} />
+                <WrappedComponent
+                    {...wrappedProps }
+                    handleAddNewVocabularyEntry={handleAddNewVocabularyEntry} />
             )
         },
         (

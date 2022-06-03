@@ -46,20 +46,10 @@ const WordSearchForm = (props: WordSearchFormProps) => {
     };
 
 
-    const [ displayComponent, setDisplayComponent ] = useState<React.ReactNode>(null);
+    const [ searchTerms, setSearchTerms ] = useState<string[]>(null);
     const handleSubmit = () => {
         const terms = searchFormValue.trim().split(/ +/g);
-        // This is a hack
-        setDisplayComponent((
-            <Grid key={`terms-${terms.join('-')}`} item xs={12}>
-                <WordSearchDisplay
-                    searchTerms={terms}
-                    userVocabularyEntries={props.userVocabularyEntries}
-                    subscriptionManagementToken={props.subscriptionManagementToken}
-                    wordReinforcementToken={props.wordReinforcementToken}
-                    handleAddNewUserVocabularyEntry={props.handleAddNewUserVocabularyEntry} />
-            </Grid>
-        ));
+        setSearchTerms(terms);
     }
 
     const classes = styleClasses();
@@ -86,7 +76,18 @@ const WordSearchForm = (props: WordSearchFormProps) => {
                         Search
                     </PrimaryButton>
                 </Grid>
-                { displayComponent }
+                {
+                    !!searchTerms && (
+                        <Grid key={`terms-${searchTerms.join('-')}`} item xs={12}>
+                            <WordSearchDisplay
+                                searchTerms={searchTerms}
+                                userVocabularyEntries={props.userVocabularyEntries}
+                                subscriptionManagementToken={props.subscriptionManagementToken}
+                                wordReinforcementToken={props.wordReinforcementToken}
+                                handleAddNewUserVocabularyEntry={props.handleAddNewUserVocabularyEntry} />
+                        </Grid>
+                    )
+                }
             </Grid>
         </Form>
     )
