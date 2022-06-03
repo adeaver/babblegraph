@@ -173,7 +173,7 @@ func getUserVocabulary(userAuth *routermiddleware.UserAuthentication, r *router.
 	var entries []uservocabulary.UserVocabularyEntry
 	if err := database.WithTx(func(tx *sqlx.Tx) error {
 		var err error
-		entries, err = uservocabulary.GetUserVocabularyEntries(tx, *userID, *languageCode, true)
+		entries, err = uservocabulary.GetUserVocabularyEntries(tx, *userID, *languageCode, true, true)
 		return err
 	}); err != nil {
 		return nil, err

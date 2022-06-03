@@ -93,7 +93,7 @@ func GetDefaultUserPreferencesAccessor(c ctx.LogContext, tx *sqlx.Tx, userID use
 	if err != nil {
 		return nil, err
 	}
-	vocabularyEntries, err := uservocabulary.GetUserVocabularyEntries(tx, userID, languageCode, false)
+	vocabularyEntries, err := uservocabulary.GetUserVocabularyEntries(tx, userID, languageCode, false, false)
 	if err != nil {
 		return nil, err
 	}
