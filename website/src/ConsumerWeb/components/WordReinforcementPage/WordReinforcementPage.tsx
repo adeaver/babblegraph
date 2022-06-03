@@ -95,6 +95,10 @@ const styleClasses = makeStyles({
 });
 
 import NewWordSearchForm from "./WordSearchForm";
+import {
+    withUserVocabulary,
+    InjectedUserVocabularyComponentProps,
+} from './withUserVocabulary';
 
 type Params = {
     token: string;
@@ -130,7 +134,7 @@ const WordReinforcementPage = withUserProfileInformation<WordReinforcementPagePr
                     <DisplayCardHeader
                         title="Add vocabulary words"
                         backArrowDestination={`/manage/${subscriptionManagementToken}`} />
-                    <NewWordSearchForm
+                    <WordReinforcementBody
                         wordReinforcementToken={token}
                         subscriptionManagementToken={subscriptionManagementToken} />
                 </DisplayCard>
@@ -138,6 +142,21 @@ const WordReinforcementPage = withUserProfileInformation<WordReinforcementPagePr
         );
     }
 );
+
+type WordReinforcementBodyProps = {
+    wordReinforcementToken: string;
+    subscriptionManagementToken: string;
+}
+
+const WordReinforcementBody = withUserVocabulary(
+    (props: WordReinforcementBodyProps & InjectedUserVocabularyComponentProps) => (
+        <NewWordSearchForm
+            wordReinforcementToken={props.wordReinforcementToken}
+            subscriptionManagementToken={props.subscriptionManagementToken}
+            userVocabularyEntries={props.userVocabularyEntries}
+            handleAddNewUserVocabularyEntry={props.handleAddNewVocabularyEntry} />
+    )
+)
 
 type UserVocabularyDisplayProps = {
     wordReinforcementToken: string;

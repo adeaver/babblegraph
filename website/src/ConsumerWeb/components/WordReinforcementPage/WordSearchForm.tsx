@@ -10,6 +10,7 @@ import { PrimaryButton } from 'common/components/Button/Button';
 import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
 
 import { WordsmithLanguageCode } from 'common/model/language/language';
+import { UserVocabularyEntry } from 'ConsumerWeb/api/user/userVocabulary';
 
 import WordSearchDisplay from "./WordSearchDisplay";
 
@@ -26,6 +27,9 @@ const styleClasses = makeStyles({
 type WordSearchFormProps = {
     wordReinforcementToken: string;
     subscriptionManagementToken: string;
+    userVocabularyEntries: Array<UserVocabularyEntry>;
+
+    handleAddNewUserVocabularyEntry: (newEntry: UserVocabularyEntry) => void;
 }
 
 const WordSearchForm = (props: WordSearchFormProps) => {
@@ -41,6 +45,7 @@ const WordSearchForm = (props: WordSearchFormProps) => {
         setSearchFormValue((event.target as HTMLInputElement).value);
     };
 
+
     const [ displayComponent, setDisplayComponent ] = useState<React.ReactNode>(null);
     const handleSubmit = () => {
         const terms = searchFormValue.trim().split(/ +/g);
@@ -49,8 +54,10 @@ const WordSearchForm = (props: WordSearchFormProps) => {
             <Grid key={`terms-${terms.join('-')}`} item xs={12}>
                 <WordSearchDisplay
                     searchTerms={terms}
+                    userVocabularyEntries={props.userVocabularyEntries}
                     subscriptionManagementToken={props.subscriptionManagementToken}
-                    wordReinforcementToken={props.wordReinforcementToken} />
+                    wordReinforcementToken={props.wordReinforcementToken}
+                    handleAddNewUserVocabularyEntry={props.handleAddNewUserVocabularyEntry} />
             </Grid>
         ));
     }
