@@ -223,11 +223,11 @@ const WordSearchModal = (props: WordSearchModalProps) => {
                     wordReinforcementToken={props.wordReinforcementToken}
                     subscriptionManagementToken={props.subscriptionManagementToken} />
                 <CenteredComponent>
-                    <PrimaryButton
+                    <WarningButton
                         className={classes.closeModalButton}
                         onClick={props.handleCloseModal}>
                         Close popup
-                    </PrimaryButton>
+                    </WarningButton>
                 </CenteredComponent>
                 <Link href={`/manage/${props.wordReinforcementToken}/vocabulary`}>
                     Go to your vocabulary list
