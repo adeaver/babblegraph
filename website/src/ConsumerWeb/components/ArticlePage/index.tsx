@@ -63,6 +63,13 @@ const styleClasses = makeStyles({
         width: '100%',
         height: '60px',
     },
+    storyLoadingSpinner: {
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        zIndex: 1,
+    },
     navbarContainer: {
         height: '100%',
     },
@@ -112,6 +119,7 @@ const ArticlePage = asBaseComponent(
         }
 
         const [ hasLoadedCaptcha, setHasLoadedCaptcha ] = useState<boolean>(false);
+        const [ hasIFrameLoaded, setHasIFrameLoaded ] = useState<boolean>(true);
 
         useEffect(() => {
             if (!hasLoadedCaptcha) {
@@ -119,6 +127,7 @@ const ArticlePage = asBaseComponent(
                 setHasLoadedCaptcha(true);
             }
             !!iframeRef && iframeRef.addEventListener('load', function() {
+                setHasIFrameLoaded(false);
                 // TODO(here): go through and add links
                 iframeRef.contentWindow.document.addEventListener('selectionchange', function() {
                     setSelection(this.getSelection().toString());
@@ -152,6 +161,9 @@ const ArticlePage = asBaseComponent(
                         </Grid>
                     </Grid>
                 </Grid>
+                {
+                    hasIFrameLoaded && <LoadingSpinner className={classes.storyLoadingSpinner} />
+                }
                 <Grid item xs={12}>
                     <iframe
                         ref={setIFrameRef}
