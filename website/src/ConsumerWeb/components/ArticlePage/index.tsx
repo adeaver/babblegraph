@@ -39,6 +39,7 @@ import {
     BaseComponentProps,
 } from 'common/base/BaseComponent';
 
+import LoginForm from 'ConsumerWeb/components/UserAccounts/LoginForm';
 import WordSearchDisplay from 'ConsumerWeb/components/WordReinforcementPage/WordSearchDisplay';
 import {
     withUserVocabulary,
@@ -210,18 +211,27 @@ type WordSearchModalProps = {
 }
 
 const WordSearchModal = (props: WordSearchModalProps) => {
+    const handleLogin = (_: string) => {
+        props.handleToggleLoginForm(false);
+    }
     const classes = styleClasses();
-    // TODO: add login form
     return (
         <Modal
             open={true}
             onClose={props.handleCloseModal}>
             <DisplayCard
                 className={classes.wordSearchModal}>
-                <WordSearchComponent
-                    selection={props.selection}
-                    wordReinforcementToken={props.wordReinforcementToken}
-                    subscriptionManagementToken={props.subscriptionManagementToken} />
+                {
+                    props.shouldShowLoginForm ? (
+                        <LoginForm
+                            onLoginSuccess={handleLogin} />
+                    ) : (
+                        <WordSearchComponent
+                            selection={props.selection}
+                            wordReinforcementToken={props.wordReinforcementToken}
+                            subscriptionManagementToken={props.subscriptionManagementToken} />
+                    )
+                }
                 <CenteredComponent>
                     <WarningButton
                         className={classes.closeModalButton}
@@ -229,9 +239,13 @@ const WordSearchModal = (props: WordSearchModalProps) => {
                         Close popup
                     </WarningButton>
                 </CenteredComponent>
-                <Link href={`/manage/${props.wordReinforcementToken}/vocabulary`}>
-                    Go to your vocabulary list
-                </Link>
+                {
+                    !props.shouldShowLoginForm && (
+                        <Link href={`/manage/${props.wordReinforcementToken}/vocabulary`}>
+                            Go to your vocabulary list
+                        </Link>
+                    )
+                }
             </DisplayCard>
         </Modal>
     );
