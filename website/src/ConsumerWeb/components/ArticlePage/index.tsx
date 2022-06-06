@@ -105,13 +105,43 @@ type ArticlePageOwnProps = RouteComponentProps<Params>;
 
 const ArticlePage = asBaseComponent(
     (props: ArticlePageOwnProps & BaseComponentProps & ArticlePageAPIProps) => {
-        const [ iframeRef, setIFrameRef ] = useState<HTMLIFrameElement>(null);
-        const [ selection, setSelection ] = useState<string>(null);
-        const [ isModalOpen, setIsModalOpen ] = useState<boolean>(false);
-
         const [ shouldShowLoginForm, setShouldShowLoginForm ] = useState<boolean>(
             props.userProfile.hasAccount && !props.userProfile.isLoggedIn
         );
+
+        const [ wordReinforcementToken, setWordReinforcementToken ] = useState<string>(
+            !!props.userProfile.nextTokens ? props.userProfile.nextTokens[0] : null
+        );
+        const [ subscriptionManagementToken, setSubscriptionManagementToken ] = useState<string>(
+            !!props.userProfile.nextTokens ? props.userProfile.nextTokens[1] : null
+        );
+
+        const [ isModalLoading, setIsModalLoading ] = useState<boolean>(false);
+        const [ modalError, setModalError ] = useState<Error>(null);
+
+        const handleLogin = () => {
+            setIsModalLoading(true);
+            getUserProfileInformation({
+                key: RouteEncryptionKey.ArticleReaderKey,
+                token: props.readerToken,
+                nextKeys: [RouteEncryptionKey.WordReinforcement, RouteEncryptionKey.SubscriptionManagement],
+            },
+            (resp: GetUserProfileInformationResponse) => {
+                setIsModalLoading(false);
+                setModalError(null);
+                setWordReinforcementToken(resp.userProfile.nextTokens[0]);
+                setSubscriptionManagementToken(resp.userProfile.nextTokens[1]);
+                setShouldShowLoginForm(false);
+            },
+            (err: Error) => {
+                setIsModalLoading(false);
+                setModalError(err);
+            });
+        }
+
+        const [ iframeRef, setIFrameRef ] = useState<HTMLIFrameElement>(null);
+        const [ selection, setSelection ] = useState<string>(null);
+        const [ isModalOpen, setIsModalOpen ] = useState<boolean>(false);
 
         const handleToggleWordSearch = (isOpen: boolean) => {
             return () => {
@@ -187,11 +217,13 @@ const ArticlePage = asBaseComponent(
                     !!isModalOpen && (
                         <WordSearchModal
                             shouldShowLoginForm={shouldShowLoginForm}
-                            wordReinforcementToken={props.userProfile.nextTokens[0]}
-                            subscriptionManagementToken={props.userProfile.nextTokens[1]}
+                            wordReinforcementToken={wordReinforcementToken}
+                            subscriptionManagementToken={subscriptionManagementToken}
                             selection={selection}
+                            isLoading={isModalLoading}
+                            error={modalError}
                             handleCloseModal={handleToggleWordSearch(false)}
-                            handleToggleLoginForm={setShouldShowLoginForm} />
+                            handleLogin={handleLogin} />
                     )
                 }
             </Grid>
@@ -226,41 +258,40 @@ const ArticlePage = asBaseComponent(
 
 type WordSearchModalProps = {
     shouldShowLoginForm: boolean;
+    isLoading: boolean;
     selection: string;
-    wordReinforcementToken: string;
-    subscriptionManagementToken: string;
+    wordReinforcementToken: string | null;
+    subscriptionManagementToken: string | null;
+    error: Error;
 
     handleCloseModal: () => void;
-    handleToggleLoginForm: (v: boolean) => void;
+    handleLogin: () => void;
 }
 
 const WordSearchModal = (props: WordSearchModalProps) => {
-    const handleLogin = (_: string) => {
-        props.handleToggleLoginForm(false);
-    }
     const classes = styleClasses();
-    return (
-        <Modal
-            open={true}
-            onClose={props.handleCloseModal}>
-            <DisplayCard
-                className={classes.wordSearchModal}>
-                {
-                    props.shouldShowLoginForm ? (
-                        <div>
-                            <Heading3 color={TypographyColor.Primary}>
-                                Login to Babblegraph
-                            </Heading3>
-                            <LoginForm
-                                onLoginSuccess={handleLogin} />
-                        </div>
-                    ) : (
-                        <WordSearchComponent
-                            selection={props.selection}
-                            wordReinforcementToken={props.wordReinforcementToken}
-                            subscriptionManagementToken={props.subscriptionManagementToken} />
-                    )
-                }
+
+    const handleLogin = (_: string) => {
+        props.handleLogin();
+    }
+
+    let body;
+    if (props.isLoading) {
+        body = <LoadingSpinner />
+    } else if (!!props.error) {
+        body = (
+            <Heading3 color={TypographyColor.Warning}>
+                Something went wrong with your request. Try again later.
+            </Heading3>
+        )
+    } else if (props.shouldShowLoginForm) {
+        body = (
+            <div>
+                <Heading3 color={TypographyColor.Primary}>
+                    Login to Babblegraph
+                </Heading3>
+                <LoginForm
+                    onLoginSuccess={handleLogin} />
                 <CenteredComponent>
                     <WarningButton
                         className={classes.closeModalButton}
@@ -268,13 +299,35 @@ const WordSearchModal = (props: WordSearchModalProps) => {
                         Close popup
                     </WarningButton>
                 </CenteredComponent>
-                {
-                    !props.shouldShowLoginForm && (
-                        <Link href={`/manage/${props.wordReinforcementToken}/vocabulary`}>
-                            Go to your vocabulary list
-                        </Link>
-                    )
-                }
+            </div>
+        );
+    } else {
+        body = (
+            <div>
+                <WordSearchComponent
+                    selection={props.selection}
+                    wordReinforcementToken={props.wordReinforcementToken}
+                    subscriptionManagementToken={props.subscriptionManagementToken} />
+                <CenteredComponent>
+                    <WarningButton
+                        className={classes.closeModalButton}
+                        onClick={props.handleCloseModal}>
+                        Close popup
+                    </WarningButton>
+                </CenteredComponent>
+                <Link href={`/manage/${props.wordReinforcementToken}/vocabulary`}>
+                    Go to your vocabulary list
+                </Link>
+            </div>
+        );
+    }
+    return (
+        <Modal
+            open={true}
+            onClose={props.handleCloseModal}>
+            <DisplayCard
+                className={classes.wordSearchModal}>
+                {body}
             </DisplayCard>
         </Modal>
     );
