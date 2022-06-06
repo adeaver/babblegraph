@@ -8,7 +8,6 @@ import (
 	"babblegraph/services/web/router"
 	"babblegraph/util/database"
 	"babblegraph/util/encrypt"
-	"encoding/base64"
 	"fmt"
 	"reflect"
 
@@ -34,7 +33,6 @@ type getArticleMetadataRequest struct {
 type getArticleMetadataResponse struct {
 	ReaderToken string `json:"reader_token"`
 	ArticleID   string `json:"article_id"`
-	ArticleURL  string `json:"article_url"`
 }
 
 func getArticleMetadata(r *router.Request) (interface{}, error) {
@@ -44,7 +42,6 @@ func getArticleMetadata(r *router.Request) (interface{}, error) {
 	}
 	var articleID string
 	var userID *users.UserID
-	var articleURL string
 	if err := encrypt.WithDecodedToken(req.ArticleToken, func(tokenPair encrypt.TokenPair) error {
 		switch {
 		case tokenPair.Key == routes.ArticleLinkKeyDEPRECATED.Str():
@@ -64,8 +61,7 @@ func getArticleMetadata(r *router.Request) (interface{}, error) {
 				if userDocument.DocumentURL == nil {
 					return fmt.Errorf("User Document has no document URL")
 				}
-				articleURL = *userDocument.DocumentURL
-				articleID = base64.URLEncoding.EncodeToString([]byte(articleURL))
+				articleID = userDocumentIDStr
 				return nil
 			})
 		default:
@@ -81,6 +77,5 @@ func getArticleMetadata(r *router.Request) (interface{}, error) {
 	return getArticleMetadataResponse{
 		ArticleID:   articleID,
 		ReaderToken: *readerToken,
-		ArticleURL:  articleURL,
 	}, nil
 }

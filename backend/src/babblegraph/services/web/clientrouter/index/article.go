@@ -7,14 +7,13 @@ import (
 	"babblegraph/model/userlinks"
 	"babblegraph/model/users"
 	"babblegraph/services/web/clientrouter/middleware"
-	"babblegraph/services/web/router"
 	"babblegraph/util/async"
 	"babblegraph/util/database"
 	"babblegraph/util/encrypt"
-	"babblegraph/util/ptr"
 	"babblegraph/util/urlparser"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"reflect"
 
@@ -93,79 +92,69 @@ func handleArticleRoute(staticFileDirName string) func(w http.ResponseWriter, r 
 	}
 }
 
-func getPaywallReportBodyFromMap(m map[string]interface{}) (*routes.PaywallReportBodyDEPRECATED, error) {
-	var paywallReportBody routes.PaywallReportBodyDEPRECATED
-	bytes, err := json.Marshal(m)
-	if err != nil {
-		return nil, fmt.Errorf("Got error %s marshalling map %+v", err.Error(), m)
+func getURLForUserDocument(r *http.Request) (*string, error) {
+	routeVars := mux.Vars(r)
+	token, ok := routeVars["token"]
+	if !ok {
+		return nil, nil
 	}
-	if err := json.Unmarshal(bytes, &paywallReportBody); err != nil {
-		return nil, fmt.Errorf("Got error %s unmarshalling string: %s", err.Error(), string(bytes))
+	var url *string
+	err := database.WithTx(func(tx *sqlx.Tx) error {
+		userDocumentID := userdocuments.UserDocumentID(token)
+		userDocument, err := userdocuments.GetUserDocumentID(tx, userDocumentID)
+		if err != nil {
+			return err
+		}
+		url = userDocument.DocumentURL
+		return nil
+	})
+	switch {
+	case err != nil:
+		return nil, err
+	case url == nil:
+		return nil, nil
 	}
-	return &paywallReportBody, nil
+	return url, nil
 }
 
-func handlePaywallReport(r *router.Request) (interface{}, error) {
-	token, err := r.GetRouteVar("token")
-	if err != nil {
-		return nil, err
-	}
-	var emailRecordID *email.ID
-	var userID *users.UserID
-	var url *urlparser.ParsedURL
-	if err := encrypt.WithDecodedToken(*token, func(tokenPair encrypt.TokenPair) error {
+func handleArticleHTMLPassthrough() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		url, err := getURLForUserDocument(r)
 		switch {
-		case tokenPair.Key == routes.PaywallReportKeyDEPRECATED.Str():
-			m, ok := tokenPair.Value.(map[string]interface{})
-			if !ok {
-				return fmt.Errorf("Paywall report body did not marshal correctly, got type %v", reflect.TypeOf(tokenPair.Value))
-			}
-			paywallReportBody, err := getPaywallReportBodyFromMap(m)
-			if err != nil {
-				return err
-			}
-			emailRecordID = &paywallReportBody.EmailRecordID
-			userID = &paywallReportBody.UserID
-			u := urlparser.MustParseURL(paywallReportBody.URL)
-			url = &u
-			return nil
-		case tokenPair.Key == routes.PaywallReportKeyForUserDocumentID.Str():
-			userDocumentIDStr, ok := tokenPair.Value.(string)
-			if !ok {
-				return fmt.Errorf("Paywall report body did not marshal correctly, got type %v", reflect.TypeOf(tokenPair.Value))
-			}
-			userDocumentID := userdocuments.UserDocumentID(userDocumentIDStr)
-			return database.WithTx(func(tx *sqlx.Tx) error {
-				userDocument, err := userdocuments.GetUserDocumentID(tx, userDocumentID)
-				if err != nil {
-					return err
-				}
-				if userDocument.DocumentURL == nil {
-					return fmt.Errorf("User Document has no document URL")
-				}
-				emailRecordID = userDocument.EmailID
-				userID = &userDocument.UserID
-				u := urlparser.MustParseURL(*userDocument.DocumentURL)
-				url = &u
-				return nil
-			})
-		default:
-			return fmt.Errorf("Incorrect key type: %s", tokenPair.Key)
+		case err != nil:
+			http.Error(w, http.StatusText(500), 500)
+			return
+		case url == nil:
+			http.Error(w, http.StatusText(404), 404)
+			return
 		}
-	}); err != nil {
-		return nil, fmt.Errorf("Unable to parse token: %s", err.Error())
+		resp, err := http.Get(*url)
+		if err != nil {
+			return
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			return
+		}
+		data, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return
+		}
+		w.Write(data)
 	}
-	if emailRecordID == nil || userID == nil || url == nil {
-		return nil, fmt.Errorf("Token does not have email record, user id, or url: %s", *token)
+}
+
+func handleArticleOutLink() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		url, err := getURLForUserDocument(r)
+		switch {
+		case err != nil:
+			http.Error(w, http.StatusText(500), 500)
+			return
+		case url == nil:
+			http.Error(w, http.StatusText(404), 404)
+			return
+		}
+		http.Redirect(w, r, *url, http.StatusFound)
 	}
-	if err := database.WithTx(func(tx *sqlx.Tx) error {
-		return userlinks.ReportPaywall(tx, *userID, *url, *emailRecordID)
-	}); err != nil {
-		r.Warnf("Failed to capture paywall report for user: %s", *userID)
-	}
-	subscriptionManagementLink, err := routes.MakeSubscriptionManagementToken(*userID)
-	if err != nil {
-		return nil, err
-	}
-	return ptr.String(fmt.Sprintf("/paywall-thank-you/%s", *subscriptionManagementLink)), nil
 }

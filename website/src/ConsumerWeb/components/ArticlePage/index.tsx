@@ -129,7 +129,18 @@ const ArticlePage = asBaseComponent(
             }
             !!iframeRef && iframeRef.addEventListener('load', function() {
                 setHasIFrameLoaded(false);
-                // TODO(here): go through and add links
+
+                const iframeAnchors = iframeRef.contentWindow.document.getElementsByTagName("a");
+                Object.values(iframeAnchors).forEach((anchor: HTMLAnchorElement) => {
+                    anchor.onclick = function(e: MouseEvent) {
+                        e.preventDefault();
+                        window.open(
+                            (e.target as HTMLAnchorElement).href,
+                            '_blank'
+                        );
+                    }
+                });
+
                 iframeRef.contentWindow.document.addEventListener('selectionchange', function() {
                     setSelection(this.getSelection().toString());
                 })
@@ -156,7 +167,7 @@ const ArticlePage = asBaseComponent(
                         </Grid>
                         <Grid className={classes.navbarItem} item xs={6}>
                             <WarningButton
-                                onClick={() => {openLocationAsNewTab(props.articleUrl)}}>
+                                onClick={() => {openLocationAsNewTab(`/out/${props.articleId}`)}}>
                                 Not Working?
                             </WarningButton>
                         </Grid>
