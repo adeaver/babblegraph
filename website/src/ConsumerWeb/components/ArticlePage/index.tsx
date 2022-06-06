@@ -12,6 +12,7 @@ import Paragraph from 'common/typography/Paragraph';
 import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
 import Link from 'common/components/Link/Link';
 import { Alignment, TypographyColor } from 'common/typography/common';
+import { Heading3 } from 'common/typography/Heading';
 import {
     PrimaryButton,
     WarningButton,
@@ -235,8 +236,13 @@ const WordSearchModal = (props: WordSearchModalProps) => {
                 className={classes.wordSearchModal}>
                 {
                     props.shouldShowLoginForm ? (
-                        <LoginForm
-                            onLoginSuccess={handleLogin} />
+                        <div>
+                            <Heading3 color={TypographyColor.Primary}>
+                                Login to Babblegraph
+                            </Heading3>
+                            <LoginForm
+                                onLoginSuccess={handleLogin} />
+                        </div>
                     ) : (
                         <WordSearchComponent
                             selection={props.selection}
