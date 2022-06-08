@@ -11,14 +11,18 @@ import (
 	"babblegraph/util/database"
 	"babblegraph/util/encrypt"
 	"babblegraph/util/urlparser"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"reflect"
+	"strings"
 
 	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
+	"golang.org/x/net/html"
 )
 
 func getArticleLinkBodyFromMap(m map[string]interface{}) (*routes.ArticleLinkBodyDEPRECATED, error) {
@@ -128,19 +132,56 @@ func handleArticleHTMLPassthrough() func(w http.ResponseWriter, r *http.Request)
 			http.Error(w, http.StatusText(404), 404)
 			return
 		}
+		u := urlparser.MustParseURL(*url)
 		resp, err := http.Get(*url)
 		if err != nil {
 			return
 		}
 		defer resp.Body.Close()
 		if resp.StatusCode != http.StatusOK {
+			http.Error(w, http.StatusText(500), 500)
 			return
 		}
 		data, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
+			http.Error(w, http.StatusText(500), 500)
 			return
 		}
-		w.Write(data)
+		htmlDoc, err := html.Parse(strings.NewReader(string(data)))
+		if err != nil {
+			log.Fatalf(err.Error())
+		}
+		var f func(node *html.Node)
+		f = func(node *html.Node) {
+			switch node.Data {
+			case "script",
+				"link",
+				"style":
+				var attrs []html.Attribute
+				for _, attr := range node.Attr {
+					if (attr.Key == "href" || attr.Key == "src") && strings.HasPrefix(attr.Val, "/") {
+						absoluteURL, err := urlparser.EnsureProtocol(fmt.Sprintf("%s/%s", u.Domain, attr.Val))
+						if err != nil {
+							continue
+						}
+						attr.Val = *absoluteURL
+					}
+					attrs = append(attrs, attr)
+				}
+				node.Attr = attrs
+			}
+			for c := node.FirstChild; c != nil; c = c.NextSibling {
+				f(c)
+			}
+		}
+		f(htmlDoc)
+		var b bytes.Buffer
+		err = html.Render(&b, htmlDoc)
+		if err != nil {
+			http.Error(w, http.StatusText(500), 500)
+			return
+		}
+		w.Write([]byte(b.String()))
 	}
 }
 
