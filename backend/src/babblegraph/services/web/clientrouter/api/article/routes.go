@@ -4,7 +4,9 @@ import (
 	"babblegraph/model/routes"
 	"babblegraph/model/userdocuments"
 	"babblegraph/model/users"
+	"babblegraph/services/web/clientrouter/clienterror"
 	"babblegraph/services/web/clientrouter/routermiddleware"
+	"babblegraph/services/web/clientrouter/util/routetoken"
 	"babblegraph/services/web/router"
 	"babblegraph/util/database"
 	"babblegraph/util/encrypt"
@@ -22,6 +24,11 @@ var Routes = router.RouteGroup{
 			Handler: routermiddleware.WithNoBodyRequestLogger(
 				getArticleMetadata,
 			),
+		}, {
+			Path: "update_user_reader_tutorial_1",
+			Handler: routermiddleware.WithNoBodyRequestLogger(
+				updateUserReaderTutorial,
+			),
 		},
 	},
 }
@@ -31,8 +38,9 @@ type getArticleMetadataRequest struct {
 }
 
 type getArticleMetadataResponse struct {
-	ReaderToken string `json:"reader_token"`
-	ArticleID   string `json:"article_id"`
+	ReaderToken        string `json:"reader_token"`
+	ArticleID          string `json:"article_id"`
+	ShouldShowTutorial bool   `json:"should_show_tutorial"`
 }
 
 func getArticleMetadata(r *router.Request) (interface{}, error) {
@@ -40,6 +48,7 @@ func getArticleMetadata(r *router.Request) (interface{}, error) {
 	if err := r.GetJSONBody(&req); err != nil {
 		return nil, err
 	}
+	var hasSeenReaderTutorial bool
 	var articleID string
 	var userID *users.UserID
 	if err := encrypt.WithDecodedToken(req.ArticleToken, func(tokenPair encrypt.TokenPair) error {
@@ -61,6 +70,10 @@ func getArticleMetadata(r *router.Request) (interface{}, error) {
 				if userDocument.DocumentURL == nil {
 					return fmt.Errorf("User Document has no document URL")
 				}
+				hasSeenReaderTutorial, err = userdocuments.HasUserSeenReaderTutorial(tx, *userID)
+				if err != nil {
+					return err
+				}
 				articleID = userDocumentIDStr
 				return nil
 			})
@@ -75,7 +88,38 @@ func getArticleMetadata(r *router.Request) (interface{}, error) {
 		return nil, err
 	}
 	return getArticleMetadataResponse{
-		ArticleID:   articleID,
-		ReaderToken: *readerToken,
+		ArticleID:          articleID,
+		ReaderToken:        *readerToken,
+		ShouldShowTutorial: !hasSeenReaderTutorial,
+	}, nil
+}
+
+type updateUserReaderTutorialRequest struct {
+	ReaderToken string `json:"reader_token"`
+}
+
+type updateUserReaderTutorialResponse struct {
+	Success bool               `json:"success"`
+	Error   *clienterror.Error `json:"error,omitempty"`
+}
+
+func updateUserReaderTutorial(r *router.Request) (interface{}, error) {
+	var req updateUserReaderTutorialRequest
+	if err := r.GetJSONBody(&req); err != nil {
+		return nil, err
+	}
+	userID, err := routetoken.ValidateTokenAndGetUserID(req.ReaderToken, routes.ArticleReaderKey)
+	if err != nil {
+		return updateUserReaderTutorialResponse{
+			Error: clienterror.ErrorInvalidToken.Ptr(),
+		}, nil
+	}
+	if err := database.WithTx(func(tx *sqlx.Tx) error {
+		return userdocuments.MarkUserHasSeenReaderTutorial(tx, *userID)
+	}); err != nil {
+		return nil, err
+	}
+	return updateUserReaderTutorialResponse{
+		Success: true,
 	}, nil
 }

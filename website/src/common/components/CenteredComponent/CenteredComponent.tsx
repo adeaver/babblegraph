@@ -11,7 +11,7 @@ type CenteredComponentProps = {
 
 const CenteredComponent = (props: CenteredComponentProps) => {
     return (
-        <Grid className={props.className} container>
+        <Grid container>
             <Box
                 component={Grid}
                 item
@@ -21,6 +21,7 @@ const CenteredComponent = (props: CenteredComponentProps) => {
                 &nbsp;
             </Box>
             <Box
+                className={props.className}
                 component={Grid}
                 item
                 xs={12}

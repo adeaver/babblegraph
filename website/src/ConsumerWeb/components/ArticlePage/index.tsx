@@ -12,7 +12,7 @@ import Paragraph from 'common/typography/Paragraph';
 import LoadingSpinner from 'common/components/LoadingSpinner/LoadingSpinner';
 import Link from 'common/components/Link/Link';
 import { Alignment, TypographyColor } from 'common/typography/common';
-import { Heading3 } from 'common/typography/Heading';
+import { Heading1, Heading3 } from 'common/typography/Heading';
 import {
     PrimaryButton,
     WarningButton,
@@ -20,10 +20,13 @@ import {
 } from 'common/components/Button/Button';
 import { loadCaptchaScript } from 'common/util/grecaptcha/grecaptcha';
 import { openLocationAsNewTab } from 'util/window/Location';
+import { getStaticContentURLForPath } from 'util/static/static';
 
 import {
     getArticleMetadata,
     GetArticleMetadataResponse,
+    UpdateUserReaderTutorialResponse,
+    updateUserReaderTutorial,
 } from 'ConsumerWeb/api/article';
 import {
     UserProfileInformationError,
@@ -91,6 +94,26 @@ const styleClasses = makeStyles({
         maxHeight: '500px',
         overflowY: 'scroll',
     },
+    tutorialModal: {
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        width: '50%',
+        minWidth: '300px',
+        transform: 'translate(-50%, -50%)',
+        maxHeight: '500px',
+        overflowY: 'scroll',
+    },
+    tutorialImage: {
+        height: 'auto',
+        maxWidth: '100%',
+        display: 'block',
+        margin: 'auto',
+    },
+    tutorialContainer: {
+        display: 'flex',
+        justifyContent: 'center',
+    },
     closeModalButton: {
         width: '100%',
     },
@@ -108,6 +131,19 @@ const ArticlePage = asBaseComponent(
         const [ shouldShowLoginForm, setShouldShowLoginForm ] = useState<boolean>(
             props.userProfile.hasAccount && !props.userProfile.isLoggedIn
         );
+        const [ shouldShowTutorial, setShouldShowTutorial ] = useState<boolean>(props.shouldShowTutorial);
+        const handleCloseTutorial = () => {
+            setShouldShowTutorial(false);
+            updateUserReaderTutorial({
+                readerToken: props.readerToken,
+            },
+            (resp: UpdateUserReaderTutorialResponse) => {
+                // no-op
+            },
+            (err: Error) => {
+                // no-op
+            });
+        }
 
         const [ wordReinforcementToken, setWordReinforcementToken ] = useState<string>(
             !!props.userProfile.nextTokens ? props.userProfile.nextTokens[0] : null
@@ -188,18 +224,24 @@ const ArticlePage = asBaseComponent(
             <Grid container>
                 <Grid className={classes.navbar} item xs={12}>
                     <Grid className={classes.navbarContainer} container>
-                        <Grid className={classes.navbarItem} item xs={6}>
+                        <Grid className={classes.navbarItem} item xs={4}>
                             <PrimaryButton
                                 onClick={handleToggleWordSearch(true)}
                                 disabled={!selection}>
                                 Lookup Word
                             </PrimaryButton>
                         </Grid>
-                        <Grid className={classes.navbarItem} item xs={6}>
+                        <Grid className={classes.navbarItem} item xs={4}>
                             <WarningButton
                                 onClick={() => {openLocationAsNewTab(`/out/${props.articleId}`)}}>
                                 Not Working?
                             </WarningButton>
+                        </Grid>
+                        <Grid className={classes.navbarItem} item xs={4}>
+                            <PrimaryButton
+                                onClick={() => {setShouldShowTutorial(true)}}>
+                                Help!
+                            </PrimaryButton>
                         </Grid>
                     </Grid>
                 </Grid>
@@ -214,7 +256,13 @@ const ArticlePage = asBaseComponent(
                         src={`/a/${props.articleId}`} />
                 </Grid>
                 {
-                    !!isModalOpen && (
+                    shouldShowTutorial && (
+                        <TutorialModal
+                            handleCloseModal={handleCloseTutorial} />
+                    )
+                }
+                {
+                    (isModalOpen && !shouldShowTutorial) && (
                         <WordSearchModal
                             shouldShowLoginForm={shouldShowLoginForm}
                             wordReinforcementToken={wordReinforcementToken}
@@ -349,5 +397,47 @@ const WordSearchComponent = withUserVocabulary(
             handleAddNewUserVocabularyEntry={props.handleAddNewVocabularyEntry} />
     )
 )
+
+type TutorialModalProps = {
+    handleCloseModal: () => void;
+}
+
+const TutorialModal = (props: TutorialModalProps) => {
+    const classes = styleClasses();
+    return (
+        <Modal
+            open={true}
+            onClose={props.handleCloseModal}>
+            <DisplayCard
+                className={classes.tutorialModal}>
+                <Heading1 color={TypographyColor.Primary}>
+                    Welcome to the Babblegraph article reader
+                </Heading1>
+                <Paragraph>
+                    Getting started is easy. Just highlight a word you don’t know.
+                </Paragraph>
+                <img className={classes.tutorialImage} src={getStaticContentURLForPath("assets/reader_tutorial_highlight.jpeg")} />
+                <Paragraph>
+                    Click on the "Lookup Word" button on the top of the page.
+                </Paragraph>
+                <CenteredComponent className={classes.tutorialContainer}>
+                    <PrimaryButton>
+                        Lookup Word
+                    </PrimaryButton>
+                </CenteredComponent>
+                <Paragraph>
+                    And then get the definition right here in the article!
+                </Paragraph>
+                <img className={classes.tutorialImage} src={getStaticContentURLForPath("assets/reader_tutorial_lookup.png")} />
+                <CenteredComponent className={classes.tutorialContainer}>
+                    <ConfirmationButton
+                        onClick={props.handleCloseModal}>
+                        Got it
+                    </ConfirmationButton>
+                </CenteredComponent>
+            </DisplayCard>
+        </Modal>
+    );
+}
 
 export default ArticlePage;
