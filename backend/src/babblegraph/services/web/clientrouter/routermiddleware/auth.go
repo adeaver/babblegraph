@@ -1,6 +1,7 @@
 package routermiddleware
 
 import (
+	"babblegraph/model/admin"
 	"babblegraph/model/useraccounts"
 	"babblegraph/model/users"
 	"babblegraph/services/web/clientrouter/util/auth"
@@ -8,6 +9,7 @@ import (
 	"babblegraph/util/database"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -99,4 +101,39 @@ func WithRequiredSubscription(validSubscriptionLevels []useraccounts.Subscriptio
 		r.RespondWithStatus(http.StatusForbidden)
 		return nil, nil
 	})
+}
+
+var safeCookies = map[string]bool{
+	AuthTokenCookieName:         true,
+	"__stripe_mid":              true,
+	"__stripe_sid":              true,
+	utmTrackingIDCookieName:     true,
+	admin.AccessTokenCookieName: true,
+}
+
+func RemoveUnsafeCookies(w http.ResponseWriter, r *http.Request) {
+	for _, cookie := range r.Cookies() {
+		if _, ok := safeCookies[cookie.Name]; !ok {
+			http.SetCookie(w, &http.Cookie{
+				Name:     cookie.Name,
+				Value:    "",
+				HttpOnly: true,
+				Path:     "/",
+				Expires:  time.Now().Add(-5 * time.Minute),
+			})
+		}
+	}
+}
+
+type WithSafeCookieHandler func(r *router.Request) (interface{}, error)
+
+func WithSafeCookie(handler WithSafeCookieHandler) router.RequestHandler {
+	return func(r *router.Request) (interface{}, error) {
+		for _, cookie := range r.GetCookies() {
+			if _, ok := safeCookies[cookie.Name]; !ok {
+				r.RemoveCookieByName(cookie.Name)
+			}
+		}
+		return handler(r)
+	}
 }

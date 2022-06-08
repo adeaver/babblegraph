@@ -7,6 +7,7 @@ import (
 	"babblegraph/model/userlinks"
 	"babblegraph/model/users"
 	"babblegraph/services/web/clientrouter/middleware"
+	"babblegraph/services/web/clientrouter/routermiddleware"
 	"babblegraph/util/async"
 	"babblegraph/util/database"
 	"babblegraph/util/encrypt"
@@ -123,6 +124,7 @@ func getURLForUserDocument(r *http.Request) (*string, error) {
 
 func handleArticleHTMLPassthrough() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		routermiddleware.RemoveUnsafeCookies(w, r)
 		url, err := getURLForUserDocument(r)
 		switch {
 		case err != nil:

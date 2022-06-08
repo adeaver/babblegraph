@@ -9,6 +9,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/http/httputil"
+	"time"
 
 	"github.com/gorilla/mux"
 )
@@ -81,6 +82,16 @@ func (r *Request) GetCookies() []*http.Cookie {
 
 func (r *Request) RespondWithCookie(c *http.Cookie) {
 	r.respCookies = append(r.respCookies, c)
+}
+
+func (r *Request) RemoveCookieByName(cookieName string) {
+	r.respCookies = append(r.respCookies, &http.Cookie{
+		Name:     cookieName,
+		Value:    "",
+		HttpOnly: true,
+		Path:     "/",
+		Expires:  time.Now().Add(-5 * time.Minute),
+	})
 }
 
 func (r *Request) RespondWithStatus(status int) {
