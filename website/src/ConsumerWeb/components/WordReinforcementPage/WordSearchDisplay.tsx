@@ -80,7 +80,7 @@ const WordSearchDisplay = asBaseComponent(
         return (
             <Grid container>
                 {
-                    !props.result.results ? (
+                    (!props.result || !props.result.results) ? (
                         <Heading3 color={TypographyColor.Warning}>
                             No results found
                         </Heading3>

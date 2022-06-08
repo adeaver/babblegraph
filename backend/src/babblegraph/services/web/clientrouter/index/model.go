@@ -35,6 +35,9 @@ func RegisterIndexRoutes(r *mux.Router, indexPages []IndexPage) error {
 	r.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, fmt.Sprintf("%s/favicon.ico", staticFileDirName))
 	})
+	r.HandleFunc("/article/{token}", handleArticleRoute(staticFileDirName))
+	r.HandleFunc("/a/{token}", handleArticleHTMLPassthrough())
+	r.HandleFunc("/out/{token}", handleArticleOutLink())
 	r.PathPrefix("/").HandlerFunc(HandleServeIndexPage(staticFileDirName))
 	return nil
 }

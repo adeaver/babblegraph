@@ -15,6 +15,7 @@ const (
 	EmailOpenedKey                           RouteEncryptionKey = "email-opened"
 	UserVerificationKey                      RouteEncryptionKey = "user-verification"
 	WordReinforcementKey                     RouteEncryptionKey = "word-reinforcement"
+	ArticleReaderKey                         RouteEncryptionKey = "article-reader"
 
 	PremiumSubscriptionCheckoutKey RouteEncryptionKey = "premium-subscription-checkout"
 	CreateUserKey                  RouteEncryptionKey = "create-user"
@@ -48,6 +49,7 @@ func EncryptUserIDWithKey(userID users.UserID, key RouteEncryptionKey) (*string,
 		UnsubscribeRouteEncryptionKey,
 		UserVerificationKey,
 		WordReinforcementKey,
+		ArticleReaderKey,
 		PremiumSubscriptionCheckoutKey,
 		CreateUserKey,
 		ForgotPasswordKey,

@@ -41,3 +41,12 @@ type UserDocument struct {
 	EmailID     *email.ID            `json:"email_id"`
 	DocumentURL *string              `json:"document_url"`
 }
+
+type userReaderTutorialReceiptID string
+
+type dbUserReaderTutorialReceipt struct {
+	ID             userReaderTutorialReceiptID `db:"_id"`
+	CreatedAt      time.Time                   `db:"created_at"`
+	LastModifiedAt time.Time                   `db:"last_modified_at"`
+	UserID         users.UserID                `db:"user_id"`
+}

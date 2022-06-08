@@ -1,4 +1,5 @@
 import React from 'react';
+import classnames from 'classnames';
 
 import { makeStyles } from '@material-ui/core/styles';
 import CircularProgress from '@material-ui/core/CircularProgress';
@@ -16,10 +17,14 @@ const styleClasses = makeStyles({
     },
 });
 
-const LoadingSpinner = () => {
+type LoadingSpinnerProps = {
+    className?: string;
+}
+
+const LoadingSpinner = (props: LoadingSpinnerProps) => {
     const classes = styleClasses();
     return (
-        <Grid container>
+        <Grid className={props.className} container>
             <Grid item xs={false} md={3}>
                 &nbsp;
             </Grid>
