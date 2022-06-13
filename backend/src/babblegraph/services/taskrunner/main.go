@@ -2,6 +2,7 @@ package main
 
 import (
 	"babblegraph/services/taskrunner/tasks"
+	"babblegraph/util/ctx"
 	"babblegraph/util/database"
 	"babblegraph/util/elastic"
 	"babblegraph/util/env"
@@ -25,6 +26,7 @@ func main() {
         create-user: create beta-premium user
         expire-user: expire user
         create-elastic-indexes: create new indices in ElasticSearch
+        user-vocabulary: migrates user vocabulary to new model
         product-updates: send product updates
         admin-content-document-backfill: backfill all documents with new content
         create-admin: create admin`)
@@ -60,6 +62,10 @@ func main() {
 			log.Fatal("no email specified")
 		}
 		if err := tasks.CreateUserWithBetaPremiumSubscription(emailClient, *userEmail); err != nil {
+			log.Fatal(err.Error())
+		}
+	case "user-vocabulary":
+		if err := tasks.MigrateUserVocabulary(ctx.GetDefaultLogContext()); err != nil {
 			log.Fatal(err.Error())
 		}
 	case "expire-user":

@@ -158,7 +158,7 @@ func UpsertUserVocabularySpotlightRecord(tx *sqlx.Tx, userID users.UserID, langu
 }
 
 // TODO(migration): delete after migration
-func CreateUserVocabularyFromSpotlight(tx *sqlx.Tx, userVocabularyEntryID UserVocabularyEntryID, spotlightRecord userlemma.UserLemmaReinforcementSpotlightRecord) error {
+func CreateUserVocabularyFromSpotlight(tx *sqlx.Tx, userVocabularyEntryID UserVocabularyEntryID, spotlight userlemma.UserLemmaReinforcementSpotlightRecord) error {
 	if _, err := tx.Exec(createVocabularySpotlightRecordQuery, spotlight.UserID, spotlight.LanguageCode, userVocabularyEntryID, spotlight.LastSentOn, spotlight.NumberOfTimesSent); err != nil {
 		return err
 	}
