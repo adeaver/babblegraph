@@ -123,15 +123,6 @@ const BlogPostPage = (props: BlogPostPageProps) => {
                             )
                         }
                         <div className={classes.signupFormContainer}>
-                            <SignupForm
-                                disabled={isLoadingSignup || !hasLoadedCaptcha}
-                                setIsLoading={setIsLoadingSignup}
-                                onSuccess={handleSignupSuccess}
-                                displayLanguage={DisplayLanguage.Spanish}
-                                shouldShowVerificationForm={successfullySignedUp} />
-                            {
-                                isLoadingSignup && <LoadingSpinner />
-                            }
                             <Link href="/">
                                 Haga clic aquí para aprender más
                             </Link>

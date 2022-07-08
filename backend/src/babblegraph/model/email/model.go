@@ -31,6 +31,8 @@ const (
 
 	EmailTypeAdminTwoFactorAuthenticationCode EmailType = "admin-two-factor-authentication-code"
 
+	EmailTypeGoodbye EmailType = "goodbye"
+
 	// Deprecated types
 	EmailTypeUserFeedbackDEPRECATED                EmailType = "user-feedback"
 	EmailTypePrivacyPolicyUpdateJune2021DEPRECATED           = "privacy-policy-update-june-2021"

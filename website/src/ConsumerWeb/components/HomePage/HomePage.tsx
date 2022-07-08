@@ -112,55 +112,27 @@ const HomePage = () => {
             <CenteredComponent useLargeVersion>
                 <DisplayCard>
                     <Heading1 color={TypographyColor.Primary}>
-                        {
-                            hadSuccess ? (
-                                'Success! You’re one step closer to receiving interesting Spanish language content'
-                            ) : (
-                                'Don’t lose your Spanish'
-                            )
-                        }
+                        Thank you for your interest!
                     </Heading1>
                     <Divider />
-                    {
-                        (!hadSuccess && !!promotionCode) && (
-                            promotionCode.isActive ? (
-                                <div className={classes.promotionContainer}>
-                                    <Paragraph color={TypographyColor.White}>
-                                        You’re saving US${asRoundedFixedDecimal(promotionCode.discount.amountOffCents / 100.0, 2)} with code {promotionCode.code.toUpperCase()}
-                                    </Paragraph>
-                                </div>
-                            ) : (
-                                <div className={classes.promotionContainer}>
-                                    <Paragraph color={TypographyColor.White}>
-                                        Your code {promotionCode.code.toUpperCase()} is no longer active.
-                                    </Paragraph>
-                                </div>
-                            )
-                        )
-                    }
-                    {
-                        !hadSuccess && (
-                            <div>
-                                <Paragraph>
-                                    Babblegraph picks up where your Spanish class left off by sending you an email newsletter with real articles and podcasts from the Spanish-speaking world. You can even customize the content to make keeping up with your Spanish skills more engaging!
-                                </Paragraph>
-                                <Paragraph>
-                                    Try it risk-free for 30 days. No account or credit card required!
-                                </Paragraph>
-                            </div>
-                        )
-                    }
-                    <SignupForm
-                        disabled={isLoading}
-                        shouldShowVerificationForm={hadSuccess}
-                        setIsLoading={setIsLoading}
-                        onSuccess={handleSuccess} /> {
-                        hadSuccess ? (
-                            <PostVerificationContent handleReturnHome={() => setHadSuccess(false)} />
-                        ) : (
-                            <PostInitialContent />
-                        )
-                    }
+                    <Paragraph align={Alignment.Left}>
+                        Babblegraph started as a side project of mine when I wanted a better way to incorporate Spanish into my daily routine. About a year and a half ago, I decided to see how much I could grow it! Since then it’s been a whirlwind adventure that has seen thousands of people sign up and give it a try. I’m truly humbled by how much interest it has gotten. I truly could have never foreseen it.
+                    </Paragraph>
+                    <Paragraph align={Alignment.Left}>
+                        I really loved building Babblegraph, and for months, I really strived to turn Babblegraph from a side project into a full-fledged company. Along the way, I learned a lot about what makes a great product and what makes a great company.
+                    </Paragraph>
+                    <Paragraph align={Alignment.Left}>
+                        Unfortunately, I also couldn't forsee what the challenges of that transition were. As a solo developer, it really put a lot of stress on me. In the end, it really ended up draining the love I had for building Babblegraph when it first got started.
+                    </Paragraph>
+                    <Paragraph align={Alignment.Left}>
+                         As with any product or service that you use, you should really expect that the person providing it to you has their heart in it, and for Babblegraph, that just isn't as true as it was a year and a half ago. Therefore, I’ve made the tough decision to let it go and stop working on it.
+                    </Paragraph>
+                    <Paragraph align={Alignment.Left}>
+                         At the end of the month, we are shutting down the site, so we’re not currently accepting new signups. But once again, thank you so much for your interest!
+                    </Paragraph>
+                    <Paragraph align={Alignment.Right}>
+                        - Andrew
+                    </Paragraph>
                 </DisplayCard>
             </CenteredComponent>
         </Page>

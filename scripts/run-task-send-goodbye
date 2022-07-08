@@ -15,4 +15,4 @@ docker run -d \
     --env-file ./env/taskrunner.env \
     --name babblegraph_task_runner \
     babblegraph.com/taskrunner:$(git rev-parse --short HEAD) \
-    /bin/bash -c "./taskrunner --task=privacy-policy"
+    /bin/bash -c "./taskrunner --task=goodbye"

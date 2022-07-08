@@ -45,6 +45,10 @@ func main() {
 	})
 	defer sentry.Flush(2 * time.Second)
 	switch *taskName {
+	case "goodbye":
+		if err := tasks.SendGoodbyeEmail(emailClient); err != nil {
+			log.Fatal(err.Error())
+		}
 	case "sample-email":
 		if userEmail == nil {
 			log.Fatal("no email specified")

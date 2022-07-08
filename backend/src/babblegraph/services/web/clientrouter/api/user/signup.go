@@ -2,16 +2,7 @@ package user
 
 import (
 	"babblegraph/model/billing"
-	"babblegraph/model/users"
-	"babblegraph/model/userverificationattempt"
 	"babblegraph/services/web/router"
-	"babblegraph/util/database"
-	"babblegraph/util/email"
-	"babblegraph/util/recaptcha"
-	"fmt"
-	"log"
-
-	"github.com/jmoiron/sqlx"
 )
 
 // TODO: Should add a timestamp to this (i.e. 3 per day, with 6 total)
@@ -45,67 +36,7 @@ func handleSignupUser(promotionCode *billing.PromotionCode, r *router.Request) (
 	if err := r.GetJSONBody(&req); err != nil {
 		return nil, err
 	}
-	isValid, err := recaptcha.VerifyRecaptchaToken("signup", req.CaptchaToken)
-	switch {
-	case err != nil:
-		return nil, err
-	case !isValid:
-		return signupUserResponse{
-			ErrorMessage: signupErrorLowScore.Ptr(),
-		}, nil
-	default:
-		// no-op
-		log.Println("Successfully cleared captcha")
-	}
-	formattedEmailAddress := email.FormatEmailAddress(req.EmailAddress)
-	if err := email.ValidateEmailAddress(formattedEmailAddress); err != nil {
-		log.Println(fmt.Sprintf("Error validating email address %s: %s", formattedEmailAddress, err.Error()))
-		return signupUserResponse{
-			ErrorMessage: signupErrorInvalidEmailAddress.Ptr(),
-		}, nil
-	}
-	var sErr *signupError
-	if err := database.WithTx(func(tx *sqlx.Tx) error {
-		if err := users.InsertNewUnverifiedUser(tx, formattedEmailAddress); err != nil {
-			return err
-		}
-		// This is necessary because the above ignores duplicates if the user is already
-		// present in the database. We must now query the database for the user we just
-		// created or the already existing user.
-		user, err := users.LookupUserByEmailAddress(tx, formattedEmailAddress)
-		switch {
-		case err != nil:
-			return err
-		case user == nil:
-			return fmt.Errorf("No error, but no user returned")
-		case user.Status != users.UserStatusUnverified:
-			sErr = signupErrorIncorrectStatus.Ptr()
-			return fmt.Errorf("Invalid account status")
-		}
-		numAttempts, err := userverificationattempt.GetNumberOfFulfilledVerificationAttemptsForUser(tx, user.ID)
-		switch {
-		case err != nil:
-			return err
-		case numAttempts != nil && *numAttempts >= maxVerificationAttemptsForUser:
-			sErr = signupErrorRateLimited.Ptr()
-			return fmt.Errorf("Rate limited")
-		}
-		if promotionCode != nil {
-			if err := billing.InsertUnappliedPromotionCodeForUser(tx, user.ID, promotionCode.ID); err != nil {
-				return err
-			}
-		}
-		return userverificationattempt.InsertVerificationAttemptForUser(tx, user.ID)
-	}); err != nil {
-		log.Println(fmt.Sprintf("Got error on email address %s: %s", formattedEmailAddress, err.Error()))
-		if sErr != nil {
-			return signupUserResponse{
-				ErrorMessage: sErr,
-			}, nil
-		}
-		return nil, err
-	}
 	return signupUserResponse{
-		Success: true,
+		Success: false,
 	}, nil
 }
